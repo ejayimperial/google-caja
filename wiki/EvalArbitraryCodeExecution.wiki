@@ -1,0 +1,28 @@
+=Eval and Function Constructor allow Execution of Unrewritten Javascript=
+
+==Effect==                                                                       
+Execute arbitrary code with access to the global environment, and the local members of the stack frame in which it is called.
+
+
+==Background==                                                                   
+eval is described at 15.1.2.1, and parses its argument as a Program, and executes it in it's caller's environment.
+
+The Function constructor allows creation of a function given a string body.  It will execute in the global scope as described at EcmaScript 262 section 15.3.2.1                
+
+EcmaScript 262 specifically requires that the global eval method be assignable, so it can be replaced.  The Function constructor is available via the 'constructor' property of any function object.
+
+
+==Assumptions==                                                                  
+window.eval and/or the Function constructor are accessible.  The function constructor is available if any function is available and a function's constructor property is readable.                                                               
+
+
+==Versions==                                                                     
+All interpreters that obey the referenced sections of EcmaScript.
+
+
+==Example==                                                                      
+{{{
+eval('alert("your cookie is " + document.cookie)');
+
+(new Function('alert("your cookie is " + document.cookie)'))();
+}}}
