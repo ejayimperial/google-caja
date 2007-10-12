@@ -1,0 +1,27 @@
+#labels Attack-Vector
+=typeof inconsistent for regular expressions=
+
+==Effect==
+See [http://javascript.crockford.com/remedial.html].
+{{{
+('function' === typeof o) !== (o instanceof Function)
+}}}
+
+==Background==
+The typeof operator must return 'function' for anything that is callable.
+
+
+==Assumptions==
+Runtime checks based on typeof allow access to members of functions that are not allowed on normal Objects.
+
+
+
+==Versions==
+On Firefox,
+{{{
+'function' === (typeof /./)
+}}}
+On IE 6,
+{{{
+'object' === (typeof /./)
+}}}
