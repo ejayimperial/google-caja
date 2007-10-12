@@ -1,0 +1,23 @@
+#labels Attack-Vector
+=CSS allows execution of unsanitized javascript?=
+
+==Effect==
+On older browsers, crafted CSS stylesheets can execute unsanitized javascript in the global scope.
+
+
+
+==Background==
+CSS allows a number of exploits.
+
+
+
+==Assumptions==
+Untrusted code can generate style elements or style attributes or otherwise add arbitrary CSS rules and create DOM elements that trigger those rules.
+
+
+==Versions==
+Unsure.  Older versions of Firefox had some buffer overflow problems with CSS.
+
+
+==Example==
+Unknown
