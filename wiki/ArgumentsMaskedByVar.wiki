@@ -15,18 +15,9 @@ From Ecmascript 262 10.1.8,
     When control enters an execution context for function code, an
     arguments object is created and initialised as follows:
     ...
-    * A property is created with name callee and property attributes
-      { DontEnum }. The initial value of this property is the Function
-     object being executed. This allows anonymous functions to be
-     recursive.
-    * A property is created with name length and property attributes
-      { DontEnum }. The initial value of this property is the number of
-      actual parameter values supplied by the caller.
-    * ....  In the case when arg is less than the number of formal
-      parameters for the Function object, this property shares its value
-      with the corresponding property of the activation object. This means
-      that changing this property changes the corresponding property of
-      the activation object and vice versa.
+    * A property is created with name callee and property attributes { DontEnum }. The initial value of this property is the Function object being executed. This allows anonymous functions to be recursive.
+    * A property is created with name length and property attributes { DontEnum }. The initial value of this property is the number of actual parameter values supplied by the caller.
+    * ....  In the case when arg is less than the number of formal parameters for the Function object, this property shares its value with the corresponding property of the activation object. This means that changing this property changes the corresponding property of the activation object and vice versa.
 
 
 ==Assumptions==
