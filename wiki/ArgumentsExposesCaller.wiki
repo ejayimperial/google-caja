@@ -32,3 +32,23 @@ Calls of untrusted functions are not passed through a launderer function which r
   }
 }}}
 This laundering scheme does not work if __caller__ is exposed.  __caller__ was removed from Firefox.
+
+
+
+==Versions==
+At least on FF and IE.  Only old versions of Firefox expose __caller__
+
+
+
+==Example==
+{{{
+function untrusted() {
+  alert('got function ' + untrusted.caller + ' : ' + arguments.caller);
+}
+
+(function () {
+  function trusted() {
+    untrusted();
+  }
+})();
+}}}
