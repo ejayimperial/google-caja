@@ -1,0 +1,12 @@
+Places where capabilities might be useful in web applications.
+
+= Capability Use Cases in Web Applications =
+
+Capabilities provide a flexible way to manage authorization -- if done right, they provide users with an intuitive way of granting permissions in such a way that they understand the possible effects of granting authority.
+
+Below are some scenarios where capabilities might be used by web applications.
+
+  * User drags their Gmail contact list onto facebook &mdash; no more asking for passwords to other sites
+  * Dragging photos from Flickr, or an entire album, onto a mail message &mdash; capabilities can describe authority at multiple levels: just this item, this whole group.
+  * Drag a schedule me link from a Calendar App to an airline booking site &mdash; capabilities can grant authority to perform a single-use edit.  Write authority need not imply read authority.
+  * A site includes a rating plugin and gives it authority to modify a dom subtree &mdash; third party code can be run inline in a page, and effectively sandboxed.
