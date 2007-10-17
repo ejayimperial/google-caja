@@ -1,0 +1,29 @@
+Reported by futurama
+
+=Conditional compilation may allow disabling of runtime checks.=
+
+==Effect==
+Unsanitized code can be embedded in comments, and conditional compilation might disable runtime assertions.
+
+
+==Background==
+According to http://msdn2.microsoft.com/en-us/library/121hztk3.aspx
+    Conditional compilation allows the use of new JScript language features without sacrificing compatibility with older versions that do not support the features.
+
+    Conditional compilation is activated by using the @cc_on statement, or using an @if or @set statement. Some typical uses for conditional compilation include using new features in JScript, embedding debugging support into a script, and tracing code execution.
+
+    Always place conditional compilation code in comments, so that hosts (like Netscape Navigator) that do not understand conditional compilation will ignore it. Here is an example.
+
+
+==Assumptions==
+Rewritten source code includes comments.
+
+
+==Versions==
+IE
+
+
+==Example==
+{{{
+//@cc_on alert(document.cookie); @/ //@cc_on alert(document.cookie);
+}}}
