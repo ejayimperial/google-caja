@@ -1,3 +1,4 @@
+#labels Attack-Vector
 Reported by futurama
 
 =Conditional compilation may allow disabling of runtime checks.=
