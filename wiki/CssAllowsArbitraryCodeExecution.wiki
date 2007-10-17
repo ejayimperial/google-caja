@@ -22,7 +22,7 @@ Untrusted code can generate style elements or style attributes or otherwise add 
 
 
 ==Versions==
-IE5, 6.
+IE 5, 6.
 
 
 ==Example==
