@@ -1,0 +1,37 @@
+Reported by Collin Jackson
+
+=Null characters in URL can disguise protocols such as {{{javascript:}}}.=
+
+==Effect==
+Unsanitized code can be embedded in comments, and conditional compilation might disable runtime assertions.
+
+
+==Background==
+RFC 3986 allows the following characters in a URI scheme:
+{{{
+scheme      = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+}}}
+
+
+
+[http://www.mozillazine.org/talkback.html?article=4078] talks about wider exploits due to null bytes %00 in URLs.
+
+
+
+==Assumptions==
+URL html attribute not stripped of null characters, or urls not restricted to absolute urls with a whitelisted protocol.
+
+
+==Versions==
+IE
+
+
+==Example==
+{{{
+<iframe src="java&#65533;script:alert(42)"></iframe>
+}}}
+
+
+
+
+
