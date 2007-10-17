@@ -1,3 +1,4 @@
+#labels Attack-Vector
 =Null characters in URL can disguise protocols such as {{{javascript:}}}.=
 
 ==Effect==
