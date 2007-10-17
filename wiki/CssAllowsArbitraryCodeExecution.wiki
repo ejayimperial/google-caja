@@ -7,17 +7,27 @@ On older browsers, crafted CSS stylesheets can execute unsanitized javascript in
 
 
 ==Background==
-CSS allows a number of exploits.
+CSS includes several mechanisms for changing the surrounding markup and executing expressions.
 
+The {{{content:}}} property allows text to be added around the modified node.
 
+E also has an extension that allows execution of arbitrary javascript.  The {{{expression}}} property is described at [http://msdn2.microsoft.com/en-us/library/ms537634.aspx]
+
+    Using the power of dynamic properties, it is now possible to declare property values not only as constants, but also as formulas.
+    ...
+    For scripting, a dynamic property can be any legal JScript or Microsoft Visual Basic Scripting Edition (VBScript) statement.
 
 ==Assumptions==
 Untrusted code can generate style elements or style attributes or otherwise add arbitrary CSS rules and create DOM elements that trigger those rules.
 
 
 ==Versions==
-Unsure.  Older versions of Firefox had some buffer overflow problems with CSS.
+IE5, 6.
 
 
 ==Example==
-Unknown
+{{{
+<div id="oDiv" style="left:expression(alert("hello"), 0)">
+Example DIV
+</div>
+}}}
