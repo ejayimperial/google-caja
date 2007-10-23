@@ -20,7 +20,7 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * ObjectToSourceLeaksPrivates -- Object.toSource and uneval allow access to private fields
   * FunctionMethodsLeakGlobalScope -- Function.call or Function.apply can leak window with certain this-values.
   * ConditionalCompilationComments -- Conditional compilation may allow disabling of runtime checks.
-  * ScriptInHtml -- Script embedded in HTML can close its script tag and open another possible executing code that appeared to be a string literal
+  * ScriptInHtml -- HTML Tags in Javascript Strings can allow Unsanitized Script Execution
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
   * SetTimeoutArbitraryCodeExecution -- setTimeout & setInterval allow arbitrary code execution
