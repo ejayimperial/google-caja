@@ -7,7 +7,7 @@ Below are some properties that we can assert on output.
 
 == Intentional Newlines ==
 
-Our source code formatter should not output any non-space tokens containing any of the characters listed in [http://en.wikipedia.org/wiki/Newline[
+Our source code formatter should not output any non-space tokens containing any of the characters listed in [http://en.wikipedia.org/wiki/Newline]
   * LF:    Line Feed, U+000A
   * CR:    Carriage Return, U+000D
   * CR+LF: CR followed by LF, U+000D followed by U+000A
@@ -26,4 +26,4 @@ We should strip all comments from the output to avoid lexing inconsistencies.  K
 
 == String Literals should not appear to be markup ==
 
-We should not allow <script> inside a string literal, since if malicious code can trick the rewriter into outputting a </script>, it can open a new script tag whose content starts inside what the browser thinks is a safe string constant.
+We should not allow {{{<script>}}} inside a string literal, since if malicious code can trick the rewriter into outputting a {{{</script>}}}, it can open a new script tag whose content starts inside what the browser thinks is a safe string constant.
