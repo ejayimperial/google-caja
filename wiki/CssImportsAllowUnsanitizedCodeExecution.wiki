@@ -1,0 +1,29 @@
+#labels Attack-Vector
+Reported by Michal Zalewski
+
+= {{{@import}}} can import unsanitized CSS =
+
+==Effect==
+Allows import of arbitrary CSS which can execute arbitrary javascript.
+
+
+==Background==
+In a CSS file {{{<style>}}} tag, an {{{@import}}} declaration can be used to import styles from an external source specified by a URL relative to the URL of the CSS or HTML file containing.the {{{@import}}}.
+
+The {{{data:}}} protocol can be used to specify inline content in some browsers.
+
+
+==Assumptions==
+{{{@import}}} is allowed in style tags or third party CSS files and is not restricted to known safe CSS.
+
+
+==Versions==
+All
+
+
+==Example==
+{{{
+<style>
+@import "data:text/css;charset=UTF-8,p%7Bwidth%3Aexpression%28alert%281%29%29%7D";
+</style>
+}}}
