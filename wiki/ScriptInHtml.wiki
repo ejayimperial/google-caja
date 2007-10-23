@@ -11,11 +11,12 @@ Javascript can be embedded in HTML, or served in separate files.
 In HTML, there is one way
 {{{
 <script>
-// Script proceeds until the string </script is seen.
-// Strictly it is allowed to end when </ is seen, but all browsers support the looser
+// Script proceeds until the string "</script" is seen.
+// Strictly it is allowed to end when "</" is seen, but all browsers support the looser
 // behavior.
 </script>
 }}}
+If the comment markers {<!-- ... -->} are seen around the contents of a script tag, they are ignored.  HTML 4 does not actually treat the content of the comment as a comment since the SCRIPT tag's content is specified as CDATA.
 
 In XHTML, a script tag is not always CDATA like HTML, but may be composed from a series of Text nodes and CDATA sections
 {{{
