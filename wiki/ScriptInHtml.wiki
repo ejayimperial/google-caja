@@ -41,7 +41,7 @@ External entities can be used in XHTML to perform javascript imports:
 
 
 ==Assumptions==
-Rewritten javascript allows any of the operators {{{<}}}, {{{<<}}}, {{{<<<}}}, {{{&}}}, or {{{&&}}} to be followed immediately by an identifier, a slash ({{{/}}}), or an open square bracket ({{{[}}}).
+Rewritten javascript allows any of the operators {{{<}}}, {{{<<}}}, {{{<<<}}}, {{{&}}}, or {{{&&}}} to be followed immediately by an identifier, a slash ({{{/}}}), an open square bracket ({{{[}}}), or a bang {{{!}}}.
 
 Or
 
@@ -73,3 +73,5 @@ var iframe, src;
 src="foo" > "bar";
 }}}
 when embedded in normal HTML.  Note, no tag beginning or end appear inside string literals.
+
+Escaping script enables any number of external entities as described above.
