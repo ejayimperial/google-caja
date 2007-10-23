@@ -24,6 +24,6 @@ We should strip all comments from the output to avoid lexing inconsistencies.  K
   * IE allows conditional compilation comments in HTML and JS.
 
 
-== String Literals should not appear to be markup ==
+== String Literals should not appear to be markup or external entity references ==
 
 We should not allow {{{<script>}}} inside a string literal, since if malicious code can trick the rewriter into outputting a {{{</script>}}}, it can open a new script tag whose content starts inside what the browser thinks is a safe string constant.
