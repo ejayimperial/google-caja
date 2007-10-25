@@ -7,7 +7,7 @@ Untrusted code can steal the arguments passed to any function it can reference w
 
 
 ==Background==
-The arguments passed in the most recent uncompleted call to a function are exposed via it's `arguments` property.  This is not documented in EcmaScript 262
+The arguments passed in the most recent uncompleted call to a function are exposed via its `arguments` property.  This is not documented in EcmaScript 262
 
 
 
@@ -35,4 +35,4 @@ function g() {
 f(0)
 }}}
 
-Note: the above has f call g.  This is not necessary.  If f and g occur concurrently, then g can steal/change f's parameters without being called by it.  Code can run concurrently if one is the handler from an XmlHttpResponse, or can occur if there are two window's event threads -- create a new iframe, and use it's setTimeout.
+Note: the above has f call g.  This is not necessary.  If f and g occur concurrently, then g can steal/change f's parameters without being called by it.  Code can run concurrently if one is the handler from an XmlHttpResponse, or can occur if there are two window's event threads -- create a new iframe, and use its setTimeout.
