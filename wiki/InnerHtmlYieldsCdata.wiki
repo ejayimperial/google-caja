@@ -1,5 +1,5 @@
 #labels Attack-Vector
-=script, style, and other elements' innerHTML cannot be safely inserted into another element's innerHTML=
+=xml, plaintext, and other elements' innerHTML cannot be safely inserted into another element's innerHTML=
 
 ==Effect==
 If an implementation allows injecting of innerHTML from one element into another, the deprecated XMP and LISTING tags' content is treated as CDATA, and so their innerHTML is not escaped as normal.
