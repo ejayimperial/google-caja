@@ -7,7 +7,7 @@ If a rewriter implementation relies on with blocks to mask global references, su
 
 
 ==Background==
-The with construct takes an expression, and any reference R in its body not satisfied by an interior declaration is interpreted as obj[R] if (R in obj).
+The with construct takes an expression, and any reference R in its body not satisfied by an interior declaration is interpreted as {{{obj[R]}} if {{{(R in obj)}}}.
 
 
 
