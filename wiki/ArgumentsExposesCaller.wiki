@@ -9,7 +9,7 @@ An untrusted function can steal a reference to a trusted caller function which i
 [http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Function:call] describes both caller and the __caller__ property of Functions. 
 
 The members of function objects are described in EcnaScript 262 Section 15.3.5.  
-In addition to these, many implementations expose properties "caller", and "__caller__".
+In addition to these, many implementations expose properties "caller", and "_&#95;caller&#95;_".
 
 Many implementations also expose caller as part of the `arguments` Array.
 
@@ -31,12 +31,12 @@ Calls of untrusted functions are not passed through a launderer function which r
     }
   }
 }}}
-This laundering scheme does not work if __caller__ is exposed.  __caller__ was removed from Firefox.
+This laundering scheme does not work if _&#95;caller&#95;_ is exposed.  &#95;_caller&#95;_ was removed from Firefox.
 
 
 
 ==Versions==
-At least on FF and IE.  Only old versions of Firefox expose __caller__
+At least on FF and IE.  Only old versions of Firefox expose _&#95;caller_&#95;
 
 
 
