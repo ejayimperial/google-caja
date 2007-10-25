@@ -43,12 +43,9 @@ At least on FF and IE.  Only old versions of Firefox expose __caller__
 ==Example==
 {{{
 function untrusted() {
-  alert('got function ' + untrusted.caller + ' : ' + arguments.caller);
+  alert('got function ' + untrusted.caller + ' : '
+        + arguments.callee.caller.arguments[0]);
 }
 
-(function () {
-  function trusted() {
-    untrusted();
-  }
-})();
+(function trusted() { untrusted(); })(4);
 }}}
