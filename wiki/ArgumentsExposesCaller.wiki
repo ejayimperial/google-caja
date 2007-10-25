@@ -9,7 +9,7 @@ An untrusted function can steal a reference to a trusted caller function which i
 [http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Function:call] describes both caller and the __caller__ property of Functions. 
 
 The members of function objects are described in EcnaScript 262 Section 15.3.5.  
-In addition to these, many implementations expose properties "caller", and "_&#95;caller&#95;_".
+In addition to these, many implementations expose properties "caller", and {{{__caller__}}}.
 
 Many implementations also expose caller as part of the `arguments` Array.
 
