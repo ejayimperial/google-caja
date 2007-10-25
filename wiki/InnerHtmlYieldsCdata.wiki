@@ -8,11 +8,10 @@ If an implementation allows injecting of innerHTML from one element into another
 ==Background==
 [http://www.freesoft.org/CIE/RFC/1866/37.htm] describes the XMP and LISTING tags' content as %literal.  The HTML spec also defines the STYLE and SCRIPT tags content as %literal.
 
-The full list as defined in HTML3.2 is:
+The full list as defined in [http://www.w3.org/TR/REC-html32 HTML3.2] is:
   * listing
   * plaintext
   * xmp
-according to [http://www.w3.org/TR/REC-html32]
 
 Also problematic are
   * option
