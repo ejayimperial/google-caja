@@ -1,12 +1,26 @@
 #labels Attack-Vector
-=script, style, xmp and listing elements' innerHTML cannot be safely inserted into another element's innerHTML=
+=script, style, and other elements' innerHTML cannot be safely inserted into another element's innerHTML=
 
 ==Effect==
 If an implementation allows injecting of innerHTML from one element into another, the deprecated XMP and LISTING tags' content is treated as CDATA, and so their innerHTML is not escaped as normal.
 
 
 ==Background==
-[http://www.freesoft.org/CIE/RFC/1866/37.htm] describes the XMP and LISTING tags' content as CDATA.  The HTML4 spec also defines the STYLE and SCRIPT tags content as CDATA.
+[http://www.freesoft.org/CIE/RFC/1866/37.htm] describes the XMP and LISTING tags' content as %literal.  The HTML spec also defines the STYLE and SCRIPT tags content as %literal.
+
+The full list as defined in HTML3.2 is:
+  * listing
+  * plaintext
+  * xmp
+according to [http://www.w3.org/TR/REC-html32]
+
+Also problematic are
+  * option
+  * script
+  * style
+  * textarea
+  * title
+which allow no tag content, so many browsers interpret what appears to be tag content as PCDATA.
 
 
 ==Assumptions==
