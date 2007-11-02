@@ -20,6 +20,7 @@ Firefox.
 
 
 ==Examples==
+{{{
 (function () {
   var alert = null;  // boilerplate that masks global alert
 
@@ -28,3 +29,4 @@ Firefox.
   })();
 
 })();
+}}}
