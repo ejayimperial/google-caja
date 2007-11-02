@@ -20,6 +20,9 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * ObjectToSourceLeaksPrivates -- Object.toSource and uneval allow access to private fields
   * FunctionMethodsLeakGlobalScope -- Function.call or Function.apply can leak window with certain this-values.
   * ConditionalCompilationComments -- Conditional compilation may allow disabling of runtime checks.
+  * StringObfuscationIsEasy -- Approaches that rely on detecting code for other languages in string literals is easy to defeat
+  * ParentAllowsAccessToGlobalScope -- the javascript interpreter extension __parent__ provides an implicit reference to outer scopes
+
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
   * ScriptInHtml -- HTML Tags in Javascript Strings can allow Unsanitized Script Execution
@@ -32,3 +35,5 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * CssAllowsArbitraryCodeExecution -- Some CSS properties allows execution of unsanitized javascript?
   * CssImportsAllowUnsanitizedCodeExecution -- {{{@import}}} can import unsanitized CSS which can execute unsanitized javascript
   * NullCharEscapes -- Null characters in URL can disguise protocols such as {{{javascript:}}}
+  * ConfusedHtmlParsers -- Differences in the way HTML parsers parse malformed HTML can hide unsanitized scripts
+  * EventHandlersInheritExtraScope -- The scope that event handlers are executed in may contain extra references
