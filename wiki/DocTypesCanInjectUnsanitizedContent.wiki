@@ -1,0 +1,33 @@
+#labels Attack-Vector
+Reported by Gareth
+
+={{{DOCTYPES}}} allow injection of unsanitized markup=
+
+==Effect==
+Unsanitized markup and unsanitized script execution
+
+
+==Background==
+XML allows [http://www.w3.org/TR/REC-xml/#NT-EntityDecl definition of entities] via {{{<!ENTITY ...>}}} declarations inside a {{{<!DOCTYPE ...>}}} block.
+
+{{{DOCTYPE}}}s commonly appear in HTML pages since they provide the browser with hints about content-type, character encoding, and whether or not to render in quirks or standards-compliance mode.
+
+Other problems with entity definitions are described at XsrfViaXxe.
+
+
+==Versions==
+All XHTML browsers including at least IE6, Firefox, Safari, and Opera.
+
+
+==Example==
+{{{
+<!DOCTYPE html [
+<!ENTITY inject "&#60;script&#62;alert('boo')&#60;/script&#62;">
+]> 
+<html>
+  <head><title/></head>
+  <body>
+    &inject;
+  </body>
+</html>
+}}}
