@@ -36,5 +36,5 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * CssImportsAllowUnsanitizedCodeExecution -- {{{@import}}} can import unsanitized CSS which can execute unsanitized javascript
   * NullCharEscapes -- Null characters in URL can disguise protocols such as {{{javascript:}}}
   * ConfusedHtmlParsers -- Differences in the way HTML parsers parse malformed HTML can hide unsanitized scripts
-  * EventHandlersInheritExtraScope -- The scope that event handlers are executed in may contain extra references
+  * EventHandlersEvalWithDom -- The scope that event handlers are executed in may expose DOM properties as globals
   * DocTypesCanInjectUnsanitizedContent -- DOCTYPEs can define entities which can inject unsanitized script or markup.
