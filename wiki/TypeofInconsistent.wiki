@@ -30,3 +30,4 @@ IE allows for some non-function callables.  On IE 6 and 7,
 {{{
 'object' === (typeof alert)
 }}}
+and similarly for many other builtins: {{{confirm}}}, {{{prompt}}}, {{{setTimeout}}}, {{{setInterval}}}, {{{clearTimeout}}}, {{{clearInterval}}}, and some of the DOM constructors such as {{{Image}}}.
