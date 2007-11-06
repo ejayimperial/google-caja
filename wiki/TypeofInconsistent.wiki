@@ -25,3 +25,8 @@ On IE 6,
 {{{
 'object' === (typeof /./)
 }}}
+
+IE allows for some non-function callables.  On IE 6 and 7,
+{{{
+'object' === (typeof alert)
+}}}
