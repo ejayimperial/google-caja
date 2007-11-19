@@ -14,16 +14,16 @@
 
 package com.google.caja.parser;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.Token;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.Renderable;
 import com.google.caja.util.SyntheticAttributes;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A node in a parse tree.
@@ -91,57 +91,53 @@ public interface ParseTreeNode extends MessagePart, Renderable {
    * @return true iff visiting the root node yielded true.
    */
   boolean acceptBreadthFirst(Visitor v);
-  
+
   /**
-   * Describes the quantifier of a quasiliteral node. 
+   * Describes the quantifier of a quasiliteral node.
    */
   enum QuasiliteralQuantifier {
     SINGLE(""),
     MULTIPLE("*"),
     MULTIPLE_NONEMPTY("+");
-    
+
     private final String suffix;
-    
-    private QuasiliteralQuantifier(String suffix) {
-      this.suffix = suffix;
-    }
-    
-    public String getSuffix() {
-      return suffix;
-    }
+
+    private QuasiliteralQuantifier(String suffix) { this.suffix = suffix; }
+
+    public String getSuffix() { return suffix; }
   }
 
   /**
    * @return whether this node is a quasiliteral.
    */
   boolean isQuasiliteral();
-  
+
   /**
    * If this node is a quasiliteral, returns the quantifier.
-   *  
+   *
    * @return the quantifier, or null if this node is not a quasiliteral.
    */
   QuasiliteralQuantifier getQuasiliteralQuantifier();
-  
+
   /**
    * If this node is a quasiliteral, returns the identifier.
-   *  
+   *
    * @return the identifier, or null if this node is not a quasiliteral.
    */
   String getQuasiliteralIdentifier();
-  
+
   /**
    * Return the common superclass of all nodes that should be matched by this
    * quasiliteral node.
-   * 
+   *
    * @return a class, or null if this node is not a quasiliteral.
    */
   Class<? extends ParseTreeNode> getQuasiMatchedClass();
-  
+
   /**
    * Do the same as the <code>match(...)</code> method, but only at the topmost
    * level of the specimen, i.e., do not recurse into subtrees of the specimen.
-   * 
+   *
    * <p>Note that, if this method returns some QuasiliteralMatch object
    * <code>m</code>, it is guaranteed that
    * <code>m.getMatchRoot() == specimen</code>.
@@ -154,7 +150,7 @@ public interface ParseTreeNode extends MessagePart, Renderable {
    * or null if this pattern did not match at the top level of the specimen.
    */
   Map<String, ParseTreeNode> matchHere(ParseTreeNode specimen);
-  
+
   // Treating this node as a pattern, attempt to substitute nodes from the
   // supplied map into the pattern, and return a newly constructed tree with
   // the substitutions made.
@@ -166,12 +162,12 @@ public interface ParseTreeNode extends MessagePart, Renderable {
   // @return whether the substitution succeeded.
   //
   // TODO(ihab): boolean substitute(Map<String, ParseTreeNode> map);
-  
+
   /**
    * Determines whether this node is shallowly equal to 'specimen', i.e.,
    * whether the contents of 'this' and 'specimen' are equal without considering
    * the state of the children of either one.
-   * 
+   *
    * @param specimen a ParseTreeNode.
    * @return whether 'this' is shallowly equal to 'specimen'.
    */
@@ -179,7 +175,7 @@ public interface ParseTreeNode extends MessagePart, Renderable {
 
   /**
    * Determines whether this node and all its children are equal to 'specimen'.
-   * 
+   *
    * @param specimen a ParseTreeNode.
    * @return whether 'this' is deeply equal to 'specimen'.
    */
