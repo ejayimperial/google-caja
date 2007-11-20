@@ -635,7 +635,7 @@ var ___;
      */
     function canEnumOwn(obj,name) {
         name = String(name);
-        return canEnumPub(obj,name) && hasOwnProp(obj,name);
+        return hasOwnProp(obj,name) && canEnumPub(obj,name);
     }
 
     /**
