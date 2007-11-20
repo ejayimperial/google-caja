@@ -200,7 +200,7 @@ public class ExpressionSanitizerBaja {
     // func(...) { ... } to <namespace>.func = ___.<wrapper>(function(...) { ... })
     private void makeFunction(final ParseTreeNode node, String wrapper) {
       final FunctionConstructor func
-      = (FunctionConstructor) node.children().get(0);
+        = (FunctionConstructor) node.children().get(0);
       final Operation call = call___(wrapper, func);
       final Statement assign = TreeConstruction.assign(
           TreeConstruction.memberAccess(meta.namespaceName,

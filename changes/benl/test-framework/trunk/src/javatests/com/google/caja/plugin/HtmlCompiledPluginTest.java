@@ -258,7 +258,7 @@ public class HtmlCompiledPluginTest extends TestCase {
           // The tests
           new RhinoTestBed.Input(new StringReader(tests), "tests"),
         };
-      RhinoTestBed.runJs(inputs);
+      RhinoTestBed.runJs(null, inputs);
     }
   }
 }

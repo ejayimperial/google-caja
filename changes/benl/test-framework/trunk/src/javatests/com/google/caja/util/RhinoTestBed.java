@@ -41,9 +41,10 @@ public class RhinoTestBed {
 
   /**
    * Runs the javascript from the given inputs in order, and returns the
-   * result.
+   * result. If dumpJsFile is not null, also put all the javascript in that file.
    */
-  public static Object runJs(Input... inputs) throws IOException {
+  public static Object runJs(final String dumpJsFile, Input... inputs)
+  throws IOException {
     Context context = Context.enter();
     try {
       ScriptableObject globalScope = context.initStandardObjects();
@@ -51,19 +52,21 @@ public class RhinoTestBed {
       ScriptableObject.putProperty(globalScope, "stderr", stderr);
       Object result = null;
 
-      String allInputs = "";
-      for (Input input : inputs) {
-        allInputs += readReader(input.input);
+      if (dumpJsFile != null) {
+        String allInputs = "";
+        for (Input input : inputs) {
+          allInputs += readReader(input.input);
+        }
+        writeFile(new File("/tmp/js.all"), allInputs);
+        Input input = new Input(new StringReader(allInputs), "all");
+        result = context.evaluateReader(
+            globalScope, input.input, input.source, 1, null);
+      } else {
+        for (Input input : inputs) {
+          result = context.evaluateReader(
+              globalScope, input.input, input.source, 1, null);
+        }
       }
-      writeFile(new File("/tmp/js.all"), allInputs);
-      Input input = new Input(new StringReader(allInputs), "all");
-      result = context.evaluateReader(
-          globalScope, input.input, input.source, 1, null);
-
-//      for (Input input : inputs) {
-//        result = context.evaluateReader(
-//            globalScope, input.input, input.source, 1, null);
-//      }
       return result;
     } catch (org.mozilla.javascript.JavaScriptException e) {
       junit.framework.TestCase.fail(e.details() + "\n"
