@@ -24,12 +24,12 @@ import java.io.IOException;
  * @author mikesamuel@gmail.com
  */
 public class FormalParam extends Declaration {
-  public FormalParam(String identifier) {
-    super(identifier, null);
+  public FormalParam(String name) {
+    super(name, null);
   }
 
   @Override
   public void render(RenderContext rc) throws IOException {
-    rc.out.append(getIdentifier());
+    rc.out.append(getIdentifier().getValue());
   }
 }

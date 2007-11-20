@@ -611,7 +611,7 @@ public final class Parser extends ParserBase {
             tq.expectToken(Keyword.CATCH);
             tq.expectToken(Punctuation.LPAREN);
             Reference ex = parseReference();
-            Declaration exvar = new Declaration(ex.getIdentifier(), null);
+            Declaration exvar = new Declaration(ex.getIdentifier().getValue(), null);
             exvar.setFilePosition(ex.getFilePosition());
             exvar.setComments(ex.getComments());
             tq.expectToken(Punctuation.RPAREN);
@@ -1331,10 +1331,10 @@ public final class Parser extends ParserBase {
       paramNames.add("arguments");
       paramNames.add("this");
       for (FormalParam p : params) {
-        if (!paramNames.add(p.getIdentifier())) {
+        if (!paramNames.add(p.getIdentifier().getValue())) {
          mq.addMessage(
              MessageType.DUPLICATE_FORMAL_PARAM,
-             MessagePart.Factory.valueOf(p.getIdentifier()),
+             MessagePart.Factory.valueOf(p.getIdentifier().getValue()),
              p.getFilePosition());
         }
       }

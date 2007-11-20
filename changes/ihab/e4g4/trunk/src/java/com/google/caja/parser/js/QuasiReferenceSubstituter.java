@@ -40,7 +40,7 @@ public class QuasiReferenceSubstituter extends QuasiRewriteVisitor {
     return
       node instanceof Reference && 
       node.children().size() == 0 &&
-      isQuasiIdentifier(((Reference)node).getIdentifier());
+      isQuasiIdentifier(((Reference)node).getIdentifier().getValue());
   }
   
   private void buildQuasiReference(
@@ -50,8 +50,8 @@ public class QuasiReferenceSubstituter extends QuasiRewriteVisitor {
     AbstractParseTreeNode<?> ap = (AbstractParseTreeNode<?>)parents.get(0);
     ap.replaceChild(
         new QuasiReference(
-            parseQuasiIdentifier(((Reference)node).getIdentifier()),
-            parseQuasiQuantifier(((Reference)node).getIdentifier())),
+            parseQuasiIdentifier(((Reference)node).getIdentifier().getValue()),
+            parseQuasiQuantifier(((Reference)node).getIdentifier().getValue())),
         node);
   }
 }

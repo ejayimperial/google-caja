@@ -39,7 +39,7 @@ public class QuasiFormalParamSubstituter extends QuasiRewriteVisitor {
   private boolean nodeIsQuasiFormalParam(ParseTreeNode node) {
     return
       node instanceof FormalParam && 
-      isQuasiIdentifier(((FormalParam)node).getIdentifier());
+      isQuasiIdentifier(((FormalParam)node).getIdentifier().getValue());
   }
   
   private void buildQuasiFormalParam(
@@ -49,8 +49,8 @@ public class QuasiFormalParamSubstituter extends QuasiRewriteVisitor {
     AbstractParseTreeNode<?> ap = (AbstractParseTreeNode<?>)parents.get(0);
     ap.replaceChild(
         new QuasiFormalParam(
-            parseQuasiIdentifier(((FormalParam)node).getIdentifier()),
-            parseQuasiQuantifier(((FormalParam)node).getIdentifier())),
+            parseQuasiIdentifier(((FormalParam)node).getIdentifier().getValue()),
+            parseQuasiQuantifier(((FormalParam)node).getIdentifier().getValue())),
         node);
   }
 }

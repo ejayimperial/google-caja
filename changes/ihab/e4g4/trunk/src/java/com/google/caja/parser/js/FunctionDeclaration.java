@@ -25,9 +25,8 @@ import java.io.IOException;
  * @author mikesamuel@gmail.com
  */
 public final class FunctionDeclaration extends Declaration {
-  public FunctionDeclaration(
-      String identifier, FunctionConstructor initializer) {
-    super(identifier, initializer);
+  public FunctionDeclaration(String name, FunctionConstructor initializer) {
+    super(name, initializer);
   }
 
   @Override
@@ -61,7 +60,7 @@ public final class FunctionDeclaration extends Declaration {
   @Override
   public void render(RenderContext rc) throws IOException {
     FunctionConstructor fc = getInitializer();
-    rc.out.append("function ").append(getIdentifier()).append('(');
+    rc.out.append("function ").append(getIdentifier().getValue()).append('(');
     rc.indent += 2;
     boolean seen = false;
     for (FormalParam p : fc.getParams()) {

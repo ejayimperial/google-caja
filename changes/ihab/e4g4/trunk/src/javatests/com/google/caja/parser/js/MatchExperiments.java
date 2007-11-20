@@ -22,13 +22,13 @@ import com.google.caja.reporting.MessageContext;
 /**
  * Simple test harness for experimenting with quasiliteral matches during
  * development. This is not part of an automated test suite.
- * 
+ *
  * @author ihab.awad@gmail.com
  */
 public class MatchExperiments {
   public static void main(String[] argv) throws Exception {
-    run("x = @foo;",
-        "x = 3;");
+    run("function foo(x, y) { x = 3; }",
+        "foo.bar(baz);");
     /*
     run("function @f(@ps*) { @f.Super.call(this, @as*); @bs*; }",
     "function foo(x, y, z) { foo.Super.call(this, p, q, r); x = 3; y = 4; z = 5; }");
@@ -40,9 +40,9 @@ public class MatchExperiments {
     System.out.println(format(patternNode));
     ParseTreeNode specimenNode = MatchTest.parse(specimen);
     System.out.println(format(specimenNode));
-    
+
     Map<String, ParseTreeNode> result = patternNode.matchHere(specimenNode);
-    
+
     if (result != null) {
       System.out.println("Match succeeded");
       System.out.println(format(result));
@@ -50,14 +50,14 @@ public class MatchExperiments {
       System.out.println("Match failed");
     }
   }
-  
+
   private static String format(ParseTreeNode n) throws Exception {
     MessageContext mc = new MessageContext();
     StringBuilder output = new StringBuilder();
     n.format(mc, output);
     return output.toString();
   }
-  
+
   private static String format(Map<String, ParseTreeNode> map) throws Exception {
     String s = "{\n";
     for (String k : map.keySet()) {

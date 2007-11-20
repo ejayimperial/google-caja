@@ -24,11 +24,16 @@ import java.io.IOException;
  * @author mikesamuel@gmail.com
  */
 public class Declaration extends AbstractStatement<Expression> {
-  private Reference reference;
+  private Identifier identifier;
   private Expression initializer;
 
-  public Declaration(String identifier, Expression initializer) {
-    children.add(new Reference(identifier));
+  public Declaration(String name, Expression initializer) {
+    this(new Identifier(name), initializer);
+  }  
+
+  private Declaration(Identifier identifier, Expression initializer) {
+    // children.add(identifier);
+    this.identifier = identifier;
     if (null != initializer) { children.add(initializer); }
     childrenChanged();
   }
@@ -36,20 +41,20 @@ public class Declaration extends AbstractStatement<Expression> {
   @Override
   protected void childrenChanged() {
     super.childrenChanged();
-    this.reference = (Reference)children.get(0);    
-    this.initializer = children.size() < 2 ? null : children.get(1);
+    // this.identifier = (Identifier)children.get(0);
+    this.initializer = children.size() < 1 ? null : children.get(0);
     if (children.size() > 2) {
       throw new IllegalArgumentException(
           "Declaration should only have at most 2 children");
     }
   }
 
-  public String getIdentifier() { return reference.getIdentifier(); }
+  public Identifier getIdentifier() { return this.identifier; }
 
   public Expression getInitializer() { return this.initializer; }
 
   @Override
-  public String getValue() { return reference.getIdentifier(); }
+  public String getValue() { return this.identifier.getValue(); }
 
   public void render(RenderContext rc) throws IOException {
     rc.out.append("var ");
@@ -62,7 +67,7 @@ public class Declaration extends AbstractStatement<Expression> {
    * {@code for (var a = 0, b = 1, ...)}.
    */
   void renderShort(RenderContext rc) throws IOException {
-    rc.out.append(reference.getIdentifier());
+    rc.out.append(identifier.getValue());
     if (null != initializer) {
       rc.out.append(" = ");
       initializer.render(rc);

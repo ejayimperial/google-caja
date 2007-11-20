@@ -24,21 +24,27 @@ import java.io.IOException;
  * @author mikesamuel@gmail.com
  */
 public class Reference extends AbstractExpression<Expression> {
-  private String identifier;
+  private Identifier identifier;
 
-  public Reference(String identifier) {
-    if (null == identifier) {
-      throw new NullPointerException("null identifier");
-    }
-    this.identifier = identifier;
+  public Reference(String name) {
+    this(new Identifier(name));
+  }
+
+  private Reference(Identifier identifier) {
+    children.add(identifier);
     childrenChanged();
   }
 
-  public String getIdentifier() { return this.identifier; }
-  public void setIdentifier(String identifier) { this.identifier = identifier; }
+  @Override
+  public void childrenChanged() {
+    super.childrenChanged();
+    this.identifier = (Identifier)children.get(0);
+  }
+
+  public Identifier getIdentifier() { return this.identifier; }
 
   @Override
-  public Object getValue() { return this.identifier; }
+  public Object getValue() { return this.identifier.getValue(); }
 
   @Override
   public boolean isLeftHandSide() {
@@ -50,7 +56,7 @@ public class Reference extends AbstractExpression<Expression> {
   }
 
   public void render(RenderContext rc) throws IOException {
-    rc.out.append(identifier);
+    rc.out.append(identifier.getValue());
   }
 
   public boolean isSuper() {

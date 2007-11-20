@@ -25,10 +25,10 @@ public final class QuasiFormalParam extends FormalParam {
   private final QuasiliteralQuantifier quasiQuantifier;
   private final String quasiIdentifier;
   
-  public QuasiFormalParam(String identifier, QuasiliteralQuantifier quantifier) {
-    super("@" + identifier + quantifier.getSuffix());
+  public QuasiFormalParam(String name, QuasiliteralQuantifier quantifier) {
+    super("@" + name + quantifier.getSuffix());
     this.quasiQuantifier = quantifier;
-    this.quasiIdentifier = identifier;
+    this.quasiIdentifier = name;
     childrenChanged();
   }
 

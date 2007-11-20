@@ -41,7 +41,7 @@ public class QuasiExpressionStmtPromoter extends QuasiRewriteVisitor {
       node instanceof ExpressionStmt && 
       node.children().size() == 1 &&
       node.children().get(0) instanceof Reference &&
-      isQuasiIdentifier(((Reference)node.children().get(0)).getIdentifier());
+      isQuasiIdentifier(((Reference)node.children().get(0)).getIdentifier().getValue());
   }
   
   private void rewriteLoneQuasiExpressionStmt(
@@ -52,8 +52,8 @@ public class QuasiExpressionStmtPromoter extends QuasiRewriteVisitor {
     Reference ref = (Reference)node.children().get(0);
     ap.replaceChild(
         new QuasiExpressionStmt(
-            parseQuasiIdentifier(ref.getIdentifier()),
-            parseQuasiQuantifier(ref.getIdentifier())),
+            parseQuasiIdentifier(ref.getIdentifier().getValue()),
+            parseQuasiQuantifier(ref.getIdentifier().getValue())),
         node);
   }
 }
