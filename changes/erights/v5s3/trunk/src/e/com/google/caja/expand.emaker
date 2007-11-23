@@ -493,7 +493,7 @@ bind expand(e, scope) {
                                                   def b2s    := expandAll(bs, scope2)
                                                   expandDef(f, js`___.ctor(function($ps*) {
                                                        ${scope2.tempDefs()}*;
-                                                       $f2.Super.call___(this, $a2s*);
+                                                       $f2.Super.call(this, $a2s*);
                                                        $b2s*
                                                      })`)
                                                 }
