@@ -105,9 +105,6 @@ var ___;
         var len = arguments.length;
         for (var i = 1; i < len; i++) {
             var arg = arguments[i];
-            if (typeof arg === 'function') {
-                arg = arg();
-            }
             // implicitly calls .toString() as needed.
             message += arg;
         }
@@ -179,11 +176,15 @@ var ___;
     // Overriding some very basic primordial methods
     ////////////////////////////////////////////////////////////////////////
 
-    Function.prototype.apply_caller___ = function(that,args) {
-        return asSimpleFunc(this).apply(that,args[0]);
+    Function.prototype.apply_caller___ = function(args) {
+        var that = args[0];
+        var realArgs = args[1];
+        return asSimpleFunc(this).apply(that,realArgs[0]);
     };
-    Function.prototype.call_caller___ = function(that,args) {
-        return asSimpleFunc(this).apply(that,args);
+    Function.prototype.call_caller___ = function(args) {
+        var that = args[0];
+        var realArgs = args[1];
+        return asSimpleFunc(this).apply(that,realArgs);
     };
 
     var originalHOP_ = Object.prototype.hasOwnProperty;
@@ -520,7 +521,7 @@ var ___;
             return primFreeze(fun); 
         }
 
-        requireType(meth,'function');
+        requireType(fun,'function');
         require(!fun.___CONSTRUCTOR___,
                 "Constructors can't be called as simple functions: ",fun);
         require(!('___METHOD_OF___' in fun),
