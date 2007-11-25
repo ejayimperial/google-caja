@@ -42,28 +42,25 @@ public class MatchExperiments {
     showTree(
         "var foo = (x + y) * sin(0.374);",
         "var foo = @bar;",
-        "var zee = @bar; var bork = @bar;");
-    /*
-    showTree("@bar*;", "var foo = 3; var bar = 5;");
-    showTree("function @f() { @f.Super.call(this); }", "function foo() { foo.Super.call(this); }");
-    */
+        "var zee = @bar * @bar;");
   }
 
   private static void showTree(
       String specimenText,
       String matchPatternText,
       String substPatternText) throws Exception {
-    System.out.println("---------------------------------------------------------");
-
     ParseTreeNode specimen = parse(specimenText);
-    QuasiNode matchPattern = QuasiBuilder.build(parse(matchPatternText));
-    QuasiNode substPattern = QuasiBuilder.build(parse(substPatternText));
+    QuasiNode matchPattern = QuasiBuilder.parseQuasiNode(matchPatternText);
+    QuasiNode substPattern = QuasiBuilder.parseQuasiNode(substPatternText);
 
     System.out.println("specimen = " + format(specimen));
     System.out.println("matchPattern = " + format(matchPattern));
     System.out.println("substPattern = " + format(substPattern));
 
-    Map<String, ParseTreeNode> matchResult = matchPattern.matchHere(specimen);
+    if (specimen.children().size() != 1)
+      throw new Exception("Top level of specimen does not have exactly 1 child");
+    
+    Map<String, ParseTreeNode> matchResult = matchPattern.matchHere(specimen.children().get(0));
 
     System.out.println(
         (matchResult == null) ?

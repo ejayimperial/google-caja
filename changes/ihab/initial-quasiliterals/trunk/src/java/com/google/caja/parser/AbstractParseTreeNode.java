@@ -24,7 +24,11 @@ import com.google.caja.util.SyntheticAttributes;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * An abstract base class for a mutable parse tree node implementations.

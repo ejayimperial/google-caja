@@ -19,7 +19,7 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Pair;
 
 import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.List;
 
 /**

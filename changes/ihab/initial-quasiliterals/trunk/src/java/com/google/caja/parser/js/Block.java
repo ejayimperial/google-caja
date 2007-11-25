@@ -32,7 +32,7 @@ public final class Block
   public Block(Object value, List<? extends ParseTreeNode> children) {
     this((List<Statement>)children);
   }
-  
+
   public Block(List<? extends Statement> elements) {
     this.children.addAll(elements);
     childrenChanged();

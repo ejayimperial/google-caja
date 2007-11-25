@@ -16,7 +16,6 @@ package com.google.caja.parser.js;
 
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.reporting.RenderContext;
-
 import java.io.IOException;
 import java.util.List;
 
