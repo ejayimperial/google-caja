@@ -18,7 +18,6 @@ import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +30,7 @@ public class SimpleQuasiNode extends QuasiNode {
   private final Class<? extends ParseTreeNode> clazz;
   private final Object value;
 
-  protected SimpleQuasiNode(
+  public SimpleQuasiNode(
       Class<? extends ParseTreeNode> clazz,
       Object value,
       QuasiNode... children) {

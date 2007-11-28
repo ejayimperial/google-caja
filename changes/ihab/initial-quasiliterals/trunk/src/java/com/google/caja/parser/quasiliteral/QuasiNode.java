@@ -16,7 +16,12 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.parser.ParseTreeNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A quasiliteral node that can match trees and substitute into trees of
@@ -27,20 +32,50 @@ import java.util.*;
  * parse trees; decide later on whether this class hierarchy should be generalized,
  * and how.
  *
- * <p>TODO(ihab.awad): Support quasiliterals containing identifier string patterns, e.g.,
- * the pattern {@code @{f}_} matches an identifier in program text that ends with an underscore
- * and binds it to the variable {@code f}.
- *
  * @author ihab.awad@gmail.com (Ihab Awad)
  */
 public abstract class QuasiNode {
   private final List<QuasiNode> children;
+
+  /**
+   * A container for the result of a recursive match on a parse tree.
+   */
+  public interface QuasiMatch {
+    /**
+     * The root node at which the pattern matched.
+     */
+    ParseTreeNode getRoot();
+
+    /**
+     * The map of bindings resulting from the pattern match.
+     */
+    Map<String, ParseTreeNode> getBindings();
+  }
 
   protected QuasiNode(QuasiNode... children) {
     this.children = Collections.unmodifiableList(Arrays.asList(children));
   }
 
   public List<QuasiNode> getChildren() { return children; }
+
+  public List<QuasiMatch> match(ParseTreeNode specimen) {
+    List<QuasiMatch> results = new ArrayList<QuasiMatch>();
+    match(specimen, results);
+    return results;
+  }
+
+  private void match(final ParseTreeNode specimen, List<QuasiMatch> results) {
+    final Map<String, ParseTreeNode> bindings = matchHere(specimen);
+    if (bindings != null) {
+      results.add(new QuasiMatch() {
+        public ParseTreeNode getRoot() { return specimen; }
+        public Map<String, ParseTreeNode> getBindings() { return bindings; }
+        public String toString() { return specimen.toString() + ": " + bindings.toString(); }
+      });
+    }
+    for (ParseTreeNode child : specimen.children())
+      match(child, results);
+  }
 
   public Map<String, ParseTreeNode> matchHere(ParseTreeNode specimen) {
     List<ParseTreeNode> specimens = new ArrayList<ParseTreeNode>();

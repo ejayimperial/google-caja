@@ -90,5 +90,18 @@ public interface ParseTreeNode extends MessagePart, Renderable, Cloneable {
    */
   boolean acceptBreadthFirst(Visitor v);
 
+  /**
+   * Create a deep clone of this {@code ParseTreeNode}.
+   *
+   * @return a deep clone of the node tree rooted at this {@code ParseTreeNode}.
+   */
   ParseTreeNode clone();
+
+  /**
+   * Perform a deep equality test on a pair of {@code ParseTreeNode}s.
+   *
+   * @param n another {@code ParseTreeNode}.
+   * @return whether the trees rooted at {@code this} and {@code n} are equal.
+   */
+  boolean deepEquals(ParseTreeNode n);
 }

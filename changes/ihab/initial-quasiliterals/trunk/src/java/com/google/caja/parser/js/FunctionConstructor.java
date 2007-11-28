@@ -33,19 +33,18 @@ import java.util.Collections;
  */
 public final class FunctionConstructor
     extends AbstractExpression<ParseTreeNode> implements NestedScope {
-  private String identifier;
+  private Identifier identifier;
   private List<FormalParam> params;
   private Block body;
 
   public FunctionConstructor(Object value, List<? extends ParseTreeNode> children) {
-    this((String)value,
-         (List<FormalParam>)children.subList(0, children.size() - 1),
-         (Block)children.get(children.size() - 1));
+    this.children.addAll(children);
+    childrenChanged();
   }
 
   public FunctionConstructor(
       String identifier, List<FormalParam> params, Block body) {
-    this.identifier = identifier;
+    children.add(new Identifier(identifier));
     children.addAll(params);
     children.add(body);
     childrenChanged();
@@ -55,8 +54,9 @@ public final class FunctionConstructor
   protected void childrenChanged() {
     super.childrenChanged();
     int n = children.size();
+    this.identifier = (Identifier)children.get(0);
     this.params = Collections.<FormalParam>unmodifiableList(
-      childrenPart(0, n - 1, FormalParam.class));
+      childrenPart(1, n - 1, FormalParam.class));
     this.body = (Block) children.get(n - 1);
   }
 
@@ -64,15 +64,17 @@ public final class FunctionConstructor
 
   public Block getBody() { return body; }
 
-  public String getName() { return identifier; }
-  public void clearName() { identifier = null; }
+  public String getName() { return identifier.getValue(); }
+  public void clearName() { identifier.setValue(null); }
 
   @Override
-  public Object getValue() { return identifier; }
+  public Object getValue() { return null; }
 
   public void render(RenderContext rc) throws IOException {
     rc.out.append("function ");
-    if (null != identifier) { rc.out.append(identifier); }
+    if (null != identifier) {
+      rc.out.append(identifier.getValue() == null ? "" : identifier.getValue());
+    }
     rc.out.append('(');
     rc.indent += 2;
     boolean seen = false;

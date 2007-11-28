@@ -26,7 +26,6 @@ import java.util.Map;
  * @author ihab.awad@gmail.com (Ihab Awad)
  */
 public class MultipleNonemptyQuasiMatchNode extends MultipleQuasiMatchNode {
-
   public MultipleNonemptyQuasiMatchNode(Class matchedClass, String identifier) {
     super(matchedClass, identifier);
   }

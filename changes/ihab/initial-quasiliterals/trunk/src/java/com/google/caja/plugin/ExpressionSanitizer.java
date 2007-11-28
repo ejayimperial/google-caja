@@ -324,7 +324,7 @@ final class ExpressionSanitizer {
         Expression object = lhsOp.children().get(0);
         Expression field = lhsOp.children().get(1);
         if (field instanceof Reference &&
-            field.getValue().equals(fieldName)) {
+            ((Reference)field).getIdentifierName().equals(fieldName)) {
           ParseTreeNode parentNode = op.getParent();
           if (parentNode instanceof MutableParseTreeNode) {
             MutableParseTreeNode mutableParentNode =

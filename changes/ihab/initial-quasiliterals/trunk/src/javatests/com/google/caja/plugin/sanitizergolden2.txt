@@ -1,45 +1,46 @@
 Block
-  FunctionDeclaration : foo
+  FunctionDeclaration
     Identifier : foo
-    FunctionConstructor : foo
-      FormalParam : a
+    FunctionConstructor
+      Identifier : foo
+      FormalParam
         Identifier : a
-      FormalParam : b
+      FormalParam
         Identifier : b
       Block ; synthetic=true
         ExpressionStmt ; synthetic=true
           Operation : FUNCTION_CALL ; synthetic=true
-            Reference : plugin_require___ ; synthetic=true
+            Reference ; synthetic=true
               Identifier : plugin_require___
             Operation : STRICTLY_NOT_EQUAL ; synthetic=true
-              Reference : this ; synthetic=true
+              Reference ; synthetic=true
                 Identifier : this
-              Reference : window ; synthetic=true
+              Reference ; synthetic=true
                 Identifier : window
         Conditional
           Operation : LOGICAL_AND
             Operation : GREATER_THAN
-              Reference : a
+              Reference
                 Identifier : a
               IntegerLiteral : 0
             Operation : GREATER_THAN
-              Reference : b
+              Reference
                 Identifier : b
               IntegerLiteral : 0
           Block
             ReturnStmt
               Operation : FUNCTION_CALL
                 Operation : MEMBER_ACCESS ; synthetic=true
-                  Reference : foo
+                  Reference
                     Identifier : foo
-                  Reference : call ; synthetic=true
+                  Reference ; synthetic=true
                     Identifier : call
-                Reference : this ; synthetic=true
+                Reference ; synthetic=true
                   Identifier : this
-                Reference : b
+                Reference
                   Identifier : b
                 Operation : SUBTRACTION
-                  Reference : a
+                  Reference
                     Identifier : a
                   IntegerLiteral : 1
         TryStmt
@@ -47,49 +48,49 @@ Block
             ExpressionStmt
               Operation : FUNCTION_CALL
                 Operation : MEMBER_ACCESS ; synthetic=true
-                  Reference : bar
+                  Reference
                     Identifier : bar
-                  Reference : call ; synthetic=true
+                  Reference ; synthetic=true
                     Identifier : call
-                Reference : this ; synthetic=true
+                Reference ; synthetic=true
                   Identifier : this
           CatchStmt
-            Declaration : safe_ex___ ; synthetic=true
+            Declaration ; synthetic=true
               Identifier : safe_ex___
             Block
-              Declaration : e ; synthetic=true
+              Declaration ; synthetic=true
                 Identifier : e
                 Operation : ADDITION ; synthetic=true
                   StringLiteral : '' ; synthetic=true
-                  Reference : safe_ex___ ; synthetic=true
+                  Reference ; synthetic=true
                     Identifier : safe_ex___
               ExpressionStmt
                 Operation : FUNCTION_CALL
                   Operation : MEMBER_ACCESS ; synthetic=true
-                    Reference : alert
+                    Reference
                       Identifier : alert
-                    Reference : call ; synthetic=true
+                    Reference ; synthetic=true
                       Identifier : call
-                  Reference : this ; synthetic=true
+                  Reference ; synthetic=true
                     Identifier : this
-                  Reference : e
+                  Reference
                     Identifier : e
-  Declaration : a
+  Declaration
     Identifier : a
     Operation : FUNCTION_CALL ; synthetic=true
-      Reference : plugin_get___ ; synthetic=true
+      Reference ; synthetic=true
         Identifier : plugin_get___
-      Reference : bar
+      Reference
         Identifier : bar
-      Reference : baz
+      Reference
         Identifier : baz
   ExpressionStmt
     Operation : FUNCTION_CALL
       Operation : MEMBER_ACCESS ; synthetic=true
-        Reference : eval
+        Reference
           Identifier : eval
-        Reference : call ; synthetic=true
+        Reference ; synthetic=true
           Identifier : call
-      Reference : this ; synthetic=true
+      Reference ; synthetic=true
         Identifier : this
       StringLiteral : 'badness()'

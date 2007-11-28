@@ -16,6 +16,8 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.parser.ParseTreeNode;
 
+import java.util.Map;
+
 /**
  * Superclass of all quasiliteral "hole" nodes.
  * 
@@ -40,8 +42,17 @@ public abstract class QuasiMatchNode extends QuasiNode {
   }
 
   protected abstract String getQuantifierSuffix();
-  
-  public final String toString() {
+
+  protected static boolean putIfDeepEquals(
+      Map<String, ParseTreeNode> bindings,
+      String key,
+      ParseTreeNode value) {
+    if (bindings.containsKey(key)) return value.deepEquals(bindings.get(key));
+    bindings.put(key, value);
+    return true;
+  }
+
+  public String toString() {
     return
         "(" + (matchedClass == null ? "<any>" : matchedClass.getSimpleName()) + ")" +
         " : @" + getIdentifier() + getQuantifierSuffix();

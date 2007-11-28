@@ -27,7 +27,6 @@ import java.util.Map;
  * @author ihab.awad@gmail.com (Ihab Awad)
  */
 public class MultipleQuasiMatchNode extends QuasiMatchNode {
-
   public MultipleQuasiMatchNode(Class matchedClass, String identifier) {
     super(matchedClass, identifier);
   }
@@ -38,7 +37,7 @@ public class MultipleQuasiMatchNode extends QuasiMatchNode {
     List<ParseTreeNode> matches = new ArrayList<ParseTreeNode>();
     while (specimens.size() > 0 && isCompatibleClass(specimens.get(0)))
       matches.add(specimens.remove(0).clone());
-    return bindings.put(getIdentifier(), new ParseTreeNodeContainer(matches)) == null;
+    return putIfDeepEquals(bindings, getIdentifier(), new ParseTreeNodeContainer(matches));
   }
 
   protected boolean createSubstitutes(

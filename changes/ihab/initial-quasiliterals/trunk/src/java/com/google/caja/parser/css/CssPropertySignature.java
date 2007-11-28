@@ -67,6 +67,11 @@ public abstract class CssPropertySignature implements ParseTreeNode {
     throw new UnsupportedOperationException();
   }
 
+  public boolean deepEquals(ParseTreeNode n) {
+    // TODO(ihab.awad): Implement this
+    throw new UnsupportedOperationException();
+  }
+
   /** A signature that can be repeated zero or more times. */
   public static final class RepeatedSignature extends CssPropertySignature {
     public final int minCount, maxCount;

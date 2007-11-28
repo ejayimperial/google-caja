@@ -37,11 +37,6 @@ public class Rewriter {
   public ParseTreeNode rewrite(ParseTreeNode node) {
     Map<String, ParseTreeNode> bindings = new HashMap<String, ParseTreeNode>();
 
-    // TODO(ihab.awad): The way this works, we *always* rewrite the contents of the bindings.
-    // But some rewrite rules may define "synthetic" nodes which are passed into subst(...)
-    // in the bindings map, but which should not be rewritten. Figure out a clean way to handle
-    // the interleaving of both cases in the rewrite rules.
-
     // TODO(ihab.awad): These are dummy rules; implement the real ones.
 
     if (match(node, bindings, "@foo + @bar")) {

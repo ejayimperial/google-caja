@@ -56,7 +56,7 @@ public class Declaration extends AbstractStatement<Expression> {
   public Expression getInitializer() { return this.initializer; }
 
   @Override
-  public String getValue() { return identifier.getValue(); }
+  public String getValue() { return null; /* return identifier.getValue(); */ }
 
   public void render(RenderContext rc) throws IOException {
     rc.out.append("var ");

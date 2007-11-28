@@ -14,11 +14,21 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.*;
+import com.google.caja.lexer.CharProducer;
+import com.google.caja.lexer.InputSource;
+import com.google.caja.lexer.JsLexer;
+import com.google.caja.lexer.JsTokenQueue;
+import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.js.*;
+import com.google.caja.parser.js.Block;
+import com.google.caja.parser.js.Expression;
+import com.google.caja.parser.js.ExpressionStmt;
+import com.google.caja.parser.js.FormalParam;
+import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.Parser;
+import com.google.caja.parser.js.Reference;
+import com.google.caja.parser.js.Statement;
 import com.google.caja.reporting.DevNullMessageQueue;
-import com.google.caja.reporting.Message;
 
 import java.io.StringReader;
 import java.net.URI;
@@ -63,6 +73,7 @@ public class QuasiBuilder {
       topLevelNode = topLevelNode.children().get(0);
     }
 
+    /*
     // If the top level is now a Reference, "promote" its single Identifier child to the top
     // level to allow the pattern "match this identifier anywhere" to be expressed.
     if (topLevelNode instanceof Reference) {
@@ -72,6 +83,7 @@ public class QuasiBuilder {
         throw new RuntimeException("Panic: Reference has non-Identifier child");
       topLevelNode = topLevelNode.children().get(0);
     }
+    */
 
     return build(topLevelNode);
   }
@@ -80,18 +92,30 @@ public class QuasiBuilder {
     if (n instanceof ExpressionStmt &&
         n.children().size() == 1 &&
         n.children().get(0) instanceof Reference &&
-        ((Reference)n.children().get(0)).getIdentifierName().startsWith("@")) {
+        ((Reference)n.children().get(0)).getIdentifierName().startsWith("@") &&
+        !((Reference)n.children().get(0)).getIdentifierName().endsWith("_")) {
       return buildMatchNode(Statement.class, ((Reference)n.children().get(0)).getIdentifierName());
     }
 
     if (n instanceof Reference &&
-        ((Reference)n).getIdentifierName().startsWith("@")) {
+        ((Reference)n).getIdentifierName().startsWith("@") &&
+        !((Reference)n).getIdentifierName().endsWith("_")) {
       return buildMatchNode(Expression.class, ((Reference)n).getIdentifierName());
     }
 
+    if (n instanceof FormalParam &&
+        ((FormalParam)n).getIdentifierName().startsWith("@")) {
+      return buildMatchNode(FormalParam.class, ((FormalParam)n).getIdentifierName());
+    }
+    
     if (n instanceof Identifier &&
+        ((Identifier)n).getValue() != null &&
         ((Identifier)n).getValue().startsWith("@")) {
-      return buildMatchNode(Identifier.class, ((Identifier)n).getValue());
+      if (((Identifier)n).getValue().endsWith("_")) {
+        return buildTrailingUnderscoreMatchNode(((Identifier)n).getValue());
+      } else {
+        return buildMatchNode(Identifier.class, ((Identifier)n).getValue());
+      }
     }
     
     return buildSimpleNode(n);
@@ -119,6 +143,18 @@ public class QuasiBuilder {
           matchedClass,
           quasiString.substring(1, quasiString.length()));
     }
+  }
+
+  private static QuasiNode buildTrailingUnderscoreMatchNode(String quasiString) {
+    assert(quasiString.startsWith("@"));
+    assert(quasiString.endsWith("_"));
+    quasiString = quasiString.substring(1, quasiString.length());
+    int numberOfUnderscores = 0;
+    while (quasiString.endsWith("_")) {
+      quasiString = quasiString.substring(0, quasiString.length() - 1);
+      numberOfUnderscores++;
+    }
+    return new TrailingUnderscoresMatchNode(quasiString, numberOfUnderscores);
   }
 
   private static QuasiNode[] buildChildrenOf(ParseTreeNode n) {

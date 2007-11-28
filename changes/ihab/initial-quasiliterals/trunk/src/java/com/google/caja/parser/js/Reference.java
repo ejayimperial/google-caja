@@ -50,7 +50,7 @@ public class Reference extends AbstractExpression<Expression> {
   public void setIdentifierName(String identifierName) { this.identifier.setValue(identifierName); }
 
   @Override
-  public Object getValue() { return this.identifier.getValue(); }
+  public Object getValue() { return null; }
 
   @Override
   public boolean isLeftHandSide() {

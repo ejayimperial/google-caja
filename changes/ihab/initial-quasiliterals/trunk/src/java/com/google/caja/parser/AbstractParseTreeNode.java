@@ -374,6 +374,22 @@ public abstract class AbstractParseTreeNode<T extends ParseTreeNode>
     return newNodeInstance(getClass(), getValue(), cloneChildren);
   }
 
+  public boolean deepEquals(ParseTreeNode n) {
+    if (this.getClass() == n.getClass()) {
+      if ((this.getValue() == null && n.getValue() == null) ||
+          (this.getValue() != null && this.getValue().equals(n.getValue()))) {
+        if (this.children().size() == n.children().size()) {
+          for (int i = 0; i < this.children().size(); i++) {
+            if (!this.children().get(i).deepEquals(n.children().get(i)))
+              return false;
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private final class MutationImpl implements MutableParseTreeNode.Mutation {
 
     private List<Change> changes = new ArrayList<Change>();

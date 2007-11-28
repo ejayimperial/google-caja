@@ -35,7 +35,7 @@ public class SingleQuasiMatchNode extends QuasiMatchNode {
     return
         specimens.size() >= 1 &&
         isCompatibleClass(specimens.get(0)) &&
-        bindings.put(getIdentifier(), specimens.remove(0).clone()) == null;
+        putIfDeepEquals(bindings, getIdentifier(), specimens.remove(0).clone());
   }
 
   protected boolean createSubstitutes(
