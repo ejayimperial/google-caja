@@ -14,36 +14,23 @@
 
 package com.google.caja;
 
-import com.google.caja.lexer.CharProducerTest;
-import com.google.caja.lexer.CommentLexerTest;
-import com.google.caja.lexer.CssLexerTest;
-import com.google.caja.lexer.HtmlLexerTest;
-import com.google.caja.lexer.JsLexerTest;
-import com.google.caja.lexer.LookaheadCharProducerTest;
-import com.google.caja.lexer.PunctuationTrieTest;
+import com.google.caja.lexer.*;
 import com.google.caja.parser.ParseTreeNodeTest;
+import com.google.caja.parser.css.Css2Test;
 import com.google.caja.parser.css.CssParserTest;
 import com.google.caja.parser.css.CssTreeTest;
-import com.google.caja.parser.css.Css2Test;
 import com.google.caja.parser.html.DomParserTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
-import com.google.caja.plugin.CompiledPluginTest;
-import com.google.caja.plugin.CssRewriterTest;
-import com.google.caja.plugin.CssValidatorTest;
-import com.google.caja.plugin.ExpressionSanitizerTest;
-import com.google.caja.plugin.GxpCompilerTest;
-import com.google.caja.plugin.GxpValidatorTest;
-import com.google.caja.plugin.HtmlWhitelistTest;
-import com.google.caja.plugin.PluginCompilerTest;
-import com.google.caja.plugin.UrlUtilTest;
+import com.google.caja.plugin.*;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
-
-import java.util.regex.Pattern;
-
+import com.google.caja.quasiliteral.MatchTest;
+import com.google.caja.quasiliteral.QuasiBuilderTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
+import java.util.regex.Pattern;
 
 /**
  * @author mikesamuel@gmail.com
@@ -78,6 +65,8 @@ public class AllTests {
           PunctuationTrieTest.class,
           StringLiteralTest.class,
           UrlUtilTest.class,
+          QuasiBuilderTest.class,
+          MatchTest.class,
         };
     Pattern testFilter = Pattern.compile(System.getProperty("test.filter", ""));
     for (Class<? extends TestCase> testClass : testClasses) {
