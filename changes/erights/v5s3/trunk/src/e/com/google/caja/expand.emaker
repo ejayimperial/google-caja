@@ -190,7 +190,7 @@ def expandAll(exprs, scope) {
  * XXX TODO: Refactor the introduction of temps so we can switch
  * whether to 
  * <ul>
- * <li>simple accumulate them as here,
+ * <li>simply accumulate them as here,
  * <li>accumulate them, but release them soon after they're no longer
  *     needed, or
  * <li>use the <tt>(function(){...})()</tt> trick to create a 

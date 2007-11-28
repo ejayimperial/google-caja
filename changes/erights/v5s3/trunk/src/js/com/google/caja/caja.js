@@ -148,26 +148,30 @@ var ___;
     ////////////////////////////////////////////////////////////////////////
 
     Object.prototype.handleRead___ = function(name) {
-        if (this[name+"_getter___"]) {
-            return this[name+"_getter___"]();
+        var handlerName = name+"_getter___";
+        if (this[handlerName]) {
+            return this[handlerName]();
         }
         return undefined; 
     };
     Object.prototype.handleCall___ = function(name,args) {
-        if (this[name+"_caller___"]) {
-            return this[name+"_caller___"].call(this,args);
+        var handlerName = name+"_handler___";
+        if (this[handlerName]) {
+            return this[handlerName].call(this,args);
         }
         require(false, 'Not callable: (',this,').',name);
     }
     Object.prototype.handleSet___ = function(name,val) {
-        if (this[name+"_setter___"]) {
-            return this[name+"_setter___"](val);
+        var handlerName = name+"_setter___";
+        if (this[handlerName]) {
+            return this[handlerName](val);
         }
         require(false, "can't set: ",name);
     }
     Object.prototype.handleDelete___ = function(name) {
-        if (this[name+"_deleter___"]) {
-            return this[name+"_deleter___"]();
+        var handlerName = name+"_deleter___";
+        if (this[handlerName]) {
+            return this[handlerName]();
         }
         require(false, "can't delete: ",name);
     }
@@ -175,17 +179,6 @@ var ___;
     ////////////////////////////////////////////////////////////////////////
     // Overriding some very basic primordial methods
     ////////////////////////////////////////////////////////////////////////
-
-    Function.prototype.apply_caller___ = function(args) {
-        var that = args[0];
-        var realArgs = args[1];
-        return asSimpleFunc(this).apply(that,realArgs[0]);
-    };
-    Function.prototype.call_caller___ = function(args) {
-        var that = args[0];
-        var realArgs = args[1];
-        return asSimpleFunc(this).apply(that,realArgs);
-    };
 
     var originalHOP_ = Object.prototype.hasOwnProperty;
 
@@ -347,12 +340,10 @@ var ___;
     function copy(obj) {
         require(isJSONContainer(obj), 
                 'caja.copy(obj) applies only to JSON Containers: ', obj);
-        var result = {};
-        for (var k in obj) {
-            if (canReadPub(obj,k) && hasOwnProp(obj,k)) {
-                result[k] = obj[k];
-            }
-        }
+        var result = (obj instanceof Array) ? [] : {};
+        each(obj, simpleFunc(function(k,v) {
+            result[k] = v;
+        }));
         return result;
     }
 
@@ -484,6 +475,8 @@ var ___;
         require(!isMethod(fun),
                 "Methods can't be simple function: ",fun);
         fun.___SIMPLE_FUNC___ = true;
+        fun.apply_canCall___ = true;
+        fun.call_canCall___ = true;
         return fun; // translator freezes fun later
     }
 
@@ -649,6 +642,35 @@ var ___;
     function canEnumOwn(obj,name) {
         name = String(name);
         return hasOwnProp(obj,name) && canEnumPub(obj,name);
+    }
+
+    var STOP = {};
+
+    /**
+     * For each sensible key/value pair in obj, call fn with that
+     * pair.
+     * <p>
+     * If <tt>obj instanceof Array</tt>, then enumerate
+     * indexes. Otherwise, enumerate the canEnumOwn() property names.
+     */
+    function each(obj,fn) {
+        fn = asSimpleFunc(fn);
+        if (obj instanceof Array) {
+            var len = obj.length;
+            for (var i = 0; i < len; i++) {
+                if (fn(i, readPub(obj,i)) === STOP) {
+                    return;
+                }
+            }
+        } else {
+            for (var k in obj) {
+                if (canEnumOwn(obj,k)) {
+                    if (fn(k, readPub(obj,k)) === STOP) {
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -898,16 +920,12 @@ var ___;
         Sub.prototype = new PseudoSuper();
         Sub.prototype.constructor = Sub;
 
-        for (var mname in members) {
-            if (canEnumOwn(members,mname)) {
-                setMember(Sub, mname, readPub(members,mname));
-            }
-        }
-        for (var sname in statics) {
-            if (canEnumOwn(statics,sname)) {
-                setPub(Sub, sname, readPub(statics,sname));
-            }
-        }
+        each(members, simpleFunc(function(mname,member) {
+            setMember(Sub, mname, member);
+        }));
+        each(statics, simpleFunc(function(sname,staticMember) {
+            setPub(Sub, sname, staticMember);
+        }));
 
         // translator freezes Sub and Sub.prototype later.
     }
@@ -935,26 +953,38 @@ var ___;
     }
 
     /**
-     * Add meth as a name_caller___ fault handler.
+     * Add callHandler as a fault handler for call-faults, but with
+     * explicit parameters. 
+     * <p>
+     * Assigns a wrapper method to name_handler___ for unpacking the
+     * arguments. In order for this fault
+     * handler to get control, it's important that no one does an
+     * allowCall(), allowSimpleFunc(), or allowMethod() on
+     * (Constr,name).
      */
     function handleMethod(Constr,name,callHandler) {
-        Constr.prototype[name+"_caller___"] = callHandler;
+        Constr.prototype[name+"_handler___"] = function(args) {
+            callHandler.apply(this,args);
+        };
     }
 
     /**
-     * Replace Constr.prototype[name] with a wrapper that first
-     * verifies that <tt>this</tt> isn't frozen.
+     * Virtually replace Constr.prototype[name] with a fault-handler
+     * wrapper that first verifies that <tt>this</tt> isn't frozen.
      * <p>
      * When a pre-existing Javascript method would mutate its object,
      * we need to provide a fault handler instead to prevent such
-     * mutation from violating Caja semantics.
+     * mutation from violating Caja semantics. In order for this fault
+     * handler to get control, it's important that no one does an
+     * allowCall(), allowSimpleFunc(), or allowMethod() on the
+     * original method. 
      */
     function allowMutator(Constr,name) {
         var original = Constr.prototype[name];
-        handleMethod(Constr,name, function(args) {
+        Constr.prototype[name+"_handler___"] = function(args) {
             require(!isFrozen(this), "Can't .",name,' a frozen object');
             return original.apply(this,args);
-        });
+        };
     }
 
     /**
@@ -1003,20 +1033,25 @@ var ___;
         'toString','toLocaleString','valueOf','isPrototypeOf','freeze_'
     ]);
     allowRead(Object.prototype,'length');
-    handleMethod(Object,'hasOwnProperty', function(args) {
-        var name = String(args[0]);
+    handleMethod(Object,'hasOwnProperty', function(name) {
+        var name = String(name);
         return canReadPub(this,name) && hasOwnProp(this,name);
     });
-
     var pie_ = Object.prototype.propertyIsEnumerable;
-    handleMethod(Object,'propertyIsEnumerable', function(args) {
-        var name = String(args[0]);
+    handleMethod(Object,'propertyIsEnumerable', function(name) {
+        var name = String(name);
         return canReadPub(this,name) && pie_.call(this,name);
     });
 
 
     ctor(Function,Object,'Function'); // seems dangerous, but doesn't add risk
     allowRead(Function.prototype,'prototype');
+    handleMethod(Function,'apply', function(that,realArgs) {
+        return asSimpleFunc(this).apply(that,realArgs[0]);
+    });
+    handleMethod(Function,'call', function(that,realArgs) {
+        return asSimpleFunc(this).apply(that,realArgs);
+    });
 
 
     ctor(Array,Object,'Array');
@@ -1035,25 +1070,19 @@ var ___;
         'localeCompare','slice','substring',
         'toLowerCase','toLocaleLowerCase','toUpperCase','toLocaleUpperCase'
     ]);
-    handleMethod(String,'match', function(args) {
-        var regexp = args[0];
+    handleMethod(String,'match', function(regexp) {
         requireMatchable(regexp);
         return this.match(regexp);
     });
-    handleMethod(String,'replace', function(args) {
-        var searchValue = args[0];
-        var replaceValue = args[1];
+    handleMethod(String,'replace', function(searchValue,replaceValue) {
         requireMatchable(searchValue);
         return this.replace(searchValue,replaceValue);
     });
-    handleMethod(String,'search', function(args) {
-        var regexp = args[0];
+    handleMethod(String,'search', function(regexp) {
         requireMatchable(regexp);
         return this.search(regexp);
     });
-    handleMethod(String,'split', function(args) {
-        var separator = args[0];
-        var limit = args[1];
+    handleMethod(String,'split', function(separator,limit) {
         requireMatchable(separator);
         return this.split(separator,limit);
     });
@@ -1200,7 +1229,7 @@ var ___;
         // Accessing properties
         canReadPub: canReadPub,       readPub: readPub,
         canEnumPub: canEnumPub,
-        canEnumOwn: canEnumOwn,
+        canEnumOwn: canEnumOwn,       each: each,
         canCallPub: canCallPub,       callPub: callPub,
         canSetPub: canSetPub,         setPub: setPub,
         canDeletePub: canDeletePub,   deletePub: deletePub,
@@ -1245,19 +1274,16 @@ var ___;
         URIError: URIError
     };
 
-    for (var k in sharedOuters) {
-        if (canEnumOwn(sharedOuters,k)) {
-            var v = sharedOuters[k];
-            switch (typeof v) {
-            case 'object':
-                if (v !== null) { primFreeze(v); }
-                break;
-            case 'function':
-                primFreeze(v);
-                break;
-            }
+    each(sharedOuters, simpleFunc(function(k,v) {
+        switch (typeof v) {
+        case 'object':
+            if (v !== null) { primFreeze(v); }
+            break;
+        case 'function':
+            primFreeze(v);
+            break;
         }
-    }
+    }));
     primFreeze(sharedOuters);
 
     ___ = {
@@ -1313,13 +1339,11 @@ var ___;
         loadModule: loadModule
     };
 
-    for (var k in caja) {
-        if (canEnumOwn(caja,k)) {
-            require(!(k in ___),
-                    'internal: initialization conflict: ' + k);
-            ___[k] = caja[k];
-        }
-    }
+    each(caja, simpleFunc(function(k,v) {
+        require(!(k in ___),
+                'internal: initialization conflict: ' + k);
+        ___[k] = v;
+    }));
 
     setNewModuleHandler(makeNormalNewModuleHandler());
 
