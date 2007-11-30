@@ -27,8 +27,6 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.RhinoTestBed;
 import com.google.caja.util.RhinoTestBed.Input;
 import junit.framework.AssertionFailedError;
-import junit.framework.TestCase;
-import org.mozilla.javascript.JavaScriptException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,8 +35,13 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.JavaScriptException;
+
+import junit.framework.TestCase;
 
 /**
  * End-to-end tests that compiles a plugin to javascript and runs the
