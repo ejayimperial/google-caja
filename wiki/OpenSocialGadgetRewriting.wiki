@@ -1,0 +1,19 @@
+#summary OpenSocial gadget rewriting
+
+= Introduction =
+
+This describes how Caja will rewrite OpenSocial gadgets.
+
+<font color="blue">This is some font blue</font>
+
+<span style="font-weight: bold">This should be in boldface</span>
+
+
+
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
