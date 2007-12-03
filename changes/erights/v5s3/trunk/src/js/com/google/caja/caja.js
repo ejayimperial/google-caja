@@ -180,6 +180,40 @@ var ___;
     // Overriding some very basic primordial methods
     ////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Returns true only if we can call
+     * Object.prototype.hasOwnProperty on this object without
+     * exploding. 
+     * <p>
+     * On Firefox, it seems that calling hasOwnProperty on an
+     * HTMLDivElement sometimes causes an
+     * "Illegal operation on WrappedNative prototype object".
+     * <p>
+     * XXX SECURITY BUG STOPGAP
+     */
+    function canOwnProperty(obj) {
+        // Each of the following represents a different temporary
+        // empirical experiment until we understand the actual
+        // problem. Turn on one at a time.
+
+        // If the bug is fixed, or you want to see the bug manifest.
+        // This case works fine on Safari 3.
+        //
+        // return true;
+
+        // When we can assume a browser environment, so that we can
+        // assume that there is a global HTMLDivElement.
+        //
+        return !(obj instanceof HTMLDivElement);
+
+        // This code will "work" even when Caja is used in a
+        // non-browser environment. However, this represents a
+        // security hole, in that a Caja object could also override
+        // toString() to return '[object HTMLDivElement]'.
+        //
+        // return obj.toString() !== '[object HTMLDivElement]'
+    }
+
     var originalHOP_ = Object.prototype.hasOwnProperty;
 
     /**
@@ -187,7 +221,21 @@ var ___;
      * <tt>obj.hasOwnProperty(prop)</tt> would normally mean in an
      * unmodified Javascript system.
      */
-    function hasOwnProp(obj,name) { return originalHOP_.call(obj,name); }
+    function hasOwnProp(obj,name) { 
+        var t = typeof obj;
+        if (t !== 'object' && t !== 'function') { 
+            return false; 
+        }
+        if (canOwnProperty(obj)) {
+            // Fails in Firefox for some DOM objects intermittently!
+            // For these, canOwnProperty must say false.
+            return originalHOP_.call(obj,name); 
+        } else {
+            // Protects against 
+            // "Illegal operation on WrappedNative prototype object"
+            return false;
+        }
+    }
 
     ////////////////////////////////////////////////////////////////////////
     // walking prototype chain, checking JSON containers
@@ -266,8 +314,17 @@ var ___;
      * The status of being frozen is not inherited. If A inherits from
      * B (i.e., if A's prototype is B), then (we hope) B must be
      * frozen regardless, but A may or may not be frozen.
+     * <p>
+     * If typeof <tt>obj</tt> is neither 'object' nor 'function', then
+     * it's currently considered frozen.
      */
-    function isFrozen(obj) { return hasOwnProp(obj,'___FROZEN___'); }
+    function isFrozen(obj) { 
+        var t = typeof obj;
+        if (t !== 'object' && t !== 'function') { 
+            return true; 
+        }
+        return hasOwnProp(obj,'___FROZEN___'); 
+    }
 
     /**
      * Mark obj as frozen so that Caja code cannot directly assign to its
@@ -463,7 +520,7 @@ var ___;
                 "constructors can't be methods: ",meth);
         require(!isSimpleFunc(Constr),
                 "Simple functions can't be methods: ",meth);
-        meth.___METHOD_OF___ = asCtor(Constr);
+        meth.___METHOD_OF___ = asCtorOnly(Constr);
         return primFreeze(meth);
     }
 
@@ -480,10 +537,10 @@ var ___;
         return fun; // translator freezes fun later
     }
 
-    /** Only constructors and simple functions can be called as constructors */
-    function asCtor(Constr) {
+    /** This "Only" form doesn't freeze */
+    function asCtorOnly(Constr) {
         if (isCtor(Constr) || isSimpleFunc(Constr)) { 
-            return primFreeze(Constr); 
+            return Constr; 
         }
 
         requireType(Constr,'function');
@@ -491,6 +548,11 @@ var ___;
                 "Methods can't be called as constructors: ",Constr);
         require(false, 
                 "Untamed functions can't be called as constructors: ",Constr);
+    }
+
+    /** Only constructors and simple functions can be called as constructors */
+    function asCtor(Constr) {
+        return primFreeze(asCtorOnly(Constr)); 
     }
 
     /** Only methods and simple functions can be called as methods */
@@ -534,18 +596,18 @@ var ___;
         name = String(name);
         require(!endsWith(name,'__'),
                 'Reserved name: ',name);
-        var proto = readPub(asCtor(Constr), 'prototype');
-        // Notice that we allow prototype members to end in a single "_".
+        var proto = readPub(asCtorOnly(Constr), 'prototype');
+        // We allow prototype members to end in a single "_".
         require(canSetProp(proto,name), 'not settable: ',name);
         if (member.___METHOD_OF___ === Constr) {
-            allowCall(prop,name); // grant
+            allowCall(proto,name); // grant
         } else if (isSimpleFunc(member)) {
-            allowCall(prop,name); // grant
-            allowSet(prop,name);  // grant
+            allowCall(proto,name); // grant
+            allowSet(proto,name);  // grant
         } else {
-            allowSet(prop,name);  // grant
+            allowSet(proto,name);  // grant
         }
-        prop[name] = member;
+        proto[name] = member;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -606,6 +668,22 @@ var ___;
     function readPub(obj,name) {
         name = String(name);
         return canReadPub(obj,name) ? obj[name] : obj.handleRead___(name);
+    }
+
+    /**
+     * Can "innocent" code enumerate the named property on this object?
+     * <p>
+     * "Innocent" code is code which we assume to be ignorant of Caja,
+     * not to be actively hostile, but which may be buggy (and
+     * therefore accidentally harmful or exploitable). This
+     * corresponds to legacy code, such as libraries, that we decide
+     * to run untranslated, perhaps hidden or tamed, but which needs
+     * to co-exist smoothly with the Caja runtime.
+     */
+    function canInnocentEnum(obj,name) {
+        name = String(name);
+        if (endsWith(name,'__')) { return false; }
+        return true;
     }
 
     /** 
@@ -1215,7 +1293,7 @@ var ___;
     // Exports
     ////////////////////////////////////////////////////////////////////////
 
-    caja = primFreeze({
+    caja = {
         require: require,
         requireType: requireType,
         requireNat: requireNat,
@@ -1236,7 +1314,7 @@ var ___;
 
         // Other
         def: def,
-    });
+    };
 
     sharedOuters = {
         caja: caja,
@@ -1305,13 +1383,15 @@ var ___;
         isCtor: isCtor,
         isMethod: isMethod,
         isSimpleFunc: isSimpleFunc,
-        ctor: ctor,                   asCtor: asCtor,
+        ctor: ctor,                   asCtorOnly: asCtorOnly,
+                                      asCtor: asCtor,
         method: method,               asMethod: asMethod,
         simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
         setMember: setMember,
 
         // Accessing properties
         canReadProp: canReadProp,     readProp: readProp,
+        canInnocentEnum: canInnocentEnum,
         canEnumProp: canEnumProp,
         canCallProp: canCallProp,     callProp: callProp,
         canSetProp: canSetProp,       setProp: setProp,
@@ -1342,8 +1422,13 @@ var ___;
     each(caja, simpleFunc(function(k,v) {
         require(!(k in ___),
                 'internal: initialization conflict: ' + k);
+        if (typeof v === 'function') {
+            simpleFunc(v);
+            allowCall(caja,k);
+        }
         ___[k] = v;
     }));
+    primFreeze(caja);
 
     setNewModuleHandler(makeNormalNewModuleHandler());
 
