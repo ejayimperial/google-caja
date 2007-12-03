@@ -54,7 +54,7 @@ public interface UriCallback {
    * @param mimeType the MIME type that is expected to be retrieved from the URI,
    * such as {@code text/plain} or {@code image/*}. The rewritten URI may refer
    * to a server that only passes through data of the expected MIME type, in order
-   * to shut of certain classes of attacks.
+   * to shut off certain classes of attacks.
    * @return a rewritten form of the URI.
    * @exception UriCallbackException if the URI could (or should) not be rewritten.
    */

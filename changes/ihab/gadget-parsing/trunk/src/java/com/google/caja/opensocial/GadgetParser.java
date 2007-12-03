@@ -14,6 +14,18 @@
 
 package com.google.caja.opensocial;
 
+import com.google.caja.util.AppendableWriter;
+import com.google.caja.util.ReadableReader;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -23,18 +35,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
-import org.w3c.dom.Attr;
-import org.w3c.dom.CDATASection;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import com.google.caja.util.AppendableWriter;
-import com.google.caja.util.ReadableReader;
 
 /**
  * Safe XML parser for gadget specifications. Rejects invalid markup.
@@ -173,12 +173,23 @@ public class GadgetParser {
   }
 
   private DocumentBuilder newDocumentBuilder() throws GadgetRewriteException {
-    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder;
+
     try {
-      return f.newDocumentBuilder();
+      builder = factory.newDocumentBuilder();
     } catch (ParserConfigurationException e) {
       throw new GadgetRewriteException(e);
     }
+
+    builder.setEntityResolver(new EntityResolver() {
+      public InputSource resolveEntity(String publicId, String systemId)
+          throws SAXException, IOException {
+        throw new IOException("Entity resolution not supported");
+      }
+    });
+
+    return builder;
   }
 
   private void check(boolean condition, String msg) throws GadgetRewriteException {

@@ -35,7 +35,7 @@ public class DefaultGadgetRewriter implements GadgetRewriter {
       throws UriCallbackException, GadgetRewriteException, IOException {
     rewrite(
         gadgetUri,
-        new InputStreamReader(uriCallback.retrieve(gadgetUri, "text/javascript")),
+        new InputStreamReader(uriCallback.retrieve(gadgetUri, "text/xml")),
         uriCallback, 
         output);
   }
