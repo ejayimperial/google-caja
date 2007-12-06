@@ -6,8 +6,32 @@
 
 // This module is written in the Caja subset of Javascript. It should
 // work whether run translated or untranslated. Either way, it depends
-// on caja.js and JSON.js (the Caja-friendly safe JSON library), but
-// not on anything else. 
+// on caja.js and JSON.js (the Caja-friendly safe JSON library). It
+// also depends on a global "xmlHttp" object as would be defined by the
+// following untranslated JavaScript code:
+// <pre>
+//        var xmlHttp;
+//        if (window.XMLHttpRequest) {
+//            xmlHttp = new XMLHttpRequest();
+//        } else {
+//            xmlHttp = new ActiveXObject('MSXML2.XMLHTTP.3.0');
+//        }
+// </pre>
+// given that the following entry points are enabled:
+//   canRead(readyState), 
+//   canRead(status),
+//   canRead(responseText),
+//   canRead(statusText),
+//   canSet(onreadystatechange),
+//   canCall(open), 
+//   canCall(send), 
+//   canCall(setRequestHeader),
+//   canCall(getResponseHeader)
+// Of these entry points, it is not yet known which are actually safe
+// to enable.
+//
+// It also depends on a global "setTimeout" function, which only needs
+// to take a function and 0 (zero) as its arguments.
 
 var Q = function() {
     function enqueue(task) { setTimeout(task, 0); }
@@ -183,9 +207,9 @@ var Q = function() {
                 } else {
                     target += urlref.substring(iFragment + 1);
                 }
-                origin.send(new Message('GET', target, null, function(http) {
+                origin.send(new Message('GET', target, null, function(xhr) {
                     var base = target.substring(0, target.indexOf('?'));
-                    ref(deserialize(base, http)).when(fulfill, reject);
+                    ref(deserialize(base, xhr)).when(fulfill, reject);
                 }));
             }
         },
@@ -194,14 +218,14 @@ var Q = function() {
             var target = request(proxy['@'], noun);
             var pQ = new Tail();
             var r = new Head(pQ);
-            origin.send(new Message('GET', target, null, function(http) {
-                if (404 === http.status && -1 !== proxy['@'].indexOf('?src=')) {
+            origin.send(new Message('GET', target, null, function(xhr) {
+                if (404 === xhr.status && -1 !== proxy['@'].indexOf('?src=')) {
                     proxy.when(function(value) {
                         r.resolve(ref(value).get(noun));
                     }, function(reason) { r.reject(reason); });
                 } else {
                     var base = target.substring(0, target.indexOf('?'));
-                    r.fulfill(deserialize(base, http));
+                    r.fulfill(deserialize(base, xhr));
                 }
             }));
             return pQ;
@@ -211,14 +235,14 @@ var Q = function() {
             var target = request(proxy['@'], verb);
             var pQ = new Tail();
             var r = new Head(pQ);
-            origin.send(new Message('POST', target, argv, function(http) {
-                if (404 === http.status && -1 !== proxy['@'].indexOf('?src=')) {
+            origin.send(new Message('POST', target, argv, function(xhr) {
+                if (404 === xhr.status && -1 !== proxy['@'].indexOf('?src=')) {
                     proxy.when(function(value) {
                         r.resolve(ref(value).post(verb, argv));
                     }, function(reason) { r.reject(reason); });
                 } else {
                     var base = target.substring(0, target.indexOf('?'));
-                    r.fulfill(deserialize(base, http));
+                    r.fulfill(deserialize(base, xhr));
                 }
             }));
             return pQ;
@@ -232,32 +256,27 @@ var Q = function() {
         this.receive = receive;
     }
     function makeHost() {
-        var http;
-        if (window.XMLHttpRequest) {
-            http = new XMLHttpRequest();
-        } else {
-            http = new ActiveXObject('MSXML2.XMLHTTP.3.0');
-        }
         var active = false;
         var pending = [ /* Message */ ];
         var output = function() {
             var m = pending[0];
-            http.open(m.method, m.URL, true);
-            http.onreadystatechange = function() {
-                if (4 !== http.readyState) { return; }
+            xmlHttp.open(m.method, m.URL, true);
+            xmlHttp.onreadystatechange = function() {
+                if (4 !== xmlHttp.readyState) { return; }
                 if (m !== pending.shift()) { throw 'problem'; }
                 if (0 === pending.length) {
                     active = false;
                 } else {
                     enqueue(output);
                 }
-                m.receive(http);
+                m.receive(xmlHttp);
             };
             if (null === m.argv) {
-                http.send(null);
+                xmlHttp.send(null);
             } else {
-                http.setRequestHeader('Content-Type','application/jsonrequest');
-                http.send(JSON.serialize(m.argv));
+                xmlHttp.setRequestHeader('Content-Type',
+                                         'application/jsonrequest');
+                xmlHttp.send(JSON.serialize(m.argv));
             }
         };
 
@@ -290,10 +309,10 @@ var Q = function() {
         }
         return base + url;
     }
-    function deserialize(base, http) {
-        if (200 === http.status || 201 === http.status ||
-            202 === http.status || 203 === http.status) {
-            return http.responseText.parseJSON(function(key, value) {
+    function deserialize(base, xhr) {
+        if (200 === xhr.status || 201 === xhr.status ||
+            202 === xhr.status || 203 === xhr.status) {
+            return xhr.responseText.parseJSON(function(key, value) {
                 if (null === value) { return value; }
                 if ('object' !== typeof value) { return value; }
                 if (value.hasOwnProperty('@')) {
@@ -310,18 +329,18 @@ var Q = function() {
                 return value;
             })[0];
         }
-        if (204 === http.status || 205 === http.status) {
+        if (204 === xhr.status || 205 === xhr.status) {
             return null;
         }
-        if (303 === http.status) {
-            var see = http.getResponseHeader('Location');
+        if (303 === xhr.status) {
+            var see = xhr.getResponseHeader('Location');
             return see ? new Remote(see) : null;
         }
         return new Rejected({
             $: [ 'org.waterken.http.Failure',
                  'org.ref_send.promise.Indeterminate' ],
-            status: http.status,
-            phrase: http.statusText
+            status: xhr.status,
+            phrase: xhr.statusText
         });
     }
 
