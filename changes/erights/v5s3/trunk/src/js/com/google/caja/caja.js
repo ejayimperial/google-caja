@@ -126,6 +126,9 @@ var ___;
      * specimen is returned.
      * <p>
      * If not, throws an informative TypeError
+     * <p>
+     * opt_name, if provided, should be a name or description of the
+     * specimen used only to generate friendlier error messages.
      */
     function requireType(specimen, typename, opt_name) {
         (typeof specimen === typename) ||
@@ -402,7 +405,9 @@ var ___;
     }
 
     /**
-     * Makes a copy of a JSON container.
+     * Makes a mutable copy of a JSON container.
+     * <p>
+     * Even if the original is frozen, the copy will still be mutable.
      */
     function copy(obj) {
         isJSONContainer(obj) ||
@@ -502,6 +507,10 @@ var ___;
      * function hasn't already been classified by any of the others. A
      * function which has not been so classified is an <i>untamed
      * function</i>. 
+     * <p>
+     * opt_name, if provided, should be the name of the constructor
+     * function. Currently, this is used only to generate friendlier
+     * error messages.
      */
     function ctor(constr, opt_Sup, opt_name) {
         requireType(constr, 'function', opt_name);
@@ -524,7 +533,13 @@ var ___;
         return constr;  // translator freezes constructor later
     }
 
-    /** Mark meth as a method of instances of constr. */
+    /** 
+     * Mark meth as a method of instances of constr. 
+     * <p>
+     * opt_name, if provided, should be the message name associated
+     * with the method. Currently, this is used only to generate
+     * friendlier error messages.
+     */
     function method(constr, meth, opt_name) {
         requireType(meth, 'function', opt_name);
         !isCtor(meth) ||
@@ -535,7 +550,13 @@ var ___;
         return primFreeze(meth);
     }
 
-    /** Mark fun as a simple function */
+    /** 
+     * Mark fun as a simple function.
+     * <p>
+     * opt_name, if provided, should be the name of the 
+     * function. Currently, this is used only to generate friendlier
+     * error messages.
+     */
     function simpleFunc(fun, opt_name) {
         requireType(fun, 'function', opt_name);
         !isCtor(fun) ||
