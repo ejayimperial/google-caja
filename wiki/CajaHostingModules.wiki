@@ -73,7 +73,7 @@ Let's dive in!
             // like this,
             //     ___.allowSet(element,'innerHTML')
             // we replace the setter with a sanitizer.  This technique is
-            // called "wapping".
+            // called "wrapping".
 14          element.innerHTML_setter___ = function(html) {
               element.innerHTML = html_sanitize(html);
             };
