@@ -6,7 +6,7 @@ This document is intended for those who want to host Caja modules within pages t
 Let's dive in!
 
 {{{
-0   <html>
+    <html>
       <head>
         <title>My Container</title>
       </head>
@@ -122,7 +122,7 @@ Let's dive in!
     </html>
 }}}
 
-A Caja module container is an HTML document (0).  It must do four things:
+A Caja module container is an HTML document.  It must do four things:
   * Load the caja library before loading any modules. (1)  
   * Define a javascript object to express the security policy for modules. (3)
   * Tell the caja library about the object. (17) (23)
