@@ -91,7 +91,7 @@ Let's dive in!
         </script>
 
 18      <div id="my_shared_module_div">
-           <span id="span1">Hi there!</span>
+           <span id="my_prefix_greeting">Hi there!</span>
         </div>
 
         <!-- Load the rewritten ("cajoled") modules.  
