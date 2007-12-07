@@ -149,7 +149,7 @@ public class ParserTest extends TestCase {
     MessageQueue mq = TestUtil.createTestMessageQueue(mc);
     Statement parseTree = TestUtil.parseTree(getClass(), testFile, mq);
 
-    RenderContext rc = new RenderContext(mc, new StringBuilder(), true);
+    RenderContext rc = new RenderContext(mc, new StringBuilder(), paranoid);
     parseTree.render(rc);
     rc.newLine();
 

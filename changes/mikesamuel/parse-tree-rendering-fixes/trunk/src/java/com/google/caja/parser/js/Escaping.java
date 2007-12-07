@@ -16,9 +16,7 @@ package com.google.caja.parser.js;
 
 import com.google.caja.util.SparseBitSet;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Escaping of strings and regular expressions.
@@ -48,6 +46,9 @@ public class Escaping {
                 asciiOnly ? NO_NON_ASCII : ALLOW_NON_ASCII, out).escape();
   }
 
+  /**
+   * @see #escapeJsString(CharSequence, boolean, boolean, Appendable)
+   */
   public static void escapeJsString(
       CharSequence s, boolean asciiOnly, boolean paranoid, StringBuilder out) {
     try {
@@ -81,6 +82,9 @@ public class Escaping {
         asciiOnly ? NO_NON_ASCII : ALLOW_NON_ASCII, out).escape();
   }
 
+  /**
+   * @see #escapeRegex(CharSequence, boolean, boolean, Appendable)
+   */
   public static void escapeRegex(
       CharSequence s, boolean asciiOnly, boolean paranoid, StringBuilder out) {
     try {
@@ -114,6 +118,9 @@ public class Escaping {
                 asciiOnly ? NO_NON_ASCII : ALLOW_NON_ASCII, out).normalize();
   }
 
+  /**
+   * @see #normalizeRegex(CharSequence, boolean, boolean, Appendable)
+   */
   public static void normalizeRegex(
       CharSequence s, boolean asciiOnly, boolean paranoid, StringBuilder out) {
     try {
@@ -125,60 +132,60 @@ public class Escaping {
   }
 
   // Escape only the characters in string that must be escaped.
-  private static final AsciiEscaper STRING_MINIMAL_ESCAPES = new AsciiEscaper(
-      new AsciiEscape('\0', "\\000"),
-      new AsciiEscape('\b', "\\b"),
-      new AsciiEscape('\r', "\\r"),
-      new AsciiEscape('\n', "\\n"),
-      new AsciiEscape('\\', "\\\\"),
-      new AsciiEscape('\'', "\\'"),
-      new AsciiEscape('\"', "\\\"")
+  private static final EscapeMap STRING_MINIMAL_ESCAPES = new EscapeMap(
+      new Escape('\0', "\\000"),
+      new Escape('\b', "\\b"),
+      new Escape('\r', "\\r"),
+      new Escape('\n', "\\n"),
+      new Escape('\\', "\\\\"),
+      new Escape('\'', "\\'"),
+      new Escape('\"', "\\\"")
       );
   // Escape enough characters in a string to make sure it can be safely embedded
   // in the body of an XML and HTML document.
-  private static final AsciiEscaper STRING_PARANOID_ESCAPES = new AsciiEscaper(
-      new AsciiEscape('\b', "\\b"),
-      new AsciiEscape('\t', "\\t"),
-      new AsciiEscape('\n', "\\n"),
-      new AsciiEscape('\13', "\\v"),
-      new AsciiEscape('\f', "\\f"),
-      new AsciiEscape('\r', "\\r"),
-      new AsciiEscape('\\', "\\\\"),
-      new AsciiEscape('\'', "\\'"),
-      new AsciiEscape('\"', "\\\""),
-      new AsciiEscape('<', "\\074"),
-      new AsciiEscape('>', "\\076")
+  private static final EscapeMap STRING_PARANOID_ESCAPES = new EscapeMap(
+      new Escape('\b', "\\b"),
+      new Escape('\t', "\\t"),
+      new Escape('\n', "\\n"),
+      new Escape('\13', "\\v"),
+      new Escape('\f', "\\f"),
+      new Escape('\r', "\\r"),
+      new Escape('\\', "\\\\"),
+      new Escape('\'', "\\'"),
+      new Escape('\"', "\\\""),
+      new Escape('<', "\\074"),
+      new Escape('>', "\\076")
       ).plus(octalEscapes('\0', '\u001f'));
   // Escape minimal characters in a regular expression that guarantee it will
   // parse properly, without escaping regular expression specials.
-  private static final AsciiEscaper REGEX_MINIMAL_ESCAPES = new AsciiEscaper(
-      new AsciiEscape('\0', "\\000"),
-            new AsciiEscape('\b', "\\b"),
-      new AsciiEscape('\r', "\\r"),
-      new AsciiEscape('\n', "\\n"),
-      new AsciiEscape('/', "\\/"));
+  private static final EscapeMap REGEX_MINIMAL_ESCAPES = new EscapeMap(
+      new Escape('\0', "\\000"),
+      new Escape('\b', "\\b"),
+      new Escape('\r', "\\r"),
+      new Escape('\n', "\\n"),
+      new Escape('/', "\\/"));
   // Escape enough characters in a string to make sure it can be safely embedded
   // in XML and HTML without changing the meaning of regular expression
   // specials.
-  private static final AsciiEscaper REGEX_PARANOID_ESCAPES = new AsciiEscaper(
-      new AsciiEscape('\b', "\\b"),
-      new AsciiEscape('\t', "\\t"),
-      new AsciiEscape('\n', "\\n"),
-      new AsciiEscape('\13', "\\v"),
-      new AsciiEscape('\f', "\\f"),
-      new AsciiEscape('\r', "\\r"),
-      new AsciiEscape('/', "\\/"),
-      new AsciiEscape('<', "\\074"),
-      new AsciiEscape('>', "\\076")
+  private static final EscapeMap REGEX_PARANOID_ESCAPES = new EscapeMap(
+      new Escape('\b', "\\b"),
+      new Escape('\t', "\\t"),
+      new Escape('\n', "\\n"),
+      new Escape('\13', "\\v"),
+      new Escape('\f', "\\f"),
+      new Escape('\r', "\\r"),
+      new Escape('/', "\\/"),
+      new Escape('<', "\\074"),
+      new Escape('>', "\\076")
       ).plus(octalEscapes('\0', '\u001f'));
 
   // Escape all characters that have a special meaning in a regular expression
-  private static final AsciiEscaper REGEX_LITERAL_ESCAPES
+  private static final EscapeMap REGEX_LITERAL_ESCAPES
       = REGEX_MINIMAL_ESCAPES.plus(
             simpleEscapes("()[]{}*+?.^$|\\".toCharArray()));
 
   // Escape all characters that have a special meaning in a regular expression
-  private static final AsciiEscaper REGEX_LITERAL_PARANOID_ESCAPES
+  private static final EscapeMap REGEX_LITERAL_PARANOID_ESCAPES
       = REGEX_PARANOID_ESCAPES.plus(
             simpleEscapes("()[]{}*+?.^$|\\".toCharArray()));
 
@@ -200,11 +207,11 @@ public class Escaping {
    */
   private static class Escaper {
     private final CharSequence chars;
-    private final AsciiEscaper ascii;
+    private final EscapeMap ascii;
     private final SparseBitSet nonAscii;
     private final Appendable out;
 
-    Escaper(CharSequence chars, AsciiEscaper ascii, SparseBitSet nonAscii,
+    Escaper(CharSequence chars, EscapeMap ascii, SparseBitSet nonAscii,
             Appendable out) {
       this.chars = chars;
       this.ascii = ascii;
@@ -311,25 +318,30 @@ public class Escaping {
   }
 
   static void unicodeEscape(char ch, Appendable out) throws IOException {
-    out.append("\\u").append("0123456789abcdef".charAt((ch >> 12) & 0xf))
-        .append("0123456789abcdef".charAt((ch >> 8) & 0xf))
-        .append("0123456789abcdef".charAt((ch >> 4) & 0xf))
-        .append("0123456789abcdef".charAt(ch & 0xf));
+    out.append("\\u")
+        .append(hexDigit((ch >> 12) & 0xf))
+        .append(hexDigit((ch >> 8) & 0xf))
+        .append(hexDigit((ch >> 4) & 0xf))
+        .append(hexDigit(ch & 0xf));
+  }
+
+  private static char hexDigit(int a) {
+    return "0123456789abcdef".charAt(a);
   }
 
   /**
    * Maps ascii codepoints (lower 7b) to the escaped form.  This is a lookup
    * table that performs efficiently for latin strings.
    */
-  private static class AsciiEscaper {
+  private static class EscapeMap {
     private final int min;
     private final String[] escapes;
 
-    private AsciiEscaper(AsciiEscape... asciiEscapes) {
+    private EscapeMap(Escape... asciiEscapes) {
       this(null, asciiEscapes);
     }
 
-    private AsciiEscaper(AsciiEscaper base, AsciiEscape... asciiEscapes) {
+    private EscapeMap(EscapeMap base, Escape... asciiEscapes) {
       assert asciiEscapes.length != 0;
       Arrays.sort(asciiEscapes);
       int max;
@@ -346,35 +358,35 @@ public class Escaping {
         System.arraycopy(base.escapes, 0, this.escapes, base.min - this.min,
                          base.escapes.length);
       }
-      for (AsciiEscape esc : asciiEscapes) {
+      for (Escape esc : asciiEscapes) {
         int idx = esc.raw - min;
         if (escapes[idx] == null) { escapes[idx] = esc.escaped; }
       }
     }
 
-    AsciiEscaper plus(AsciiEscape... asciiEscapes) {
-      return new AsciiEscaper(this, asciiEscapes);
+    EscapeMap plus(Escape... asciiEscapes) {
+      return new EscapeMap(this, asciiEscapes);
     }
   }
 
-  private static class AsciiEscape implements Comparable<AsciiEscape> {
+  private static class Escape implements Comparable<Escape> {
     private final byte raw;
     private final String escaped;
 
-    AsciiEscape(char ch, String escaped) {
+    Escape(char ch, String escaped) {
       if ((ch & ~0x7f) != 0) { throw new IllegalArgumentException(); }
       this.raw = (byte) ch;
       this.escaped = escaped;
     }
 
-    public int compareTo(AsciiEscape other) {
+    public int compareTo(Escape other) {
       return this.raw - other.raw;
     }
   }
 
   /** Produces octal escapes for all characters in the given inclusive range. */
-  private static AsciiEscape[] octalEscapes(char min, char max) {
-    AsciiEscape[] out = new AsciiEscape[max - min + 1];
+  private static Escape[] octalEscapes(char min, char max) {
+    Escape[] out = new Escape[max - min + 1];
     for (int i = 0; i < out.length; ++i) {
       StringBuilder sb = new StringBuilder(4);
       char ch = (char) (min + i);
@@ -384,7 +396,7 @@ public class Escaping {
         // StringBuilders do not throw IOException
         throw new RuntimeException(ex);
       }
-      out[i] = new AsciiEscape(ch, sb.toString());
+      out[i] = new Escape(ch, sb.toString());
     }
     return out;
   }
@@ -393,10 +405,10 @@ public class Escaping {
    * For each character, produces an escape that simply prefixes that character
    * with a backslash, so "*" => "\\*"
    */
-  private static AsciiEscape[] simpleEscapes(char[] chars) {
-    AsciiEscape[] out = new AsciiEscape[chars.length];
+  private static Escape[] simpleEscapes(char[] chars) {
+    Escape[] out = new Escape[chars.length];
     for (int i = 0; i < out.length; ++i) {
-      out[i] = new AsciiEscape(chars[i], "\\" + chars[i]);
+      out[i] = new Escape(chars[i], "\\" + chars[i]);
     }
     return out;
   }
