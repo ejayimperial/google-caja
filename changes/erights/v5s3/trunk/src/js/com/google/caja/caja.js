@@ -1353,6 +1353,7 @@ var ___;
     var outers = copy(sharedOuters);
     return freeze({
       getOuters: simpleFunc(function() { return outers; }),
+      setOuters: simpleFunc(function(newOuters) { outers = newOuters; }),
       handle: simpleFunc(function(newModule) {
         newModule(outers);
       })
