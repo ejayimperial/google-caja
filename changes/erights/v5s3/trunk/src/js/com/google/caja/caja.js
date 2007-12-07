@@ -134,13 +134,13 @@ var ___;
    *     test || fail(varargs...)
    * </pre>
    */
-  function require(test, varargs) {
+  function enforce(test, varargs) {
     return test || fail.apply({}, 
                               Array.prototype.slice.call(arguments, 1));
   }
   
   /**
-   * Requires <tt>typeof specimen === typename</tt>, in which case
+   * Enforces <tt>typeof specimen === typename</tt>, in which case
    * specimen is returned.
    * <p>
    * If not, throws an informative TypeError
@@ -148,7 +148,7 @@ var ___;
    * opt_name, if provided, should be a name or description of the
    * specimen used only to generate friendlier error messages.
    */
-  function requireType(specimen, typename, opt_name) {
+  function enforceType(specimen, typename, opt_name) {
     (typeof specimen === typename) ||
       fail('expected ', typename, ' instead of ', typeof specimen,
            ': ', (opt_name || specimen));
@@ -156,14 +156,14 @@ var ___;
   }
   
   /**
-   * Requires specimen to be a non-negative integer within the range
+   * Enforces that specimen is a non-negative integer within the range
    * of exactly representable consecutive integers, in which case
    * specimen is returned.
    * <p>
    * "Nat" is short for "Natural number".
    */
-  function requireNat(specimen) {
-    requireType(specimen, 'number');
+  function enforceNat(specimen) {
+    enforceType(specimen, 'number');
     (Math.floor(specimen) === specimen) ||
       fail('Must be integral: ', specimen);
     (specimen >= 0) ||
@@ -279,8 +279,8 @@ var ___;
    * Does str end with suffix? 
    */
   function endsWith(str, suffix) {
-    requireType(str, 'string');
-    requireType(suffix, 'string');
+    enforceType(str, 'string');
+    enforceType(suffix, 'string');
     var strLen = str.length;
     var sufLen = suffix.length;
     return strLen >= sufLen && 
@@ -374,26 +374,35 @@ var ___;
     if (isFrozen(obj)) { return obj; }
     var typ = typeof obj;
     if (typ !== 'object' && typ !== 'function') { return obj; }
+
+    // badFlags are names of properties we need to turn off.
+    // We accumulate these first, so that we're not in the midst of a
+    // for/in loop on obj while we're deleting properties from obj.
+    var badFlags = []; 
     for (var k in obj) {
       if (endsWith(k, '_canSet___') || endsWith(k, '_canDelete___')) { 
         if (obj[k]) {
-          if (hasOwnProp(obj, k)) {
-            (delete obj[k]) ||
-              fail('internal: failed delete: ', obj, '.', k);
-          }
-          if (obj[k]) {
-            // At the time of this writing, this case
-            // should never be able to happen, since
-            // prototypes are always frozen before use,
-            // and frozen objects cannot have these flags
-            // set on them. We code it this way to allow
-            // for a future optimization, where the
-            // prototype can record as canSet those
-            // properties that appear in instances that
-            // inherit from this prototype. 
-            obj[k] = false;
-          }
+          badFlags.push(k);
         }
+      }
+    }
+    for (var i = 0; i < badFlags.length; i++) {
+      var flag = badFlags[i];
+      if (hasOwnProp(obj, flag)) {
+        (delete obj[flag]) ||
+          fail('internal: failed delete: ', obj, '.', flag);
+      }
+      if (obj[flag]) {
+        // At the time of this writing, this case
+        // should never be able to happen, since
+        // prototypes are always frozen before use,
+        // and frozen objects cannot have these flags
+        // set on them. We code it this way to allow
+        // for a future optimization, where the
+        // prototype can record as canSet those
+        // properties that appear in instances that
+        // inherit from this prototype. 
+        obj[flag] = false;
       }
     }
     obj.___FROZEN___ = true;
@@ -534,7 +543,7 @@ var ___;
    * error messages.
    */
   function ctor(constr, opt_Sup, opt_name) {
-    requireType(constr, 'function', opt_name);
+    enforceType(constr, 'function', opt_name);
     !isMethod(constr) ||
       fail("Methods can't be constructors: ", constr);
     !isSimpleFunc(constr) ||
@@ -562,7 +571,7 @@ var ___;
    * friendlier error messages.
    */
   function method(constr, meth, opt_name) {
-    requireType(meth, 'function', opt_name);
+    enforceType(meth, 'function', opt_name);
     !isCtor(meth) ||
       fail("constructors can't be methods: ", meth);
     !isSimpleFunc(constr) ||
@@ -579,7 +588,7 @@ var ___;
    * error messages.
    */
   function simpleFunc(fun, opt_name) {
-    requireType(fun, 'function', opt_name);
+    enforceType(fun, 'function', opt_name);
     !isCtor(fun) ||
       fail("Constructors can't be simple functions: ", fun);
     !isMethod(fun) ||
@@ -596,7 +605,7 @@ var ___;
       return constr; 
     }
     
-    requireType(constr, 'function');
+    enforceType(constr, 'function');
     !isMethod(constr) ||
       fail("Methods can't be called as constructors: ", constr);
     fail("Untamed functions can't be called as constructors: ", constr);
@@ -615,7 +624,7 @@ var ___;
       return meth; 
     }
     
-    requireType(meth, 'function');
+    enforceType(meth, 'function');
     !isCtor(meth) ||
       fail("Constructors can't be called as methods: ", meth);
     fail("Untamed functions can't be called as methods: ", meth);
@@ -627,7 +636,7 @@ var ___;
       return primFreeze(fun); 
     }
     
-    requireType(fun, 'function');
+    enforceType(fun, 'function');
     !isCtor(fun) ||
       fail("Constructors can't be called as simple functions: ", fun);
     !isMethod(fun) ||
@@ -1142,7 +1151,7 @@ var ___;
    * If it is a RegExp, then this match might mutate it, which must
    * not be allowed if regexp is frozen.
    */
-  function requireMatchable(regexp) {
+  function enforceMatchable(regexp) {
     if (regexp instanceof RegExp) {
       !isFrozen(regexp) ||
         fail("Can't match with frozen RegExp: ", regexp);
@@ -1222,19 +1231,19 @@ var ___;
     'toLowerCase', 'toLocaleLowerCase', 'toUpperCase', 'toLocaleUpperCase'
   ]);
   handleMethod(String, 'match', function(regexp) {
-    requireMatchable(regexp);
+    enforceMatchable(regexp);
     return this.match(regexp);
   });
   handleMethod(String, 'replace', function(searchValue, replaceValue) {
-    requireMatchable(searchValue);
+    enforceMatchable(searchValue);
     return this.replace(searchValue, replaceValue);
   });
   handleMethod(String, 'search', function(regexp) {
-    requireMatchable(regexp);
+    enforceMatchable(regexp);
     return this.search(regexp);
   });
   handleMethod(String, 'split', function(separator, limit) {
-    requireMatchable(separator);
+    enforceMatchable(separator);
     return this.split(separator, limit);
   });
   
@@ -1368,9 +1377,10 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
   
   caja = {
-    require: require,
-    requireType: requireType,
-    requireNat: requireNat,
+    fail: fail,
+    enforce: enforce,
+    enforceType: enforceType,
+    enforceNat: enforceNat,
     
     // walking prototype chain, checking JSON containers
     isJSONContainer: isJSONContainer,
@@ -1481,7 +1491,7 @@ var ___;
     allowMethod: allowMethod,
     handleMethod: handleMethod,
     allowMutator: allowMutator,
-    requireMatchable: requireMatchable,
+    enforceMatchable: enforceMatchable,
     all2: all2,
     
     // Taming decisions
