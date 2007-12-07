@@ -60,8 +60,10 @@ Let's dive in!
           }
 
 9         outers.document.getElementById = function(id) {
+            id = String(id);
+
             // Tame the element before returning it.
-10          var element = document.getElementById(id);
+10          var element = document.getElementById('my_prefix_'+id);
 
             // This stuff is harmless, so we allow it.
 11          ___.allowCall(element, 'hasAttributes');
@@ -155,7 +157,7 @@ Many modules will want to manipulate their DOM tree after they have been loaded.
 
 The function outers.document.write() (8) only allows the use of BR tags, alphanumeric strings, and a bit of punctuation.  This is very strict sanitization.  It's possible to allow far more, but it becomes very complicated to do so safely.
 
-The function outers.document.getElementById() (9) returns a direct reference to the DOM element (10), but the caja runtime will prevent any reads, assignments, or calls to properties of the element at runtime unless we whitelist the actions (11) (12).  Just as with document.write(), allowing a module to assign to the innerHTML property directly is far too much authority, so we want to sanitize first.  Caja provides a way to intercept property assignments through the use of the "*_setter___" properties.  Since we did not explicitly say
+The function outers.document.getElementById() (9) returns a direct reference to the DOM element (10), but being allowed to ask for *any* id is too much authority, so we prefix the id with a namespace identifier.  The caja runtime will prevent any reads, assignments, or calls to properties of the element at runtime unless we whitelist the actions (11) (12).  Just as with document.write(), allowing a module to assign to the innerHTML property directly is far too much authority, so we want to sanitize first.  Caja provides a way to intercept property assignments through the use of the "*_setter___" properties.  Since we did not explicitly say
 {{{
 ___.allowSet(element.innerHTML);
 }}}
