@@ -226,7 +226,7 @@ public class ExpressionSanitizerBaja {
         }
         if (finder.argumentsUsed) {
           final Statement localArgs
-            = new Declaration(ReservedNames.CAJA_ARGUMENTS,
+            = new Declaration(ReservedNames.LOCAL_ARGUMENTS,
                 call___("args", new Reference("arguments")));
           func.getBody().prepend(localArgs);
         }
@@ -248,13 +248,12 @@ public class ExpressionSanitizerBaja {
         if (ref.isThis()) {
           ref.setIdentifier(ReservedNames.LOCAL_THIS);
         } else if (ref.isArguments()) {
-          ref.setIdentifier(ReservedNames.CAJA_ARGUMENTS);
+          ref.setIdentifier(ReservedNames.LOCAL_ARGUMENTS);
         }
       } else if (node instanceof RegexpLiteral) {
         // /regex/ becomes RegExp('regex', '')
         // /regex/modifiers becomes RegExp('regex', 'modifiers')
         final RegexpLiteral regex = (RegexpLiteral) node;
-        String text = regex.getValue().toString();
         final Operation call = new Operation(Operator.FUNCTION_CALL,
             new Reference("RegExp"), string(regex.getMatchText()),
             string(regex.getModifiers()));
@@ -264,8 +263,9 @@ public class ExpressionSanitizerBaja {
         final Operator operator = op.getOperator();
         final Expression lhs = op.children().get(0);
         Expression rhs = null;
-        if (op.children().size() > 1)
+        if (op.children().size() > 1) {
           rhs = op.children().get(1);
+        }
         final ParseTreeNode parent = op.getParent();
         Operator parentOp = null;
         if (parent instanceof Operation)
@@ -305,9 +305,11 @@ public class ExpressionSanitizerBaja {
         } else if (operator == Operator.CONSTRUCTOR) {
           assert parentOp == Operator.FUNCTION_CALL;
           assert rhs == null;
-          // XXX(benl): Why does the class appear as a child of both CONSTRUCTOR and FUNCTION_CALL?
-          final ArrayConstructor args
-            = new ArrayConstructor((List<Expression>)parent.children().subList(1, parent.children().size()));
+          // XXX(benl): Why does the class appear as a child of both CONSTRUCTOR
+          // and FUNCTION_CALL?
+          List<? extends Expression> constructorArgs = ((Operation) parent)
+              .children().subList(1, parent.children().size());
+          final ArrayConstructor args = new ArrayConstructor(constructorArgs);
           replaceCall___(parent, "callNew", lhs, args);
         }
       }
@@ -321,6 +323,4 @@ public class ExpressionSanitizerBaja {
     // nodes. Note that children are processed first!
     node.acceptPostOrder(visitor);
   }
-
-
 }

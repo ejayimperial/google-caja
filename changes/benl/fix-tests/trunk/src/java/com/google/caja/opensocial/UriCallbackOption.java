@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.caja.plugin;
+package com.google.caja.opensocial;
 
 /**
- * Caja reserved names.
- *
- * @author benl@google.com (Ben Laurie)
+ * Determines the way in which a content URI embedded in a gadget specification
+ * should be handled.
  */
-public class ReservedNames {
-  public static final String LOCAL_THIS = "t___";
-  public static final String SUPER = "Super";
-  static final String TEMP = "x___";
-  public static final String ARGUMENTS = "arguments";
-  public static final String LOCAL_ARGUMENTS = "a___";
+public enum UriCallbackOption {
+  /**
+   * The URI should be retrieved and its content embedded inline.
+   */
+  RETRIEVE,
 
-  private ReservedNames() {
-  }
-
+  /**
+   * The URI should be rewritten (e.g., to point to a proxy) and the new URI
+   * embedded in the gadget spec instead.
+   */
+  REWRITE
 }

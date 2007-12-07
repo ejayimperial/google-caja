@@ -12,21 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.caja.plugin;
+package com.google.caja.opensocial;
+
+import java.net.URI;
 
 /**
- * Caja reserved names.
+ * Thrown when a URL cannot or should not be retrieved.
  *
- * @author benl@google.com (Ben Laurie)
+ * @author ihab.awad@gmail.com (Ihab Awad)
  */
-public class ReservedNames {
-  public static final String LOCAL_THIS = "t___";
-  public static final String SUPER = "Super";
-  static final String TEMP = "x___";
-  public static final String ARGUMENTS = "arguments";
-  public static final String LOCAL_ARGUMENTS = "a___";
+public class UriCallbackException extends Exception {
+  private final URI uri;
 
-  private ReservedNames() {
+  public UriCallbackException(URI uri, String message) {
+    super(uri.toString() + " - " + message);
+    this.uri = uri;
   }
 
+  public UriCallbackException(Throwable cause) {
+    super(cause);
+    this.uri = null;
+  }
+
+  public URI getUri() { return uri; }
 }

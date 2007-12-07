@@ -12,21 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.caja.plugin;
+package com.google.caja.opensocial;
 
 /**
- * Caja reserved names.
+ * Thrown when there is a problem in parsing or rewriting a gadget.
  *
- * @author benl@google.com (Ben Laurie)
+ * @author ihab.awad@gmail.com (Ihab Awad)
  */
-public class ReservedNames {
-  public static final String LOCAL_THIS = "t___";
-  public static final String SUPER = "Super";
-  static final String TEMP = "x___";
-  public static final String ARGUMENTS = "arguments";
-  public static final String LOCAL_ARGUMENTS = "a___";
-
-  private ReservedNames() {
+public class GadgetRewriteException extends Exception {
+  public GadgetRewriteException(String message) {
+    super(message);
   }
 
+  public GadgetRewriteException(Throwable cause) {
+    super(cause);
+  }
 }

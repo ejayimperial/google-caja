@@ -60,6 +60,6 @@ public final class Reference extends AbstractExpression<Expression> {
 
   public boolean isArguments() {
     return this.identifier.equals(ReservedNames.ARGUMENTS)
-      || this.identifier.equals(ReservedNames.CAJA_ARGUMENTS);
+      || this.identifier.equals(ReservedNames.LOCAL_ARGUMENTS);
   }
 }

@@ -19,7 +19,8 @@ import com.google.caja.lexer.TokenQueue;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
 import com.google.caja.lexer.FilePosition;
-import com.google.caja.lexer.StringFilePosition;
+import com.google.caja.lexer.TokenType;
+import com.google.caja.lexer.TokenQueue.Mark;
 import com.google.caja.plugin.HtmlPluginCompiler;
 import com.google.caja.plugin.GxpCompiler;
 import com.google.caja.reporting.MessagePart;
@@ -159,12 +160,14 @@ public final class HtmlDomParser {
    * and then route them back through the compiler appropriately before resuming
    * html parsing as normal.
    */
-  private static Token<HtmlTokenType> extractTagContents(String tagName,
-      Token<HtmlTokenType> last, TokenQueue<HtmlTokenType> tokens,
-      HtmlPluginCompiler c)
+  private static Token<HtmlTokenType> extractTagContents(
+      String tagName, Token<HtmlTokenType> last,
+      TokenQueue<HtmlTokenType> tokens, HtmlPluginCompiler c)
       throws ParseException {
     FilePosition posBegin = last.pos;
     FilePosition posEnd = last.pos;
+    Mark start = tokens.mark();
+    Mark end = start;
     while (true) {
       last = tokens.peek();
       if (last.type == HtmlTokenType.TAGBEGIN && isClose(last) &&
@@ -181,15 +184,15 @@ public final class HtmlDomParser {
         tokens.expectToken(">");
         break;
       }
+      end = tokens.mark();
       tokens.advance();
     }
 
     // the TokenQueue skips over some things (e.g. whitespace) so it's important
     // that we go back and extract the tag's contents from the input
     // source itself.
-    StringFilePosition pos = new StringFilePosition(FilePosition
-        .between(posBegin, posEnd));
-    String tagContent = pos.read();
+    FilePosition pos = FilePosition.between(posBegin, posEnd);
+    String tagContent = contentBetween(start, end, tokens);
 
     // Remove HTML comments in the SCRIPT tag that HTML authors use to cloak
     // JavaScript from older browsers.
@@ -197,11 +200,12 @@ public final class HtmlDomParser {
         .replaceFirst("^(\\s*)<!--", "$1 ")
         .replaceFirst("-->(\\s*)", " $1");
 
+    String canonicalTagName = tagName.toLowerCase();
     try {
       ParseTreeNode node = null;
-      if (tagName.equals("script")) {
+      if (canonicalTagName.equals("script")) {
         node = c.parseJsString(tagContent, pos);
-      } else if (tagName.equals("style")) {
+      } else if (canonicalTagName.equals("style")) {
         node = c.parseCssString(tagContent, pos);
       }
       c.addInput(node);
@@ -210,10 +214,34 @@ public final class HtmlDomParser {
           new Message(
               MessageType.PARSE_ERROR,
               pos,
-              MessagePart.Factory.valueOf(
-                  ("<" + tagName + "> tag."))));
+              MessagePart.Factory.valueOf(("<" + tagName + "> tag."))),
+          ex);
     }
     return last;
+  }
+
+  /**
+   * Reconstructs the input text between a range of marks from a token queue.
+   * @param start inclusive
+   * @param end exclusive
+   */
+  private static <T extends TokenType> 
+      String contentBetween(Mark start, Mark end, TokenQueue<T> q)
+      throws ParseException {
+    Mark orig = q.mark();
+    q.rewind(end);
+    int endChar = q.currentPosition().endCharInFile();
+    q.rewind(start);
+    int startChar = q.currentPosition().startCharInFile();
+    
+    StringBuilder sb = new StringBuilder(endChar - startChar);
+    while (q.currentPosition().startCharInFile() < endChar) {
+      Token t = q.pop();
+      sb.append(t.text);
+    }
+    
+    q.rewind(orig);
+    return sb.toString();
   }
 
   private static DomTree parseAttrib(TokenQueue<HtmlTokenType> tokens)
