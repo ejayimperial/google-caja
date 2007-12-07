@@ -785,9 +785,9 @@ var ___;
   /**
    * Inside a <tt>caja.each()</tt>, the body function can terminate
    * early, as if with a conventional <tt>break;</tt>, by doing a
-   * <pre>return caja.STOP;</pre>
+   * <pre>return caja.BREAK;</pre>
    */
-  var STOP = {};
+  var BREAK = {};
   
   /**
    * For each sensible key/value pair in obj, call fn with that
@@ -801,14 +801,14 @@ var ___;
     if (obj instanceof Array) {
       var len = obj.length;
       for (var i = 0; i < len; i++) {
-        if (fn(i, readPub(obj, i)) === STOP) {
+        if (fn(i, readPub(obj, i)) === BREAK) {
           return;
         }
       }
     } else {
       for (var k in obj) {
         if (canEnumOwn(obj, k)) {
-          if (fn(k, readPub(obj, k)) === STOP) {
+          if (fn(k, readPub(obj, k)) === BREAK) {
             return;
           }
         }
@@ -1393,7 +1393,7 @@ var ___;
     canReadPub: canReadPub,       readPub: readPub,
     canEnumPub: canEnumPub,
     canEnumOwn: canEnumOwn,       
-    STOP: STOP,                   each: each,                   
+    BREAK: BREAK,                 each: each,                   
     canCallPub: canCallPub,       callPub: callPub,
     canSetPub: canSetPub,         setPub: setPub,
     canDeletePub: canDeletePub,   deletePub: deletePub,
