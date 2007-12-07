@@ -107,7 +107,8 @@ Let's dive in!
             hex = String(hex);
             var re = /^[A-F0-9]*$/;
             if (hex.match(re)) {
-              var request = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("MSXML2.XMLHTTP.3.0");
+              var request = window.XMLHttpRequest ? new XMLHttpRequest() : 
+                  new ActiveXObject("MSXML2.XMLHTTP.3.0");
               request.open("GET", "http://www.myserver.com/?hex="+hex, true);
               request.send();
             }
