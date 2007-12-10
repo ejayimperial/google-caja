@@ -3,6 +3,8 @@
 
 This document is intended for those who want to host [CajaModule Caja modules] within pages that they serve.  If you simply want to write Caja modules for someone else to host, check out the [CajaCajole Cajole] docs (which don't yet exist, sorry!)
 
+Here's a sample Caja module container; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text.
+
 {{{
     <html>
       <head>
@@ -184,6 +186,8 @@ The function `outers.document.write()` (9) only allows the use of `<BR>` tags, a
 The function `outers.document.getElementById()` (10) returns a direct reference to the DOM element (11), but being allowed to ask for *any* id is too much authority, so we prefix the id with a namespace identifier.  The caja runtime will prevent any reads, assignments, or calls to properties of the element at runtime unless we whitelist the actions (12) (13).  Just as with `document.write()`, allowing a module to assign to the `innerHTML` property directly is far too much authority, so we want to sanitize first.  Caja provides a way to intercept property assignments through the use of the `*_setter___` properties.  Since we did not explicitly say `___.allowSet(element.innerHTML)`, when a module attempts to set it, the runtime check will fail and will call `innerHTML_setter___` instead.
 
 Finally, we whitelist `outers.document.getElementById()` (16) and `outers.document.write()` (17).
+
+At this point, it must be emphasized that taming an existing API is a job for a javascript security expert with a strong background in object capabilities.  Exposing too much will completely break the security.  Don't be tempted to throw in new capabilities without thoroughly understanding the implications.
 
 Now we can tell the Caja runtime about the virtual global scope we've defined (18).  `___.getNewModuleHandler()` gets the handler for new modules; `setOuters(outers)` makes the handler use our virtual global scope for every module that's loaded after this point (at least, until we call `setOuters()` again).
 
