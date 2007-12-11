@@ -1,0 +1,12 @@
+#summary Definition of a Caja Module
+
+= Caja Modules =
+
+A [Caja Caja] module is the output of [CajaCajole Cajole], a javascript function of the form 
+{{{
+   function(___OUTERS___) {
+   }
+}}}
+that (currently--we're reserving this for potential later use) returns undefined.  The code is guaranteed to obey [http://en.wikipedia.org/wiki/Object_capability_model object capabilities] rules.
+
+At the moment, the most common kind of Caja module is one produced from an [http://code.google.com/apis/opensocial/ OpenSocial] gadget spec.
