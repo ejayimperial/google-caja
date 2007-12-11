@@ -22,7 +22,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * @author ihab.awad@gmail.com (Ihab Awad)
@@ -30,15 +30,15 @@ import java.net.URL;
 public class DefaultGadgetRewriterTest extends TestCase {
 
   private static final UrlCallback urlCallback = new UrlCallback() {
-    public UrlCallbackOption getOption(URL url, String mimeType) {
+    public UrlCallbackOption getOption(URI url, String mimeType) {
       return UrlCallbackOption.RETRIEVE;
     }
 
-    public InputStream retrieve(URL url, String mimeType) throws UrlCallbackException {
+    public InputStream retrieve(URI url, String mimeType) throws UrlCallbackException {
       throw new UrlCallbackException(url, "Rewrite unsupported");
     }
 
-    public URL rewrite(URL url, String mimeType) throws UrlCallbackException {
+    public URI rewrite(URI url, String mimeType) throws UrlCallbackException {
       throw new UrlCallbackException(url, "Rewrite unsupported");
     }
   };

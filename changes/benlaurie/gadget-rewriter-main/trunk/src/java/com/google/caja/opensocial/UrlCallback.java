@@ -15,7 +15,7 @@
 package com.google.caja.opensocial;
 
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * A callback that retrieves or rewrites URIs on behalf of a {@link GadgetRewriter}.
@@ -32,7 +32,7 @@ public interface UrlCallback {
    * such as {@code text/plain} or {@code image/*}.
    * @return a {@code UriCallbackOption} indicating how to proceed.
    */
-  UrlCallbackOption getOption(URL url, String mimeType);
+  UrlCallbackOption getOption(URI url, String mimeType);
 
   /**
    * Retrieve the literal content of the specified URI.
@@ -45,7 +45,7 @@ public interface UrlCallback {
    * error case is where the server returns some content not matching the expected MIME type,
    * which could indicate an attempted attack.
    */
-  InputStream retrieve(URL url, String mimeType) throws UrlCallbackException;
+  InputStream retrieve(URI url, String mimeType) throws UrlCallbackException;
 
   /**
    * Rewrites a URL, perhaps to point to a proxy.
@@ -58,5 +58,5 @@ public interface UrlCallback {
    * @return a rewritten form of the URI.
    * @exception UrlCallbackException if the URI could (or should) not be rewritten.
    */
-  URL rewrite(URL url, String mimeType) throws UrlCallbackException;
+  URI rewrite(URI url, String mimeType) throws UrlCallbackException;
 }

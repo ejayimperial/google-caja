@@ -20,7 +20,6 @@ import com.google.caja.plugin.HtmlPluginCompiler;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
 
 /**
  * A default implementation of the Caja/OpenSocial gadget rewriter.
@@ -32,7 +31,7 @@ public class DefaultGadgetRewriter implements GadgetRewriter {
   private static final String CSS_PREFIX = "CSS_PREFIX";
   private static final String ROOT_DIV_ID = "ROOT_DIV_ID";
 
-  public void rewrite(URL gadgetUrl, UrlCallback urlCallback, Appendable output)
+  public void rewrite(URI gadgetUrl, UrlCallback urlCallback, Appendable output)
       throws UrlCallbackException, GadgetRewriteException, IOException {
     rewrite(
         gadgetUrl,
@@ -41,16 +40,16 @@ public class DefaultGadgetRewriter implements GadgetRewriter {
         output);
   }
 
-  public void rewrite(URL baseUrl, Readable gadgetSpec, UrlCallback urlCallback, Appendable output)
-      throws UrlCallbackException, GadgetRewriteException, IOException {
+  public void rewrite(URI baseUrl, Readable gadgetSpec, UrlCallback urlCallback, Appendable output)
+      throws GadgetRewriteException, IOException {
     GadgetParser parser = new GadgetParser();
     GadgetSpec spec = parser.parse(gadgetSpec);
     spec.setContent(rewriteContent(baseUrl, spec.getContent(), urlCallback));
     parser.render(spec, output);
  }
 
-  private String rewriteContent(URL baseUrl, String content, UrlCallback callback)
-      throws UrlCallbackException, GadgetRewriteException, IOException {
+  private String rewriteContent(URI baseUrl, String content, UrlCallback callback)
+      throws GadgetRewriteException {
     HtmlPluginCompiler compiler =
         new HtmlPluginCompiler(content, JAVASCRIPT_PREFIX, CSS_PREFIX, ROOT_DIV_ID, true);
     // TODO(ihab.awad): Resolve embedded <script src="..."> tags (and any other embedded URIs,

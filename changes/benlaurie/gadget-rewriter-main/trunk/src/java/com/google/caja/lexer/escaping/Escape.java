@@ -12,27 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.caja.opensocial;
-
-import java.net.URI;
+package com.google.caja.lexer.escaping;
 
 /**
- * Thrown when a URL cannot or should not be retrieved.
+ * Encapsulates an ascii character and it's escaped form.
  *
- * @author ihab.awad@gmail.com (Ihab Awad)
+ * @author mikesamuel@gmail.com (Mike Samuel)
  */
-public class UrlCallbackException extends Exception {
-  private final URI url;
+final class Escape implements Comparable<Escape> {
+  final byte raw;
+  final String escaped;
 
-  public UrlCallbackException(URI url, String message) {
-    super(url.toString() + " - " + message);
-    this.url = url;
+  Escape(char ch, String escaped) {
+    if ((ch & ~0x7f) != 0) { throw new IllegalArgumentException(); }
+    this.raw = (byte) ch;
+    this.escaped = escaped;
   }
 
-  public UrlCallbackException(Throwable cause) {
-    super(cause);
-    this.url = null;
+  public int compareTo(Escape other) {
+    return this.raw - other.raw;
   }
-
-  public URI getUrl() { return url; }
 }

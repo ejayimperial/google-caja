@@ -16,7 +16,6 @@ package com.google.caja.opensocial;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 
 /**
  * Caja rewriter for OpenSocial gadgets.
@@ -36,14 +35,14 @@ public interface GadgetRewriter {
    * (unless, of course, they are absolute).
    *
    * @param gadgetUrl the URL of a gadget specification.
-   * @param uriCallback a {@link UrlCallback} object for resolving URIs.
+   * @param urlCallback a {@link UrlCallback} object for resolving URIs.
    * @param output an {@code Appendable} to which the rewriter will write the Caja parsed
    * gadget specification, as a literal string of content.
    * @exception UrlCallbackException if the {@code urlCallback} threw an exception.
    * @exception GadgetRewriteException if there was a problem parsing the gadget.
    * @exception IOException if there was an I/O problem.
    */
-  void rewrite(URL gadgetUrl, UrlCallback uriCallback, Appendable output)
+  void rewrite(URI gadgetUrl, UrlCallback urlCallback, Appendable output)
       throws UrlCallbackException, GadgetRewriteException, IOException;
 
   /**
@@ -59,8 +58,8 @@ public interface GadgetRewriter {
    * @exception UrlCallbackException if the {@code urlCallback} threw an exception.
    * @exception GadgetRewriteException if there was a problem parsing the gadget.
    * @exception IOException if there was an I/O problem.
-   * @see #rewrite(URL, UrlCallback, Appendable)
+   * @see #rewrite(URI, UrlCallback, Appendable)
    */
-  void rewrite(URL baseUrl, Readable gadgetSpec, UrlCallback urlCallback, Appendable output)
+  void rewrite(URI baseUrl, Readable gadgetSpec, UrlCallback urlCallback, Appendable output)
       throws UrlCallbackException, GadgetRewriteException, IOException;
 }
