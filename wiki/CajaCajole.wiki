@@ -1,0 +1,5 @@
+#summary Cajole is the name of the executable that translates Caja code into javascript.
+
+= Cajole =
+
+Cajole is the name of the java executable that translates an [http://code.google.com/apis/opensocial/ OpenSocial] gadget spec into a [CajaModule Caja module].
