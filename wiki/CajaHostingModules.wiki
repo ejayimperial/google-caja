@@ -40,8 +40,8 @@ Here's a sample Caja module container; the numbers at the left are footnotes and
           // different modules.
 3         var outers = ___.copy(___.sharedOuters);
 
-          // "Taming" a global object is explicitly whitelisting permitted 
-          // reads, calls, sets, and deletes.
+          // "Taming" a global object is disabling everything except 
+          // explicitly whitelisted reads, calls, sets, and deletes.
 
           // NOTE! Exposing too much can break the system entirely.  Don't 
           // allow anything without consulting an object-capabilities/
@@ -167,7 +167,7 @@ The browser environment comes with several predefined standard global objects, l
 
 The best way to control access is to define it in a module; then the code is guaranteed to follow object capability rules.  When working with legacy code, however, cajoling the code into a module may be difficult.
 
-Legacy code, then, will typically be either _tamed_ or _wrapped_.  _Taming_ an object is whitelisting calls, sets, and reads of the object's properties; a direct reference to the object is provided, but runtime checks are performed before allowing any of these actions.  The direct reference is placed into the virtual global scope of the module, called the `outers`.  Typically, we make a copy of the standard objects (3) and add references to the copy.  Any property of outers can be read, set, or called by module code, but actions that affect properties of other objects need to be explicitly whitelisted.
+Legacy code, then, will typically be either _tamed_ or _wrapped_.  _Taming_ an object is disabling everything except for whitelisted calls, sets, and reads of the object's properties; a direct reference to the object is provided, but runtime checks are performed before allowing any of these actions.  The direct reference is placed into the virtual global scope of the module, called the `outers`.  Typically, we make a copy of the standard objects (3) and add references to the copy.  Any property of outers can be read, set, or called by module code, but actions that affect properties of other objects need to be explicitly whitelisted.
 
 There are two different approaches to controlling the ability to set properties of global objects.  In this example, `constructedGuy` is an object with a single property, name.  We'd like it to be a constant, so we need to tame it.  First, we put a reference to `constructedGuy` into `outers` (4).  Next, we whitelist the ability to read `constructedGuy`'s name.  The call to `allowRead` sets the flag `constructedGuy.name_canRead___` to `true`; any attempt to read `constructedGuy.name` within translated module code checks this flag before continuing.
 
