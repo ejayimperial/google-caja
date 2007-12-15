@@ -1707,9 +1707,6 @@ var ___;
     getKeeper: getKeeper,
     setKeeper: setKeeper,
 
-    // other
-    hasOwnProp: hasOwnProp,
-    
     // walking prototype chain, checking JSON containers
     directConstructor: directConstructor,
     isFrozen: isFrozen,
@@ -1742,6 +1739,7 @@ var ___;
     canDeleteProp: canDeleteProp, deleteProp: deleteProp,
     
     // Other
+    hasOwnProp: hasOwnProp,
     args: args,
     
     // Taming mechanism
