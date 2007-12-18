@@ -728,7 +728,7 @@ public class HtmlPluginCompiler {
   /**
    * sanitizes and namespace any css inputs.
    * @return true if the input css was safe.  False if any destructive
-   *   modifications had to be made to make it safe, or if such modifivations
+   *   modifications had to be made to make it safe, or if such modifications
    *   were needed but could not be made.
    */
   private boolean validateCss() {

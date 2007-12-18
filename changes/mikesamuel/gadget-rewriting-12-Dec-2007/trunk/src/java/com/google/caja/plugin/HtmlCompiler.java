@@ -65,6 +65,17 @@ import java.util.regex.Pattern;
 
 /**
  * Compiles HTML containing CSS and JavaScript to Javascript + safe CSS.
+ * This takes in a DOM, and outputs javascript that will render the DOM.
+ * The content can be rendered by either pushing it onto a buffer as in
+ * {@code tgtChain=['out__', 'push']} or to an emit function such as
+ * {@code tgtChain=['document', 'write']}.
+ *
+ * <p>
+ * TODO(mikesamuel): this shares a lot of code with GxpCompiler and the two
+ * should be merged.
+ * </p>
+ *
+ * @author mikesamuel@gmail.com
  */
 public class HtmlCompiler {
 
@@ -100,8 +111,7 @@ public class HtmlCompiler {
     // Produce callse to ___OUTERS___.emitHtml___(<html>)
     // with inlined calls to functions extracted from script bodies.
     Block body = s(new Block(Collections.<Statement>emptyList()));
-    compileDom(doc, Arrays.asList("___OUTERS___", "emitHtml___"),
-               JsWriter.Esc.HTML, body);
+    compileDom(doc, Arrays.asList("___OUTERS___", "emitHtml___"), body);
     return body;
   }
 
@@ -109,22 +119,31 @@ public class HtmlCompiler {
     return eventHandlers.values();
   }
 
-  private void compileDom(
-      DomTree t, List<String> tgtChain, JsWriter.Esc escaping, Block b)
+  /**
+   * Appends to block, statements that will call the function identified by
+   * tgtChain with snippets of html that comprise t.
+   *
+   * @param t the tree to render
+   * @param tgtChain the function to invoke with html chunks, such as
+   *   {@code ['out__', 'push']} to output
+   *   {@code out.push('<html>', foo, '</html>')}.
+   * @param b the block to which statements are added.
+   */
+  private void compileDom(DomTree t, List<String> tgtChain, Block b)
       throws GxpCompiler.BadContentException {
     if (t instanceof DomTree.Fragment) {
       for (DomTree child : t.children()) {
-        compileDom(child, tgtChain, escaping, b);
+        compileDom(child, tgtChain, b);
       }
       return;
     }
     switch (t.getType()) {
       case TEXT:
         JsWriter.appendText(
-            ((DomTree.Text) t).getValue(), escaping, tgtChain, b);
+            ((DomTree.Text) t).getValue(), JsWriter.Esc.HTML, tgtChain, b);
         break;
       case CDATA:
-        JsWriter.appendText(t.getValue(), escaping, tgtChain, b);
+        JsWriter.appendText(t.getValue(), JsWriter.Esc.HTML, tgtChain, b);
         break;
       case TAGBEGIN:
         DomTree.Tag el = (DomTree.Tag) t;
@@ -147,8 +166,6 @@ public class HtmlCompiler {
         }
 
         assertNotBlacklistedTag(el);
-
-        assert escaping != JsWriter.Esc.NONE;
 
         DomAttributeConstraint constraint =
             DomAttributeConstraint.Factory.forTag(tagName);
@@ -217,7 +234,7 @@ public class HtmlCompiler {
 
           if (tagAllowsContent(tagName)) {
             for (DomTree child : childrenRemaining) {
-              compileDom(child, tgtChain, JsWriter.Esc.HTML, b);
+              compileDom(child, tgtChain, b);
               wroteChildElement = true;
             }
           } else {
@@ -261,16 +278,34 @@ public class HtmlCompiler {
     }
   }
 
+  /**
+   * True if the given name requires a close tag.
+   *   "TABLE" -> true, "BR" -> false.
+   * @param tag a tag name, such as {@code P} for {@code <p>} tags.
+   */
   private static boolean requiresCloseTag(String tag) {
     HTML.Element e = HTML4.lookupElement(tag.toUpperCase());
     return null == e || !e.isEmpty();
   }
 
+  /**
+   * True if the tag can have content.  False for unitary tags like
+   * {@code INPUT} and {@code BR}.
+   * @param tag a tag name, such as {@code P} for {@code <p>} tags.
+   */
   private static boolean tagAllowsContent(String tag) {
     HTML.Element e = HTML4.lookupElement(tag.toUpperCase());
     return null == e || !e.isEmpty();
   }
 
+  /**
+   * Invokes the CSS validator to rewrite style attributes.
+   * @param attrib an attribute with name {@code "style"}.
+   * @param tgtChain the function to invoke with html chunks, such as
+   *   {@code ['out__', 'push']} to output
+   *   {@code out.push('<html>', foo, '</html>')}.
+   * @param b the block to which statements are added.
+   */
   private void compileStyleAttrib(
       DomTree.Attrib attrib, List<String> tgtChain, Block b)
       throws GxpCompiler.BadContentException {
@@ -303,6 +338,9 @@ public class HtmlCompiler {
     JsWriter.appendString("\"", tgtChain, b);
   }
 
+  /**
+   * Parses a style attribute's value as a CSS declaration group.
+   */
   private CssTree.DeclarationGroup parseStyleAttrib(DomTree.Attrib t)
       throws ParseException {
     // parse the attribute value as CSS
@@ -330,6 +368,9 @@ public class HtmlCompiler {
     return decls;
   }
 
+  /**
+   * Strip quotes from an attribute value if there are any.
+   */
   private static String deQuote(String s) {
     int len = s.length();
     if (len < 2) { return s; }
@@ -339,6 +380,10 @@ public class HtmlCompiler {
            : s;
   }
 
+  /**
+   * Parses an {@code onclick} handler's or other handler's attribute value
+   * as a javascript statement.
+   */
   private Block asBlock(DomTree stmt) {
     // parse as a javascript expression.
     String src = deQuote(stmt.getToken().text);
@@ -439,6 +484,7 @@ public class HtmlCompiler {
    * Transformations are performed at compile time.
    */
   private static enum AttributeXform {
+    /** Applied to NMTOKENs such as {@code id} and {@code class} attributes. */
     NMTOKEN {
       @Override
       void apply(AncestorChain<DomTree.Attrib> tChain, HtmlCompiler htmlc,
@@ -478,6 +524,7 @@ public class HtmlCompiler {
         JsWriter.appendString(sb.toString(), tgtChain, out);
       }
     },
+    /** Applied to CSS such as {@code style} attributes. */
     STYLE {
       @Override
       void apply(AncestorChain<DomTree.Attrib> tChain, HtmlCompiler htmlc,
@@ -486,6 +533,7 @@ public class HtmlCompiler {
         throw new AssertionError();
       }
     },
+    /** Applied to javascript such as {@code onclick} attributes. */
     SCRIPT {
       @Override
       void apply(AncestorChain<DomTree.Attrib> tChain, HtmlCompiler htmlc,
@@ -527,6 +575,7 @@ public class HtmlCompiler {
         JsWriter.appendString(sb.toString(), tgtChain, out);
       }
     },
+    /** Applied to URIs such as {@code href} and {@code src} attributes. */
     URI {
       @Override
       void apply(AncestorChain<DomTree.Attrib> tChain, HtmlCompiler htmlc,

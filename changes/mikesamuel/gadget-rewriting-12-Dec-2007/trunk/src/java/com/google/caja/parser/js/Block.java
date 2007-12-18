@@ -43,7 +43,7 @@ public final class Block
     super.childrenChanged();
     for (ParseTreeNode child : children()) {
       if (!(child instanceof Statement)) {
-        throw new ClassCastException("Expected statement not " + child);
+        throw new ClassCastException("Expected statement, not " + child);
       }
     }
   }
