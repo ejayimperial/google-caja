@@ -70,13 +70,11 @@ public class GadgetRewriterMain {
 
   class Callback implements UriCallback {
 
-    @Override
     public UriCallbackOption getOption(ExternalReference extref,
         String mimeType) {
       return UriCallbackOption.RETRIEVE;
     }
 
-    @Override
     public Reader retrieve(final ExternalReference extref,
         final String mimeType)
         throws UriCallbackException {
@@ -90,7 +88,6 @@ public class GadgetRewriterMain {
       return new InputStreamReader(content);
     }
 
-    @Override
     public URI rewrite(ExternalReference extref, String mimeType) {
       // TODO Auto-generated method stub
       return null;
