@@ -75,7 +75,8 @@ public class GxpCompilerTest extends TestCase {
     DomTree.Tag domTree = (DomTree.Tag) DomParser.parseDocument(tq);
     GxpCompiler gxpc = new GxpCompiler(
         mq,
-        new PluginMeta("TestPlugin", "pre", "/testplugin", "rootDiv", false));
+        new PluginMeta(
+            "TestPlugin", "pre", "/testplugin", "rootDiv",PluginMeta.TranslationScheme.AAJA));
     GxpCompiler.TemplateSignature sig = gxpc.compileTemplateSignature(domTree);
     ParseTreeNode compiled = gxpc.compileDocument(sig);
 
@@ -99,7 +100,8 @@ public class GxpCompilerTest extends TestCase {
     DomTree.Tag domTree = (DomTree.Tag) DomParser.parseDocument(tq);
     GxpCompiler gxpc = new GxpCompiler(
         mq,
-        new PluginMeta("TestPlugin", "pre", "/testplugin", "rootDiv", false));
+        new PluginMeta(
+            "TestPlugin", "pre", "/testplugin", "rootDiv", PluginMeta.TranslationScheme.AAJA));
     GxpCompiler.TemplateSignature sig = gxpc.compileTemplateSignature(domTree);
     ParseTreeNode compiled = gxpc.compileDocument(sig);
 
@@ -118,7 +120,7 @@ public class GxpCompilerTest extends TestCase {
       messages.add(Pair.pair(m.getMessageType(), (FilePosition) parts.get(0)));
     }
     assertEquals(
-        "[[EXPECTED_RELATIVE_URL, gxpcompilerinput2.gxp:6+21@84 - 53@116], "
+        "[[DISALLOWED_URI, gxpcompilerinput2.gxp:6+21@84 - 53@116], "
         + "[REWROTE_STYLE, gxpcompilerinput2.gxp:6+8@71 - 54@117], "
         + "[UNSAFE_CSS_PROPERTY, gxpcompilerinput2.gxp:9+9@139 - 16@146], "
         + "[REWROTE_STYLE, gxpcompilerinput2.gxp:9+8@138 - 71@201], "
@@ -141,7 +143,8 @@ public class GxpCompilerTest extends TestCase {
         TestUtil.parseXml(getClass(), "gxpcompilerinput4.gxp", mq));
     GxpCompiler gxpc = new GxpCompiler(
         mq,
-        new PluginMeta("TestPlugin", "pre", "/testplugin", "rootDiv", false));
+        new PluginMeta(
+            "TestPlugin", "pre", "/testplugin", "rootDiv", PluginMeta.TranslationScheme.AAJA));
     GxpCompiler.TemplateSignature sig2 = gxpc.compileTemplateSignature(gxp2),
                                   sig3 = gxpc.compileTemplateSignature(gxp3);
 
@@ -177,7 +180,7 @@ public class GxpCompilerTest extends TestCase {
 
   public void testGxpWithBadUrl() throws Exception {
     assertRejected(
-        PluginMessageType.EXPECTED_RELATIVE_URL,
+        PluginMessageType.DISALLOWED_URI,
         "<gxp:template name=\"Test\">"
         + "<a href=\"http://evil.com/\">hello</a>"
         + "</gxp:template>");
@@ -389,7 +392,7 @@ public class GxpCompilerTest extends TestCase {
       new EchoingMessageQueue(
           new PrintWriter(new OutputStreamWriter(System.out)), mc);
     PluginMeta meta = new PluginMeta("TestPlugin", "pre",
-        "/testplugin", "rootDiv", false);
+        "/testplugin", "rootDiv", PluginMeta.TranslationScheme.AAJA);
 
 
     DomTree.Tag[] doms = new DomTree.Tag[gxps.length];
@@ -444,7 +447,7 @@ public class GxpCompilerTest extends TestCase {
             max = msg.getMessageLevel();
           }
         }
-        if (null == max || MessageLevel.FATAL_ERROR.compareTo(max) > 0) {
+        if (null == max || MessageLevel.ERROR.compareTo(max) > 0) {
           for (ParseTreeNode javascript : javascripts) {
             javascript.formatTree(mc, 0, System.err);
           }
@@ -471,7 +474,7 @@ public class GxpCompilerTest extends TestCase {
       new EchoingMessageQueue(
           new PrintWriter(new OutputStreamWriter(System.out)), mc);
     PluginMeta meta = new PluginMeta("TestPlugin", "pre",
-        "/testplugin", "rootDiv", false);
+        "/testplugin", "rootDiv", PluginMeta.TranslationScheme.AAJA);
 
     DomTree.Tag[] doms = new DomTree.Tag[gxps.length];
     for (int i = 0; i < gxps.length; ++i) {

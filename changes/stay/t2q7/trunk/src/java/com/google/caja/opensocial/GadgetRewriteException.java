@@ -16,16 +16,24 @@ package com.google.caja.opensocial;
 
 /**
  * Thrown when there is a problem in parsing or rewriting a gadget.
- * FIXME(ihab): Why isn't this a Caja exception?
+ * FIXME(msamuel): Why isn't this a Caja exception?
  *
  * @author ihab.awad@gmail.com (Ihab Awad)
  */
 public class GadgetRewriteException extends Exception {
+  public GadgetRewriteException() {
+    this(null, null);
+  }
+
   public GadgetRewriteException(String message) {
-    super(message);
+    this(message, null);
   }
 
   public GadgetRewriteException(Throwable cause) {
-    super(cause);
+    this(null, cause);
+  }
+
+  public GadgetRewriteException(String message, Throwable cause) {
+    super(message, cause);
   }
 }
