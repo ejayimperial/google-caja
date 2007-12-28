@@ -11,7 +11,7 @@ log-to-console.js   receive diagnostic reports. If you use the
                     squarefree shell, you can instead simply do
 		    "___.setLogFunc(print)".
 
-generics-cajita.js  Optional: Virtualls adds consensus extensions
+generics-cajita.js  Optional: Virtually adds consensus extensions
 extensions.js       (like the static generic Array.slice()) to various
                     primordial objects.
 
