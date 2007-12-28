@@ -76,7 +76,7 @@
       if (name in obj) {
         var proto = find(obj, name);
         if (proto === obj) {
-          ___.log('Allowing read of ', obj, '.', name);
+          ___.log('Allowing read of: ', obj, '.', name);
         } else {
           var constr = proto.constructor;
           ___.log('Allowing read of ".', name, '" for: ', constr);
@@ -94,7 +94,7 @@
       if (typeof obj[name] === 'function') {
         var proto = find(obj, name);
         if (proto === obj) {
-          ___.log('Allowing call of ', obj, '.', name, '()');
+          ___.log('Allowing call of: ', obj, '.', name, '()');
         } else {
           var constr = proto.constructor;
           ___.log('Allowing call of ".', name, '()" for: ', constr);
@@ -109,7 +109,7 @@
      * 
      */
     handleSet: function(obj, name, val) {
-      ___.log('Allowing ', obj, '.', name, ' = ...');
+      ___.log('Allowing: ', obj, '.', name, ' = ...');
       ___.allowSet(obj, name);
       obj[name] = val;
       if (obj[name] === val) {
@@ -123,7 +123,7 @@
      */
     handleDelete: function(obj, name) {
       if (___.hasOwnProp(obj, name)) {
-        ___.log('Allowing delete ', obj, '.', name);
+        ___.log('Allowing: delete ', obj, '.', name);
         ___.allowDelete(obj, name);
         if (delete obj[name]) {
           return true;
