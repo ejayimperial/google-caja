@@ -20,19 +20,28 @@
 //   by some other untranslated Javascript code.
 // * "<tt>caja</tt>" providing some common services to the Caja
 //   programmer. 
-
-// In order not to disrupt innocent code (see
-// <tt>canInnocentEnum()</tt> below), the only property names Caja may
-// add to primordial objects are names ending in triple underbar. The
-// actual spelling of all names ending in triple underbar is
-// considered private to the Caja implementation and may change
-// without notice over time.
-
-// Caja virtually adds <tt>Object.prototype.freeze_()</tt>, so that a
-// constructed object can freeze itself, but its clients cannot freeze
-// it. Therefore, Caja instead adds a call-fault handler for
-// <tt>freeze_()</tt> (which, at the time of this writing is currently
-// spelled <tt>Object.prototype.freeze__handler___()</tt>). 
+// <p>
+// <i>Innocent code</i> is code which we assume to be ignorant of
+// Caja, not to be actively hostile, but which may be buggy (and
+// therefore accidentally harmful or exploitable). This corresponds to
+// legacy code, such as libraries, that we decide to run untranslated,
+// perhaps hidden or tamed, but which needs to co-exist smoothly with
+// the Caja runtime. 
+// <p>
+// We assume that innocent code uses unfiltered for/in loops only to
+// enumerate direct instances of <tt>Object</tt>, i.e., objects that
+// directly inherit from <tt>Object.prototype</tt>.
+// <p>
+// In order not to disrupt innocent code, the Caja runtime adds no
+// properties to <tt>Object.prototype</tt> itself. The only property
+// names Caja adds to other primordial objects are names ending in
+// triple underbar. The actual spelling of all names ending in triple
+// underbar is considered private to the Caja implementation and may
+// change without notice over time. Any for/in loops in innocent code
+// used to enumerate any primordial object other than
+// <tt>Object.prototype</tt>, or any object that inherits from such an
+// object, may need to be modified to skip properties ending with
+// triple underbar. See <tt>canInnocentEnum</tt> below.
 
 
 var caja;
@@ -76,8 +85,8 @@ var ___;
             value = '(a ' + typ + ')';
           }
         }
-      } else if (typeof value === 'function' && '___NAME___' in value) {
-        value = value.___NAME___;
+      } else if (typeof value === 'function' && 'NAME___' in value) {
+        value = value.NAME___;
       }
       strs.push(String(value));
     }
@@ -205,7 +214,7 @@ var ___;
   function Token(name) {
     return primFreeze({
       toString: primFreeze(simpleFunc(function() {
-	return name;
+        return name;
       }))
     });
   }
@@ -218,6 +227,229 @@ var ___;
    */
   var USELESS = Token('USELESS');
 
+  ////////////////////////////////////////////////////////////////////////
+  // thePseudoProto
+  ////////////////////////////////////////////////////////////////////////
+
+  /**
+   * The holder of properties pseudo-added to Object.prototype.
+   * <p>
+   * <i>Innocent code</i>
+   * innocent code to enumerate direct instances of
+   * <tt>Object</tt> (i.e., objects that inherit directly from
+   * <tt>Object.prototype</tt>) safely with unfiltered for/in loops,
+   * the Caja runtime must avoid adding any properties to
+   * <tt>Object.prototype</tt>.
+   */
+  var thePseudoProto = {};
+  
+  /**
+   * Acts like <tt>name in obj</tt>, but includes properties
+   * pseudo-inherited from <tt>thePseudoProto</tt>.
+   */
+  function pIn(obj, name) {
+    return (name in obj) || (name in thePseudoProto);
+  }
+
+  /**
+   * Acts like <tt>obj[name]</tt>, but includes properties
+   * pseudo-inherited from <tt>thePseudoProto</tt>.
+   */
+  function pRead(obj, name) {
+    if (name in obj) {
+      return obj[name];
+    } else {
+      return thePseudoProto[name];
+    }
+  }
+
+  /**
+   * Acts like <tt>obj[name](args...), but includes properties
+   * pseudo-inherited from <tt>thePseudoProto</tt>.
+   */
+  function pCall(obj, name, args) {
+    if (name in obj) {
+      return obj[name].apply(obj, args);
+    } else {
+      return thePseudoProto[name].apply(name, args);
+    }
+  }
+
+  /**
+   * Acts like <tt>obj[name] = val</tt>, but if obj is
+   * <tt>Object.prototype</tt>, adds the property instead to
+   * <tt>thePseudoProto</tt>. 
+   * <p>
+   * Will refuse to pseudo-set a property on <tt>Object.prototype</tt>
+   * that conflicts with a property on the actual
+   * <tt>Object.prototype</tt>. If would be better to allow such a set
+   * and have <tt>pRead</tt> consider <tt>thePseudoProto</tt> to have
+   * precedence over <tt>Object.prototype</tt>. However, we know of no
+   * cheap enough way to test whether <tt>obj</tt> inherits its
+   * <tt>name</tt> property directly from
+   * <tt>Object.prototype</tt>. The obvious <tt>obj[name] ===
+   * Object.prototype[name]</tt> would be true if has or inherits a
+   * property of the same name and value.
+   */
+  function pSet(obj, name, val) {
+    if (obj === Object.prototype) {
+      if (name in obj) {
+        fail("Internal: Conflicts with existing Object.prototype.",
+             name);
+      }
+      return thePseudoProto[name] = val;
+    } else {
+      return obj[name] = val;
+    }
+  }
+
+  /**
+   *
+   */
+  function pDelete(obj, name) {
+    if (delete obj[name]) {
+      return true;
+    } else if (obj === Object.prototype) {
+      return delete thePseudoProto[name];
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Is defined and returns true only if we can call
+   * <tt>Object.prototype.hasOwnProperty</tt> on this object without
+   * exploding. 
+   * <p>
+   * On Firefox, it seems that calling <tt>hasOwnProperty</tt> on an
+   * <tt>HTMLDivElement</tt> sometimes causes an
+   * "Illegal operation on WrappedNative prototype object".
+   * <p>
+   * SECURITY BUG STOPGAP TODO(erights)
+   */
+  var canCallHasOwnProperty_;
+  
+  // When we're in a non-browser environment, such that there isn't
+  // a global <tt>HTMLDivElement</tt>, then we don't need to worry
+  // about this bug. We also don't need to worry about this bug for
+  // internal uses of <tt>hasOwnProp()</tt> that happens during the
+  // initialization of caja.js. Since <tt>hasOwnProp()</tt> might be
+  // called before the following <tt>if</tt> runs, it guards the test
+  // with <pre>!canCallHasOwnProperty_ ||</pre> which will be true
+  // at least until the following <tt>if</tt> runs.
+  if (typeof theGlobalObject.HTMLDivElement === 'function') {
+    canCallHasOwnProperty_ = function(obj) {
+      return !(obj instanceof theGlobalObject.HTMLDivElement);
+    };
+  }
+  
+  /**
+   * <tt>hasOwnProp(obj.prop)</tt> means what
+   * <tt>obj.hasOwnProperty(prop)</tt> would normally mean, but<ul>
+   * <li>Avoids testing known-untestable objects
+   * <li>Uses <tt>Object.prototype.hasOwnProperty.call</tt> so it
+   *     doesn't get mislead by an override.
+   * <li>If obj is <tt>Object.prototype</tt>, also checks
+   *     <tt>thePseudoProto</tt>.
+   * </ul>
+   */
+  function hasOwnProp(obj, name) { 
+    var t = typeof obj;
+    if (t !== 'object' && t !== 'function') { 
+      return false; 
+    }
+    if (!canCallHasOwnProperty_ || canCallHasOwnProperty_(obj)) {
+      // Fails in Firefox for some DOM objects intermittently(?!) 
+      // with "Illegal operation on WrappedNative prototype object".
+      // For these, <tt>canCallHasOwnProperty_()</tt> must say false.
+      if (Object.prototype.hasOwnProperty.call(obj, name)) {
+        return true;
+      } else if (obj === Object.prototype) {
+        return name in thePseudoProto;
+      }
+    } else {
+      return false;
+    }
+  }
+  
+  ////////////////////////////////////////////////////////////////////////
+  // Accessing property attributes
+  ////////////////////////////////////////////////////////////////////////
+  
+  /** Tests whether the fast-path canRead flag is set. */
+  function canRead(obj, name)   { 
+    return !!pRead(obj, name + '_canRead___'); 
+  }
+
+  /** Tests whether the fast-path canEnum flag is set. */
+  function canEnum(obj, name)   { 
+    return !!pRead(obj, name + '_canEnum___'); 
+  }
+
+  /** Tests whether the fast-path canCall flag is set. */
+  function canCall(obj, name)   { 
+    return !!pRead(obj, name + '_canCall___'); 
+  }
+  
+  /** Tests whether the fast-path canSet flag is set. */
+  function canSet(obj, name)    { 
+    return !!pRead(obj, name + '_canSet___'); 
+  }
+
+  /** Tests whether the fast-path canDelete flag is set. */
+  function canDelete(obj, name) { 
+    return !!pRead(obj, name + '_canDelete___'); 
+  }
+  
+  /** 
+   * Sets the fast-path canRead flag.
+   * <p>
+   * The various <tt>allow*</tt> functions are called externally by
+   * Javascript code to express whitelisting taming decisions. And
+   * they are called internally to record decisions arrived at by
+   * other means. 
+   */
+  function allowRead(obj, name) { 
+    pSet(obj, name + '_canRead___', true); 
+  }
+  
+  /** <tt>allowEnum</tt> implies <tt>allowRead</tt> */
+  function allowEnum(obj, name) { 
+    allowRead(obj, name);
+    pSet(obj, name + '_canEnum___', true);
+  }
+  
+  /** 
+   * Simple-functions should callable and readable, but methods
+   * should only be callable.
+   */
+  function allowCall(obj, name) { 
+    pSet(obj, name + '_canCall___', true); 
+  }
+  
+  /**
+   * <tt>allowSet</tt> implies <tt>allowEnum</tt> and <tt>allowRead</tt>.
+   */
+  function allowSet(obj, name) {
+    if (isFrozen(obj)) {
+      fail("Can't set .", name, ' on frozen: ', obj);
+    }
+    allowEnum(obj, name);
+    pSet(obj, name + '_canSet___', true);
+  }
+  
+  /**
+   * BUG TODO(erights): <tt>allowDelete</tt> is not yet specified or
+   * implemented. 
+   */
+  function allowDelete(obj, name) {
+    if (isFrozen(obj)) {
+      fail("Can't delete .", name, ' on frozen: ', obj);
+    }
+    fail('TODO(erights): allowDelete() not yet implemented');
+    pSet(obj, name + '_canDelete___', true);
+  }
+  
   ////////////////////////////////////////////////////////////////////////
   // Privileged fault handlers
   ////////////////////////////////////////////////////////////////////////
@@ -234,15 +466,29 @@ var ___;
    * distinction should be logged for diagnostic purposes.
    */
   function logAbsence_(obj, name) {
-    if (!(name in obj)) {
+    if (!pIn(obj, name)) {
       log('Since there is no ', obj, '.', name, '...');
     }
   }
 
   /**
+   * The static generic form of <tt>bind()</tt>, but with the
+   * arguments in an explicit list rather than spread out.
+   * <p>
+   * <tt>bindHandler()</tt> itself does check <tt>asMethodOf(that,fun)</tt>.
+   */
+  function bindHandler(fun, bindArgs) {
+    var that = bindArgs[0];
+    var subArgs = slice(bindArgs, 1);
+    return primFreeze(simpleFunc(function(var_args) {
+      return fun.apply(that, subArgs.concat(args(arguments)));
+    }));
+  }
+  
+  /**
    * A <i>Keeper</i> is a fault-handler of last resort.
    * <p>
-   * This default keeper is installed in <tt>Object.prototype</tt>, so
+   * This default keeper is installed in <tt>thePseudoProto</tt>, so
    * that it can be overridden on a per-class or per-instance basis.
    * <p>
    * <tt>theDefaultKeeper</tt> always <tt>log()</tt>s and reports
@@ -313,11 +559,11 @@ var ___;
    * fault generically. 
    * <p>
    * This default fault-handler is installed in
-   * <tt>Object.prototype</tt>, so that it can be overridden on a
+   * <tt>thePseudoProto</tt>, so that it can be overridden on a
    * per-class or per-instance basis. <tt>theDefaultHandler</tt> first
    * checks if there is a fault-handling function available on that object
    * to handle this fault on this specific property name. If so, then it
-   * delegate to that fault-handling function. Otherwise it delegates to
+   * delegates to that fault-handling function. Otherwise it delegates to
    * the object's <tt>.keeper___</tt>.
    */
   var theDefaultHandler = primFreeze({
@@ -338,104 +584,48 @@ var ___;
      * useful safe thing to return that's still within a fail-stop
      * subset of JavaScript is the result of attaching that method to
      * this instance.
-     * <p>
-     * TODO(erights): As an optimization, memoize the attached method
-     * in <tt>obj</tt> as canRead and canCall but not canEnum. 
      */
     handleRead: primFreeze(simpleFunc(function(obj, name) {
       var handlerName = name + '_getter___';
-      if (obj[handlerName]) {
-        return obj[handlerName].call(USELESS, obj);
-      }
-      if (canCall(obj, name)) {
-        return attachMethod(obj, obj[name]);
+      if (pIn(obj, handlerName)) {
+        return pRead(obj, handlerName).call(USELESS, obj);
       }
       var applyHandlerName = name + '_handler___';
-      var handler = obj[applyHandlerName];
+      var handler = pRead(obj, applyHandlerName);
       if (handler) {
-        return attachMethod(obj, bindHandler(handler, [obj, obj]));
+	fail("TODO(erights): Can't yet attach fault handlers: ", name);
       }
-      return obj.keeper___.handleRead(obj, name);
+      return pRead(obj, 'keeper___').handleRead(obj, name);
     })),
 
     handleCall: primFreeze(simpleFunc(function(obj, name, args) {
       var handlerName = name + '_handler___';
-      if (obj[handlerName]) {
-        return obj[handlerName].call(USELESS, obj, args);
+      if (pIn(obj, handlerName)) {
+        return pRead(obj, handlerName).call(USELESS, obj, args);
       }
-      return obj.keeper___.handleCall(obj, name, args);
+      return pRead(obj, 'keeper___').handleCall(obj, name, args);
     })),
 
     handleSet: primFreeze(simpleFunc(function(obj, name, val) {
       var handlerName = name + '_setter___';
-      if (obj[handlerName]) {
-        return obj[handlerName].call(USELESS, obj, val);
+      if (pIn(obj, handlerName)) {
+        return pRead(obj, handlerName).call(USELESS, obj, val);
       }
-      return obj.keeper___.handleSet(obj, name, val);
+      return pRead(obj, 'keeper___').handleSet(obj, name, val);
     })),
 
     handleDelete: primFreeze(simpleFunc(function(obj, name) {
       var handlerName = name + '_deleter___';
-      if (obj[handlerName]) {
-        return obj[handlerName].call(USELESS, obj);
+      if (pIn(obj, handlerName)) {
+        return pRead(obj, handlerName).call(USELESS, obj);
       }
-      return obj.keeper___.handleDelete(obj, name);
+      return pRead(obj, 'keeper___').handleDelete(obj, name);
     }))
   });
 
 
-  Object.prototype.keeper___ = theDefaultKeeper;
-  Object.prototype.faultHandler___ = theDefaultHandler;
-  
-  ////////////////////////////////////////////////////////////////////////
-  // Overriding some very basic primordial methods
-  ////////////////////////////////////////////////////////////////////////
-  
-  /**
-   * Is defined and returns true only if we can call
-   * <tt>Object.prototype.hasOwnProperty</tt> on this object without
-   * exploding. 
-   * <p>
-   * On Firefox, it seems that calling <tt>hasOwnProperty</tt> on an
-   * <tt>HTMLDivElement</tt> sometimes causes an
-   * "Illegal operation on WrappedNative prototype object".
-   * <p>
-   * SECURITY BUG STOPGAP TODO(erights)
-   */
-  var canCallHasOwnProperty_;
-  
-  // When we're in a non-browser environment, such that there isn't
-  // a global <tt>HTMLDivElement</tt>, then we don't need to worry
-  // about this bug. We also don't need to worry about this bug for
-  // internal uses of <tt>hasOwnProp()</tt> that happens during the
-  // initialization of caja.js. Since <tt>hasOwnProp()</tt> might be
-  // called before the following <tt>if</tt> runs, it guards the test
-  // with <pre>!canCallHasOwnProperty_ ||</pre> which will be true
-  // at least until the following <tt>if</tt> runs.
-  if (typeof theGlobalObject.HTMLDivElement === 'function') {
-    canCallHasOwnProperty_ = function(obj) {
-      return !(obj instanceof theGlobalObject.HTMLDivElement);
-    };
-  }
-  
-  /**
-   * <tt>hasOwnProp(obj.prop)</tt> means what
-   * <tt>obj.hasOwnProperty(prop)</tt> normally means.
-   */
-  function hasOwnProp(obj, name) { 
-    var t = typeof obj;
-    if (t !== 'object' && t !== 'function') { 
-      return false; 
-    }
-    if (!canCallHasOwnProperty_ || canCallHasOwnProperty_(obj)) {
-      // Fails in Firefox for some DOM objects intermittently(?!) 
-      // with "Illegal operation on WrappedNative prototype object".
-      // For these, <tt>canCallHasOwnProperty_()</tt> must say false.
-      return Object.prototype.hasOwnProperty.call(obj, name); 
-    } else {
-      return false;
-    }
-  }
+  pSet(Object.prototype, 'keeper___', theDefaultKeeper);
+  pSet(Object.prototype, 'faultHandler___', theDefaultHandler);
   
   ////////////////////////////////////////////////////////////////////////
   // walking prototype chain, checking JSON containers
@@ -476,7 +666,7 @@ var ___;
    * Assuming that all untranslated code creates only well formed
    * prototype chains, then, since (we claim that) all Caja-translated
    * code <i>can</i> only create well-formed prototype chains, then
-   * for all Caja-visible objects,
+   * for all Caja-visible objects that inherit from a prototype,
    * <tt>directConstructor(obj).prototype</tt> is <tt>obj</tt>'s
    * prototype. 
    */
@@ -488,9 +678,15 @@ var ___;
       // forbidden <tt>Function</tt> constructor.
       return undefined;
     }
+    if (obj === Object.prototype) {
+      return undefined;
+    }
     // The following test will initially return false in IE
     if (hasOwnProp(obj, '__proto__')) { 
-      if (obj.__proto__ === null) { return undefined; }
+      if (obj.__proto__ === null) { 
+        log('Internal: Unexpected inheritance root: ', obj);
+        return undefined; 
+      }
       return obj.__proto__.constructor; 
     }
     var result;
@@ -580,8 +776,8 @@ var ___;
    * <tt>obj.prototype</tt>. 
    * <p>
    * This function appears as <tt>___.primFreeze(obj)</tt> and is
-   * wrapped by <tt>caja.freeze()</tt> and the virtual
-   * <tt>Object.prototype.freeze_()</tt>. 
+   * wrapped by <tt>caja.freeze()</tt> and
+   * <tt>thePseudoProto.freeze_()</tt>.
    */
   function primFreeze(obj) {
     if (null === obj) { return obj; }
@@ -596,7 +792,7 @@ var ___;
     var badFlags = []; 
     for (var k in obj) {
       if (endsWith(k, '_canSet___') || endsWith(k, '_canDelete___')) { 
-        if (obj[k]) {
+        if (pRead(obj, k)) {
           badFlags.push(k);
         }
       }
@@ -604,21 +800,21 @@ var ___;
     for (var i = 0; i < badFlags.length; i++) {
       var flag = badFlags[i];
       if (hasOwnProp(obj, flag)) {
-        if (!(delete obj[flag])) {
+        if (!(pDelete(obj, flag))) {
           fail('Internal: failed delete: ', obj, '.', flag);
         }
       }
-      if (obj[flag]) {
+      if (pRead(obj, flag)) {
         // At the time of this writing, this case should never be able
         // to happen, since prototypes are always frozen before use,
         // and frozen objects cannot have these flags set on them. We
         // code it this way to allow for a future optimization, where
         // the prototype can record as canSet those properties that
         // appear in instances that inherit from this prototype.
-        obj[flag] = false;
+        pSet(obj, flag, false);
       }
     }
-    obj.___FROZEN___ = true;
+    pSet(obj, '___FROZEN___', true);
     if (typ === 'function') {
       // Do last to avoid possible infinite recursion.
       primFreeze(obj.prototype);
@@ -668,77 +864,25 @@ var ___;
     return primFreeze(copy(obj));
   }
   
-  ////////////////////////////////////////////////////////////////////////
-  // Accessing property attributes
-  ////////////////////////////////////////////////////////////////////////
-  
-  /** Tests whether the fast-path canRead flag is set. */
-  function canRead(obj, name)   { return !!obj[name + '_canRead___']; }
-  /** Tests whether the fast-path canEnum flag is set. */
-  function canEnum(obj, name)   { return !!obj[name + '_canEnum___']; }
-  /** Tests whether the fast-path canCall flag is set. */
-  function canCall(obj, name)   { return !!obj[name + '_canCall___']; }
-  /** Tests whether the fast-path canSet flag is set. */
-  function canSet(obj, name)    { return !!obj[name + '_canSet___']; }
-  /** Tests whether the fast-path canDelete flag is set. */
-  function canDelete(obj, name) { return !!obj[name + '_canDelete___']; }
-  
-  /** 
-   * Sets the fast-path canRead flag.
+  /**
+   * A method of a constructed object can freeze its object by saying
+   * <tt>this.freeze_()</tt>.
    * <p>
-   * The various <tt>allow*</tt> functions are called externally by
-   * Javascript code to express whitelisting taming decisions. And
-   * they are called internally to record decisions arrived at by
-   * other means. 
+   * Because this method ends in a "<tt>_</tt>", it is Internal, so
+   * clients of a constructed object (a non-JSON container) cannot
+   * freeze it without its cooperation. 
    */
-  function allowRead(obj, name) { 
-    obj[name + '_canRead___'] = true; 
-  }
-  
-  /** <tt>allowEnum</tt> implies <tt>allowRead</tt> */
-  function allowEnum(obj, name) { 
-    allowRead(obj, name);
-    obj[name + '_canEnum___'] = true;
-  }
-  
-  /** 
-   * Simple functions should callable and readable, but methods
-   * should only be callable.
-   */
-  function allowCall(obj, name) { 
-    obj[name + '_canCall___'] = true; 
-  }
-  
-  /**
-   * <tt>allowSet</tt> implies <tt>allowEnum</tt> and <tt>allowRead</tt>.
-   */
-  function allowSet(obj, name) {
-    if (isFrozen(obj)) {
-      fail("Can't set .", name, ' on frozen: ', obj);
-    }
-    allowEnum(obj, name);
-    obj[name + '_canSet___'] = true;
-  }
-  
-  /**
-   * BUG TODO(erights): <tt>allowDelete</tt> is not yet specified or
-   * implemented. 
-   */
-  function allowDelete(obj, name) {
-    if (isFrozen(obj)) {
-      fail("Can't delete .", name, ' on frozen: ', obj);
-    }
-    fail('TODO(erights): allowDelete() not yet implemented');
-    obj[name + '_canDelete___'] = true;
-  }
+  pSet(Object.prototype, 'freeze_', function() {
+    return primFreeze(this);
+  });
   
   ////////////////////////////////////////////////////////////////////////
   // Classifying functions
   ////////////////////////////////////////////////////////////////////////
   
-  function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
-  function isMethod(meth)    { return '___METHOD_OF___' in meth; }
-  function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
+  function isCtor(constr)    { return !!constr.CONSTRUCTOR___; }
+  function isMethod(meth)    { return 'METHOD_OF___' in meth; }
+  function isSimpleFunc(fun) { return !!fun.SIMPLE_FUNC___; }
   
   /** 
    * Mark <tt>constr</tt> as a constructor.
@@ -762,9 +906,9 @@ var ___;
       fail("Methods can't be constructors: ", constr);
     }
     if (isSimpleFunc(constr)) {
-      fail("Simple functions can't be constructors: ", constr);
+      fail("Simple-functions can't be constructors: ", constr);
     }
-    constr.___CONSTRUCTOR___ = true;
+    constr.CONSTRUCTOR___ = true;
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
       if (hasOwnProp(constr, 'Super')) {
@@ -779,14 +923,13 @@ var ___;
       }
     }
     if (opt_name) {
-      constr.___NAME___ = String(opt_name);
+      constr.NAME___ = String(opt_name);
     }
     return constr;  // translator freezes constructor later
   }
 
   /**
-   * Supports the new proposed split-translation for first-class
-   * constructors.
+   * Supports the split-translation for first-class constructors.
    * <p>
    * The split translation translates a constructor definition (which
    * must not appear as an expression) like<pre>
@@ -836,17 +979,17 @@ var ___;
       fail("Constructors can't be methods: ", meth);
     }
     if (isSimpleFunc(constr)) {
-      fail("Simple functions can't be methods: ", meth);
+      fail("Simple-functions can't be methods: ", meth);
     }
-    meth.___METHOD_OF___ = asCtorOnly(constr);
+    meth.METHOD_OF___ = asCtorOnly(constr);
     if (opt_name) {
-      meth.___NAME___ = String(opt_name);
+      meth.NAME___ = String(opt_name);
     }
     return primFreeze(meth);
   }
   
   /** 
-   * Mark <tt>fun</tt> as a simple function.
+   * Mark <tt>fun</tt> as a simple-function.
    * <p>
    * <tt>opt_name</tt>, if provided, should be the name of the 
    * function. Currently, this is used only to generate friendlier
@@ -855,19 +998,19 @@ var ___;
   function simpleFunc(fun, opt_name) {
     enforceType(fun, 'function', opt_name);
     if (isCtor(fun)) {
-      fail("Constructors can't be simple functions: ", fun);
+      fail("Constructors can't be simple-functions: ", fun);
     }
     if (isMethod(fun)) {
-      fail("Methods can't be simple function: ", fun);
+      fail("Methods can't be simple-function: ", fun);
     }
-    fun.___SIMPLE_FUNC___ = true;
+    fun.SIMPLE_FUNC___ = true;
 
     // TODO(erights): enable this optimization (after testing without it)
 //  fun.apply_canCall___ = true;
 //  fun.call_canCall___ = true;
 
     if (opt_name) {
-      fun.___NAME___ = String(opt_name);
+      fun.NAME___ = String(opt_name);
     }
     return fun;  // translator freezes fun later
   }
@@ -885,24 +1028,31 @@ var ___;
     fail("Untamed functions can't be called as constructors: ", constr);
   }
   
-  /** Only constructors and simple functions can be called as constructors */
+  /** 
+   * Only constructors and simple-functions can be called as
+   * constructors.   
+   */
   function asCtor(constr) {
     return primFreeze(asCtorOnly(constr)); 
   }
   
   /** 
-   * Only methods and simple functions can be called as methods.
-   * <p>
-   * TODO(erights): <tt>asMethod()</tt> currently isn't called as one
-   * might expect. Either it should be, or it should probably be
-   * removed.
+   * Only methods and simple-functions can be called as methods.
    */
-  function asMethod(meth) {
-    if (isSimpleFunc(meth) || isMethod(meth)) { 
-      if (!isFrozen(meth)) {
-        fail('Internal: non-frozen func stored as method: ', meth);
+  function asMethodOf(obj, meth) {
+    if (isSimpleFunc(meth)) {
+      return primFreeze(meth); 
+    }
+    if (isMethod(meth)) {
+      if (meth.ATTACHMENT___ === obj) {
+	return meth.ORIGINAL___;
       }
-      return meth; 
+      if ('ATTACHMENT___' in meth) {
+	fail("Can't reattach method: ", meth);
+      }
+      // TODO(erights): Should we fail() instead?
+      log('Internal: Bare method: ', meth);
+      return meth;
     }
     
     enforceType(meth, 'function');
@@ -912,7 +1062,7 @@ var ___;
     fail("Untamed functions can't be called as methods: ", meth);
   }
   
-  /** Only simple functions can be called as simple functions */
+  /** Only simple-functions can be called as simple-functions */
   function asSimpleFunc(fun) {
     if (isSimpleFunc(fun)) { 
       return primFreeze(fun); 
@@ -920,12 +1070,12 @@ var ___;
     
     enforceType(fun, 'function');
     if (isCtor(fun)) {
-      fail("Constructors can't be called as simple functions: ", fun);
+      fail("Constructors can't be called as simple-functions: ", fun);
     }
     if (isMethod(fun)) {
-      fail("Methods can't be called as simple functions: ", fun);
+      fail("Methods can't be called as simple-functions: ", fun);
     }
-    fail("Untamed functions can't be called as simple functions: ", fun);
+    fail("Untamed functions can't be called as simple-functions: ", fun);
   }
 
   /**
@@ -942,7 +1092,7 @@ var ___;
    * is within a fail-stop subset of the semantics of its
    * original. 
    * <p>
-   * <tt>attachMethod(x,m).bind(x)</tt> acts just like
+   * <tt>attach(x,m).bind(x)</tt> acts just like
    * <tt>m.bind(x)</tt>, so the Caja expression <tt>x.foo.bind(x)</tt> 
    * means just what it means in JavaScript.
    * <p>
@@ -955,42 +1105,36 @@ var ___;
    * inherited from a prototype, it would be within a safe fail-stop
    * subset of JavaScript for the Caja expression <tt>x.foo</tt> to
    * return the value of the JavaScript expression
-   * <tt>attachMethod(x,x.foo)</tt>.
+   * <tt>attach(x,x.foo)</tt>.
    * <p>
    * Note that Cajita avoids all this complexity, since if
    * <tt>x.foo</tt> is a simple-function, then <tt>x.foo.bind(y)</tt>
    * is always equivalent to <tt>x.foo</tt> no matter what the value
    * of <tt>y</tt>.
    */
-  function attachMethod(that, meth) {
+  function attach(that, meth) {
+    if (typeof that != 'function') {
+      enforceType(that, 'object');
+    }
+    if (that === null) {
+      fail('Internal: may not attach null: ', meth);
+    }
     if (!isMethod(meth)) {
-      fail('Method expected: ', meth);
+      return meth;
+    }
+    if (meth.ATTACHMENT___ !== undefined) {
+      fail('Method ', meth, ' cannot be reattached to: ', that);
     }
     function result(var_args) {
       if (this !== that) {
-	fail('Method ', meth, ' is already attached to ', that);
+        fail('Method ', meth, ' is already attached: ', this);
       }
       return meth.apply(that, arguments);
     }
-    // TODO(erights): It's obviously not right to mark it as a
-    // simple-function, but we don't currently have a workable
-    // alternative. 
-    return primFreeze(simpleFunc(result));
-  }
-  
-  /**
-   * The static generic form of <tt>bind()</tt>, but with the
-   * arguments in an explicit list rather than spread out.
-   * <p>
-   * <tt>bindHandler()</tt> itself does not enforce that <tt>obj</tt>
-   * is a simple-function.
-   */
-  function bindHandler(obj, bindArgs) {
-    var that = bindArgs[0];
-    var subArgs = slice(bindArgs, 1);
-    return primFreeze(simpleFunc(function(var_args) {
-      return obj.apply(that, subArgs.concat(args(arguments)));
-    }));
+    var result = method(meth.METHOD_OF___, result, meth.NAME___);
+    result.ATTACHMENT___ = that;
+    result.ORIGINAL___ = meth;
+    return result;
   }
   
   ////////////////////////////////////////////////////////////////////////
@@ -1023,9 +1167,11 @@ var ___;
   function readProp(that, name) {
     name = String(name);
     if (canReadProp(that, name)) {
-      return that[name];
+      return pRead(that, name);
+    } else if (canCallProp(that, name)) {
+      return attach(that, pRead(that, name));
     } else {
-      return that.faultHandler___.handleRead(that, name);
+      return pRead(that, 'faultHandler___').handleRead(that, name);
     }
   }
   
@@ -1036,6 +1182,9 @@ var ___;
    * If the property was defined by Caja code, then yes. If it was
    * whitelisted, then yes. Or if the property is an own property of
    * a JSON container, then yes.
+   * <p>
+   * Currently says <tt>false</tt> if it would read by attaching a
+   * method. What should it say in this case?
    */
   function canReadPub(obj, name) {
     name = String(name);
@@ -1048,30 +1197,25 @@ var ___;
   }
   
   /**
-   * Caja code attempting to read a property on something besides
-   * <tt>this</tt>.
+   * A client of <tt>obj</tt> attempting to read its public
+   * <tt>name</tt> property.
    * <p>
    * If it can't, it reads <tt>undefined</tt> instead.
    */
   function readPub(obj, name) {
     name = String(name);
     if (canReadPub(obj, name)) {
-      return obj[name];
+      return pRead(obj, name);
+    } else if (canCallProp(obj, name)) {
+      return attach(obj, pRead(obj, name));
     } else {
-      return obj.faultHandler___.handleRead(obj, name);
+      return pRead(obj, 'faultHandler___').handleRead(obj, name);
     }
   }
   
   /**
    * Can "innocent" code enumerate the <tt>name</tt> property on
    * <tt>obj</tt>? 
-   * <p>
-   * <i>"Innocent"</i> code is code which we assume to be ignorant of
-   * Caja, not to be actively hostile, but which may be buggy (and
-   * therefore accidentally harmful or exploitable). This corresponds to
-   * legacy code, such as libraries, that we decide to run untranslated,
-   * perhaps hidden or tamed, but which needs to co-exist smoothly with
-   * the Caja runtime. 
    * <p>
    * An earlier version of <tt>canInnocentEnum()</tt> filtered out
    * names ending with a double underbar. It now filters out exactly
@@ -1139,7 +1283,8 @@ var ___;
    * that pair. 
    * <p>
    * If <tt>obj instanceof Array</tt>, then enumerate
-   * indexes. Otherwise, enumerate the canEnumOwn() property names.
+   * indexes. Otherwise, enumerate the <tt>canEnumOwn()</tt> property
+   * names. 
    * <p>
    * TODO(erights): Instead of testing <tt>instanceof Array</tt>,
    * should we instead test to see if <tt>obj</tt> is array-like?
@@ -1167,8 +1312,8 @@ var ___;
 
   /**
    * As a transitional measure, here's the old <tt>each</tt> function,
-   * which calls its <tt>fn</tt> argument with a key/value pair instead
-   * of a value/key pair. 
+   * which calls its <tt>fn</tt> argument with key/value pairs instead
+   * of value/key pairs. 
    * <p>
    * TODO(erights): Remove once there aren't any more uses.
    *
@@ -1218,7 +1363,7 @@ var ___;
     if (endsWith(name, '__')) { return false; }
     if (canCall(that, name)) { return true; }
     if (!canReadProp(that, name)) { return false; }
-    var func = that[name];
+    var func = pRead(that, name);
     if (!isSimpleFunc(func)) { return false; }
     allowCall(that, name);  // memoize
     return true;
@@ -1230,10 +1375,10 @@ var ___;
   function callProp(that, name, args) {
     name = String(name);
     if (canCallProp(that, name)) {
-      var meth = that[name];
+      var meth = pRead(that, name);
       return meth.apply(that, args);
     } else {
-      return that.faultHandler___.handleCall(that, name, args);
+      return pRead(that, 'faultHandler___').handleCall(that, name, args);
     }
   }
   
@@ -1246,7 +1391,7 @@ var ___;
     if (endsWith(name, '_')) { return false; }
     if (canCall(obj, name)) { return true; }
     if (!canReadPub(obj, name)) { return false; }
-    var func = obj[name];
+    var func = pRead(obj, name);
     if (!isSimpleFunc(func)) { return false; }
     allowCall(obj, name);  // memoize
     return true;
@@ -1258,10 +1403,10 @@ var ___;
   function callPub(obj, name, args) {
     name = String(name);
     if (canCallPub(obj, name)) {
-      var meth = obj[name];
+      var meth = pRead(obj, name);
       return meth.apply(obj, args);
     } else {
-      return obj.faultHandler___.handleCall(obj, name, args);
+      return pRead(obj, 'faultHandler___').handleCall(obj, name, args);
     }
   }
   
@@ -1285,10 +1430,10 @@ var ___;
     name = String(name);
     if (canSetProp(that, name)) {
       allowSet(that, name);  // grant
-      that[name] = val;
+      pSet(that, name, val);
       return val;
     } else {
-      return that.faultHandler___.handleSet(that, name, val);
+      return pRead(that, 'faultHandler___').handleSet(that, name, val);
     }
   }
   
@@ -1342,10 +1487,10 @@ var ___;
     name = String(name);
     if (canSetPub(obj, name)) {
       allowSet(obj, name);  // grant
-      obj[name] = val;
+      pSet(obj, name, val);
       return val;
     } else {
-      return obj.faultHandler___.handleSet(obj, name, val);
+      return pRead(obj, 'faultHandler___').handleSet(obj, name, val);
     }
   }
   
@@ -1373,10 +1518,13 @@ var ___;
     name = String(name);
     if (canDeleteProp(that, name)) {
       fail('TODO(erights): deletion not yet supported');
-      return (delete that[name]) ||
+      if (pDelete(that, name)) {
+        return true;
+      } else {
         fail('Not deleted: ', that, '.', name);
+      }
     } else {
-      return that.faultHandler___.handleDelete(that, name);
+      return pRead(that, 'faultHandler___').handleDelete(that, name);
     }
   }
   
@@ -1407,10 +1555,13 @@ var ___;
         fail('Unable to delete: ', name);
       }
       fail('TODO(erights): deletion not yet supported');
-      return (delete obj[name]) ||
+      if (pDelete(obj, name)) {
+        return true;
+      } else {
         fail('Not deleted: ', name);
+      }
     } else {
-      return obj.faultHandler___.handleDelete(obj, name);
+      return pRead(obj, 'faultHandler___').handleDelete(obj, name);
     }
   }
   
@@ -1418,7 +1569,7 @@ var ___;
    * Sets <pre>constr.prototype[name] = member</pre>.
    * <p>
    * If <tt>member</tt> is a method, make it callable. If
-   * <tt>member</tt> is a simple function, make it callable and
+   * <tt>member</tt> is a simple-function, make it callable and
    * readable. Else make it readable. 
    * <p>
    * TODO(erights): Currently, when <tt>member</tt> is not a method,
@@ -1439,7 +1590,7 @@ var ___;
       fail('Not settable: ', name);
     }
     if (isMethod(member)) {
-      if (member.___METHOD_OF___ !== constr) {
+      if (member.METHOD_OF___ !== constr) {
         fail('Internal: method of wrong constructor: ', 
              member, ', ', constr);
       }
@@ -1450,7 +1601,7 @@ var ___;
     } else {
       allowEnum(proto, name);  // grant
     }
-    proto[name] = member;
+    pSet(proto, name, member);
   }
   
   /**
@@ -1534,7 +1685,7 @@ var ___;
    * that no one does a conflicting <tt>allowRead()</tt>.
    */
   function useGetHandler(obj, name, getHandler) {
-    obj[name + '_getter___'] = getHandler;
+    pSet(obj, name + '_getter___', getHandler);
   }
 
   /**
@@ -1551,7 +1702,7 @@ var ___;
    * <tt>allowSimpleFunc()</tt>, or <tt>allowMethod()</tt>. 
    */
   function useApplyHandler(obj, name, applyHandler) {
-    obj[name + '_handler___'] = applyHandler;
+    pSet(obj, name + '_handler___', applyHandler);
   }
 
   /**
@@ -1581,7 +1732,7 @@ var ___;
    * that no one does a conflicting <tt>allowSet()</tt>.
    */
   function useSetHandler(obj, name, setHandler) {
-    obj[name + '_setter___'] = setHandler;
+    pSet(obj, name + '_setter___', setHandler);
   }
 
   /**
@@ -1593,15 +1744,15 @@ var ___;
    * that no one does a conflicting <tt>allowDelete()</tt>.
    */
   function useDeleteHandler(obj, name, deleteHandler) {
-    obj[name + '_deleter___'] = deleteHandler;
+    pSet(obj, name + '_deleter___', deleteHandler);
   }
 
   /**
-   * Whilelist <tt>obj[name]</tt> as a simple function that can be
+   * Whilelist <tt>obj[name]</tt> as a simple-function that can be
    * either called or read. 
    */
   function allowSimpleFunc(obj, name) {
-    simpleFunc(obj[name], name);
+    simpleFunc(pRead(obj, name), name);
     allowCall(obj, name);
     allowRead(obj, name);
   }
@@ -1611,7 +1762,7 @@ var ___;
    * called on instances of <tt>constr</tt>. 
    */
   function allowMethod(constr, name) {
-    method(constr, constr.prototype[name], name);
+    method(constr, pRead(constr.prototype, name), name);
     allowCall(constr.prototype, name);
   }
   
@@ -1628,13 +1779,13 @@ var ___;
    * <tt>allowMethod()</tt> on the original method.  
    */
   function allowMutator(constr, name) {
-    var original = constr.prototype[name];
+    var original = pRead(constr.prototype, name);
     useApplyHandler(
       constr.prototype, name, function(obj, args) {
-	if (isFrozen(obj)) {
+        if (isFrozen(obj)) {
           fail("Can't .", name, '() a frozen object: ', obj);
-	}
-	return original.apply(obj, args);
+        }
+        return original.apply(obj, args);
       });
   }
   
@@ -1681,7 +1832,7 @@ var ___;
   
   ctor(Object, undefined, 'Object');
   all2(allowMethod, Object, [
-    'toString', 'toLocaleString', 'valueOf', 'isPrototypeOf'
+    'toString', 'toLocaleString', 'valueOf', 'isPrototypeOf', 'freeze_'
   ]);
   allowRead(Object.prototype, 'length');
   useCallHandler(
@@ -1697,30 +1848,24 @@ var ___;
     });
 
 
-  /**
-   * A method of a constructed object can freeze its object by saying
-   * <tt>this.freeze_()</tt>.
-   * <p>
-   * Because this method ends in a "<tt>_</tt>", it is Internal, so
-   * clients of a constructed object (a non-JSON container) cannot
-   * freeze it without its cooperation. 
-   */
   useCallHandler(
-    Object.prototype, 'freeze_', function(obj) {
-      return primFreeze(obj);
-    });
-  
-  useCallHandler(
-    Function.prototype, 'apply', function(obj, that, realArgs) {
-      return asSimpleFunc(obj).apply(that, realArgs);
+    Function.prototype, 'apply', function(fun, that, realArgs) {
+      return asMethodOf(that, fun).apply(that, realArgs);
     });
   useApplyHandler(
-    Function.prototype, 'call', function(obj, callArgs) {
-      return asSimpleFunc(obj).apply(callArgs[0], slice(callArgs, 1));
+    Function.prototype, 'call', function(fun, callArgs) {
+      var that = callArgs[0];
+      var subArgs = slice(callArgs, 1);
+      return asMethodOf(that, fun).apply(that, subArgs);
     });
   useApplyHandler(
-    Function.prototype, 'bind', function(obj, bindArgs) {
-      return bindHandler(asSimpleFunc(obj), bindArgs);
+    Function.prototype, 'bind', function(fun, bindArgs) {
+      var that = bindArgs[0];
+      var subArgs = slice(bindArgs, 1);
+      var meth = asMethodOf(that, fun);
+      return primFreeze(simpleFunc(function(var_args) {
+	return meth.apply(that, subArgs.concat(args(arguments)));
+      }));
     });
   
   
@@ -1741,24 +1886,24 @@ var ___;
     'toLowerCase', 'toLocaleLowerCase', 'toUpperCase', 'toLocaleUpperCase'
   ]);
   useCallHandler(
-    String.prototype, 'match', function(obj, regexp) {
+    String.prototype, 'match', function(str, regexp) {
       enforceMatchable(regexp);
-      return obj.match(regexp);
+      return str.match(regexp);
     });
   useCallHandler(
-    String.prototype, 'replace', function(obj, searchValue, replaceValue) {
+    String.prototype, 'replace', function(str, searchValue, replaceValue) {
       enforceMatchable(searchValue);
-      return obj.replace(searchValue, replaceValue);
+      return str.replace(searchValue, replaceValue);
     });
   useCallHandler(
-    String.prototype, 'search', function(obj, regexp) {
+    String.prototype, 'search', function(str, regexp) {
       enforceMatchable(regexp);
-      return obj.search(regexp);
+      return str.search(regexp);
     });
   useCallHandler(
-    String.prototype, 'split', function(obj, separator, limit) {
+    String.prototype, 'split', function(str, separator, limit) {
       enforceMatchable(separator);
-      return obj.split(separator, limit);
+      return str.split(separator, limit);
     });
   
   
@@ -2048,10 +2193,12 @@ var ___;
     diagnostic: diagnostic,
     getLogFunc: getLogFunc,       setLogFunc: setLogFunc,
 
-    // walking prototype chain, checking JSON containers
-    directConstructor: directConstructor,
-    constructorOf: constructorOf,
-    isFrozen: isFrozen,           primFreeze: primFreeze,
+    // thePseudoProto
+    thePseudoProto: thePseudoProto,
+    pIn: pIn,                     pRead: pRead,
+    pCall: pCall,                 pSet: pSet,
+    pDelete: pDelete,
+    hasOwnProp: hasOwnProp,
     
     // Accessing property attributes
     canRead: canRead,             allowRead: allowRead,
@@ -2059,16 +2206,21 @@ var ___;
     canCall: canCall,             allowCall: allowCall,
     canSet: canSet,               allowSet: allowSet,
     canDelete: canDelete,         allowDelete: allowDelete,
+
+    // walking prototype chain, checking JSON containers
+    directConstructor: directConstructor,
+    constructorOf: constructorOf,
+    isFrozen: isFrozen,           primFreeze: primFreeze,
     
     // Classifying functions
     isCtor: isCtor,               isMethod: isMethod,
     isSimpleFunc: isSimpleFunc,
     ctor: ctor,                   splitCtor: splitCtor,
     asCtorOnly: asCtorOnly,       asCtor: asCtor,
-    method: method,               asMethod: asMethod,
+    method: method,               asMethodOf: asMethodOf,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
 
-    attachMethod: attachMethod,   bindHandler: bindHandler,
+    attach: attach,
     
     // Accessing properties
     canReadProp: canReadProp,     readProp: readProp,
@@ -2082,7 +2234,6 @@ var ___;
     setMemberMap: setMemberMap,
     
     // Other
-    hasOwnProp: hasOwnProp,
     args: args,
     
     // Taming mechanism
