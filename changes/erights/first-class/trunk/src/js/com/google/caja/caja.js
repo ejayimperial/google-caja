@@ -1206,7 +1206,7 @@ var ___;
     name = String(name);
     if (canReadPub(obj, name)) {
       return pRead(obj, name);
-    } else if (canCallProp(obj, name)) {
+    } else if (canCallPub(obj, name)) {
       return attach(obj, pRead(obj, name));
     } else {
       return pRead(obj, 'faultHandler___').handleRead(obj, name);
