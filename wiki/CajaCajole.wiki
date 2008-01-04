@@ -29,4 +29,4 @@ where:
 
   _<sourceGadgetUrl>_ - The absolute URL of a gadget spec, such as `http://example.com/listfriends.xml` or `file:/Users/example/listfriends.xml`.
 
-  _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./output/listfriends-cajoled.xml`.
+  _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./output/listfriends-caja.xml`.
