@@ -1,5 +1,23 @@
-#summary Cajole is the name of the executable that translates Caja code into javascript.
+#summary Cajole is what we call the process of turning Caja code into javascript.
 
 = Cajole =
 
-Cajole is the name of the java executable that translates an [http://code.google.com/apis/opensocial/ OpenSocial] gadget spec into a [CajaModule Caja module].
+To cajole an [http://code.google.com/apis/opensocial/ OpenSocial] gadget spec into a [CajaModule Caja module], do the following --
+
+# Download source from [http://code.google.com/p/google-caja/source SVN]. We assume you have downloaded it to a directory called `google-caja`.
+
+# Build the code by doing the following:
+
+{{{
+cd google-caja/src
+ant
+}}}
+
+# You should now have a JAR file called `ant-jars/pluginc.jar`, relative to your current directory. Run the following command:
+
+{{{
+java -cp ant-jars/pluginc.jar \
+  com.google.caja.opensocial.GadgetRewriterMain \
+ -i <em>sourceGadgetUrl</em>  \
+ -o listfriends-caja.xml
+}}}
