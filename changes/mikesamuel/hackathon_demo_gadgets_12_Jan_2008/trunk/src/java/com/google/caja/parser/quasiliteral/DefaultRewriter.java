@@ -21,7 +21,6 @@ import com.google.caja.parser.js.CatchStmt;
 import com.google.caja.parser.js.Conditional;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.ForEachLoop;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;

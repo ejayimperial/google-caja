@@ -62,10 +62,10 @@ public abstract class AbstractRewriter {
 
   protected final ParseTreeNode expand(ParseTreeNode node, Scope scope) {
     for (Rule rule : rules) {
-      ParseTreeNode result = rule.fire(node, scope)
+      ParseTreeNode result = rule.fire(node, scope);
 
       if (result != NONE) {
-        if (false) logResults(rule, node, result, ex);
+        if (false) logResults(rule, node, result, null);
         return result;
       }
     }
