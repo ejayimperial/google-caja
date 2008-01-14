@@ -32,39 +32,85 @@ import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.util.Pair;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
  * A scope analysis of a {@link com.google.caja.parser.ParseTreeNode}.
- * 
+ *
  * @author ihab.awad@gmail.com (Ihab Awad)
  */
 public class Scope {
   private enum LocalType {
-    // A function declaration, visible in its enclosing scope.
-    // Example: "foo" in the following --
-    //     function foo() { }
-    DECLARED_FUNCTION,
+    /**
+     * A named function value, visible only within its own body.
+     * Examples: "foo" in the following --
+     *
+     * <pre>
+     * var y = function foo() { };
+     * zip(function foo() { });
+     * </pre>
+     */
+    FUNCTION(),
 
-    // A named function value, visible only within its own body.
-    // Examples: "foo" in the following --
-    //     var y = function foo() { };
-    //     zip(function foo() { });
-    NAMED_FUNCTION_VALUE,
-    
-    // A variable containing arbitrary data (including functions).
-    // Examples: "x", "y", "z" and "t" in the following --
-    //     var x;
-    //     var y = 3;
-    //     var z = function() { };
-    //     var t = function foo() { };
-    DATA,
+    /**
+     * A function declaration, visible in its enclosing scope.
+     * Example: "foo" in the following --
+     *
+     * <pre>
+     * function foo() { }
+     * </pre>
+     */
+    DECLARED_FUNCTION(FUNCTION),
+
+    /**
+     * A constructor declaration, i.e., one which mentions 'this' in its body,
+     * Example: "foo" in the following --
+     *
+     * <pre>
+     * function foo() { this.x = 3; }
+     * </pre>
+     */
+    CONSTRUCTOR(DECLARED_FUNCTION),
+
+    /**
+     * A variable containing arbitrary data (including functions).
+     * Examples: "x", "y", "z" and "t" in the following --
+     *
+     * <pre>
+     * var x;
+     * var y = 3;
+     * var z = function() { };
+     * var t = function foo() { };
+     * </pre>
+     */
+    DATA(),
 
     /**
      * A variable defined in a catch block.
+     * Example: "foo" in the following --
+     *
+     * <pre>
+     * catch (foo) { this.x = 3; }
+     * </pre>
      */
     CAUGHT_EXCEPTION,
+    ;
+
+    private final HashSet<LocalType> implications = new HashSet<LocalType>();
+
+    private LocalType(LocalType... implications) {
+      this.implications.add(this);
+      for (LocalType implication : implications) {
+        this.implications.addAll(implication.implications);
+      }
+    }
+
+    public boolean implies(LocalType type) {
+      return implications.contains(type);
+    }
   }
 
   /** False if this is a pseudo scope for a catch block. */
@@ -75,6 +121,9 @@ public class Scope {
   private boolean containsArguments;
   private final Map<String, Pair<LocalType, FilePosition>> locals
       = new HashMap<String, Pair<LocalType, FilePosition>>();
+
+  // TODO(ihab.awad): Create scope from static methods.
+  // TODO(ihab.awad): Take a message queue for adding error messages.
 
   /**
    * Create a root scope for a program.
@@ -120,7 +169,7 @@ public class Scope {
         // scope if its in the global scope so that isGlobal returns the
         // correct value.
         if (parent.getType(name) != Scope.LocalType.DECLARED_FUNCTION) {
-          declare(ctor.getIdentifier(), Scope.LocalType.NAMED_FUNCTION_VALUE);
+          declare(ctor.getIdentifier(), Scope.LocalType.FUNCTION);
         }
       }
 
@@ -143,6 +192,15 @@ public class Scope {
     } else {
       walkBlock(root);
     }
+  }
+
+  /**
+   * The parent of this scope.
+   *
+   * @return a {@code Scope} or {@code null}.
+   */
+  public Scope getParent() {
+    return parent;
   }
 
   /**
@@ -190,10 +248,7 @@ public class Scope {
    *   scope. If 'name' is not defined, return false.
    */
   public boolean isFunction(String name) {
-    LocalType t = getType(name);
-    return
-        t == LocalType.DECLARED_FUNCTION ||
-        t == LocalType.NAMED_FUNCTION_VALUE;
+    return isDefined(name) && getType(name).implies(LocalType.FUNCTION);
   }
 
   /**
@@ -214,7 +269,19 @@ public class Scope {
    *   scope. If 'name' is not defined, return false.
    */
   public boolean isDeclaredFunction(String name) {
-    return getType(name) == LocalType.DECLARED_FUNCTION;
+    return isDefined(name) && getType(name).implies(LocalType.DECLARED_FUNCTION);
+  }
+
+  /**
+   * In this scope or some enclosing scope, is a given name defined
+   * as a constructor?
+   *
+   * @param name an identifier.
+   * @return whether 'name' is defined as a constructor within this
+   * scope. If 'name' is not defined, return false.
+   */
+  public boolean isConstructor(String name) {
+    return isDefined(name) && getType(name).implies(LocalType.CONSTRUCTOR);
   }
 
   /**
@@ -239,6 +306,14 @@ public class Scope {
     return null;      
   }
 
+  private LocalType computeDeclarationType(Declaration decl) {
+    if (decl instanceof FunctionDeclaration) {
+      Scope s2 = new Scope(this, ((FunctionDeclaration)decl).getInitializer());
+      return s2.hasFreeThis() ? LocalType.CONSTRUCTOR : LocalType.DECLARED_FUNCTION;
+    }
+    return LocalType.DATA;
+  }
+
   private void walkBlock(ParseTreeNode root) {
     root.acceptPreOrder(new Visitor() {
       public boolean visit(AncestorChain<?> chain) {
@@ -246,14 +321,13 @@ public class Scope {
             || chain.node instanceof CatchStmt) {
           return false;
         } else if (chain.node instanceof Declaration) {
-          declare(
-              ((Declaration) chain.node).getIdentifier(),
-              (chain.node instanceof FunctionDeclaration
-               ? LocalType.DECLARED_FUNCTION
-               : LocalType.DATA));
+          Declaration decl = (Declaration) chain.node;
+          declare(decl.getIdentifier(), computeDeclarationType(decl));
         } else if (chain.node instanceof Reference) {
           String name = ((Reference)chain.node).getIdentifierName();
-          if (ReservedNames.ARGUMENTS.equals(name)) { containsArguments = true; }
+          if (ReservedNames.ARGUMENTS.equals(name)) {
+            containsArguments = true;
+          }
           if (ReservedNames.THIS.equals(name)) { containsThis = true; }
         }
         return true;
@@ -294,7 +368,7 @@ public class Scope {
           // A function constructor's own name is visible, and that should mask
           // the declaration of the same name in the parent scope.
           && (maskedType != LocalType.DECLARED_FUNCTION
-              || type != LocalType.NAMED_FUNCTION_VALUE
+              || type != LocalType.FUNCTION
               || ancestor != parent)) {
         // Since different interpreters disagree about how exception
         // declarations affect local variable declarations, we need to
@@ -304,12 +378,14 @@ public class Scope {
              || maskedType == LocalType.CAUGHT_EXCEPTION)
             ? MessageLevel.ERROR
             : MessageLevel.LINT);
-        mq.getMessages().add(new Message(
-            MessageType.MASKING_SYMBOL,
-            level,
-            ident.getFilePosition(),
-            MessagePart.Factory.valueOf(name),
-            maskedDefinition.b));
+        if (ident.getFilePosition() != null) {  // HACK(msamuel)
+          mq.getMessages().add(new Message(
+              MessageType.MASKING_SYMBOL,
+              level,
+              ident.getFilePosition(),
+              MessagePart.Factory.valueOf(name),
+              maskedDefinition.b));
+        }
       }
       break;
     }
