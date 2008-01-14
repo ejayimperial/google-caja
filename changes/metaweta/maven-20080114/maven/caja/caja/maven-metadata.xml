@@ -1,0 +1,11 @@
+<metadata>
+  <groupId>caja</groupId>
+  <artifactId>caja</artifactId>
+  <versioning>
+    <release>r359</release>
+    <versions>
+      <version>r339</version>
+      <version>r359</version>
+    </versions>
+  </versioning>
+</metadata>
