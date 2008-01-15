@@ -102,13 +102,24 @@ function attachDocumentStubs(domPrefix, outers) {
     return tameNode(this.node_.prevSibling);
   };
   TameNode.prototype.addEventListener = function (name, listener, bubble) {
-    return this.node_.addEventListener(
-        name,
-        function (event) {
-          var thisNode = tameNode(this);
-          if (!thisNode) { throw new Error(); }
-          return listener.call(thisNode, new TameEvent(event));
-        }, bubble);
+    if (this.node_.addEventListener) {
+      this.node_.addEventListener(
+          name,
+          function (event) {
+            var thisNode = tameNode(this);
+            if (!thisNode) { throw new Error(); }
+            return listener.call(
+                thisNode, new TameEvent(event || window.event));
+          }, bubble);
+    } else {
+      var thisNode = this;
+      this.node_.attachEvent(
+          'on' + name,
+          function (event) {
+            return listener.call(
+                thisNode, new TameEvent(event || window.event));
+          });
+    }
   };
   TameNode.prototype.toString = function () {
     return '<' + this.node_.tagName + '>';
