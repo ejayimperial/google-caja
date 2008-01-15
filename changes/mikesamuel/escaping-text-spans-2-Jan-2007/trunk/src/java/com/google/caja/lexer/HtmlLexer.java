@@ -436,7 +436,7 @@ final class HtmlInputSplitter extends AbstractTokenStream<HtmlTokenType> {
                 state = State.SERVER_CODE;
                 break;
               default:
-                if (Character.isLetter(ch)) {
+                if (Character.isLetter(ch) && !this.inEscapeExemptBlock) {
                   state = State.TAGNAME;
                 } else if ('<' == ch) {
                   lookahead = ch;
