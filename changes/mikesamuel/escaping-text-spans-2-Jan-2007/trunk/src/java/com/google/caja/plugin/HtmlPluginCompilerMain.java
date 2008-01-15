@@ -17,9 +17,13 @@ package com.google.caja.plugin;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.AncestorChain;
+import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.reporting.Message;
+import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.RenderContext;
+import com.google.caja.reporting.SimpleMessageQueue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -68,9 +72,6 @@ public final class HtmlPluginCompilerMain {
       new Option("r", "root_div_id", true,
           "ID of root <div> into which generated JS will inject content");
 
-  private static final Option SCHEME =
-      new Option("s", "caja", false, "Emit Baja code instead of Aaja code");
-
   private static final Options options = new Options();
 
   static {
@@ -80,7 +81,6 @@ public final class HtmlPluginCompilerMain {
     options.addOption(JS_NAME);
     options.addOption(CSS_PREFIX);
     options.addOption(ROOT_DIV_ID);
-  //   options.addOption(IS_BAJA);
   }
 
   private File inputFile = null;
@@ -89,7 +89,6 @@ public final class HtmlPluginCompilerMain {
   private String jsName = null;
   private String cssPrefix = null;
   private String rootDivId = null;
-  private boolean isBaja = false;
 
   private HtmlPluginCompilerMain() {}
 
@@ -101,15 +100,12 @@ public final class HtmlPluginCompilerMain {
     int rc = processArguments(argv);
     if (rc != 0) return rc;
 
-    if (isBaja) {
-      jsName += "___OUTERS___";
-    }
-
     HtmlPluginCompiler compiler =
-        new HtmlPluginCompiler(jsName, cssPrefix, rootDivId, PluginMeta.TranslationScheme.CAJA);
+        new HtmlPluginCompiler(
+            new SimpleMessageQueue(),
+            new PluginMeta(jsName, cssPrefix, rootDivId,
+                           PluginMeta.TranslationScheme.CAJA));
     try {
-      compiler.addInput(
-          new AncestorChain<DomTree.Fragment>(parseHtmlFromFile(inputFile)));
       compiler.addInput(
           new AncestorChain<DomTree.Fragment>(parseHtmlFromFile(inputFile)));
 
@@ -125,15 +121,17 @@ public final class HtmlPluginCompilerMain {
     } finally {
       try {
         for (Message m : compiler.getMessageQueue().getMessages()) {
+          System.err.print(m.getMessageLevel().name() + ": ");
           m.format(compiler.getMessageContext(), System.err);
+          System.err.println();
         }
       } catch (IOException ex) {
         ex.printStackTrace();
       }
     }
 
-    writeFile(outputJsFile, compiler.getOutputJs());
-    writeFile(outputCssFile, compiler.getOutputCss());
+    writeFile(outputJsFile, compiler.getJavascript());
+    writeFile(outputCssFile, compiler.getCss());
 
     return 0;
   }
@@ -145,9 +143,6 @@ public final class HtmlPluginCompilerMain {
     } catch (org.apache.commons.cli.ParseException e) {
       throw new RuntimeException(e);
     }
-
-    // if (cl.hasOption(IS_BAJA.getOpt()))
-      isBaja = true;
 
     if (cl.getOptionValue(INPUT.getOpt()) == null)
       return usage("Option \"" + INPUT.getLongOpt() + "\" missing");
@@ -199,7 +194,7 @@ public final class HtmlPluginCompilerMain {
     }
   }
 
-  private void writeFile(File path, String contents) {
+  private void writeFile(File path, ParseTreeNode contents) {
     Writer w;
     try {
       w = new BufferedWriter(new FileWriter(path, false));
@@ -207,13 +202,14 @@ public final class HtmlPluginCompilerMain {
       throw new RuntimeException(e);
     }
 
-    try {
-      w.write(contents);
-      if (contents.length() > 0 && !contents.endsWith("\n")) {
+    if (contents != null) {
+      RenderContext rc = new RenderContext(new MessageContext(), w, true);
+      try {
+        contents.render(rc);
         w.write("\n");
+      } catch (IOException e)  {
+        throw new RuntimeException(e);
       }
-    } catch (IOException e)  {
-      throw new RuntimeException(e);
     }
 
     try {

@@ -14,6 +14,7 @@
 
 package com.google.caja.plugin;
 
+import com.google.caja.parser.ParserBase;
 import java.util.regex.Pattern;
 
 /**
@@ -53,16 +54,20 @@ public final class PluginMeta {
   public final TranslationScheme scheme;
   /** Used to generate names that are unique within the plugin's namespace. */
   private int guidCounter;
+  /** Describes how resources external to the plugin definition are resolved. */
+  private final PluginEnvironment env;
 
   public PluginMeta(String namespaceName, String namespacePrefix,
                     String rootDomId, TranslationScheme scheme) {
-    this(namespaceName, namespacePrefix, "", rootDomId, scheme);
+    this(namespaceName, namespacePrefix, "", rootDomId, scheme,
+         PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
   }
 
-  public PluginMeta(String namespaceName, String namespacePrefix,
-                    String pathPrefix, String rootDomId, TranslationScheme scheme) {
+  public PluginMeta(
+      String namespaceName, String namespacePrefix, String pathPrefix,
+      String rootDomId, TranslationScheme scheme, PluginEnvironment env) {
     if (null == namespaceName || null == namespacePrefix
-        || null == pathPrefix || null == rootDomId) {
+        || null == pathPrefix || null == rootDomId || env == null) {
       throw new NullPointerException();
     }
     if (pathPrefix.endsWith("/") && pathPrefix.length() > 1) {
@@ -71,11 +76,15 @@ public final class PluginMeta {
     if (!pathPrefix.startsWith("/") && !"".equals(pathPrefix)) {
       throw new IllegalArgumentException(pathPrefix);
     }
+    if (!ParserBase.isJavascriptIdentifier(namespaceName)) {
+      throw new IllegalArgumentException(namespaceName);
+    }
     this.namespaceName = namespaceName;
     this.namespacePrefix = namespacePrefix;
     this.pathPrefix = pathPrefix;
     this.rootDomId = rootDomId;
     this.scheme = scheme;
+    this.env = env;
     if (CONSTANT_NAME.matcher(this.namespaceName).matches()) {
       this.namespacePrivateName = this.namespaceName + "_PRIVATE";
     } else {
@@ -91,6 +100,8 @@ public final class PluginMeta {
   public String generateUniqueName(String prefix) {
     return prefix + "_" + (++guidCounter) + "___";
   }
+
+  public PluginEnvironment getPluginEnvironment() { return env; }
 
   private static final Pattern CONSTANT_NAME = Pattern.compile("^[A-Z_]+$");
 }

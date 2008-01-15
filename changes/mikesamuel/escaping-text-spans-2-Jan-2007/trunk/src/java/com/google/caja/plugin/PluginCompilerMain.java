@@ -82,7 +82,9 @@ public class PluginCompilerMain {
       args = parseFlags(args);
 
       meta = new PluginMeta(
-          namespaceName, namespacePrefix, pathPrefix, "", PluginMeta.TranslationScheme.AAJA);
+          namespaceName, namespacePrefix, pathPrefix, "",
+          PluginMeta.TranslationScheme.AAJA,
+          PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
       compiler = new PluginCompiler(meta);
 
       boolean success = true;
@@ -370,7 +372,9 @@ public class PluginCompilerMain {
   private void dumpMessages() {
     try {
       for (Message m : mq.getMessages()) {
+        System.out.print(m.getMessageLevel() + ":");
         m.format(mc, System.out);
+        System.out.println();
       }
     } catch (IOException ex) {
       ex.printStackTrace();

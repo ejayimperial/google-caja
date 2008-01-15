@@ -32,7 +32,7 @@ import com.google.caja.parser.html.DomParserTest;
 import com.google.caja.parser.html.JsHtmlParserTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
-import com.google.caja.parser.quasiliteral.DefaultRewriterTest;
+import com.google.caja.parser.quasiliteral.DefaultJsRewriterTest;
 import com.google.caja.parser.quasiliteral.MatchTest;
 import com.google.caja.parser.quasiliteral.QuasiBuilderTest;
 import com.google.caja.plugin.CompiledPluginTest;
@@ -46,6 +46,7 @@ import com.google.caja.plugin.HtmlWhitelistTest;
 import com.google.caja.plugin.PluginCompilerTest;
 import com.google.caja.plugin.UrlUtilTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
+import com.google.caja.util.JoinTest;
 import com.google.caja.util.SparseBitSetTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -73,6 +74,7 @@ public class AllTests {
           CssTreeTest.class,
           CssValidatorTest.class,
           DefaultGadgetRewriterTest.class,
+          DefaultJsRewriterTest.class,
           DomParserTest.class,
           EscapingTest.class,
           ExpressionSanitizerTest.class,
@@ -82,19 +84,19 @@ public class AllTests {
           HtmlCompiledPluginTest.class,
           HtmlLexerTest.class,
           HtmlWhitelistTest.class,
+          JoinTest.class,
           JsHtmlParserTest.class,
           JsLexerTest.class,
           LookaheadCharProducerTest.class,
+          MatchTest.class,
           ParseTreeNodeTest.class,
           ParserTest.class,
           PluginCompilerTest.class,
           PunctuationTrieTest.class,
+          QuasiBuilderTest.class,
           SparseBitSetTest.class,
           StringLiteralTest.class,
           UrlUtilTest.class,
-          MatchTest.class,
-          QuasiBuilderTest.class,
-          DefaultRewriterTest.class,
         };
     Pattern testFilter = Pattern.compile(System.getProperty("test.filter", ""));
     for (Class<? extends TestCase> testClass : testClasses) {
