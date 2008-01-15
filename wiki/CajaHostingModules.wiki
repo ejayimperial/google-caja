@@ -177,7 +177,7 @@ outers.literalGuy = literalGuy;
 }}}
 and do nothing else, then module code would be free to change the `name` property.  If we want it to be constant, then we need to freeze it.
 
-The function `warn()` allows a module to put up an alert box, but prefaces the message with a fixed string.  Since `alert()` is not included in `___.sharedOuters`, modules cannot pop up boxes unless we grant them the capability to do so.  We put the reference to `warn()` in `outers` and then tell Caja that it's safe to call it as a simple function.  [Note that there's a different call to tell Caja that it's safe to call methods of constructed objects (11).]
+The function `warn()` allows a module to put up an alert box, but prefaces the message with a fixed string.  Since `alert()` is not included in `___.sharedOuters`, modules cannot pop up boxes unless we grant them the capability to do so.  We put the reference to `warn()` in `outers` and then tell Caja that it's safe to call it as a simple function. (Note that there's a different call to tell Caja that it's safe to call methods of constructed objects (11).)
 
 Many modules will want to manipulate their DOM tree after they have been loaded.  We do not want to allow arbitrary calls to `document.write()`; that's far too much authority.  Instead, we allow the modules to manipulate the inner HTML of `my_shared_module_div` (19).  First, we create an empty object in the virtual global scope and call it `document` (8).  This gives the illusion of being in a browser context to the module code.  Next, we add some methods to `outers.document` and whitelist them.
 
