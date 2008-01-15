@@ -65,7 +65,7 @@ Here's a sample Caja module container; the numbers at the left are footnotes and
           // via warn()
 6         outers.warn = warn;
           // Mark it as callable; note the difference between marking a simple
-          // function as callable as opposed to marking a method as callable (11).
+          // function as callable as opposed to marking a method as callable (16).
 7         ___.simpleFunc(warn);
 
           // DOM taming
