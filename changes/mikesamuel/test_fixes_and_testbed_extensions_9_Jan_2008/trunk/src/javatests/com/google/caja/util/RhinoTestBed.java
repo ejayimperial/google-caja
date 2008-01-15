@@ -70,8 +70,7 @@ public class RhinoTestBed {
       }
       return result;
     } catch (org.mozilla.javascript.JavaScriptException e) {
-      e.printStackTrace();
-      Assert.fail(e.details());
+      Assert.fail(e.details() + "\n" + e.getScriptStackTrace());
       return null;
     } finally {
       Context.exit();
