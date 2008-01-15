@@ -1,0 +1,8 @@
+.searchbox #searchbox-results li {
+  list-style-type: none;
+  margin-top: .5em;
+  border-bottom: 1px dotted #888
+}
+.searchbox form {
+  display: inline
+}
