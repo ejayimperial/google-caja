@@ -1,4 +1,4 @@
-#summary Cajole is what we call the process of turning Caja code into javascript.
+#summary "Cajoling" is what we call the process of turning Caja code into javascript.
 
 = Cajole =
 
