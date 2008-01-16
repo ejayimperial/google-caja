@@ -104,10 +104,7 @@
                         })();
                       (function () {
                           var x___ = li;
-                          var x0___ = new (___.asCtor(___OUTERS___.StringInterpolation))(['\074b\076', titleText, '\074/b\076 &mdash; \074tt\076\074a href=', (function () {
-                                  var x___ = result;
-                                  return x___.url_canRead___ ? x___.url : ___.readPub(x___, 'url');
-                                })(), '\076', (function () {
+                          var x0___ = new (___.asCtor(___OUTERS___.StringInterpolation))(['\074b\076', titleText, '\074/b\076 &mdash; \074tt\076\074a href=\"#\"\076', (function () {
                                   var x___ = result;
                                   return x___.url_canRead___ ? x___.url : ___.readPub(x___, 'url');
                                 })(), '\074/a\076\074/tt\076']);
@@ -134,6 +131,7 @@
           if (result) {
             ___.asSimpleFunc(___OUTERS___.resultConsumer)(___.asSimpleFunc(___.primFreeze(___OUTERS___.clone))(result));
           }
+          return false;
         });
       ___OUTERS___.curry = ___.simpleFunc(function (fn, args) {
           return ___.primFreeze(___.simpleFunc(function () {

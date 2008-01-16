@@ -76,7 +76,8 @@ function doSearch(button) {
           var titleText = result.titleHtml.replace(/<\/?[A-Za-z][^>]*>/g, ' ');
           li.setInnerHTML(open(Template(
               '<b>$titleText</b> &mdash; '
-              + '<tt><a href=${result.url}>${result.url}</a></tt>')));
+              + '<tt><a href="#">${result.url}</a></tt>'))
+              );
           li.addEventListener('click', curry(showResult, [i]));
           resultList.appendChild(li);
         }
@@ -92,6 +93,7 @@ function showResult(index) {
   if (result) {
     resultConsumer(clone(result));
   }
+  return false;
 }
 
 function curry(fn, args) {

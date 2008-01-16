@@ -75,6 +75,7 @@ var TRANSFORMATIONS = [
   /ORE\b/g, 'OAR',
   /IE\b/g, 'EE',
   /AIR\b/g, 'EH',
+  /AIN\b/g, 'ANE',
   /IEF\b/g, 'EEF',
   /TY\b/g, 'TI',
   /NESS\b/g, 'NES',
