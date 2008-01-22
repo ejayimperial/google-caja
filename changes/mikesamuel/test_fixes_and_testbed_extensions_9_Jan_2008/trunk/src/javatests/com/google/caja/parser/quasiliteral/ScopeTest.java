@@ -18,14 +18,8 @@ import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.js.Block;
-import com.google.caja.parser.js.CatchStmt;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.Identifier;
-import com.google.caja.parser.js.TryStmt;
-import com.google.caja.reporting.MessageContext;
-import com.google.caja.reporting.MessageLevel;
-import com.google.caja.reporting.MessageQueue;
-import com.google.caja.reporting.MessageType;
 import com.google.caja.util.TestUtil;
 import junit.framework.TestCase;
 
@@ -34,14 +28,6 @@ import junit.framework.TestCase;
  * @author ihab.awad@gmail.com
  */
 public class ScopeTest extends TestCase {
-  private MessageQueue mq;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    mq = TestUtil.createTestMessageQueue(new MessageContext());
-  }
-  
   public void testSimpleDeclaredFunction() throws Exception {
     ParseTreeNode n = TestUtil.parse(
         "var x = 3;" +
@@ -49,7 +35,7 @@ public class ScopeTest extends TestCase {
         "  var y = 3;" +
         "  z = 4;" +
         "};");
-    Scope s0 = new Scope(n, mq);
+    Scope s0 = new Scope((Block)n);
     Scope s1 = new Scope(s0, findFunctionConstructor(n, "foo"));
 
     assertTrue(s0.isDefined("x"));
@@ -104,7 +90,7 @@ public class ScopeTest extends TestCase {
   public void testAnonymousFunction() throws Exception {
     ParseTreeNode n = TestUtil.parse(
         "var x = function() {};");
-    Scope s0 = new Scope(n, mq);
+    Scope s0 = new Scope((Block)n);
     Scope s1 = new Scope(s0, findFunctionConstructor(n, null));
 
     assertTrue(s0.isDefined("x"));
@@ -121,7 +107,7 @@ public class ScopeTest extends TestCase {
   public void testNamedFunction() throws Exception {
     ParseTreeNode n = TestUtil.parse(
         "var x = function foo() {};");
-    Scope s0 = new Scope(n, mq);
+    Scope s0 = new Scope((Block)n);
     Scope s1 = new Scope(s0, findFunctionConstructor(n, "foo"));
     
     assertTrue(s0.isDefined("x"));
@@ -148,7 +134,7 @@ public class ScopeTest extends TestCase {
   public void testNamedFunctionSameName() throws Exception {
     ParseTreeNode n = TestUtil.parse(
         "var x = function x() {};");
-    Scope s0 = new Scope(n, mq);
+    Scope s0 = new Scope((Block)n);
     Scope s1 = new Scope(s0, findFunctionConstructor(n, "x"));
 
     assertTrue(s0.isDefined("x"));
@@ -165,58 +151,18 @@ public class ScopeTest extends TestCase {
   public void testFormalParams() throws Exception {
     ParseTreeNode n = TestUtil.parse(
         "function f(x) {};");
-    Scope s0 = new Scope(n, mq);
+    Scope s0 = new Scope((Block)n);
     Scope s1 = new Scope(s0, findFunctionConstructor(n, "f"));
 
     assertFalse(s0.isDefined("x"));
     assertTrue(s1.isDefined("x"));    
   }
 
-  public void testCatchBlocks() throws Exception {
-    ParseTreeNode n = TestUtil.parse(
-        "try { } catch (e) { var x; }");
-
-    Block b = (Block) n;
-    TryStmt t = (TryStmt) b.children().get(0);
-    CatchStmt c = (CatchStmt) t.children().get(1);
-    
-    Scope s0 = new Scope(n, mq);
-    Scope s1 = new Scope(s0, c);
-
-    // e only defined in catch scope
-    assertFalse(s0.isDefined("e"));
-    assertTrue(s1.isDefined("e"));
-    assertTrue(s1.isException("e"));
-
-    // Definition of x appears in main scope
-    assertTrue(s0.isDefined("x"));
-  }
-
-  public void testMaskedVariables() throws Exception {
-    ParseTreeNode n = TestUtil.parse(
-        "var e; try { } catch (e) { var x; }");
-
-    Block b = (Block) n;
-    TryStmt t = (TryStmt) b.children().get(1);
-    CatchStmt c = (CatchStmt) t.children().get(1);
-    
-    Scope s0 = new Scope(n, mq);
-    Scope s1 = new Scope(s0, c);
-
-    assertEquals(
-        MessageType.MASKING_SYMBOL,
-        mq.getMessages().get(0).getMessageType());
-    assertTrue(
-        MessageLevel.ERROR.compareTo(
-            mq.getMessages().get(0).getMessageLevel())
-        <= 0);
-  }
-
   public void testConstructor() throws Exception {
     ParseTreeNode n = TestUtil.parse(
         "function ctor() { this.x = 3; }" +
         "function notctor() { x = 3; }");
-    Scope s = new Scope((Block) n, mq);
+    Scope s = new Scope((Block)n);
 
     assertTrue(s.isConstructor("ctor"));
     assertTrue(s.isDeclaredFunction("ctor"));
