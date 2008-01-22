@@ -19,6 +19,7 @@ import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.js.Block;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
@@ -109,11 +110,12 @@ public abstract class AbstractRewriter {
   }
 
   public final ParseTreeNode expand(ParseTreeNode module, MessageQueue mq) {
-    return expand(module, new Scope(module, mq), mq);
+    return expand(module, new Scope((Block)module), mq);
   }
 
   protected final ParseTreeNode expand(ParseTreeNode node, Scope scope, MessageQueue mq) {
     for (Rule rule : rules) {
+
       ParseTreeNode result = null;
       RuntimeException ex = null;
       
