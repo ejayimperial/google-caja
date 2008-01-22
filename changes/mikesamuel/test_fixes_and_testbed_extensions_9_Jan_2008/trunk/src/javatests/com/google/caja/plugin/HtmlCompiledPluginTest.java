@@ -31,7 +31,6 @@ import com.google.caja.util.TestUtil;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
-import java.net.URLEncoder;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
@@ -366,9 +365,8 @@ public class HtmlCompiledPluginTest extends TestCase {
       jsTree.render(rc);
       System.out.println("Compiled gadget: " + js);
 
-      String htmlStubUrl = "content:" + URLEncoder.encode(
-          "<html><head/><body><div id=\"test-test\"/></body></html>", "UTF-8")
-          .replace("+", "%20");
+      String htmlStubUrl = TestUtil.makeContentUrl(
+          "<html><head/><body><div id=\"test-test\"/></body></html>");
 
       RhinoTestBed.Input[] inputs = new RhinoTestBed.Input[] {
           // Browser Stubs

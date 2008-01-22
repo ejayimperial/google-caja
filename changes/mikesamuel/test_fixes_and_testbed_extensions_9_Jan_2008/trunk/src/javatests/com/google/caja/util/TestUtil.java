@@ -48,6 +48,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import java.util.ArrayList;
@@ -276,14 +277,23 @@ public final class TestUtil {
    * since it allows us to specify HTML in a string.
    * <p>
    * This registers a handler for the <code>content</code> protocol so that
-   * <code>content:%3Chtml%3E%3Chead/%3E%3Cbody/%3E%3C/html%3E</code>
-   * when loaded via <code>java.net.URL</code> will yield an
-   * <code>InputStream</code> containing the UTF-8 encoding of the string
-   * <code>"<html><head/><body/></html>"</code>.
+   * {@code content:foo-bar} when loaded via {@code java.net.URL} will yield an
+   * {@code InputStream} containing the UTF-8 encoding of the string
+   * {@code "foo-bar"}.
    */
   public static void enableContentUrls() {
     // Force loading of class that registers a handler for content: URLs.
     SetupUrlHandlers.init();
+  }
+
+  public static String makeContentUrl(String content) {
+    try {
+      return "content:"
+          + URLEncoder.encode(content, "UTF-8").replace("+", "%20");
+    } catch (UnsupportedEncodingException ex) {
+      throw (AssertionError) new AssertionError(
+          "UTF-8 not supported").initCause(ex);
+    }
   }
 }
 

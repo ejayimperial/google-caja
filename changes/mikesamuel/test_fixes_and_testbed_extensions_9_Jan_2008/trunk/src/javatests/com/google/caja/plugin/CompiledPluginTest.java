@@ -352,6 +352,8 @@ public class CompiledPluginTest extends TestCase {
       rc.newLine();
     }
 
+    String htmlStubUrl = TestUtil.makeContentUrl("<html><head/><body/></html>");
+
     String compiledPlugin = buf.toString();
 
     RhinoTestBed.Input[] inputs = new RhinoTestBed.Input[] {
@@ -361,9 +363,8 @@ public class CompiledPluginTest extends TestCase {
         new RhinoTestBed.Input(getClass(), "console-stubs.js"),
         // Initialize the DOM
         new RhinoTestBed.Input(
-            new StringReader(
-                // Document not defined until window.location set.
-                "location = 'content:%3Chtml%3E%3Cbody/%3E%3C/html%3E';\n"),
+            // Document not defined until window.location set.
+            new StringReader("location = '" + htmlStubUrl + "';\n"),
             "dom"),
         // Make the assertTrue, etc. functions available to javascript
         new RhinoTestBed.Input(getClass(), "asserts.js"),
