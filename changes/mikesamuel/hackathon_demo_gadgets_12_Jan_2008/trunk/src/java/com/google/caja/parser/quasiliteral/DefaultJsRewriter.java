@@ -523,7 +523,7 @@ public class DefaultJsRewriter extends JsRewriter {
             scope.isDeclaredFunction(getReferenceName(bindings.get("ctor")))) {
           return substV(
               "new (___.asCtor(@ctor))(@as*)",
-              "ctor", bindings.get("ctor"),
+              "ctor", expand(bindings.get("ctor"), scope, mq),
               "as", expandAll(bindings.get("as"), scope, mq));
         }
         return NONE;

@@ -48,7 +48,7 @@ function showKitten(result) {
         }
 
         // Pick one at random.
-        var k = (Math.random() * n) | 0;
+        var k = 0;  // (Math.random() * n) | 0;  FAKE FOR DEMO
         log('chose ' + k + ' from ' + imageResults.length);
 
         // Display it.

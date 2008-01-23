@@ -161,6 +161,6 @@
           }
           return cloned;
         });
-      ___OUTERS___.emitHtml___('\n\n\074center\076\n  \074form onsubmit=\"return false\"\076\n    \074input type=\"text\" size=\"60\" name=\"q\" value=\"it was the best of times\"\076\n    \074input type=\"button\" value=\"Search\" onclick=\"return plugin_dispatchEvent___(this, event || window.event, ', ___.getId(___OUTERS___), ', \'c_1___\')\"\076\n  \074/form\076\n\074/center\076');
+      ___OUTERS___.emitHtml___('\n\n\074center\076\n  \074form onsubmit=\"return false\"\076\n    \074input type=\"text\" size=\"60\" name=\"q\" value=\"it was the best of times\"\076\n    \074input type=\"button\" value=\"Search\" onclick=\"return plugin_dispatchEvent___(this, event || window.event, ', ___.getId(___OUTERS___), ', \'c_1___\')\"\076\n  \074/form\076\n\074/center\076\n');
     });
 }

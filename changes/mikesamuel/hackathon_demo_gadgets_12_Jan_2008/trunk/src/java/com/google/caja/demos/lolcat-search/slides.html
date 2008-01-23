@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>Securing JavaScript &mdash; Object Capabilities</title>
+  <title>Securing JavaScript &mdash; Object-Capabilities</title>
   <style type="text/css">
     /* Hide the dynamic bits until we know js works */
     #dynamic { display: none }
@@ -27,13 +27,15 @@
 
     .slide {
       text-align: center;
-      font-size: 175%;
+      font-size: 166%;
       /* meant for display on a 1024 x 768 browser window */
       width: 950px;
-      height: 640px
+      height: 550px
     }
 
-    button { font-size: 150%; border: 0; background: white; color: blue; }
+    span.button {
+      font-size: 150%; border: 0; background: white; color: blue
+    }
 
     .slide ul, .slide ol, .slide pre {
       text-align: left; margin-left: 3em; margin-right: 3em;
@@ -135,17 +137,20 @@
   }
 
   function createControls(controlContainer) {
-    var prevButton = document.createElement('BUTTON');
+    var prevButton = document.createElement('SPAN');
+    prevButton.className = 'button';
     prevButton.onclick = function () {
       setCurrentSlide((currentSlide + slides.length - 1) % slides.length);
     };
     prevButton.appendChild(document.createTextNode('\u2190'));
 
-    var tocButton = document.createElement('BUTTON');
+    var tocButton = document.createElement('SPAN');
+    tocButton.className = 'button';
     tocButton.onclick = slideShower('toc');
     tocButton.appendChild(document.createTextNode('TOC'));
 
-    var nextButton = document.createElement('BUTTON');
+    var nextButton = document.createElement('SPAN');
+    nextButton.className = 'button';
     nextButton.onclick = function () {
       setCurrentSlide((currentSlide + 1) % slides.length);
     };
@@ -189,6 +194,7 @@
     return function () {
       var slideIndex = slideIndexFromId(slides, slideId);
       slideIndex !== undefined && setCurrentSlide(slideIndex);
+      document.getElementById('controls').focus();
     };
   }
 
@@ -197,10 +203,10 @@
   --></script>
 </head>
 <body bgcolor=white
- onload="initSlides(); document.getElementsByTagName('button')[0].focus()">
+ onload="initSlides(); document.getElementById('controls').focus()">
 
   <div class=noprint id=dynamic
-   ><span id=controls></span> (<span id=counter>&nbsp;</span>)</div>
+   ><a id=controls></a> (<span id=counter>&nbsp;</span>)</div>
 
   <ul>
     <li class=slide>
@@ -215,7 +221,7 @@
       <br>
 
       <p>Rewrites JavaScript/HTML/CSS</p>
-      <p>Enforces Object Capabilities</p>
+      <p>Enforces Object-Capabilities</p>
       <p>Gadget writers use familiar tools</p>
     </li>
 
@@ -224,12 +230,13 @@
 
       <p>Gadget can't interfere with the container</p>
       <p>Nor with other gadgets</p>
-      <p>Can be safely given user data</p>
+      <p>But mutually suspicious gadgets can cooperate</p>
+      <p>And can be safely given user data</p>
       <p>With restrictions</p>
     </li>
 
     <li class=slide>
-      <h1>Object Capabilities</h1>
+      <h1>Object-Capabilities</h1>
 
       <p>An O.C. Language is an OO language that ensures:</p>
       <ul>
@@ -273,8 +280,6 @@
     <li class=slide>
       <h1>Demo: LOLcat Search</h1>
 
-      <small>http://tinyurl.com/2toxmm</small>
-
       <img src=lolcat-search.png style=float:right>
 
       <p>Two cooperating gadgets:</p>
@@ -289,7 +294,7 @@
     </li>
 
     <li class=slide>
-      <h1>JS &amp; CSS extracted from HTML</h1>
+      <h1>JS &amp; CSS extracted</h1>
 
       <pre>&lt;script src="searchbox.js"&gt;&lt;/script&gt;
 &lt;link rel=stylesheet href="searchbox.css" /&gt;
@@ -306,7 +311,7 @@ ___OUTERS___.emitHtml___(<span class=str>'&lt;form onsubmit=\"return false\"&gt;
      + <span class=str>'    &lt;input type=\"text\" size=\"60\" name=\"q\"&gt;\n'</span>
      + <span class=str>'    &lt;input type=\"button\" value=\"Search\"'</span>
      + <span class=str>' onclick=\"<b>return plugin_dispatchEvent___(&hellip;)</b>\"&gt;\n'</span>
-     + <span class=str>'  &lt;/form&gt;\n&lt;/center&gt;'</span>);
+     + <span class=str>'  &lt;/form&gt;'</span>);
       </pre>
     </li>
 

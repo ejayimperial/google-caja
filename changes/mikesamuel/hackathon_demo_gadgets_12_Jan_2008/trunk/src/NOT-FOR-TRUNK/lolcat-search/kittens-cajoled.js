@@ -63,10 +63,7 @@
                       ___.asSimpleFunc(___.primFreeze(___OUTERS___.renderKittenTable))('error.jpg', snippet);
                       return undefined;
                     }
-                    var k = (function () {
-                        var x___ = ___OUTERS___.Math;
-                        return x___.random_canCall___ ? x___.random() : ___.callPub(x___, 'random', []);
-                      })() * n | 0;
+                    var k = 0;
                     ___.asSimpleFunc(___OUTERS___.log)('chose ' + k + ' from ' + (function () {
                           var x___ = imageResults;
                           return x___.length_canRead___ ? x___.length : ___.readPub(x___, 'length');
@@ -90,6 +87,6 @@
               return x___.setInnerHTML_canCall___ ? x___.setInnerHTML(x0___) : ___.callPub(x___, 'setInnerHTML', [x0___]);
             })();
         });
-      ___OUTERS___.emitHtml___('\n');
+      ___OUTERS___.emitHtml___('\n\n');
     });
 }

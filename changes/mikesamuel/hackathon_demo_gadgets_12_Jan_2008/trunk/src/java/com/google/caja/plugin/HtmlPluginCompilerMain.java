@@ -22,10 +22,12 @@ import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
+import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.plugin.stages.OpenTemplateStage;
 import com.google.caja.plugin.stages.ConsolidateCodeStage;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.util.Pipeline;
@@ -106,6 +108,9 @@ public final class HtmlPluginCompilerMain {
   }
 
   private int run(String[] argv) {
+    MessageQueue mq = new SimpleMessageQueue();
+    MessageContext mc = null;
+
     try {
       int rc = processArguments(argv);
       if (rc != 0) return rc;
@@ -114,11 +119,11 @@ public final class HtmlPluginCompilerMain {
           inputFile.getParentFile());
     
       HtmlPluginCompiler compiler =
-          new HtmlPluginCompiler(
-              new SimpleMessageQueue(),
-              new PluginMeta(jsName, cssPrefix, "", rootDivId,
-                             PluginMeta.TranslationScheme.CAJA,
-                             env));
+          new HtmlPluginCompiler(mq, new PluginMeta(
+              jsName, cssPrefix, "", rootDivId,
+              PluginMeta.TranslationScheme.CAJA, env));
+      mc = compiler.getMessageContext();
+
       for (ListIterator<Pipeline.Stage<Jobs>> it
                = compiler.getCompilationPipeline().getStages().listIterator();
            it.hasNext();) {
@@ -129,8 +134,8 @@ public final class HtmlPluginCompilerMain {
         }
       }
       try {
-        compiler.addInput(
-            new AncestorChain<DomTree.Fragment>(parseHtmlFromFile(inputFile)));
+        compiler.addInput(new AncestorChain<DomTree.Fragment>(
+            parseHtmlFromFile(inputFile, mq)));
 
         if (!compiler.run()) {
           throw new RuntimeException();
@@ -141,16 +146,6 @@ public final class HtmlPluginCompilerMain {
       } catch (IOException ex) {
         System.err.println(ex);
         return -1;
-      } finally {
-        try {
-          for (Message m : compiler.getMessageQueue().getMessages()) {
-            System.err.print(m.getMessageLevel().name() + ": ");
-            m.format(compiler.getMessageContext(), System.err);
-            System.err.println();
-          }
-        } catch (IOException ex) {
-          ex.printStackTrace();
-        }
       }
 
       writeFile(outputJsFile, compiler.getJavascript());
@@ -160,6 +155,17 @@ public final class HtmlPluginCompilerMain {
     } catch (Throwable th) {
       th.printStackTrace();
       return -1;
+    } finally {
+      if (mc == null) { mc = new MessageContext(); }
+      try {
+        for (Message m : mq.getMessages()) {
+          System.err.print(m.getMessageLevel().name() + ": ");
+          m.format(mc, System.err);
+          System.err.println();
+        }
+      } catch (IOException ex) {
+        ex.printStackTrace();
+      }
     }
   }
 
@@ -210,12 +216,14 @@ public final class HtmlPluginCompilerMain {
     return -1;
   }
 
-  private DomTree.Fragment parseHtmlFromFile(File f)
+  private DomTree.Fragment parseHtmlFromFile(File f, MessageQueue mq)
       throws IOException, ParseException {
     InputSource is = new InputSource(f.toURI());
     Reader in = new InputStreamReader(new FileInputStream(f), "UTF-8");
     try {
-      return DomParser.parseFragment(DomParser.makeTokenQueue(is, in, false));
+      return DomParser.parseFragment(
+          DomParser.makeTokenQueue(is, in, false),
+          OpenElementStack.Factory.createHtml5ElementStack(mq));
     } finally {
       in.close();
     }
