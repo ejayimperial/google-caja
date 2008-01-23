@@ -1,0 +1,70 @@
+[http://incubator.apache.org/projects/shindig.html Shindig] is an Apache project to provide an example [http://code.google.com/apis/opensocial Open Social] container.  Shindig also supports [http://code.google.com/p/google-caja Caja], a secure subset of Javascript.  You may download and build your own copy of Shindig, but if your only interest is writing Open Social gadgets, you can simply use  [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html Google's server].
+
+The sample container has three main sections:  
+
+  * At top center, there is an "address box" in a blue region into which you may enter the URL of an Open Social XML gadget description.  To the right are two checkboxes, 
+    * "use caja"
+    When this box is checked, the content of the gadget (between &lt;Content> tags) is "cajoled" before being served to the user--that is, a program examines the code and inserts runtime checks to prevent prohibited actions.
+    * "use permissive.js"
+    This box is only active if "use caja" is checked.  The file "permissive.js" whitelists everything, but logs to the console every DOM API call.  It is purposely insecure so that we can find out which APIs are most important to gadget authors.  If "use permissive.js" is unchecked, then the only DOM APIs available to the gadget are `document.getElementById()` and the ability to set the `innerHTML` property of DOM elements.
+    
+  * There is a yellow region that allows you to provide a fake social network to simulate a logged-in user.  There are two ways to provide this, selected by the radio button:
+    * a URL to an XML file on the web
+    * a textbox where you can enter the data by hand
+    
+  * Below the yellow region is the area where the gadget will be rendered.
+  
+When using Caja, some Javascript constructs are prohibited:
+
+  * Accessing private names from outside an object.
+  Caja provides for truly private variables in Javascript:
+    {{{
+function F(x) {
+  this.x_ = x;
+}
+F.prototype.getX() = function {
+  return this.x_;
+}
+var f=new F(1);
+}}}
+  If we tried to execute `f.x_ = 2` or even `var y = f.x_`, we'd get a compile-time error.
+  
+  * Changing frozen objects.
+  Caja provides a way to make data immutable.  Object and Array literals have to be explicitly frozen:
+    {{{
+var obj = {x:10, y:20};
+obj.y = 40; // no problem
+caja.freeze(obj);
+obj.x = 30; // causes runtime error    
+}}}
+  Functions are frozen once used in a `new` expression:
+    {{{
+function F(x) {
+  this.x_ = x;
+}
+F.prototype.getX() = function {
+  return this.x_;
+}
+
+var f=new F(1);
+
+// This method definition will cause a compile-time error because it occurred after using
+// F() in a "new" expression.  (It'll work fine if you move it before the "new".)
+F.prototype.setX(x) = function {
+  this.x_ = x;
+}
+}}}
+  * No `this` stealing.
+  In the code below, `F` chooses to expose a getter for its private variable `x_`, while `G` does not.  Caja doesn't allow you to "steal" `G`'s private variable by attaching an evil method:
+  {{{
+function F(x) { this.x_ = x; }
+F.prototype.getX() = function { return x_; }
+function G(x) { this.x_ = x; }
+
+f = new F(1);
+g = new G(2);
+g.getX = f.getX; // causes compile-time error
+}}}
+  * No `with` or `eval`.
+  Caja supports JSONRequest, so there's no need to use `eval` for changing a string into a JSON object; all other uses are very suspicious and cause a lot of trouble.  The keyword `with` is just plain evil, so we excised it completely.
+  
