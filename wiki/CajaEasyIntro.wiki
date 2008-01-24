@@ -1,8 +1,8 @@
-[http://incubator.apache.org/projects/shindig.html Shindig] is an Apache project to provide an example [http://code.google.com/apis/opensocial Open Social] container.  Shindig also supports [http://code.google.com/p/google-caja Caja], a secure subset of Javascript.  You may download and build your own copy of Shindig, but if your only interest is writing Open Social gadgets, you can simply use  [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html Google's server].
+[http://incubator.apache.org/projects/shindig.html Shindig] is an Apache project to provide an example [http://code.google.com/apis/opensocial OpenSocial] container.  Shindig also supports [http://code.google.com/p/google-caja Caja], a secure subset of Javascript.  You may download and build your own copy of Shindig, but if your only interest is writing OpenSocial gadgets, you can simply use  [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html Google's server].
 
 The sample container has three main sections:  
 
-  * At top center, there is an "address box" in a blue region into which you may enter the URL of an Open Social XML gadget description.  To the right are two checkboxes, 
+  * At top center, there is an "address box" in a blue region into which you may enter the URL of an OpenSocial XML gadget description.  To the right are two checkboxes, 
     * "use caja"
     When this box is checked, the content of the gadget (between <Content> tags) is "cajoled" before being served to the user--that is, a program examines the code and inserts runtime checks to prevent prohibited actions.
     * "use permissive.js"
@@ -70,4 +70,4 @@ g.getX = f.getX; // causes compile-time error
 
 Caja also sanitizes HTML and CSS.  It doesn't support any nonstandard extensions, like `expression` or `import`.
 
-If you have other questions, feel free to post them to the [http://groups.google.com/group/opensocial Open Social mailing list]. 
+If you have other questions, feel free to post them to the [http://groups.google.com/group/opensocial-api/topics OpenSocial mailing list].
