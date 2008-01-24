@@ -83,4 +83,8 @@ g.prop();          // never gets here
 
 Caja also sanitizes HTML and CSS.  It doesn't support any nonstandard extensions, like `expression` or `import`.
 
+=A "Malicious" Gadget=
+Here's a [http://google-caja.googlecode.com/files/window.top.xml gadget] that presents a button to the user.  When the button is clicked, it attempts to set `window.top.location` to `http://www.google.com`.  When the "use caja" box is unchecked, the attack succeeds; when it is checked, a runtime error occurs.
+
+=Everything Else=
 If you have other questions, feel free to post them to the [http://groups.google.com/group/opensocial-api/topics OpenSocial mailing list].
