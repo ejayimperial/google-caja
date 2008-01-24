@@ -60,7 +60,7 @@ F.prototype.setX(x) = function {
   In the code below, `F` chooses to expose a getter for its private variable `x_`, while `G` does not.  Caja doesn't allow you to "steal" `G`'s private variable by attaching an evil method:
   {{{
 function F(x) { this.x_ = x; }
-F.prototype.getX() = function { return x_; }
+F.prototype.getX() = function { return this.x_; }
 function G(x) { this.x_ = x; }
 
 f = new F(1);
