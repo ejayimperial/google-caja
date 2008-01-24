@@ -1,6 +1,6 @@
 #summary Simple introduction to Caja via the OpenSocial sample container
 
-[http://incubator.apache.org/projects/shindig.html Shindig] is an Apache incubator project which is providing a reference implementation of an [http://code.google.com/apis/opensocial/ OpenSocial] container.  Shindig also (optionally) supports [http://code.google.com/p/google-caja Caja], a secure subset of Javascript.  You may download and build your own copy of Shindig, but if your only interest is writing gadgets, you can simply use [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html a hosted version run by Google].
+[http://incubator.apache.org/projects/shindig.html Shindig] is an Apache incubator project which is providing a reference implementation of an [http://code.google.com/apis/opensocial/ OpenSocial] container.  Shindig also (optionally) supports [http://code.google.com/p/google-caja Caja], a secure subset of Javascript.  (Caja is a Spanish word meaning "box" or "vault", pronounced KA-ha.)  You may download and build your own copy of Shindig, but if your only interest is writing gadgets, you can simply use [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html a hosted version run by Google].
 
 =Why Use Caja?=
 Gadgets are currently loaded in an `IFRAME`, which requires multiple requests to the server.  Under Caja, the gadgets are served inline, which will reduce the time it takes to fetch them.
