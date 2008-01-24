@@ -41,7 +41,8 @@ public class RhinoTestBed {
 
   /**
    * Runs the javascript from the given inputs in order, and returns the
-   * result. If dumpJsFile is not null, also put all the javascript in that file.
+   * result.
+   * If dumpJsFile is not null, also put all the javascript in that file.
    */
   public static Object runJs(final String dumpJsFile, Input... inputs)
   throws IOException {
@@ -57,7 +58,7 @@ public class RhinoTestBed {
         for (Input input : inputs) {
           allInputs += readReader(input.input);
         }
-        writeFile(new File("/tmp/js.all"), allInputs);
+        writeFile(new File(dumpJsFile), allInputs);
         Input input = new Input(new StringReader(allInputs), "all");
         result = context.evaluateReader(
             globalScope, input.input, input.source, 1, null);
@@ -89,6 +90,9 @@ public class RhinoTestBed {
     public Input(Reader input, String source) {
       this.input = input;
       this.source = source;
+    }
+    public Input(String javascript, String source) {
+      this(new StringReader(javascript), source);
     }
   }
 
