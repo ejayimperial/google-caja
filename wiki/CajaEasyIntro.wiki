@@ -4,7 +4,7 @@ The sample container has three main sections:
 
   * At top center, there is an "address box" in a blue region into which you may enter the URL of an Open Social XML gadget description.  To the right are two checkboxes, 
     * "use caja"
-    When this box is checked, the content of the gadget (between &lt;Content> tags) is "cajoled" before being served to the user--that is, a program examines the code and inserts runtime checks to prevent prohibited actions.
+    When this box is checked, the content of the gadget (between <Content> tags) is "cajoled" before being served to the user--that is, a program examines the code and inserts runtime checks to prevent prohibited actions.
     * "use permissive.js"
     This box is only active if "use caja" is checked.  The file "permissive.js" whitelists everything, but logs to the console every DOM API call.  It is purposely insecure so that we can find out which APIs are most important to gadget authors.  If "use permissive.js" is unchecked, then the only DOM APIs available to the gadget are `document.getElementById()` and the ability to set the `innerHTML` property of DOM elements.
     
@@ -69,3 +69,5 @@ g.getX = f.getX; // causes compile-time error
   Caja supports JSONRequest, so there's no need to use `eval` for changing a string into a JSON object; all other uses are very suspicious and cause a lot of trouble.  The keyword `with` is just plain evil, so we excised it completely.
 
 Caja also sanitizes HTML and CSS.  It doesn't support any nonstandard extensions, like `expression` or `import`.
+
+If you have other questions, feel free to post them to the [http://groups.google.com/group/opensocial Open Social mailing list]. 
