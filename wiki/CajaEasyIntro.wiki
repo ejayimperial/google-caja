@@ -65,7 +65,7 @@ function G(x) { this.x_ = x; }
 
 f = new F(1);
 g = new G(2);
-g.getX = f.getX; // causes compile-time error
+g.getX = f.getX; // causes runtime error
 }}}
   * No `with` or `eval`.
   Caja supports JSONRequest, so there's no need to use `eval` for changing a string into a JSON object; all other uses are very suspicious and cause a lot of trouble.  The keyword `with` is just plain evil, so we excised it completely.
