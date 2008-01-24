@@ -1,3 +1,5 @@
+#summary Simple introduction to Caja via the OpenSocial sample container
+
 [http://incubator.apache.org/projects/shindig.html Shindig] is an Apache project to provide an example [http://code.google.com/apis/opensocial OpenSocial] container.  Shindig also supports [http://code.google.com/p/google-caja Caja], a secure subset of Javascript.  You may download and build your own copy of Shindig, but if your only interest is writing OpenSocial gadgets, you can simply use  [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html Google's server].
 
 The sample container has three main sections:  
