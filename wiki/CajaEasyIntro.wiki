@@ -36,7 +36,7 @@ function F(x) {
 F.prototype.getX() = function {
   return this.x_;
 }
-var f=new F(1);
+var f = new F(1);
 }}}
   If we tried to execute `f.x_ = 2` or even `var y = f.x_`, we'd get a compile-time error.
   
