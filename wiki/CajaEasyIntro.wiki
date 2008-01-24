@@ -67,4 +67,5 @@ g.getX = f.getX; // causes compile-time error
 }}}
   * No `with` or `eval`.
   Caja supports JSONRequest, so there's no need to use `eval` for changing a string into a JSON object; all other uses are very suspicious and cause a lot of trouble.  The keyword `with` is just plain evil, so we excised it completely.
-  
+
+Caja also sanitizes HTML and CSS.  It doesn't support any nonstandard extensions, like `expression` or `import`.
