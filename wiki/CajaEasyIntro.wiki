@@ -60,12 +60,14 @@ F.prototype.setX(x) = function {
   In the code below, `F` chooses to expose a getter for its private variable `x_`, while `G` does not.  Caja doesn't allow you to "steal" `G`'s private variable by attaching an evil method:
   {{{
 function F(x) { this.x_ = x; }
-F.prototype.getX() = function { return this.x_; }
-function G(x) { this.x_ = x; }
+F.prototype.getX = function() { return this.x_; }
+function G(x) { this.x_ = x; this.prop = 1; }
+G.prototype.setProp = function(p) { this.prop = p; }
 
 f = new F(1);
 g = new G(2);
-g.getX = f.getX; // causes runtime error
+g.setProp(f.getX); // causes runtime error
+g.prop();          // never gets here
 }}}
   * No `with` or `eval`.
   Caja supports JSONRequest, so there's no need to use `eval` for changing a string into a JSON object; all other uses are very suspicious and cause a lot of trouble.  The keyword `with` is just plain evil, so we excised it completely.
