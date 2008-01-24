@@ -25,6 +25,8 @@ The sample container has three main sections:
     
   * Below the yellow region is the area where the gadget will be rendered.
   
+=Caja Caveats=
+
 When using Caja, some Javascript constructs are prohibited:
 
   * Accessing private names from outside an object.
@@ -82,6 +84,8 @@ g.prop();          // never gets here
   Caja supports JSONRequest, so there's no need to use `eval` for changing a string into a JSON object; all other uses are very suspicious and cause a lot of trouble.  The keyword `with` is just plain evil, so we excised it completely.
 
 Caja also sanitizes HTML and CSS.  It doesn't support any nonstandard extensions, like `expression` or `import`.
+
+Caja supports the use of external scripts; when it recognizes a reference to an external script, it fetches the script, inlines it, and attempts to continue the cajoling process.  Most javascript libraries have not yet been converted to be caja-compatible, although there is work being done toward enabling the most popular ones.
 
 =A "Malicious" Gadget=
 Here's a gadget that presents a button to the user:
