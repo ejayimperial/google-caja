@@ -11,7 +11,7 @@ Caja is a platform that will finally allow gadget writers to do secure mashups.
 
 =The Sample Container=
 
-The sample container has three main sections:  
+The [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html sample container] has three main sections:  
 
   * At top center, there is an "address box" in a blue region into which you may enter the URL of an XML gadget description.  To the right there are three checkboxes, 
     * "use caja"
@@ -99,7 +99,7 @@ Caja supports the use of external scripts; when it recognizes a reference to an 
 Here are two gadgets that "attack" the user:
   http://google-caja.googlecode.com/files/window.top.xml
   http://google-caja.googlecode.com/files/grabcookie.xml
-Copy either URL into the address bar of the sample container and press the "reset" button to try it out.  
+Copy either URL into the address bar of the [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html sample container] and press the "reset" button to try it out.  
 
 The first gadget has a single button.  When the button is clicked, it attempts to set `window.top.location` to `http://www.google.com`.  When the "use caja" box is not checked, the attack succeeds; when it is checked, the attack fails and a runtime error occurs.
 
