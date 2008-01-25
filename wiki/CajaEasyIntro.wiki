@@ -56,7 +56,7 @@ obj.y = 40; // no problem
 caja.freeze(obj);
 obj.x = 30; // causes runtime error    
 }}}
-  Functions are frozen once used in a `new` expression:
+  Constructed objects are frozen and functions are frozen once used in a `new` expression:
     {{{
 function F(x) {
   this.x_ = x;
@@ -67,9 +67,11 @@ F.prototype.getX() = function {
 
 var f=new F(1);
 
-// This method definition will cause a compile-time error because it occurred after using
-// F() in a "new" expression.  (It'll work fine if you move it before the "new".)
-F.prototype.setX(x) = function {
+f.y = 1; // causes runtime error
+
+// This also causes a runtime error, though it'll work fine if you move 
+// it before the "new".
+F.prototype.setX(x) = function {  
   this.x_ = x;
 }
 }}}
