@@ -97,8 +97,11 @@ Caja supports the use of external scripts; when it recognizes a reference to an 
 
 ="Malicious" Gadgets=
 Here are two gadgets that "attack" the user:
+
   http://google-caja.googlecode.com/files/window.top.xml
+
   http://google-caja.googlecode.com/files/grabcookie.xml
+
 Copy either URL into the address bar of the [http://cg-in-f85.google.com/46/o/ig/files/samplecontainer/samplecontainer.html sample container] and press the "reset" button to try it out.  
 
 The first gadget has a single button.  When the button is clicked, it attempts to set `window.top.location` to `http://www.google.com`.  When the "use caja" box is not checked, the attack succeeds; when it is checked, the attack fails and a runtime error occurs.
