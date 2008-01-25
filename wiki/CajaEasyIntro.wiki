@@ -13,7 +13,7 @@ Caja is a platform that will finally allow gadget writers to do secure mashups.
 
 The sample container has three main sections:  
 
-  * At top center, there is an "address box" in a blue region into which you may enter the URL of an XML gadget description.  To the right there is three checkboxes, 
+  * At top center, there is an "address box" in a blue region into which you may enter the URL of an XML gadget description.  To the right there are three checkboxes, 
     * "use caja"
     When this box is checked, the content of the gadget (between <Content> tags) is "cajoled" before being served to the user--that is, a program examines the code and inserts runtime checks to prevent prohibited actions.
     * "use permissive.js"
