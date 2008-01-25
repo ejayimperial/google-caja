@@ -95,12 +95,15 @@ Caja also sanitizes HTML and CSS.  It doesn't support any nonstandard extensions
 
 Caja supports the use of external scripts; when it recognizes a reference to an external script, it fetches the script, inlines it, and attempts to continue the cajoling process.  Most javascript libraries have not yet been converted to be caja-compatible, although there is work being done toward enabling the most popular ones.
 
-=A "Malicious" Gadget=
-Here's a gadget that "attacks" the user:
+="Malicious" Gadgets=
+Here are two gadgets that "attack" the user:
   http://google-caja.googlecode.com/files/window.top.xml
-Copy this URL into the address bar of the sample container and press the "reset" button to try it out.  
+  http://google-caja.googlecode.com/files/grabcookie.xml
+Copy either URL into the address bar of the sample container and press the "reset" button to try it out.  
 
-The gadget has a single button.  When the button is clicked, it attempts to set `window.top.location` to `http://www.google.com`.  When the "use caja" box is not checked, the attack succeeds; when it is checked, the attack fails and a runtime error occurs.
+The first gadget has a single button.  When the button is clicked, it attempts to set `window.top.location` to `http://www.google.com`.  When the "use caja" box is not checked, the attack succeeds; when it is checked, the attack fails and a runtime error occurs.
+
+The first gadget has a textbox and a button.  When the button is clicked, it attempts to read the value of `document.cookie` and display it in the textbox.  When the "use caja" box is not checked, the attack succeeds; when it is checked, the attack fails and a runtime error occurs.
 
 =Everything Else=
 If you have other questions, feel free to post them to the [http://groups.google.com/group/opensocial-api/topics OpenSocial mailing list].
