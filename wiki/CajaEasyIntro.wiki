@@ -21,7 +21,6 @@ The sample container has three main sections:
     {{{
 window = {}.eval("window");
 }}} 
-
     If "use permissive.js" is unchecked, then the only DOM APIs available to the gadget are `document.getElementById()` and the ability to set the `innerHTML` property of DOM elements.
     
   * There is a yellow region that allows you to provide a mock social network and datastore (key,value pairs) to simulate a logged-in user.  There are two ways to provide this, selected by the radio button:
