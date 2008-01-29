@@ -6,7 +6,7 @@ Can confuse the lexer causing executable code to be interpreted as the content o
 
 
 ==Background==
-according to EcmaScript
+According to EcmaScript
 ===7.1 Unicode Format-Control Characters===
     The Unicode format-control characters (i.e., the characters in category "Cf" in the Unicode Character Database such as LEFT-TO-RIGHT MARK or RIGHT-TO-LEFT MARK) are control codes used to control the formatting of a range of text in the absence of higher-level protocols for this (such as mark-up languages).
     It is useful to allow these in source text to facilitate editing and display.
@@ -27,7 +27,7 @@ Firefox strips codepoints 0x200c-0x200f, 0x202a-0x202e, and 0x206a-0x206f.  IE, 
 
 
 ==Example==
-In the below, Firefox and any standards compliant interpreter, strips the &#x200D out before lexing, so it sees {{{/&#x200D;/}}} is interpreted as a line comment.  The line comment defuses the block comment, so the {{{alert('hi');}}} is treated as real code.
+In the below, Firefox and any standards compliant interpreter, strips the &#x200D; out before lexing, so it sees {{{/&#x200D;/}}} is interpreted as a line comment.  The line comment defuses the block comment, so the {{{alert('hi');}}} is treated as real code.
 {{{
 <html>
 <body onload="
