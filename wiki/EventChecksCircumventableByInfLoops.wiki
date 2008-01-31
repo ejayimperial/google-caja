@@ -1,5 +1,5 @@
+#summary Invariants enforced by event handlers can be circumvented by causing the browser to turn off javascript.
 #labels Attack-Vector
-# Invariants enforced by event handlers can be circumvented by causing the browser to turn off javascript.
 
 
 ==Effect==
@@ -9,7 +9,7 @@ Malicious code that can deny service can circumvent checks that rely on code bei
 ==Background==
 Many browsers (including IE and FF) will throttle frames that execute too much javascript without pausing.  They often ask the user a question like:
 
-    <b>Unresponsive script</b>
+    ===Unresponsive script===
 
     A script on this page may be busy or it may have stopped responding.  ...
 
