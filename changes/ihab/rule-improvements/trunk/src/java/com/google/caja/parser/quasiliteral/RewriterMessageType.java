@@ -14,11 +14,11 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.reporting.MessageTypeInt;
+import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
-import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageType;
+import com.google.caja.reporting.MessageTypeInt;
 
 import java.io.IOException;
 

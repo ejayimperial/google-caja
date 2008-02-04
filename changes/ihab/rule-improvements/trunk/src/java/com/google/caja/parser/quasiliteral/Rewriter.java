@@ -16,9 +16,8 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.ParseException;
-import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.js.Block;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
@@ -62,7 +61,7 @@ public abstract class Rewriter {
    * @return the expanded parse tree node.
    */
   public final ParseTreeNode expand(ParseTreeNode node, MessageQueue mq) {
-    return expand(node, new Scope(node, mq), mq);
+    return expand(node, Scope.fromRootBlock((Block)node, mq), mq);
   }
 
   /**

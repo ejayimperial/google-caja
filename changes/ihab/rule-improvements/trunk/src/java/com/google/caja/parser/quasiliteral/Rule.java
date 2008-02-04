@@ -14,20 +14,21 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.reporting.MessagePart;
-import com.google.caja.reporting.MessageQueue;
-import com.google.caja.reporting.MessageContext;
-import com.google.caja.reporting.RenderContext;
+import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.AbstractParseTreeNode;
+import com.google.caja.parser.js.Expression;
+import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.Identifier;
 import com.google.caja.parser.js.Reference;
-import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.StringLiteral;
+import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
+import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.MessagePart;
+import com.google.caja.reporting.MessageQueue;
+import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Pair;
 
 import java.io.IOException;
@@ -289,7 +290,7 @@ public abstract class Rule implements MessagePart {
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
     if (match("function(@ps*) { @bs*; }", member, bindings)) {
-      Scope s2 = new Scope(scope, member);
+      Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)member);
       if (s2.hasFreeThis()) {
         return substV(
             "___.method(@fname, function(@ps*) {" +

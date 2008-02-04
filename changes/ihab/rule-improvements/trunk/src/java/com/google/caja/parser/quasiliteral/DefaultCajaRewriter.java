@@ -17,7 +17,6 @@ package com.google.caja.parser.quasiliteral;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
 import com.google.caja.parser.js.Block;
-import com.google.caja.parser.js.CatchStmt;
 import com.google.caja.parser.js.Conditional;
 import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FunctionConstructor;
@@ -67,7 +66,7 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (isSynthetic(node)) {
           if (node instanceof FunctionConstructor) {
-            scope = new Scope(scope, node);
+            scope = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           }
           return expandAll(node, scope, mq);
         }
@@ -98,7 +97,7 @@ public class DefaultCajaRewriter extends Rewriter {
           return substV(
             "try { @s0*; } catch (@x) { @s1*; }",
             "s0",  expandAll(bindings.get("s0"), scope, mq),
-            "s1",  expandAll(bindings.get("s1"), new Scope(scope, t.getCatchClause()), mq),
+            "s1",  expandAll(bindings.get("s1"), Scope.fromCatchStmt(scope, t.getCatchClause()), mq),
             "x", bindings.get("x"));
         }
         return NONE;
@@ -113,7 +112,7 @@ public class DefaultCajaRewriter extends Rewriter {
           return substV(
             "try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }",
             "s0",  expandAll(bindings.get("s0"), scope, mq),
-            "s1",  expandAll(bindings.get("s1"), new Scope(scope, t.getCatchClause()), mq),
+            "s1",  expandAll(bindings.get("s1"), Scope.fromCatchStmt(scope, t.getCatchClause()), mq),
             "s2",  expandAll(bindings.get("s2"), scope, mq),              
             "x", bindings.get("x"));
         }
@@ -513,9 +512,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (match("var @v", node, bindings) &&
             !scope.isFunction(getIdentifierName(bindings.get("v")))) {
           if (scope.getParent() != null) {
-            return substV(
-                "var @v",
-                "v", bindings.get("v"));
+            return node;
           } else {
             ParseTreeNode expr = substV(
                 "___OUTERS___.@v",
@@ -558,7 +555,7 @@ public class DefaultCajaRewriter extends Rewriter {
             bindings.get("f") instanceof Reference) {
           return substV(
               "new (___.asCtor(@f))(@as*)",
-              "f", expand(bindings.get("f"), scope, mq),
+              "f", expandReferenceToOuters(bindings.get("f"), scope, mq),
               "as", expandAll(bindings.get("as"), scope, mq));
         }
         return NONE;
@@ -768,7 +765,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // Anonymous simple function constructor
         if (match("function(@ps*) { @bs*; }", node, bindings)) {
-          Scope s2 = new Scope(scope, node);
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           if (!s2.hasFreeThis()) {
             return substV(
                 "___.primFreeze(" +
@@ -792,7 +789,7 @@ public class DefaultCajaRewriter extends Rewriter {
         // Named simple function declaration
         if (node.getClass() == FunctionDeclaration.class &&
             match("function @f(@ps*) { @bs*; }", node.children().get(1), bindings)) {
-          Scope s2 = new Scope(scope, node.children().get(1));
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node.children().get(1));
           if (!s2.hasFreeThis()) {
             return expandDef(
                 new Reference((Identifier)bindings.get("f")),
@@ -819,7 +816,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // Named simple function constructor
         if (match(getPatternNode("function @f(@ps*) { @bs* }"), node, bindings)) {
-          Scope s2 = new Scope(scope, node);
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           if (!s2.hasFreeThis()) {
             return substV(
                 "___.primFreeze(" +
@@ -842,7 +839,7 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("function(@ps*) { @bs*; }", node, bindings)) {
-          Scope s2 = new Scope(scope, node);
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           if (s2.hasFreeThis()) {
             mq.addMessage(
                 RewriterMessageType. METHOD_IN_NON_METHOD_CONTEXT,
@@ -859,7 +856,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // This catches a case where a named function is *not* part of a declaration.
         if (match("function @f(@ps*) { @bs*; }", node, bindings)) {
-          Scope s2 = new Scope(scope, node);
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           if (s2.hasFreeThis()) {
             mq.addMessage(
                 RewriterMessageType.CONSTRUCTOR_CANNOT_ESCAPE,
@@ -882,8 +879,8 @@ public class DefaultCajaRewriter extends Rewriter {
           Object fName = bindings.get("f").getValue();
           Object sfName = bindings.get("sf").children().get(0).getValue();          
           if (fName.equals(sfName)) {
-            if (!new Scope(scope, bindings.get("as")).hasFreeThis()) {
-              Scope s2 = new Scope(scope, node.children().get(1));
+            if (!Scope.fromParseTreeNodeContainer(scope, (ParseTreeNodeContainer)bindings.get("as")).hasFreeThis()) {
+              Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node.children().get(1));
               return expandDef(
                   new Reference((Identifier)bindings.get("f")),
                   substV(
@@ -913,7 +910,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (node instanceof FunctionDeclaration &&
             match("function @f(@ps*) { @bs*; }", node.children().get(1), bindings)) {
-          Scope s2 = new Scope(scope, node.children().get(1));
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node.children().get(1));
           if (s2.hasFreeThis()) {
             return expandDef(
                 new Reference((Identifier)bindings.get("f")),

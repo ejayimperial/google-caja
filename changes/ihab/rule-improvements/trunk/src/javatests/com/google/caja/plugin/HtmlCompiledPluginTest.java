@@ -20,6 +20,7 @@ import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
+import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Block;
 import com.google.caja.reporting.EchoingMessageQueue;
 import com.google.caja.reporting.MessageContext;
@@ -328,6 +329,27 @@ public class HtmlCompiledPluginTest extends TestCase {
         );
   }
 
+  /**
+   * Empty styles should not cause parse failure.
+   * <a href="http://code.google.com/p/google-caja/issues/detail?id=56">bug</a>
+   */
+  public void testEmptyStyle() throws Exception {
+    execGadget("<style> </style>", "");
+  }
+
+  /**
+   * Handlers should have their handlers rewritten.
+   */
+  public void testHandlerRewriting() throws Exception {
+    execGadget(
+        "<a onclick=\"foo(this)\">hi</a>",
+
+        "assertEquals('<a onclick=\"return plugin_dispatchEvent___(" +
+        "this, event || window.event, 0, \\'c_1___\\')\">hi</a>'," +
+        " outers.emitHtml___.htmlBuf_.join(''))"
+        );
+  }
+
   private void execGadget(String gadgetSpec, String tests) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = new EchoingMessageQueue(
@@ -337,7 +359,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
     HtmlPluginCompiler compiler = new HtmlPluginCompiler(mq, meta);
     compiler.setMessageContext(mc);
-    DomTree html = parseHtml(gadgetSpec);
+    DomTree html = parseHtml(gadgetSpec, mq);
     if (html != null) { compiler.addInput(new AncestorChain<DomTree>(html)); }
 
     boolean failed = !compiler.run();
@@ -378,11 +400,12 @@ public class HtmlCompiledPluginTest extends TestCase {
     }
   }
 
-  DomTree parseHtml(String html) throws Exception {
+  DomTree parseHtml(String html, MessageQueue mq) throws Exception {
     InputSource is = new InputSource(new URI("test://" + getName()));
     StringReader in = new StringReader(html);
     TokenQueue<HtmlTokenType> tq = DomParser.makeTokenQueue(is, in, false);
     if (tq.isEmpty()) { return null; }
-    return DomParser.parseFragment(tq);
+    return DomParser.parseFragment(
+        tq, OpenElementStack.Factory.createHtml5ElementStack(mq));
   }
 }
