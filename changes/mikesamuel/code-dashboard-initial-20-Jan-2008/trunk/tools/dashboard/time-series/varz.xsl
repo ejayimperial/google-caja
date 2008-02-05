@@ -385,8 +385,8 @@
           <xsl:with-param name="s">
             <xsl:value-of select="substring-after($s, $pattern)"/>
           </xsl:with-param>
-          <xsl:with-param name="pattern"/>
-          <xsl:with-param name="repl"/>
+          <xsl:with-param name="pattern" select="$pattern"/>
+          <xsl:with-param name="repl" select="$repl"/>
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>

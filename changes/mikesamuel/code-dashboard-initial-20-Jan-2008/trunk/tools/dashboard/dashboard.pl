@@ -59,10 +59,10 @@ while (@ARGV) {
   my $flag = shift;
   last if '--' eq $flag;
   if ('-o' eq $flag) {
-    die if defined($OUTPUT_DIR);
+    die "output directory redeclared.  Was $OUTPUT_DIR" if defined($OUTPUT_DIR);
     $OUTPUT_DIR = abs_path(shift);
   } elsif ('-b' eq $flag) {
-    die if defined($BUILD_CLIENT);
+    die "build client redeclared.  Was $BUILD_CLIENT" if defined($BUILD_CLIENT);
     $BUILD_CLIENT = abs_path(shift);
   } else {
     usage;
@@ -74,16 +74,24 @@ if (@ARGV) {
 }
 
 die 'Please specify output directory via -o' unless $OUTPUT_DIR;
-die $OUTPUT_DIR unless !(-e $OUTPUT_DIR) || -d $OUTPUT_DIR;
+die "$OUTPUT_DIR not a directory" unless !(-e $OUTPUT_DIR) || -d $OUTPUT_DIR;
 
+sub requireDir($) {
+  my $path = shift;
+  die "$0 requires a directory at $path" unless -d $path;
+}
+sub requireExe($) {
+  my $path = shift;
+  die "$0 requires an executable at $path" unless -x $path;
+}
 
 
 # Directory structure within subversion
-my $DASHBOARD_DIR = dirname(abs_path($0));  die unless -d $DASHBOARD_DIR;
-my $TOOLS_DIR = dirname($DASHBOARD_DIR);    die unless -d $TOOLS_DIR;
-$MASTER_CLIENT ||= dirname($TOOLS_DIR);     die unless -d $MASTER_CLIENT;
-$BUILD_CLIENT ||= $MASTER_CLIENT;           die unless -d $BUILD_CLIENT;
-my $SRC_DIR = "$BUILD_CLIENT/src";          die unless -d $SRC_DIR;
+my $DASHBOARD_DIR = dirname(abs_path($0));  requireDir $DASHBOARD_DIR;
+my $TOOLS_DIR = dirname($DASHBOARD_DIR);    requireDir $TOOLS_DIR;
+$MASTER_CLIENT ||= dirname($TOOLS_DIR);     requireDir $MASTER_CLIENT;
+$BUILD_CLIENT ||= $MASTER_CLIENT;           requireDir $BUILD_CLIENT;
+my $SRC_DIR = "$BUILD_CLIENT/src";          requireDir $SRC_DIR;
 
 # Caja build output directories
 my $REPORTS_DIR = "$SRC_DIR/ant-reports";
@@ -91,16 +99,16 @@ my $DOCS_DIR = "$SRC_DIR/ant-docs";
 my $DEMOS_DIR = "$SRC_DIR/ant-demos";
 
 # History of all builds used to generate time series.
-my $HISTORY_DIR = "$MASTER_CLIENT/history"; die unless -d $HISTORY_DIR;
+my $HISTORY_DIR = "$MASTER_CLIENT/history"; requireDir $HISTORY_DIR;
 
 # Executables required
-my $BUILDTOOLS = "/home/build/buildtools";  die unless -d $BUILDTOOLS;
-my $ANT_HOME = "/usr/local/ant";            die unless -d $ANT_HOME;
-my $ANT = "$ANT_HOME/bin/ant";              die unless -x $ANT;
-my $JAVA_HOME = "$BUILDTOOLS/java/latest";  die unless -d $JAVA_HOME;
-my $JAVA = "$JAVA_HOME/bin/java";           die unless -x $JAVA;
-my $SVN = "/usr/bin/svn";                   die unless -x $SVN;
-my $XSLTPROC = "/usr/bin/xsltproc";         die unless -x $XSLTPROC;
+my $BUILDTOOLS = "/home/build/buildtools";  requireDir $BUILDTOOLS;
+my $ANT_HOME = "/usr/local/ant";            requireDir $ANT_HOME;
+my $ANT = "$ANT_HOME/bin/ant";              requireExe $ANT;
+my $JAVA_HOME = "$BUILDTOOLS/java/latest";  requireDir $JAVA_HOME;
+my $JAVA = "$JAVA_HOME/bin/java";           requireExe $JAVA;
+my $SVN = "/usr/bin/svn";                   requireExe $SVN;
+my $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
 
 
 sub collectCodeStats() {
@@ -192,11 +200,11 @@ sub outputTree($$$$) {
   my ($src_dir, $name, $index, $status_log_ref) = @_;
 
   my $out_dir = "$OUTPUT_DIR/$name";
-  die $out_dir if -e $out_dir;
+  die "Output directory $out_dir already exists" if -e $out_dir;
 
   system('cp', '-r', $src_dir, $out_dir);
 
-  die "$out_dir/$index" unless -e "$out_dir/$index";
+  die "$out_dir/$index does not exist" unless -e "$out_dir/$index";
 
   push(@{$status_log_ref}, qq'<output name="$name" href="$name/$index"/>');
 }
@@ -220,19 +228,19 @@ sub extractTasks($$) {
                    '!', '-name', '*~',
                    '!', '-path', '*/.svn/*');
     my $grep = cmd('xargs', 'egrep', '-Hn', '\bTODO\b');
-    open(IN, "$find | $grep|") or die $!;
+    open(IN, "$find | $grep|") or die "Failed to grep for TODOs: $!";
     while (<IN>) {
       chomp;
       my ($file, $line, $task) = m/([^:]*):(\d+):.*?(TODO.*)/;
       $file =~ s|.*/google-caja/||;
-      die $_ unless defined($file);
+      die "Bad grep output: $_" unless defined($file);
 
       my $file_xml = xml($file);
 
       # Typical format is
       # TODO(<owner-email-or-username>): <details>
       my ($owners, $detail) = ($task =~ /TODO(?:\s*\(\s*([\w\.@\s,]+)\))?(.*)/);
-      die $task unless defined($detail);
+      die "Malformed task: $task" unless defined($detail);
       $owners =~ s/^\s+|\s+$//g;
       $detail =~ s/^:?\s*//;
 
@@ -262,12 +270,12 @@ sub extractTestSummary($$) {
     chomp;
     next unless m/<testsuite\b(.*)/;
     my $testsummary = $1;
-    die $_ unless $testsummary =~ s/>.*//;
-    die $_ unless $testsummary =~ m/\btests="(\d+)"/;
+    die "Malformed $xml_file: $_" unless $testsummary =~ s/>.*//;
+    die "Malformed $xml_file: $_" unless $testsummary =~ m/\btests="(\d+)"/;
     $tests += $1;
-    die $_ unless $testsummary =~ m/\berrors="(\d+)"/;
+    die "Malformed $xml_file: $_" unless $testsummary =~ m/\berrors="(\d+)"/;
     $errors += $1;
-    die $_ unless $testsummary =~ m/\bfailures="(\d+)"/;
+    die "Malformed $xml_file: $_" unless $testsummary =~ m/\bfailures="(\d+)"/;
     $failures += $1;
   }
   close(IN);
@@ -290,13 +298,13 @@ sub extractCoverageSummary($$) {
   close(IN);
   $html = decode_utf8($html);
 
-  die $html
+  die "Malformed $html_file: $html"
       unless $html =~ /<h2[^>]*>OVERALL\s+COVERAGE\s+SUMMARY.*?<\/table>/is;
   my $summaryTable = $&;
 
   my ($pct, $covered, $total) = ($summaryTable
       =~ m|<td>([\d\.]+)%\s*\(([\d\.]+)/([\d\.]+)\)</TD></TR>|i);
-  die $summaryTable unless defined($pct);
+  die "Malformed $html_file: $summaryTable" unless defined($pct);
 
   push(@{$status_log_ref}, qq'<varz name="emma.pct" value="$pct"/>');
   push(@{$status_log_ref}, qq'<varz name="emma.covered" value="$covered"/>');
@@ -305,7 +313,7 @@ sub extractCoverageSummary($$) {
 
 # Execute a command and return whether it succeeded and the stderr&stdout.
 sub exec_log($$@) {
-  die unless wantarray;
+  die "exec_log called in wrong context" unless wantarray;
 
   my $dir = shift;
   my $cmd = cmd(@_);
@@ -377,7 +385,8 @@ sub extractTimeSeries() {
     close(IN);
 
     $xml =~ s/<[!CDATA[.*?]]>|<!--.*?-->//g;
-    die $historical_report unless $xml =~ m/<report\b[^>]*\bid="(\w+)"/;
+    die "Malformed historical report $historical_report"
+        unless $xml =~ m/<report\b[^>]*\bid="(\w+)"/;
     my $report_id = $1;
     print OUT qq'<instant id="$report_id">\n';
     while ($xml =~ s/<varz[^>]*>//) {
@@ -397,23 +406,25 @@ sub makeDashboard() {
   foreach my $xsl_file (glob("$dashboard_root/reports/*.xsl")) {
     my $html_output = "$OUTPUT_DIR/"
         . substr($xsl_file, length("$dashboard_root/reports/"));
-    $html_output =~ s/\.xsl$/\.html/ or die $xsl_file;
+    die "Bad stylesheet filename: $xsl_file"
+        unless $html_output =~ s/\.xsl$/\.html/;
 
     print STDERR "$xsl_file -> $html_output\n";
     system($XSLTPROC, '-o', $html_output, '--novalid', '--nonet',
            $xsl_file, "$OUTPUT_DIR/index.xml");
-    die if $?;
+    die "xsltproc failed on $xsl_file" if $?;
   }
 
   foreach my $xsl_file (glob("$dashboard_root/time-series/*.xsl")) {
     my $xhtml_output = "$OUTPUT_DIR/"
         . substr($xsl_file, length("$dashboard_root/time-series/"));
-    $xhtml_output =~ s/\.xsl$/\.xhtml/ or die $xsl_file;
+    die "Bad stylesheet filename: $xsl_file"
+        unless $xhtml_output =~ s/\.xsl$/\.xhtml/ ;
 
     print STDERR "$xsl_file -> $xhtml_output\n";
     system($XSLTPROC, '-o', $xhtml_output, '--novalid', '--nonet',
            $xsl_file, "$OUTPUT_DIR/time-series.xml");
-    die if $?;
+    die "xsltproc failed on $xsl_file" if $?;
   }
 
   foreach my $supporting_file (glob("$dashboard_root/files/*")) {
