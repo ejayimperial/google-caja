@@ -108,9 +108,9 @@ For CSS Properties, we need the following type information:
 
 
 == Builtin Whitelists ==
-{{{com/google/caja/html/tags.json}}}
-{{{com/google/caja/html/attribs.json}}}
-{{{com/google/caja/css/css2.1.json}}}
+  * {{{resource:///com/google/caja/html/tags.json}}}
+  * {{{resource:///com/google/caja/html/attribs.json}}}
+  * {{{resource:///com/google/caja/css/css2.1.json}}}
 
 
 == Specifying Whitelists at the Command Line==
