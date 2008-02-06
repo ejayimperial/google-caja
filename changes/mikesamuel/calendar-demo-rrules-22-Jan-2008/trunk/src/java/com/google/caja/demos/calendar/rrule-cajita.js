@@ -79,7 +79,10 @@ var Frequency = {
 function WeekDayNum(ical) {
   var m = ical.match(/^(-?\d+)?(MO|TU|WE|TH|FR|SA|SU)$/i);
   if (!m) { throw new Error('Invalid weekday number: ' + ical); }
-  return { wday: WeekDay[m[2].toUpperCase()], num: Number(m[1]) || 0 };
+  return caja.freeze({
+    wday: WeekDay[m[2].toUpperCase()],
+    num: Number(m[1]) || 0
+  });
 }
 
 /**
@@ -609,12 +612,12 @@ function rruleIteratorImpl(
 
   reset();
 
-  return {
+  return caja.freeze({
     reset: reset,
     next: next,
     hasNext: hasNext,
     advanceTo: advanceTo
-  };
+  });
 }
 
 module.createRecurrenceIterator = createRecurrenceIterator;

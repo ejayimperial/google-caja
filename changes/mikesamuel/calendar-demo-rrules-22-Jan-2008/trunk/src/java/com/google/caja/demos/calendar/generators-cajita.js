@@ -106,7 +106,7 @@ generators.serialYearGenerator = function (interval, dtStart) {
     throttle = generators.MAX_YEARS_BETWEEN_INSTANCES;
   }
 
-  return { generate: generate, workDone: workDone, reset: reset };
+  return caja.freeze({ generate: generate, workDone: workDone, reset: reset });
 }
 
 /**
@@ -152,7 +152,7 @@ generators.serialMonthGenerator = function (interval, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 /**
@@ -210,7 +210,7 @@ generators.serialDayGenerator = function (interval, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 /**
@@ -240,7 +240,7 @@ generators.byMonthGenerator = function (months, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 /**
@@ -303,7 +303,7 @@ generators.byMonthDayGenerator = function (dates, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 /**
@@ -390,7 +390,7 @@ generators.byDayGenerator = function (days, weeksInYear, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 /**
@@ -500,7 +500,7 @@ generators.byWeekNoGenerator = function (weekNos, wkst, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 /**
@@ -554,7 +554,7 @@ generators.byYearDayGenerator = function (yearDays, dtStart) {
     return true;
   }
 
-  return { generate: generate, reset: reset };
+  return caja.freeze({ generate: generate, reset: reset });
 }
 
 caja.freeze(generators);

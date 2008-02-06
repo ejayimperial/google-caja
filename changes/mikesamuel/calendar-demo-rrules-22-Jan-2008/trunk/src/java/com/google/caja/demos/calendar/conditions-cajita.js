@@ -38,26 +38,26 @@
 var conditions = {
   countCondition: function (count) {
     var i = count;
-    return {
+    return caja.freeze({
       test: function (dateValueUtc) { return --i >= 0; },
       reset: function () { i = count; }
-    };
+    });
   },
 
   untilCondition: function (untilDateValueUtc) {
-    return {
+    return caja.freeze({
       test: function (dateValueUtc) {
         return dateValueUtc <= untilDateValueUtc;
       },
       reset: function () {}
-    };
+    });
   },
 
   unboundedCondition: function () {
-    return {
+    return caja.freeze({
       test: function () { return true; },
       reset: function () {}
-    };
+    });
   }
 };
 
