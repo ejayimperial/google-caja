@@ -1224,7 +1224,7 @@ primitive or immutable object, we can memoize a lot of the output of
 our context scanners.  In the above example, our context scanner takes
 a literal string, an input state, an output buffer, and produces an
 output state.  In the frequent case where we're not recording a variable,
-our output state is specified entirely by the literal string and the output
+our output state is specified entirely by the literal string and the input
 state.
 
 <p>The below wraps a context scanner that doesn't require the output buffer
@@ -1254,7 +1254,10 @@ function memoizingContextScanner(contextScanner) {
       return cache[cacheKey];
     }
     // Flush the cache if it gets too large to bound memory consumption.
-    if (++size === 100) { cache = {}; }
+    if (++size === 100) {
+      cache = {};
+      size = 0;
+    }
     return cache[cacheKey] = contextScanner(literalString, context, undefined);
   };
 }
