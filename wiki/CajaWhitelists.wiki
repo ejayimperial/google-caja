@@ -1,0 +1,117 @@
+#summary Schema for whitelists used by the Cajoler
+#labels Phase-Design
+
+= Whitelist File Format and Schema =
+
+== Background ==
+
+Caja uses whitelists to approve HTML tags, HTML attributes, and CSS properties.  These whitelists were hardcoded in java files.
+
+The whitelist is a table of whitelisted item.  Each row in the table includes a key (variously an HTML element name, HTML attribute name, or CSS property name), and some information about the item's content.
+
+Although we believe the default whitelists are fairly comprehensive, clients that do their own preprocessing of HTML & CSS before cajoling may want to whitelist constructs which they know are safe, but which Caja cannot prove safe for arbitrary input.
+
+It may become necessary to support different element definitions for HTML4 vs XHTML.
+
+
+== Whitelist File Format Overview ==
+
+A whitelist is a [http://www.json.org/ JSON file] like:
+{{{
+{
+  inherits: [
+    { "url": "resource:///com/google/caja/html/tags.json" }
+  ],
+
+  allows: [
+    { "key": "OBJECT" }
+  ],
+
+  denies: [
+    { "key": "IFRAME" }
+  ],
+
+  type: [
+    { "key": "OBJECT", "optionalEndTag": false, "empty": false, "breaksFlow": false }
+  ]
+}
+}}}
+
+We use JSON, because, unlike XML, parsing it cannot open arbitrary network connections, and it is more extensible since it doesn't make a hard distinction between elements, which can be extended, and attributes, which can't.
+
+
+== Elements of a Whitelist ==
+
+The example above includes three elements, {{{inherits}}}, {{{allows}}}, and {{{denies}}}.
+
+The cajoler examines the {{{inherits}}} and loads those.  The {{{inherits}}} {{{url}}} can be either a {{{file://...}}} URL, or a special {{{resource://...} URL which is resolved relative to the Cajoler's class-path.
+
+A Whitelist has the form
+    {{{
+    interface Whitelist {{{
+      Set<String> allowedItems();
+      Map<String, Type> typeDefinitions();
+
+      interface Type extends Map<String, ? extends Object> {}
+    }
+    }}}
+  
+The cajoler loads a whitelist using the following algorithm:
+  * Create an empty whitelist W
+  * For each {{{inherits}}}
+    * Fetch its URL -- Abort on failure
+    * Load it using this algorithm
+    * Add it to the list of loaded whitelists
+  * For each loaded whitelist LW
+    * Add LW's {{{allows}}} to W
+    * Add LW's {{{types}}} to W
+  * For each loaded whitelist LW
+    * Remove any items in W matching LW's {{{denies}}}
+  * For each {{{allows}}}
+    * Add an item to W.
+  * For each {{{denies}}}
+    * Remove any item in W with the same key.
+  * For each {{{types}}}
+    * Remove any type definition from W with the same key.
+  * For each {{{types}}}
+    * Add a type definition to W
+  * If there are type definitions in W with the same key, and the same value, remove all but 1.
+  * Abort if there exist any two distinct type definitions in W with the same key.
+  * Return W.
+
+This algorithm preserves the properties that
+  * Any item allowed by the top-level whitelist is allowed.
+  * Any item denied by a top-level is denied.
+  * Any item denied by an inherited whitelist that is not allowed by the top level whitelist is denied.
+  * Any item allowed by an inherited whitelist and not denied by any inherited whitelist or by the top level whitelist is allowed.
+  * If the top level whitelist defines a type for an item, then that type is used for the item.
+  * If the top level whitelist defines an ambiguous type, then processing aborts.
+  * If the top level whitelist defines a type for an item, and inherited whitelists define ambiguous types for an item, then processing does not abort, and the top level whitelist's definition is used.
+
+This means that whitelists can be used in several distinct ways:
+  * As a schema -- a whitelist that includes only type definitions and neither allows nor denies may be included
+  * As a whitelist -- a whitelist may inherit definitions from a schema and then pick and choose items to allow
+  * As an override -- a whitelist may inherit types and definitions from other whitelists and then choose to override definitions made in the inherited lists.
+
+
+== Type information in Whitelists ==
+For HTML Elements, we need the following type information:
+  * {{{empty}}} - does the element not contain any other elements?  {{{<INPUT>}}}, {{{<BR>>}}}, and {{{<HR>}}} are examples of empty elements in HTML 4.
+  * {{{optionalEndTag}}} - does the element require an end tag?  {{{<P>}}} elements do not require end tags in HTML 4, but {{{<TABLE>}}} elements do,
+  * {{{breaksFlow}}} - does the element break the flow of text?
+
+For HTML Attributes, we need the following type information:
+  * {{{type}}} - one of the values in {{{com.google.caja.html.HTML.Type}}}: {{{NONE}}}, {{{SCRIPT}}}, {{{URI}}}, {{{ID}}}, {{{IDREF}}}, {{{NMTOKEN}}}, {{{NMTOKENS}}}, or {{{FRAME}}}.
+
+For CSS Properties, we need the following type information:
+  * {{{signature}}} - a property signature as described and "Value" in the [http://www.w3.org/TR/CSS21/about.html#property-defs CSS2.1 spec]
+
+
+== Builtin Whitelists ==
+{{{com/google/caja/html/tags.json}}}
+{{{com/google/caja/html/attribs.json}}}
+{{{com/google/caja/css/css2.1.json}}}
+
+
+== Specifying Whitelists at the Command Line==
+TBD
