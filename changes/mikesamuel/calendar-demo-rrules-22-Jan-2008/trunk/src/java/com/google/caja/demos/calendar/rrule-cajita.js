@@ -60,7 +60,7 @@ var rrule = {};
 (function (module) {
 
 /** @enum {number} */
-var Frequency = {
+var Frequency = caja.freeze({
   SECONDLY: 0,
   MINUTELY: 1,
   HOURLY: 2,
@@ -68,7 +68,7 @@ var Frequency = {
   WEEKLY: 4,
   MONTHLY: 5,
   YEARLY: 6
-};
+});
 
 /**
  * A weekday & number pattern.

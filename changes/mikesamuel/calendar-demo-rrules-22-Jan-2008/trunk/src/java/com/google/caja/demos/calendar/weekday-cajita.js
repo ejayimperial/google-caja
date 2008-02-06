@@ -44,9 +44,15 @@ WeekDay.predecessor = function (weekDay) {
 };
 WeekDay.names = [];
 (function () {
+  // Create a reverse mapping of enum values to names.
   for (var k in WeekDay) {
-    WeekDay.names[WeekDay[k]] = k;
+    if (!WeekDay.hasOwnProperty(k)) { continue; }
+    var v = Number(WeekDay[k]);
+    if (v === (v & 0x7fffffff)) {  // Is a non-negative integer.
+      WeekDay.names[v] = k;
+    }
   }
 })();
 
 caja.freeze(WeekDay);
+caja.freeze(WeekDay.names);
