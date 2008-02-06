@@ -1666,10 +1666,12 @@ var ___;
    */
   function guard(trademark, obj) {
     enforce (hasOwnProp(obj, "trademarks___") && 
-             trademark in obj.trademarks___, 
-        "This object does not have the ", 
-        trademark.name ? String(trademark.name) : "given", 
-        " trademark" );
+        trademark in obj.trademarks___, 
+      "This object does not have the ", 
+      hasOwnProp(trademark, "name") ? 
+          "["+String(trademark.name)+"]" : 
+          "given", 
+      " trademark" );
   }
   
   /**
@@ -1677,7 +1679,7 @@ var ___;
    * Creates the list if it doesn't already exist.
    */
   function audit(trademark, obj) {
-    if (!hasOwnProp(obj, trademarks___)) {
+    if (!hasOwnProp(obj, "trademarks___")) {
       obj.trademarks___ = [];
     }
     obj.trademarks___.push(trademark);
