@@ -1676,13 +1676,21 @@ var ___;
   
   /**
    * Adds the given trademark to the given object's list of trademarks.
+   * If the object is still being constructed, delay the assignment.
    * Creates the list if it doesn't already exist.
+   *
+   * TODO(metaweta): when erights checks in his first-class branch, add
+   * code to the make() method to set the underConstruction___ flag 
+   * before the call to init(), then reset it and move the 
+   * delayedTrademarks to the actual trademarks after the call to init().
    */
   function audit(trademark, obj) {
-    if (!hasOwnProp(obj, "trademarks___")) {
-      obj.trademarks___ = [];
+    var list = obj.underConstruction___ ? 
+        "delayedTrademarks___" : "trademarks___";
+    if (!obj[list]) {
+      obj[list] = [];
     }
-    obj.trademarks___.push(trademark);
+    obj[list].push(trademark);
   }
   
   ////////////////////////////////////////////////////////////////////////
