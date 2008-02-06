@@ -95,6 +95,10 @@ public class DefaultGadgetRewriterTest extends TestCase {
     assertRewritePasses("listfriends-inline.xml", MessageLevel.WARNING);
   }
 
+  public void testSocialHelloWorld() throws Exception {
+    assertRewritePasses("SocialHelloWorld.xml", MessageLevel.WARNING);
+  }
+
   public void testParsing() throws Exception {
     assertRewritePasses("test-parsing.xml", MessageLevel.WARNING);
   }
@@ -106,7 +110,7 @@ public class DefaultGadgetRewriterTest extends TestCase {
   // Test Gadget rewriting
   public void testExampleGadget() throws Exception {
     assertRewriteMatches("example.xml", "example-rewritten.xml",
-                       MessageLevel.ERROR);
+                         MessageLevel.ERROR);
   }
 
   // Check that the validating and rewriting passes are hooked up.

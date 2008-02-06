@@ -18,18 +18,10 @@
   -    ant <rulename>
   - and look for the output in ./ant-* directories.
   -
-  - Valid values for <rulename> are:
-  -   default   :  builds the plugin compiler (pluginc), tests, and docs
-  -   clean     :  wipes generated files
-  -   demos     :  demo files
-  -   docs      :  javadoc
-  -   pluginc   :  the plugin compiler
-  -   runtests  :  runs the tests
-  -
-  - To run with assertions enabled, set the environment variable ANT_FLAGS="-ea"
+  - To see valid values for <rulename>, run ant -p.
  -->
 
-<project name="pluginc" default="default" basedir=".">
+<project name="caja" default="default" basedir=".">
   <description>
   A subset of javascript that allow an application to securely embed plugins via
   a capability based security model.
@@ -40,7 +32,7 @@
   <property name="src"         location="java"/>
   <property name="testsrc"     location="javatests"/>
   <property name="javascript"  location="js"/>
-  <property name="third_party" location="./third_party"/>
+  <property name="third_party" location="third_party"/>
   <property name="demos"       location="java/com/google/caja/demos"/>
   <!--== outputs ==-->
   <property name="reports"     location="ant-reports"/>  <!-- emma reports -->
@@ -241,6 +233,7 @@
         <include name="**/caja/opensocial/listfriends-inline.xml"/>
         <include name="**/caja/opensocial/listfriends.js"/>
         <include name="**/caja/opensocial/listfriends.xml"/>
+        <include name="**/caja/opensocial/SocialHelloWorld.xml"/>
         <include name="**/caja/opensocial/test-parsing.xml"/>
         <include name="**/caja/parser/css/cssparsergolden1.txt"/>
         <include name="**/caja/parser/css/cssparsergolden2.txt"/>
@@ -304,7 +297,8 @@
     </copy>
   </target>
 
-  <target name="opensocial" depends="PluginCompiler,dirs">
+  <target name="opensocial" depends="PluginCompiler,dirs"
+   description="Build opensocial jars">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
@@ -577,7 +571,7 @@
       </fileset>
     </copy>
     <!-- Build fsm.js by running the state machine generator. -->
-    <exec executable="python2.4" logError="true">
+    <exec executable="python2.4" logError="true" failonerror="true">
       <arg value="${javascript}/com/google/caja/interp/tools/fsmc.py"/>
       <arg value="--type_prefix"/> <arg value="html."/>
       <arg value="--full"/>
