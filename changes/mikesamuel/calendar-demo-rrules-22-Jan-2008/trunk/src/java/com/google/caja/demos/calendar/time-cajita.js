@@ -564,3 +564,5 @@ time.sameMonth = function (d0, d1) {
 // cause underflow/overflow.
 time.MAX_DATE_VALUE = time.date(0xfff, 12, 31);
 time.MIN_DATE_VALUE = time.date(0, 1, 1);
+
+caja.freeze(time);

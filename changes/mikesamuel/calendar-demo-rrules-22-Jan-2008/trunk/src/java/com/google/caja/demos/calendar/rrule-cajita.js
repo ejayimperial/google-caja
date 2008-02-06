@@ -621,3 +621,5 @@ module.createRecurrenceIterator = createRecurrenceIterator;
 module.Frequency = Frequency; 
  
 })(rrule); 
+
+caja.freeze(rrule);

@@ -148,3 +148,5 @@ var filters = {
     };
   }
 };
+
+caja.freeze(filters);

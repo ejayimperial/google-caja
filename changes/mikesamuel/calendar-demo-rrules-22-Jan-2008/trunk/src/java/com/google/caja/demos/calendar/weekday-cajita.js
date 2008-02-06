@@ -48,3 +48,5 @@ WeekDay.names = [];
     WeekDay.names[WeekDay[k]] = k;
   }
 })();
+
+caja.freeze(WeekDay);

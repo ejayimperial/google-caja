@@ -92,3 +92,5 @@ timezone.fromOffset = function (offsetSeconds) {
     return time.plusSeconds(dateValue, isUtc ? offsetSeconds : -offsetSeconds);
   };
 };
+
+caja.freeze(timezone);

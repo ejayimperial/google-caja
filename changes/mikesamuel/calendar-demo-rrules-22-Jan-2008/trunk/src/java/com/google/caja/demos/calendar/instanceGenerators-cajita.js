@@ -259,3 +259,5 @@ instanceGenerators.bySetPosInstanceGenerator = function (
 
   return { generate: generate, reset: reset };
 };
+
+caja.freeze(instanceGenerators);

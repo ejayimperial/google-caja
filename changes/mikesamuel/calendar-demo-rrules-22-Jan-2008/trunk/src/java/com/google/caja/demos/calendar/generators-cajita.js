@@ -556,3 +556,5 @@ generators.byYearDayGenerator = function (yearDays, dtStart) {
 
   return { generate: generate, reset: reset };
 }
+
+caja.freeze(generators);

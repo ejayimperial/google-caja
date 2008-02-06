@@ -60,3 +60,5 @@ var conditions = {
     };
   }
 };
+
+caja.freeze(conditions);
