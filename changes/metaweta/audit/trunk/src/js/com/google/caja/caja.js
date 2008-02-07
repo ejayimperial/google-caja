@@ -1658,7 +1658,19 @@ var ___;
   // Trademarks
   ////////////////////////////////////////////////////////////////////////
   
-  var DeepFrozen = {name:"DeepFrozen"};
+  /**
+   * Creates an immutable object that acts rather like a string
+   * but has identity.
+   * TODO(metaweta): Remove this when erights' first-calss branch
+   * gets checked in.
+   */
+  function Token(name) {
+    return primFreeze({ toString : function () {
+      return name;
+    }});
+  }
+  
+  var DeepFrozen = Token("DeepFrozen");
   
   /**
    * Throws an exception if the object does not have any trademarks or
@@ -1667,11 +1679,9 @@ var ___;
   function guard(trademark, obj) {
     enforce (hasOwnProp(obj, "trademarks___") && 
         trademark in obj.trademarks___, 
-      "This object does not have the ", 
-      hasOwnProp(trademark, "name") ? 
-          "["+String(trademark.name)+"]" : 
-          "given", 
-      " trademark" );
+      "This object does not have the [", 
+      String(trademark),
+      "] trademark" );
   }
   
   /**
@@ -1687,9 +1697,7 @@ var ___;
   function audit(trademark, obj) {
     var list = obj.underConstruction___ ? 
         "delayedTrademarks___" : "trademarks___";
-    if (!obj[list]) {
-      obj[list] = [];
-    }
+    if (!obj[list]) { obj[list] = []; }
     obj[list].push(trademark);
   }
   
