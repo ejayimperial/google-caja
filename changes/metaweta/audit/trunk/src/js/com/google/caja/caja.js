@@ -1704,10 +1704,10 @@ var ___;
    * delayedTrademarks to the actual trademarks after the call to init().
    */
   function audit(trademark, obj) {
-    var list = obj.underConstruction___ ? 
+    var map = obj.underConstruction___ ? 
         "delayedTrademarks___" : "trademarks___";
-    if (!obj[list]) { obj[list] = {}; }
-    obj[list][String(trademark)]=trademark;
+    if (!obj[map]) { obj[map] = {}; }
+    obj[map][String(trademark)]=trademark;
   }
   
   ////////////////////////////////////////////////////////////////////////
