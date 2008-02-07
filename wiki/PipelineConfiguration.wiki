@@ -101,8 +101,30 @@ configuration would be less extensible than one that doesn't over-specify.
 
 We represent the wiring diagram explicitly as compositions using a subset of javascript, since JS makes it easy to specify input/output relationships, we already have a lot of infrastructure for parsing it, and it will be immediately apparent to our users.
 
+We will recognize the following structure:
+{{{
+    Config       ::==  (<ParserSpec> | <Relation>)*
+    ParserSpec   ::==  <Reference> '=' <JavaClassName> '(' <Glob> ')' ';'
+    Relation     ::==  <Reference> '=' <JavaClassName>
+                       '(' (<Reference> (',' <Reference>)*)? ')' ';'
+    Glob         ::==  <StringLiteral>                                    # like '*.html'
+}}}
+
+The class named in a {{{<ParserSpec>}}} must implement the class {{{com.google.caja.plugin.Parser}}} which consumes files and produces parse trees.
+
+The class named in a {{{<Relation>}}} must implement {{{com.google.caja.util.Pipeline.Stage<Jobs>}}}, unless it is the {{{com.google.caja.plugin.Emitter}}} rule which specifies that the results are meant
+to be outputs.
+
 This scheme can be extended to routing configuration files to pipeline stages if that
-becomes necessary.
+becomes necessary.  We could add a construct like:
+{{{
+    StageConfig  ::==  <Reference> = <JavaClassName> '(' <JsonRef> ')' ';'
+    JsonRef      ::==  <Uri>
+                    |  <JsonLiteral>
+    Uri          ::==  <StringLiteral>
+}}}
+where the class has to be an instance of {{{com.google.caja.plugin.Config}}} and has a constructor that takes a JSON parse tree.  The reference to the left can then be used in
+the parameter list to any of the other constructs to get passed to their constructors.
 
 
 == Example Configuration ==
