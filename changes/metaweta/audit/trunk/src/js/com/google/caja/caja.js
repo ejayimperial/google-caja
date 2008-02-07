@@ -1678,9 +1678,7 @@ var ___;
    */
   function hasTrademark(trademark, obj) {
     if (!hasOwnProp(obj, "trademarks___")) return false;
-    for (var i=0; i<obj.trademarks___.length; ++i) {
-      if (obj.trademarks___[i]===trademark) return true;
-    }
+    if (obj.trademarks___[String(trademark)]===trademark) return true;
     return false;
   }
   
@@ -1696,7 +1694,7 @@ var ___;
   }
   
   /**
-   * Adds the given trademark to the given object's list of trademarks.
+   * Adds the given trademark to the given object's hash of trademarks.
    * If the object is still being constructed, delay the assignment.
    * Creates the list if it doesn't already exist.
    *
@@ -1708,8 +1706,8 @@ var ___;
   function audit(trademark, obj) {
     var list = obj.underConstruction___ ? 
         "delayedTrademarks___" : "trademarks___";
-    if (!obj[list]) { obj[list] = []; }
-    obj[list].push(trademark);
+    if (!obj[list]) { obj[list] = {}; }
+    obj[list][String(trademark)]=trademark;
   }
   
   ////////////////////////////////////////////////////////////////////////
