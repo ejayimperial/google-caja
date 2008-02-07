@@ -54,7 +54,7 @@ jar and a configuration file, as maintainers are less leery of configuration
 changes than code changes.
 
 
-== Pipelines: The Junk ↦ (Pipeline) ↦ Bicycle Design Pattern ==
+== Pipelines: The Junk → (Pipeline) → Bicycle Design Pattern ==
 
 The Cajoler is organized as a series of parse tree transformations that take
 heterogeneous inputs and produce a (hopefully) working web application.  This is
@@ -64,7 +64,7 @@ The cajoler then shoves the box into the pipeline, and hopefully a working web
 application (bicycle).  Finally it emits the parse-trees (sends the box with the
 bicycle) to the client.
 
-The Junk ↦ (Pipeline) ↦ Bicycle design pattern specifies a
+The Junk → (Pipeline) → Bicycle design pattern specifies a
 function from a box of junk to a bicycle, or more precisely, from a box of junk
 and no (NULL) bicycle to a box of less junk and a bicycle.  So the type of
 a pipeline is {{{(Junk ∗ Bicycle) ⇨ (Junk ∗ Bicycle)}}}.
