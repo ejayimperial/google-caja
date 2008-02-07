@@ -18,7 +18,7 @@ The Cajoler's main method looks like:
       }
     }}}
 
-    [http://google-caja.googlecode.com/svn/trunk/doc/images/Cajoler-Arch.png  Cajoler Architercture]
+    [http://google-caja.googlecode.com/svn/trunk/doc/images/Cajoler-Arch.png]
 
 The input files on the left are classified into CSS, JS, and HTML, and various
 template files ({{{*.jsp}}}, {{{*.csst}}}) represented as triangles on the left.
@@ -116,7 +116,7 @@ server side.
 Let's put that "Rewrite Macros" box in between the parsed JS inputs and the
 "Cajole JS" box thus:
 
-    [http://google-caja.googlecode.com/svn/trunk/doc/images/Cajoler-Arch-Tweaked.png Cajoler Architercture']
+    [http://google-caja.googlecode.com/svn/trunk/doc/images/Cajoler-Arch-Tweaked.png]
 
 The part of the old configuration file into which we want to inject
 "Rewrite Macros" looks like:
