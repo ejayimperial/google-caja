@@ -1678,7 +1678,11 @@ var ___;
    */
   function hasTrademark(trademark, obj) {
     if (!hasOwnProp(obj, "trademarks___")) return false;
-    if (obj.trademarks___[String(trademark)]===trademark) return true;
+    var list = obj.trademarks___[String(trademark)];
+    if (!list.length) return false;
+    for (var i=0; i < list.length; ++i) {
+      if (list[i]===trademark) return true;
+    }
     return false;
   }
   
@@ -1707,7 +1711,9 @@ var ___;
     var map = obj.underConstruction___ ? 
         "delayedTrademarks___" : "trademarks___";
     if (!obj[map]) { obj[map] = {}; }
-    obj[map][String(trademark)]=trademark;
+    var name = String(trademark);
+    if (!obj[map][name]) { obj[map][name] = []; }
+    obj[map][name].push(trademark);
   }
   
   ////////////////////////////////////////////////////////////////////////
