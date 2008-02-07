@@ -23,7 +23,9 @@ function fail(msg) {
     console.trace();
     console.log(msg);
   }
-  if (typeof Error !== 'undefined') { throw new Error(msg); }
+  //if (typeof Error !== 'undefined') {
+    throw new Error(msg);
+  //}
   throw msg;
 }
 

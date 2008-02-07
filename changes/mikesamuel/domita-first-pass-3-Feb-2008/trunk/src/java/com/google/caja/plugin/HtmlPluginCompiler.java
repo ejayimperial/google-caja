@@ -203,9 +203,10 @@ public class HtmlPluginCompiler {
         lexer, is, new Criterion<Token<CssTokenType>>() {
           public boolean accept(Token<CssTokenType> tok) {
             return tok.type != CssTokenType.COMMENT
-            && tok.type != CssTokenType.SPACE;
+                && tok.type != CssTokenType.SPACE;
           }
         });
+    if (tq.isEmpty()) { return null; }
 
     CssParser p = new CssParser(tq);
     input = p.parseStyleSheet();

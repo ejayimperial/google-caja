@@ -68,9 +68,8 @@ public final class CssRewriter {
     removeEmptyDeclarations(t);
     // After we remove declarations, we may have some rulesets without any
     // declarations which is technically illegal, so we remove rulesets without
-    // declarations
+    // declarations.
     removeEmptyRuleSets(t);
-    simplifyExprs(t);
     if (null != meta.namespacePrefix) { namespaceIdents(t); }
     // Do this again to make sure no earlier changes introduce unsafe constructs
     valid &= removeUnsafeConstructs(t);
@@ -113,19 +112,6 @@ public final class CssRewriter {
             }
           }
           return false;
-        }
-      }, t.parent);
-  }
-  private void simplifyExprs(AncestorChain<CssTree> t) {
-    t.node.acceptPreOrder(new Visitor() {
-        public boolean visit(AncestorChain<?> ancestors) {
-          ParseTreeNode node = ancestors.node;
-          if (!(node instanceof CssTree.Term)) { return true; }
-          // #ffffff -> #fff
-          // lengths such as 0 0 0 0 -> 0
-          // rgb(0, 0, 0) -> #000
-          // TODO
-          return true;
         }
       }, t.parent);
   }
@@ -180,8 +166,9 @@ public final class CssRewriter {
             // If this selector is like body.ie or body.firefox, move over
             // it so that it remains topmost
             if ("BODY".equalsIgnoreCase(first.getElementName())) {
-              // the next part had better be a DESCENDANT combinator
-              ParseTreeNode it = sel.children().get(1);
+              // The next part had better be a DESCENDANT combinator.
+              ParseTreeNode it = null;
+              if (sel.children().size() > 1) { it = sel.children().get(1); }
               if (it instanceof CssTree.Combination
                   && (CssTree.Combinator.DESCENDANT
                       == ((CssTree.Combination) it).getCombinator())) {
@@ -228,7 +215,7 @@ public final class CssRewriter {
                 // TODO: check argument if child now instanceof FunctionLiteral
               }
               String value = (String) child.getValue();
-              if (!isSafeSelectorPart(value)) {
+              if (value != null && !isSafeSelectorPart(value)) {
                 mq.addMessage(PluginMessageType.UNSAFE_CSS_IDENTIFIER,
                               child.getFilePosition(),
                               MessagePart.Factory.valueOf(value));
@@ -470,7 +457,7 @@ public final class CssRewriter {
     return SAFE_SELECTOR_PART.matcher(s).matches();
   }
   private static final Pattern SAFE_CSS_IDENTIFIER =
-    Pattern.compile("^[a-zA-Z][a-zA-Z0-9\\-]*$");
+    Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9\\-]*$");
   /**
    * Restrict identifiers to ascii characters until we can test browser handling
    * of escape sequences.
