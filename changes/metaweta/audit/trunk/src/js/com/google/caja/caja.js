@@ -1673,12 +1673,23 @@ var ___;
   var DeepFrozen = Token("DeepFrozen");
   
   /**
+   * Returns true if the object has a list of trademarks 
+   * and the given trademark is in the list
+   */
+  function hasTrademark(trademark, obj) {
+    if (!hasOwnProp(obj, "trademarks___")) return false;
+    for (var i=0; i<obj.trademarks___.length; ++i) {
+      if (obj.trademarks___[i]===trademark) return true;
+    }
+    return false;
+  }
+  
+  /**
    * Throws an exception if the object does not have any trademarks or
    * the given trademark is not in the list of trademarks.
    */
   function guard(trademark, obj) {
-    enforce (hasOwnProp(obj, "trademarks___") && 
-        trademark in obj.trademarks___, 
+    enforce (hasTrademark(trademark, obj), 
       "This object does not have the [", 
       String(trademark),
       "] trademark" );
@@ -1734,6 +1745,7 @@ var ___;
     
     // Auditing
     guard: guard,
+    hasTrademark : hasTrademark,
 
     // Other
     def: def
