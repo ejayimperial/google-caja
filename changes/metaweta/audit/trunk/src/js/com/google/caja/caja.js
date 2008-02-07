@@ -1673,8 +1673,8 @@ var ___;
   var DeepFrozen = Token("DeepFrozen");
   
   /**
-   * Returns true if the object has a list of trademarks 
-   * and the given trademark is in the list
+   * Returns true if the object has a map of trademarks 
+   * and the given trademark is in the map
    */
   function hasTrademark(trademark, obj) {
     if (!hasOwnProp(obj, "trademarks___")) return false;
@@ -1694,9 +1694,9 @@ var ___;
   }
   
   /**
-   * Adds the given trademark to the given object's hash of trademarks.
+   * Adds the given trademark to the given object's map of trademarks.
    * If the object is still being constructed, delay the assignment.
-   * Creates the list if it doesn't already exist.
+   * Creates the map if it doesn't already exist.
    *
    * TODO(metaweta): when erights checks in his first-class branch, add
    * code to the make() method to set the underConstruction___ flag 
