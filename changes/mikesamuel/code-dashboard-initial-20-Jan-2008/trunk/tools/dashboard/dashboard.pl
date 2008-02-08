@@ -46,17 +46,17 @@ tools/dashboard/dashboard.pl generates the dashboard by:
 
 # One client is used to store historical statistics and contains templates for
 # HTML and supporting files.  This is the "Master Client".
-my $MASTER_CLIENT;
+our $MASTER_CLIENT;
 
 # The second client is the "build client" which is the one we're updating,
 # building, and extracting stats from.
-my $BUILD_CLIENT;
+our $BUILD_CLIENT;
 
 
 # Directory for output for this particular build.
-my $OUTPUT_DIR;
+our $OUTPUT_DIR;
 while (@ARGV) {
-  my $flag = shift;
+  our $flag = shift;
   last if '--' eq $flag;
   if ('-o' eq $flag) {
     die "output directory redeclared.  Was $OUTPUT_DIR" if defined($OUTPUT_DIR);
@@ -87,28 +87,28 @@ sub requireExe($) {
 
 
 # Directory structure within subversion
-my $DASHBOARD_DIR = dirname(abs_path($0));  requireDir $DASHBOARD_DIR;
-my $TOOLS_DIR = dirname($DASHBOARD_DIR);    requireDir $TOOLS_DIR;
-$MASTER_CLIENT ||= dirname($TOOLS_DIR);     requireDir $MASTER_CLIENT;
-$BUILD_CLIENT ||= $MASTER_CLIENT;           requireDir $BUILD_CLIENT;
-my $SRC_DIR = "$BUILD_CLIENT/src";          requireDir $SRC_DIR;
+our $DASHBOARD_DIR = dirname(abs_path($0));  requireDir $DASHBOARD_DIR;
+our $TOOLS_DIR = dirname($DASHBOARD_DIR);    requireDir $TOOLS_DIR;
+$MASTER_CLIENT ||= dirname($TOOLS_DIR);      requireDir $MASTER_CLIENT;
+$BUILD_CLIENT ||= $MASTER_CLIENT;            requireDir $BUILD_CLIENT;
+our $SRC_DIR = "$BUILD_CLIENT/src";          requireDir $SRC_DIR;
 
 # Caja build output directories
-my $REPORTS_DIR = "$SRC_DIR/ant-reports";
-my $DOCS_DIR = "$SRC_DIR/ant-docs";
-my $DEMOS_DIR = "$SRC_DIR/ant-demos";
+our $REPORTS_DIR = "$SRC_DIR/ant-reports";
+our $DOCS_DIR = "$SRC_DIR/ant-docs";
+our $DEMOS_DIR = "$SRC_DIR/ant-demos";
 
 # History of all builds used to generate time series.
-my $HISTORY_DIR = "$MASTER_CLIENT/history"; requireDir $HISTORY_DIR;
+our $HISTORY_DIR = "$MASTER_CLIENT/history"; requireDir $HISTORY_DIR;
 
 # Executables required
-my $BUILDTOOLS = "/home/build/buildtools";  requireDir $BUILDTOOLS;
-my $ANT_HOME = "/usr/local/ant";            requireDir $ANT_HOME;
-my $ANT = "$ANT_HOME/bin/ant";              requireExe $ANT;
-my $JAVA_HOME = "$BUILDTOOLS/java/latest";  requireDir $JAVA_HOME;
-my $JAVA = "$JAVA_HOME/bin/java";           requireExe $JAVA;
-my $SVN = "/usr/bin/svn";                   requireExe $SVN;
-my $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
+our $BUILDTOOLS = "/home/build/buildtools";  requireDir $BUILDTOOLS;
+our $ANT_HOME = "/usr/local/ant";            requireDir $ANT_HOME;
+our $ANT = "$ANT_HOME/bin/ant";              requireExe $ANT;
+our $JAVA_HOME = "$BUILDTOOLS/java/latest";  requireDir $JAVA_HOME;
+our $JAVA = "$JAVA_HOME/bin/java";           requireExe $JAVA;
+our $SVN = "/usr/bin/svn";                   requireExe $SVN;
+our $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
 
 
 sub collectCodeStats() {
