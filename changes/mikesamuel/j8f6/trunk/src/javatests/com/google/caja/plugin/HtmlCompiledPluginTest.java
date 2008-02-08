@@ -128,20 +128,6 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   /**
-   * Tests that Object.eval is uncallable.
-   * 
-   * @throws Exception
-   */
-  public void testObjectEval() throws Exception {
-    execGadget(
-        "<script>var success=false;" +
-          "try{Object.eval('1')}catch(e){success=true;}" + 
-          "if (!success)fail('Object.eval is accessible.')</script>",
-        ""
-        );
-  }
-
-  /**
    * Tests that cajoled code can't construct new Function objects.
    * 
    * @throws Exception
@@ -340,6 +326,27 @@ public class HtmlCompiledPluginTest extends TestCase {
         "try{x=toSource();}catch(e){}" +
         "if(x) fail('Global write-only values are readable.');</script>",
         ""
+        );
+  }
+
+  /**
+   * Empty styles should not cause parse failure.
+   * <a href="http://code.google.com/p/google-caja/issues/detail?id=56">bug</a>
+   */
+  public void testEmptyStyle() throws Exception {
+    execGadget("<style> </style>", "");
+  }
+
+  /**
+   * Handlers should have their handlers rewritten.
+   */
+  public void testHandlerRewriting() throws Exception {
+    execGadget(
+        "<a onclick=\"foo(this)\">hi</a>",
+
+        "assertEquals('<a onclick=\"return plugin_dispatchEvent___(" +
+        "this, event || window.event, 0, \\'c_1___\\')\">hi</a>'," +
+        " outers.emitHtml___.htmlBuf_.join(''))"
         );
   }
 
