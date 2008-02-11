@@ -194,6 +194,7 @@
       <src path="${testsrc}"/>
       <classpath refid="classpath.tests.compile"/>
       <include name="**/caja/AllTests.java"/>
+      <include name="**/caja/demos/calendar/RRuleTest.java"/>
       <include name="**/caja/demos/calendar/HcalTest.java"/>
       <include name="**/caja/lexer/CharProducerTest.java"/>
       <include name="**/caja/lexer/CommentLexerTest.java"/>
@@ -244,6 +245,7 @@
         <include name="**/caja/plugin/unicode.js"/>
       </fileset>
       <fileset dir="${testsrc}">
+        <include name="**/caja/demos/calendar/*_test.html"/>
         <include name="**/caja/demos/calendar/*.js"/>
         <include name="**/caja/lexer/csslexergolden1.txt"/>
         <include name="**/caja/lexer/csslexerinput1.css"/>
@@ -295,6 +297,7 @@
         <include name="**/caja/plugin/console-stubs.js"/>
         <include name="**/caja/plugin/container.js"/>
         <include name="**/caja/plugin/domita_test.html"/>
+        <include name="**/caja/plugin/jsunit.js"/>
         <include name="**/caja/plugin/gxpcompilergolden1.js"/>
         <include name="**/caja/plugin/gxpcompilergolden2.js"/>
         <include name="**/caja/plugin/gxpcompilergolden3.txt"/>

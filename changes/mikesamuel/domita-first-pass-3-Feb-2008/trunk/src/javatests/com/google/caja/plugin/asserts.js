@@ -18,15 +18,13 @@
  * in turn mimic junit.
  */
 
+
 function fail(msg) {
   if (typeof console !== 'undefined') {
     console.trace();
     console.log(msg);
   }
-  //if (typeof Error !== 'undefined') {
-    throw new Error(msg);
-  //}
-  throw msg;
+  throw new Error(msg);
 }
 
 function assertEquals() {
@@ -40,7 +38,7 @@ function assertEquals() {
   function commonSuffix(a, b, limit) {
     var i = a.length;
     var j = b.length;
-    while (i > limit && j > limit && a.charAt(i - 1) == b.charAt(j - 1)) {
+    while (i > limit && j > limit && a.charAt(i - 1) === b.charAt(j - 1)) {
       --i;
       --j;
     }
@@ -64,7 +62,7 @@ function assertEquals() {
     default: throw 'missing arguments ' + arguments;
   }
   if (a !== b) {
-    if (typeof a == 'string' && typeof b == 'string') {
+    if (typeof a === 'string' && typeof b === 'string') {
       var prefix = commonPrefix(a, b);
       var suffix = commonSuffix(a, b, prefix);
       msg = (msg ? msg + ' :: ' : '') + '<<' + a.substring(0, prefix) + '#' +
@@ -102,5 +100,46 @@ function assertFalse() {
       assertEquals(arguments[0], false, arguments[1]);
       break;
     default: throw 'missing arguments ' + arguments;
+  }
+}
+
+function assertLessThan() {
+  var msg, a, b;
+  switch (arguments.length) {
+    case 2:
+      msg = null;
+      a = arguments[0];
+      b = arguments[1];
+      break;
+    case 3:
+      msg = arguments[0];
+      a = arguments[1];
+      b = arguments[2];
+      break;
+    default: throw 'missing arguments ' + argumetns;
+  }
+  if (!(a < b)) {
+    fail((msg ? msg + ' :: ' : '')
+         + '!(<<' + a + '>>: ' + (typeof a) + ' < '
+         + '<<' + b + '>>: ' + (typeof b) + ')');
+  }
+}
+
+function assertNull() {
+  var msg, a;
+  switch (arguments.length) {
+    case 1:
+      msg = null;
+      a = arguments[0];
+      break;
+    case 2:
+      msg = arguments[0];
+      a = arguments[1];
+      break;
+    default: throw 'missing arguments ' + argumetns;
+  }
+  if (a !== null) {
+    fail((msg ? msg + ' :: ' : '')
+         + 'Expected null, not ' + '<<' + a + '>>: ' + (typeof a));
   }
 }
