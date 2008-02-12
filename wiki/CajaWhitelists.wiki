@@ -1,5 +1,5 @@
 #summary Schema for whitelists used by the Cajoler
-#labels Phase-Design
+#labels Phase-Implementation
 
 = Whitelist File Format and Schema =
 
@@ -96,12 +96,12 @@ This means that whitelists can be used in several distinct ways:
 
 == Type information in Whitelists ==
 For HTML Elements, we need the following type information:
-  * {{{empty}}} - does the element not contain any other elements?  {{{<INPUT>}}}, {{{<BR>>}}}, and {{{<HR>}}} are examples of empty elements in HTML 4.
+  * {{{empty}}} - does the element not contain any other elements?  {{{<INPUT>}}}, {{{<BR>}}}, and {{{<HR>}}} are examples of empty elements in HTML 4.
   * {{{optionalEndTag}}} - does the element require an end tag?  {{{<P>}}} elements do not require end tags in HTML 4, but {{{<TABLE>}}} elements do,
   * {{{breaksFlow}}} - does the element break the flow of text?
 
 For HTML Attributes, we need the following type information:
-  * {{{type}}} - one of the values in {{{com.google.caja.html.HTML.Type}}}: {{{NONE}}}, {{{SCRIPT}}}, {{{URI}}}, {{{ID}}}, {{{IDREF}}}, {{{NMTOKEN}}}, {{{NMTOKENS}}}, or {{{FRAME}}}.
+  * {{{type}}} - one of the values in {{{com.google.caja.html.HTML.Type}}}: {{{NONE}}}, {{{SCRIPT}}}, {{{STYLE}}}, {{{URI}}}, {{{ID}}}, {{{IDREF}}}, {{{NMTOKEN}}}, {{{NMTOKENS}}}, or {{{FRAME}}}.
 
 For CSS Properties, we need the following type information:
   * {{{signature}}} - a property signature as described and "Value" in the [http://www.w3.org/TR/CSS21/about.html#property-defs CSS2.1 spec]
