@@ -734,12 +734,14 @@ function plugin_dispatchEvent___(thisNode, event, pluginId, handler) {
   var outers = ___.getOuters(pluginId);
   switch (typeof handler) {
     case 'string':
-      return outers[handler](
-          outers.tameNode___(thisNode), outers.tameEvent___(event));
+      handler = outers[handler];
+      break;
     case 'function':
-      return (___.asSimpleFunc(handler)).call(
-          outers, outers.tameNode___(thisNode), outers.tameEvent___(event));
+      break;
     default:
-      throw new Error();
+      throw new Error(
+          'Expected function as event handler, not ' + typeof handler);
   }
+  return (___.asSimpleFunc(handler))(
+      outers.tameNode___(thisNode), outers.tameEvent___(event));
 }
