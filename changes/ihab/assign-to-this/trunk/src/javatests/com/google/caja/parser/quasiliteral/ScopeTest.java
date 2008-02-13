@@ -338,7 +338,7 @@ public class ScopeTest extends TestCase {
       FunctionConstructor fc = (FunctionConstructor)d.getInitializer();
       s1 = Scope.fromFunctionConstructor(s0, fc);
       TryStmt ts = (TryStmt)fc.getBody().children().get(0);
-      s2 = Scope.fromCatchStmt(s0, ts.getCatchClause());
+      s2 = Scope.fromCatchStmt(s1, ts.getCatchClause());
     }
 
     assertEquals("x0___", s0.newTempVariable().getValue());
