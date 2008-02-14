@@ -81,8 +81,20 @@ var html = (function () {
       // Don't capture space.
       '^\\s*(?:'
       // Capture an attribute name in group 1, and value in groups 2-4.
-      + '(?:([a-z][a-z-]*)(?:\\s*=\\s*'
-      + '(?:\"([^\"]*)\"|\'([^\']*)\'|([^>\"\'\\s]*))?))'
+      + ('(?:'
+         + '([a-z][a-z-]*)'
+         + ('(?:'
+            + '\\s*=\\s*'
+            + ('(?:'
+               + '\"([^\"]*)\"'
+               + '|\'([^\']*)\''
+               + '|([^>\"\'\\s]*)'
+               + ')'
+               )
+            + ')'
+            ) + '?'
+         + ')'
+         )
       // End of tag captured in group 5.
       + '|(/?>)'
       // Don't capture cruft
@@ -117,7 +129,9 @@ var html = (function () {
    *   endTag:   function (name, param) { ... },
    *   pcdata:   function (text, param) { ... },
    *   rcdata:   function (text, param) { ... },
-   *   cdata:    function (text, param) { ... }
+   *   cdata:    function (text, param) { ... },
+   *   startDoc: function (param) { ... },
+   *   endDod:   function (param) { ... },
    * }</pre>
    *
    * @param {Object} event handler.
@@ -134,6 +148,8 @@ var html = (function () {
       var tagName;  // The name of the tag currently being processed.
       var eflags;  // The element flags for the current tag.
       var openTag;  // True if the current tag is an open tag.
+
+      handler.startDoc && handler.startDoc(param);
 
       while (htmlText) {
         var m = htmlText.match(inTag ? INSIDE_TAG_TOKEN : OUTSIDE_TAG_TOKEN);
@@ -204,6 +220,8 @@ var html = (function () {
           }
         }
       }
+
+      handler.endDoc && handler.endDoc(param);
     }
   }
 
@@ -216,6 +234,87 @@ var html = (function () {
 })();
 
 /**
+ * Returns a function that strips unsafe tags and attributes from html.
+ * @param {Function} sanitizeAttributes
+ *     from tagName, attribs[]) to null or a sanitized attribute array.
+ *     The attribs array can be arbitrarily modified, but the same array
+ *     instance is reused, so should not be held.
+ * @return {Function} from html to sanitized html
+ */
+html.makeHtmlSanitizer = function (sanitizeAttributes) {
+  var out = [];
+  var stack = [];
+  var ignoring = false;
+  return html.makeSaxParser({
+        startDoc: function (_) {
+          stack = [];
+          ignoring = false;
+        },
+        startTag: function (tagName, attribs, out) {
+          if (ignoring) { return; }
+          if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
+          var eflags = html4.ELEMENTS[tagName];
+          if (eflags & html4.eflags.UNSAFE) {
+            ignoring = !(eflags & html4.eflags.EMPTY);
+            return;
+          }
+          attribs = sanitizeAttributes(tagName, attribs);
+          if (attribs) {
+            if (!(eflags & (html4.eflags.OPTIONAL_ENDTAG|html4.eflags.EMPTY))) {
+              stack.push(tagName);
+            }
+
+            out.push('<', tagName);
+            for (var i = 0, n = attribs.length; i < n; i += 2) {
+              var attribName = attribs[i],
+                  value = attribs[i + 1];
+              if (value != null) {  // Skip null or undefined
+                out.push(' ', attribName, '="', html.escapeAttrib(value), '"');
+              }
+            }
+            out.push('>');
+          }
+        },
+        endTag: function (tagName, out) {
+          if (ignoring) {
+            ignoring = false;
+            return;
+          }
+          if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
+          var eflags = html4.ELEMENTS[tagName];
+          if (!(eflags & (html4.eflags.UNSAFE|html4.eflags.EMPTY))) {
+            var index;
+            for (index = stack.length; --index >= 0;) {
+              if (stack[index] === tagName) { break; }
+            }
+            if (index < 0) { return; }  // Not opened.
+            for (var i = index; --i > index;) {
+              out.push('</', stack[i], '>');
+            }
+            stack.length = index;
+            out.push('</', tagName, '>');
+          }
+        },
+        pcdata: function (text, out) {
+          if (!ignoring) { out.push(text); }
+        },
+        rcdata: function (text, out) {
+          if (!ignoring) { out.push(text); }
+        },
+        cdata: function (text, out) {
+          if (!ignoring) { out.push(text); }
+        },
+        endDoc: function (out) {
+          for (var i = stack.length; --i >= 0;) {
+            out.push('</', stack[i], '>');
+          }
+          stack.length = 0;
+        }
+      });
+}
+
+
+/**
  * Strips unsafe tags and attributes from html.
  * @param {string} html to sanitize
  * @param {Function} opt_urlXform : string -> string? -- a transform to apply to
@@ -226,58 +325,31 @@ var html = (function () {
  */
 function html_sanitize(htmlText, opt_urlPolicy, opt_nmTokenPolicy) {
   var out = [];
-  var ignoring = false;
-  html.makeSaxParser({
-        startTag: function (tagName, attribs, out) {
-          if (ignoring) { return; }
-          var eflags = html4.ELEMENTS[tagName];
-          if (eflags & html4.eflags.UNSAFE) {
-            ignoring = !(eflags & html4.eflags.EMPTY);
-            return;
-          }
-          out.push('<', tagName);
-          for (var i = 0, n = attribs.length; i < n; i += 2) {
-            var attribName = attribs[i].toUpperCase(), value = attribs[i + 1];
-            // Skip unrecognized attribs
-            if (!html4.ATTRIBS.hasOwnProperty(attribName)) { continue; }
-            var atype = html4.ATTRIBS[attribName];
-            if (atype) {
-              switch (atype) {
-                case html4.atype.SCRIPT:
-                case html4.atype.STYLE:
-                  continue;
-                case html4.atype.IDREF:
-                case html4.atype.NAME:
-                case html4.atype.NMTOKENS:
-                  value = opt_nmTokenPolicy ? opt_nmTokenPolicy(value) : value;
-                  break;
-                case html4.atype.URI:
-                  value = opt_urlPolicy && opt_urlPolicy(value);
-                  break;
-              }
+  html.makeHtmlSanitizer(
+      function sanitizeAttribs(tagName, attribs) {
+        for (var i = 0; i < attribs.length; i += 2) {
+          var attribName = attribs[i];
+          var value = attribs[i + 1];
+          if (html4.ATTRIBS.hasOwnProperty(attribName)) {
+            switch (html4.ATTRIBS[attribName]) {
+              case html4.atype.SCRIPT:
+              case html4.atype.STYLE:
+                value = null;
+              case html4.atype.IDREF:
+              case html4.atype.NAME:
+              case html4.atype.NMTOKENS:
+                value = opt_nmTokenPolicy ? opt_nmTokenPolicy(value) : value;
+                break;
+              case html4.atype.URI:
+                value = opt_urlPolicy && opt_urlPolicy(value);
+                break;
             }
-            if (value != null) {  // Skip null or undefined
-              out.push(' ', attribName, '="', html.escapeAttrib(value), '"');
-            }
+          } else {
+            value = null;
           }
-          out.push('>');
-        },
-        endTag: function (tagName, out) {
-          if (ignoring) {
-            ignoring = false;
-            return;
-          }
-          out.push('</', tagName, '>');
-        },
-        pcdata: function (text, out) {
-          if (!ignoring) { out.push(text); }
-        },
-        rcdata: function (text, out) {
-          if (!ignoring) { out.push(text); }
-        },
-        cdata: function (text, out) {
-          if (!ignoring) { out.push(text); }
+          attribs[i + 1] = value;
         }
+        return attribs;
       })(htmlText, out);
   return out.join('');
 }

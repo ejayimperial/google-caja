@@ -89,3 +89,24 @@ function testSpecialCharsInAttributes() {
       '<B TITLE="a&lt;b &amp;&amp; c&gt;b">bar</B>',
       html_sanitize('<b title="a<b && c>b">bar</b>'));
 }
+
+function testUnclosedTags() {
+  assertEquals('<DIV ID="foo">Bar<BR>Baz</DIV>',
+               html_sanitize('<div id="foo">Bar<br>Baz'));
+}
+
+function testUnopenedTags() {
+  assertEquals('Foo<B>Bar</B>Baz',
+               html_sanitize('Foo<b></select>Bar</b></b>Baz</select>'));
+}
+
+function testUnsafeEndTags() {
+  assertEquals(
+      '',
+      html_sanitize(
+          '</meta http-equiv="refesh" content="1;URL=http://evilgadget.com">'));
+}
+
+function testEmptyEndTags() {
+  assertEquals('<INPUT>', html_sanitize('<input></input>'));
+}

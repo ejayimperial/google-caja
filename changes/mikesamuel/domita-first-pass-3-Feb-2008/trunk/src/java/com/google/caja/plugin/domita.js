@@ -164,61 +164,33 @@ attachDocumentStub = (function () {
     /** Sanitize HTML applying the appropriate transformations. */
     function sanitizeHtml(htmlText) {
       var out = [];
-      out.ignoring = false;
       htmlSanitizer(htmlText, out);
       return out.join('');
     }
-    var htmlSanitizer = html.makeSaxParser({
-        startTag: function (tagName, attribs, out) {
-          if (out.ignoring) { return; }
-          var eflags = html4.ELEMENTS[name];
-          if (eflags & html4.eflags.UNSAFE) {
-            out.ignoring = !(eflags & html4.eflags.EMPTY);
-            return;
-          }
-          for (var i = 0, n = attribs.length; i < n; i += 2) {
-            var attribName = attribs[i].toUpperCase(), value = attribs[i + 1];
-            // Skip unrecognized attribs
-            if (!html4.ATTRIBS.hasOwnProperty(attribName)) {
-              value = null;
+    var htmlSanitizer = html.makeHtmlSanitizer(
+        function sanitizeAttributes(tagName, attribs) {
+          for (var i = 0; i < attribs.length; i += 2) {
+            var attribName = attribs[i];
+            var value = attribs[i + 1];
+            if (html4.ATTRIBS.hasOwnProperty(attribName)) {
+              var atype = html4.ATTRIBS[attribName];
+              value = rewriteAttribute(tagName, attribName, atype, value);
             } else {
-              value = rewriteAttribute(
-                  tagName, attribName, html4.ATTRIBS[attribName], value);
+              value = null;
             }
-            attribs[i + 1] = value;
+            if (value != null) {  // intentionally matches undefined
+              attribs[i + 1] = value;
+            } else {
+              attribs.splice(i, 2);
+              i -= 2;
+            }
           }
           var policy = elementPolicies[tagName];
           if (policy && elementPolicies.hasOwnProperty(tagName)) {
-            attribs = policy(attribs);
-            if (!attribs) { return; }
+            return policy(attribs);
           }
-
-          out.push('<', tagName);
-          for (var i = 0, n = attribs.length; i < n; i += 2) {
-            var attribName = attribs[i].toUpperCase(), value = attribs[i + 1];
-            if (value != null) {  // Skip null or undefined
-              out.push(' ', attribName, '="', html.escapeAttrib(value), '"');
-            }
-          }
-          out.push('>');
-        },
-        endTag: function (name, out) {
-          if (out.ignoring) {
-            out.ignoring = false;
-            return;
-          }
-          out.push('</', name, '>');
-        },
-        pcdata: function (text, out) {
-          if (!out.ignoring) { out.push(text); }
-        },
-        rcdata: function (text, out) {
-          if (!out.ignoring) { out.push(text); }
-        },
-        cdata: function (text, out) {
-          if (!out.ignoring) { out.push(text); }
-        }
-      });
+          return attribs;
+        });
 
 
     /**
