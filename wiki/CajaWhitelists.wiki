@@ -34,7 +34,7 @@ A white-list is a [http://www.json.org/ JSON file] like:
     { "key": "IFRAME" }
   ],
 
-  type: [
+  "types": [
     { "key": "OBJECT", "optionalEndTag": false, "empty": false, "breaksFlow": false }
   ]
 }
@@ -81,23 +81,23 @@ The cajoler loads a white-list using the following algorithm:
   * For each {{{types}}}
     * Add a type definition to W
   * If there are type definitions in W with the same key, and the same value, remove all but 1.
-  * Abort if there exist any two distinct type definitions in W with the same key.
+  * If there exist any two distinct type definitions in W with the same key, mark W invalid.
   * Return W.
 
 This algorithm preserves the properties that
-  * Any item allowed by the top-level white-list is allowed.
-  * Any item denied by a top-level is denied.
-  * Any item denied by an inherited white-list that is not allowed by the top level white-list is denied.
-  * Any item allowed by an inherited white-list and not denied by any inherited white-list or by the top level white-list is allowed.
-  * If the top level white-list defines a type for an item, then that type is used for the item.
-  * If the top level white-list defines an ambiguous type, then processing aborts.
-  * If the top level white-list defines a type for an item, and inherited white-lists define ambiguous types for an item, then processing does not abort, and the top level white-list's definition is used.
+  * Any item not mentioned in either the start white-list or in inherited white-lists is *denied*.
+  * Any item denied by a start is denied.
+  * Any item allowed by the start white-list and not also denied is *allowed*.
+  * Any item denied by an inherited white-list that is not allowed by the start white-list is denied.
+  * Any item allowed by an inherited white-list and not denied by any inherited white-list or by the start white-list is allowed.
+  * If the start white-list defines a type for an item, then that type is used for the item.
+  * If the start white-list defines an ambiguous type, then processing aborts.
+  * If the start white-list defines a type for an item, and inherited white-lists define ambiguous types for an item, then the start white-list's definition is used, and the start white-list is valid.
 
-This means that white-lists can be used in several distinct ways:
-  * As a schema -- a white-list that includes only type definitions and neither allows nor denies may be included
-  * As a white-list -- a white-list may inherit definitions from a schema and then pick and choose items to allow
-  * As an override -- a white-list may inherit types and definitions from other white-lists and then choose to override definitions made in the inherited lists.
-
+This allows white-lists to be used in several distinct ways:
+  * As a schema -- a white-list that includes only type definitions and neither allows nor denies items may be inherited for its definitions.
+  * As a white-list -- a white-list may inherit definitions from a schema and then pick and choose items to allow.
+  * As an override -- a white-list may inherit types and definitions from other white-lists and then choose to override allows and definitions made in the inherited lists.
 
 == Type information in WhiteLists ==
 For HTML Elements, we need the following type information:
