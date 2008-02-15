@@ -54,7 +54,18 @@ public class ValidateCssStage implements Pipeline.Stage<Jobs> {
       valid &= v.validateCss(cssTree);
       valid &= rw.rewrite(cssTree);
     }
+    for (Job job : jobs.getJobsByType(Job.JobType.CSS_TEMPLATE)) {
+      // The parsetree node is a CssTree.StyleSheet
+      AncestorChain<CssTemplate> chain = job.getRoot().cast(CssTemplate.class);
+      valid &= validate(
+          v, rw, new AncestorChain<CssTree>(chain, chain.node.getCss()));
+    }
 
     return valid && jobs.hasNoFatalErrors();
+  }
+
+  private static final boolean validate(
+      CssValidator v, CssRewriter rw, AncestorChain<CssTree> css) {
+    return v.validateCss(css) & rw.rewrite(css);
   }
 }

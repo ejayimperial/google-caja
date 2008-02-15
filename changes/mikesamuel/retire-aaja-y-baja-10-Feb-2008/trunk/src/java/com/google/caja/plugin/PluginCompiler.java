@@ -59,6 +59,7 @@ import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.util.Criterion;
 import com.google.caja.util.Pipeline;
+import com.google.caja.util.Pipeline;
 import static com.google.caja.plugin.SyntheticNodes.s;
 
 import java.io.StringReader;
@@ -169,8 +170,7 @@ public final class PluginCompiler {
    * @return true on success, false on failure.
    */
   public boolean run() {
-    boolean result = compilationPipeline.apply(jobs);
-    return result;
+    return compilationPipeline.apply(jobs);
   }
 
   private class CompileGxpsStage implements Pipeline.Stage<Jobs> {
