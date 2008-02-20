@@ -16,6 +16,7 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.BreakStmt;
 import com.google.caja.parser.js.CaseStmt;
@@ -139,6 +140,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+
     ////////////////////////////////////////////////////////////////////////
     // variable - variable name handling
     ////////////////////////////////////////////////////////////////////////
@@ -202,7 +204,7 @@ public class DefaultCajaRewriter extends Rewriter {
             scope.isConstructor(getReferenceName(bindings.get("x")))) {
           mq.addMessage(
               RewriterMessageType.CONSTRUCTORS_ARE_NOT_FIRST_CLASS,
-              this, node);
+              node.getFilePosition(), this, node);
           return node;
         }
         return NONE;
@@ -520,7 +522,7 @@ public class DefaultCajaRewriter extends Rewriter {
             return node;
           } else {
             ParseTreeNode expr = substV(
-                "___OUTERS___.@v",
+                ReservedNames.OUTERS + ".@v",
                 "v", bindings.get("v"));
             // Must now wrap the Expression in something Statement-like since
             // that is what the enclosing context expects:
@@ -1072,6 +1074,7 @@ public class DefaultCajaRewriter extends Rewriter {
     addRule(new Rule("recurse", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof ParseTreeNodeContainer ||
+            node instanceof ArrayConstructor ||
             node instanceof BreakStmt ||
             node instanceof Block ||
             node instanceof CaseStmt ||
