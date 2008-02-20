@@ -34,7 +34,6 @@ import com.google.caja.plugin.stages.CheckForErrorsStage;
 import com.google.caja.plugin.stages.CompileHtmlStage;
 import com.google.caja.plugin.stages.ConsolidateCodeStage;
 import com.google.caja.plugin.stages.ConsolidateCssStage;
-import com.google.caja.plugin.stages.RewriteGlobalReferencesStage;
 import com.google.caja.plugin.stages.RewriteHtmlStage;
 import com.google.caja.plugin.stages.ValidateCssStage;
 import com.google.caja.plugin.stages.ValidateHtmlStage;
@@ -115,9 +114,6 @@ public class HtmlPluginCompiler {
     stages.add(new CompileHtmlStage(cssSchema));
     stages.add(new ValidateCssStage(cssSchema));
     stages.add(new ConsolidateCodeStage());
-    if (jobs.getPluginMeta().scheme != PluginMeta.TranslationScheme.CAJA) {
-      stages.add(new RewriteGlobalReferencesStage());
-    }
     stages.add(new ValidateJavascriptStage());
     stages.add(new ConsolidateCssStage());
     stages.add(new CheckForErrorsStage());

@@ -332,7 +332,7 @@ public class GxpCompilerTest extends TestCase {
   public void testUnrewrittenAttrAttrib() throws Exception {
     assertOutput(
         "out___.push('<img src=\\\"/testplugin/blank.gif\\\" width=\\\"', "
-        + "plugin_htmlAttr___(screenWidth() / 2), '\\\">');",
+        + "___OUTERS___.plugin_htmlAttr___(screenWidth() / 2), '\\\">');",
         true,
         "<gxp:template name=\"Test\">"
         + "<img src=\"blank.gif\">"
@@ -371,8 +371,9 @@ public class GxpCompilerTest extends TestCase {
   public void testCssSubstitution() throws Exception {
     assertOutput(
         "out___.push('<div style=\\\"position: absolute;\\nleft: ', "
-        + "plugin_cssNumber___(x + 10), 'px;\\nright: ', "
-        + "plugin_cssNumber___(x + 50), 'px\\\" id=\\\"pre-foo\\\">\\n"
+        + "___OUTERS___.plugin_cssNumber___(x + 10), 'px;\\nright: ', "
+        + "___OUTERS___.plugin_cssNumber___(x + 50), 'px\\\""
+        + " id=\\\"pre-foo\\\">\\n"
         + "Hello\\n</div>');",
         true,
         "<gxp:template name=\"Test\">\n"
@@ -470,9 +471,8 @@ public class GxpCompilerTest extends TestCase {
   private void assertOutput(String golden, boolean expectValid, String... gxps)
       throws Exception {
     MessageContext mc = new MessageContext();
-    MessageQueue mq = //new SimpleMessageQueue();
-      new EchoingMessageQueue(
-          new PrintWriter(new OutputStreamWriter(System.out)), mc);
+    MessageQueue mq = new EchoingMessageQueue(
+        new PrintWriter(new OutputStreamWriter(System.err)), mc);
     PluginMeta meta = makeTestPluginMeta();
 
     DomTree.Tag[] doms = new DomTree.Tag[gxps.length];
@@ -533,7 +533,8 @@ public class GxpCompilerTest extends TestCase {
       String actual = actualBuf.toString().trim();
       // get rid of boilerplate
       String pre = "function Test() {\n  var out___ = [];\n  ",
-            post = "\n  return plugin_blessHtml___(out___.join(''));\n}";
+          post = ("\n  return ___OUTERS___.plugin_blessHtml___"
+                  + "(out___.join(''));\n}");
       assertTrue(actual, actual.startsWith(pre));
       assertTrue(actual, actual.endsWith(post));
       actual = actual.substring(pre.length(), actual.length() - post.length())
@@ -546,8 +547,6 @@ public class GxpCompilerTest extends TestCase {
 
   private PluginMeta makeTestPluginMeta() {
     return new PluginMeta(
-        "TestPlugin", "pre", "/testplugin", "rootDiv",
-        PluginMeta.TranslationScheme.AAJA,
-        PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
+        "pre", "/testplugin", PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
   }
 }
