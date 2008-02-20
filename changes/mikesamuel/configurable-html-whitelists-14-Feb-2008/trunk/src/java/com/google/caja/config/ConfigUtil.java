@@ -225,7 +225,6 @@ class JSONWhiteListLoader {
 
           JSONWhiteListLoader inheritedLoader
               = new JSONWhiteListLoader(pos, mq);
-          System.err.println("parsing " + pos);
           JSONObject inheritedJson = inheritedLoader.expectJSONObject(
               JSONValue.parse(ConfigUtil.openConfigResource(
                   uri, src.source().getUri())), "whitelist");

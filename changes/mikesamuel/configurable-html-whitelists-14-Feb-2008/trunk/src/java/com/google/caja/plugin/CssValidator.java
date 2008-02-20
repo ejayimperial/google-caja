@@ -255,8 +255,7 @@ final class Candidate {
     this.warning = warning;
   }
 
-  void match(
-      CssTree.Term term, CssPropertyPartType type, String propertyName) {
+  void match(CssTree.Term term, CssPropertyPartType type, String propertyName) {
     this.match = new Match(term, type, propertyName, this.match);
   }
 
