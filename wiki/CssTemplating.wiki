@@ -32,7 +32,8 @@ The existing CSS Template syntax uses annotations to specify
   height:   $(y1 - y0)px;
 }}}
 
-This scheme adds one production to the CSS 2.1 grammar:{{{
+This scheme adds one production to the CSS 2.1 grammar:
+{{{
   substitution  ::==  '$' '(' <js-body>* ')' <unit>?
   js-body       ::==  '(' <js-body> ')'
                    |  <js-token-not-parenthesis>
@@ -44,7 +45,8 @@ The CSS Template parser sees this, and runs the CSSValidator as usual
 to mark each primitive value or substitution with a
 ContentTypeProperty (e.g. left), and a ContentType (e.g. LENGTH).
 
-The CSSRewriter compiles the template into a javascript function:{{{
+The CSSRewriter compiles the template into a javascript function:
+{{{
   function myTemplate(x0, y0, x1, y1) {
     var out___ = [];
     out___.push('position: absolute; left: ', cssNumber___(x0),
@@ -60,17 +62,20 @@ The CSSRewriter compiles the template into a javascript function:{{{
 
 To be more consistent with string interpolation syntax, we'll change
 the substitution production to use curly brackets instead of
-parentheses:{{{
+parentheses:
+{{{
   substitution  ::==  '$' '{' <js-body>* '}' <unit>?
   js-body       ::==  '{' <js-body> '}'
                    |  <js-token-not-curlies>
 }}}
-and rewrite the following syntax:{{{
+and rewrite the following syntax:
+{{{
   element.setAttribute('style', eval(Template(
       "position: absolute; left: ${x0}px; top: ${y0}px;"
       + " width: ${x1-x0}px; height: ${y1-y0}px", content_type.CSS)));
 }}}
-to something that binds x0, y0, x1, and y1 in the local scope:{{{
+to something that binds x0, y0, x1, and y1 in the local scope:
+{{{
   element.setAttribute('style', cssTemplate0___(x0, y0, x1, y1));
   ...
   function cssTemplate0___(x0, y0, x1, y1) {
@@ -90,7 +95,8 @@ interpolated strings.
 
 Many users will want to make incremental changes to style.  We can
 compile the function to one that modifies only the style properties
-mentioned, so compile to:{{{
+mentioned, so compile to:
+{{{
   function cssTemplate0___(x0, y0, x1, y1) {
     var props___ = {};
     props___.position = 'absolute';
@@ -101,4 +107,8 @@ mentioned, so compile to:{{{
     return blessCss___(props___);  // Mark as known safe CSS
   }
 }}}
-which can be unpacked by {{{TamedElement.setStyle}}}.
+which can be unpacked by {{{TamedElement.setStyle}}} which is the
+setter invoked when someone does
+{{{
+  myHtmlElement.style = ...;
+}}}.
