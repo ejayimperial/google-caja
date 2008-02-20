@@ -110,5 +110,5 @@ mentioned, so compile to:
 which can be unpacked by {{{TamedElement.setStyle}}} which is the
 setter invoked when someone does
 {{{
-  myHtmlElement.style = ...;
-}}}.
+myHtmlElement.style = ...;
+}}}
