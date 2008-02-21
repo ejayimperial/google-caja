@@ -211,16 +211,30 @@ public class DefaultCajaRewriterTest extends TestCase {
         "___OUTERS___.foo = ___.ctor(function foo() {" +
         "  var t___ = this;" +
         "  {" +
-        "    var x0___ = undefined;" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
         "    var k;" +
-        "    for (x0___ in t___) {" +
-        "      if (___.canEnumProp(t___, x0___)) {" +
-        "        k = x0___;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        k = x1___;" +
         "        k;" +
         "      }" +
         "    }" +
         "  }" +
         "});");
+    checkSucceeds(
+        "for (var k in this) { k; }",
+        "{" +
+        "  ___OUTERS___.x0___ = ___OUTERS___;" +
+        "  ___OUTERS___.x1___ = undefined;" +
+        "  ___OUTERS___.k;" +
+        "  for (x1___ in x0___) {" +
+        "    if (___.canEnumProp(x0___, x1___)) {" +
+        "      ___OUTERS___.k = x1___;" +
+        "      ___OUTERS___.k;" +
+        "    }" +
+        "  }" +
+        "}");
     checkSucceeds(
         "function foo() {" +
         "  for (k in this) { k; }" +
@@ -228,10 +242,11 @@ public class DefaultCajaRewriterTest extends TestCase {
         "___OUTERS___.foo = ___.ctor(function foo() {" +
         "  var t___ = this;" +
         "  {" +
-        "    var x0___ = undefined;" +
-        "    for (x0___ in t___) {" +
-        "      if (___.canEnumProp(t___, x0___)) {" +
-        "        ___OUTERS___.k = x0___;" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        ___OUTERS___.k = x1___;" +
         "        ___OUTERS___.k;" +
         "      }" +
         "    }" +
@@ -246,10 +261,11 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  var t___ = this;" +
         "  var k;" +
         "  {" +
-        "    var x0___ = undefined;" +
-        "    for (x0___ in t___) {" +
-        "      if (___.canEnumProp(t___, x0___)) {" +
-        "        k = x0___;" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        k = x1___;" +
         "        k;" +
         "      }" +
         "    }" +
@@ -264,10 +280,11 @@ public class DefaultCajaRewriterTest extends TestCase {
         "___OUTERS___.foo = ___.ctor(function foo() {" +
         "  var t___ = this;" +
         "  {" +
-        "    var x0___ = undefined;" +
-        "    for (x0___ in t___) {" +
-        "      if (___.canEnumProp(t___, x0___)) {" +
-        "        ___OUTERS___.y.k = x0___;" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        ___OUTERS___.y.k = x1___;" +
         "        ___OUTERS___.y.k;" +
         "      }" +
         "    }" +
@@ -646,7 +663,13 @@ public class DefaultCajaRewriterTest extends TestCase {
         "}));");
   }
 
-  public  void testSetInitialize() throws Exception {
+  public void testSetBadInitialize() throws Exception {
+    checkFails(
+        "var x__ = 3",
+        "Variables cannot end in \"__\"");
+  }
+
+  public void testSetInitialize() throws Exception {
     checkSucceeds(
         "function() {" +
         "  var v = x;" +
@@ -659,6 +682,12 @@ public class DefaultCajaRewriterTest extends TestCase {
         "___OUTERS___.v = ___OUTERS___.x");
   }  
   
+  public void testSetBadDeclare() throws Exception {
+    checkFails(
+        "var x__",
+        "Variables cannot end in \"__\"");
+  }
+
   public  void testSetDeclare() throws Exception {
     checkSucceeds(
         "function() {" +
@@ -1275,6 +1304,8 @@ public class DefaultCajaRewriterTest extends TestCase {
     MessageQueue mq = TestUtil.createTestMessageQueue(mc);
     new DefaultCajaRewriter(true).expand(parseText(input), mq);
 
+    assertFalse(mq.getMessages().isEmpty());
+    
     StringBuilder messageText = new StringBuilder();
     for (Message m : mq.getMessages()) {
       m.format(mc, messageText);

@@ -341,14 +341,14 @@ public class ScopeTest extends TestCase {
       s2 = Scope.fromCatchStmt(s1, ts.getCatchClause());
     }
 
-    assertEquals("x0___", s0.newTempVariable().getValue());
-    assertEquals("x1___", s0.newTempVariable().getValue());    
+    assertEquals("x0___", s0.newTempVariable());
+    assertEquals("x1___", s0.newTempVariable());
 
-    assertEquals("x0___", s1.newTempVariable().getValue());
-    assertEquals("x1___", s1.newTempVariable().getValue());
+    assertEquals("x0___", s1.newTempVariable());
+    assertEquals("x1___", s1.newTempVariable());
 
-    assertEquals("x2___", s2.newTempVariable().getValue());
-    assertEquals("x3___", s2.newTempVariable().getValue());
+    assertEquals("x2___", s2.newTempVariable());
+    assertEquals("x3___", s2.newTempVariable());
   }
 
   private void assertDefinedGlobalValue(Scope s, String name) {

@@ -190,17 +190,17 @@ public class Scope {
    * Allocate a new, uniquely named temporary variable, which is named in a manner
    * inaccessible to Caja code.
    *
-   * @return an {@code Identifier} representing the variable.
+   * @return an new variable name.
    */
-  public Identifier newTempVariable() {
+  public String newTempVariable() {
     if (fromCatchStmt) return parent.newTempVariable();
-    Identifier result = new Identifier(new StringBuilder()
+    String name = new StringBuilder()
         .append("x")
         .append(tempVariableCounter++)
         .append("___")
-        .toString());
-    declare(this, result, LocalType.DATA);
-    return result;
+        .toString();
+    declare(this, new Identifier(name), LocalType.DATA);
+    return name;
   }
 
   /**
