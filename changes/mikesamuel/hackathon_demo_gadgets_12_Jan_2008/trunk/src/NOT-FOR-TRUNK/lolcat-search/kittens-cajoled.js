@@ -1,6 +1,6 @@
 {
   ___.loadModule(function (___OUTERS___) {
-      ___OUTERS___.katTranzlator = ___.simpleFunc(function (text) {
+      ___OUTERS___.katTranzlator = ___.simpleFunc(function katTranzlator(text) {
           text = (function () {
               var x___ = (function () {
                   var x___ = (function () {
@@ -30,8 +30,8 @@
         });
       ___OUTERS___.TRANSFORMATIONS = [/\bCAN (I|YOU|HE|SHE|IT|WE|THEY)\b/g, '$1 CAN', /\bTO\b/g, '2', /\bFOR\b/g, '4', /\bYOUR\b/g, 'UR', /\bYOU\b/g, 'U', /\bTHIS\b/g, 'DIS', /\bWITH\b/g, 'WIF', /\bHAVE\b/g, 'HAZ', /\bARE\b/g, 'IS', /\bAM\b/g, 'IS', /\bPLEASE\b/g, 'PLZ', /\bTHANKS\b/g, 'THX', /\bOH MY (GOD|GOSH)\b/g, 'OMG', /\bATE\b/g, 'EATED', /\bSAID\b/g, 'SED', /\bSERIOUSLY\b/g, 'SRSLY', /\bKNOW\b/g, 'KNOE', /\bLOVE\b/g, 'LUV', /\bHELP\b/g, 'HALP', /\bMAYBE\b/g, 'MEBBE', /\bWAS\b/g, 'WUZ', /\bOF\b/g, 'OV', /\bOH\b/g, 'O', /\bREALLY\b/g, 'RLY', /\bGREAT\b/g, 'GRAET', /\bMY\b/g, 'MAH', /\b(HELLO|HI)\b/g, 'HAI', /THI/g, 'TI', /\bKN/g, 'N', /([^ ])SE(\b|[^AEIOU])/g, '$1ZE$2', /IES\b/g, 'EHS', /TION(S?)\b/g, 'SHUN', /LE\b/g, 'L', /IENDS\b/g, 'ENZ', /([^R])ING\b/g, '$1IN', /I([KM])E\b/g, 'IE$1', /ER( [^AEIOU]|$)/g, 'AH$1', /ORE\b/g, 'OAR', /IE\b/g, 'EE', /AIR\b/g, 'EH', /AIN\b/g, 'ANE', /IEF\b/g, 'EEF', /TY\b/g, 'TI', /NESS\b/g, 'NES', /([^ AEIOU])E([RD])\b/g, '$1$2', /IC\b/g, 'IK', /VE\b/g, 'V', /FORE\b/g, 'FOA', /(O[^ AEIOU])E\b/g, '$1', /\bPH([AEIOU])/g, 'F$1', /([^AEIOU ])IR/g, '$1UR', /([^AEIOU ])S\b/g, '$1Z', /([^ AEIOU]) OV\b/g, '$1A', /N\'T/g, 'NT', /OAR/g, 'OR', /IGHT/g, 'ITE', /([AEIOU])S([BDFJV])/g, '$1Z$2', /CEIV/g, 'CEEV', /AUGHT/g, 'AWT', /OO/g, 'U', /U([^ AEIOU])E/g, 'OO$1', /U([^ AEIOU]I)/g, 'OO$1', /CIOUS/g, 'SHUS', /OUCH/g, 'OWCH', /ISON/g, 'ISUN', /OIS/g, 'OYZ', /\bSEAR/g, 'SER', /\bSEA/g, 'SEE', /\bGOD/g, 'CEILING CAT', /\bHEAVEN/g, 'CEILING', /([AEIOU])[SZ]E/g, '$1Z', /\bI AM\b/g, 'I', /\bIZ A\b/g, 'IS', /\bHAZ NO\b/g, 'NO HAZ', /\bDO YOU\b/g, 'YOU', /\bA ([A-Z]+)\b/g, '$1', /\bI IS\b/g, 'IM'];
       ___OUTERS___.emitHtml___('\n');
-      var searchEngine;
-      ___OUTERS___.showKitten = ___.simpleFunc(function (result) {
+      ___OUTERS___.searchEngine;
+      ___OUTERS___.showKitten = ___.simpleFunc(function showKitten(result) {
           var title = (function () {
               var x___ = (function () {
                   var x___ = result;
@@ -76,7 +76,7 @@
               return x___.imageSearch_canCall___ ? x___.imageSearch(x0___, x1___) : ___.callPub(x___, 'imageSearch', [x0___, x1___]);
             })();
         });
-      ___OUTERS___.renderKittenTable = ___.simpleFunc(function (imageUrl, snippet) {
+      ___OUTERS___.renderKittenTable = ___.simpleFunc(function renderKittenTable(imageUrl, snippet) {
           (function () {
               var x___ = (function () {
                   var x___ = ___OUTERS___.document;

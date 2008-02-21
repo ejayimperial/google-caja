@@ -3,10 +3,10 @@
       ___OUTERS___.c_1___ = function (thisNode___, event) {
         ___.asSimpleFunc(___.primFreeze(___OUTERS___.doSearch))(thisNode___);
       };
-      var searchEngine;
-      var resultConsumer;
+      ___OUTERS___.searchEngine;
+      ___OUTERS___.resultConsumer;
       ___OUTERS___.resultsOfLastSearch = [];
-      ___OUTERS___.doSearch = ___.simpleFunc(function (button) {
+      ___OUTERS___.doSearch = ___.simpleFunc(function doSearch(button) {
           var form = (function () {
               var x___ = button;
               return x___.getForm_canCall___ ? x___.getForm() : ___.callPub(x___, 'getForm', []);
@@ -126,14 +126,14 @@
               return x___.webSearch_canCall___ ? x___.webSearch(x0___, x1___) : ___.callPub(x___, 'webSearch', [x0___, x1___]);
             })();
         });
-      ___OUTERS___.showResult = ___.simpleFunc(function (index) {
+      ___OUTERS___.showResult = ___.simpleFunc(function showResult(index) {
           var result = ___.readPub(___OUTERS___.resultsOfLastSearch, index);
           if (result) {
             ___.asSimpleFunc(___OUTERS___.resultConsumer)(___.asSimpleFunc(___.primFreeze(___OUTERS___.clone))(result));
           }
           return false;
         });
-      ___OUTERS___.curry = ___.simpleFunc(function (fn, args) {
+      ___OUTERS___.curry = ___.simpleFunc(function curry(fn, args) {
           return ___.primFreeze(___.simpleFunc(function () {
                 return (function () {
                     var x___ = fn;
@@ -144,20 +144,19 @@
                   })();
               }));
         });
-      ___OUTERS___.clone = ___.simpleFunc(function (original) {
+      ___OUTERS___.clone = ___.simpleFunc(function clone(original) {
           var cloned = {
           };
           {
-            (function () {
-                var o___ = original;
-                for (var k in o___) {
-                  if (!___.canRead(o___, k))
-                    continue;
-                  {
-                    ___.setPub(cloned, k, ___.readPub(original, k));
-                  }
-                }
-              })();
+            var x0___ = original;
+            var x1___ = undefined;
+            var k;
+            for (x1___ in x0___) {
+              if (___.canEnumPub(x0___, x1___)) {
+                k = x1___;
+                ___.setPub(cloned, k, ___.readPub(original, k));
+              }
+            }
           }
           return cloned;
         });

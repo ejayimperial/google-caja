@@ -32,6 +32,7 @@ import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.css.CssParser;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomParser;
+import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Parser;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.reporting.Message;
@@ -65,7 +66,6 @@ import java.util.regex.Pattern;
  */
 public class PluginCompilerMain {
   private String outPath = null;
-  private String namespaceName = "PLUGIN";
   private String namespacePrefix = "plugin";
   private String pathPrefix = "/plugin";
   private MessageQueue mq = new SimpleMessageQueue();
@@ -82,10 +82,9 @@ public class PluginCompilerMain {
       args = parseFlags(args);
 
       meta = new PluginMeta(
-          namespaceName, namespacePrefix, pathPrefix, "",
-          PluginMeta.TranslationScheme.AAJA,
+          namespacePrefix, pathPrefix,
           PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
-      compiler = new PluginCompiler(meta);
+      compiler = new PluginCompiler(meta, mq);
 
       boolean success = true;
       if (args.length == 0) {
@@ -138,8 +137,6 @@ public class PluginCompilerMain {
       }
       if ("--out".equals(name)) {
         this.outPath = value;
-      } else if ("--name".equals(name)) {
-        this.namespaceName = value;
       } else if ("--prefix".equals(name)) {
         this.namespacePrefix = value;
       } else if ("--pathPrefix".equals(name)) {
@@ -241,7 +238,8 @@ public class PluginCompilerMain {
       lexer.setTreatedAsXml(true);
       TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(
           lexer, is, Criterion.Factory.<Token<HtmlTokenType>>optimist());
-      input = DomParser.parseDocument(tq);
+      input = DomParser.parseDocument(
+          tq, OpenElementStack.Factory.createXmlElementStack());
       tq.expectEmpty();
     } else if (path.endsWith(".css")) {
       CssLexer lexer = new CssLexer(cp);
@@ -372,9 +370,9 @@ public class PluginCompilerMain {
   private void dumpMessages() {
     try {
       for (Message m : mq.getMessages()) {
-        System.out.print(m.getMessageLevel() + ":");
-        m.format(mc, System.out);
-        System.out.println();
+        System.err.print(m.getMessageLevel() + ":");
+        m.format(mc, System.err);
+        System.err.println();
       }
     } catch (IOException ex) {
       ex.printStackTrace();

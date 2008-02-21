@@ -15,6 +15,7 @@
 package com.google.caja;
 
 import com.google.caja.demos.calendar.HcalTest;
+import com.google.caja.demos.calendar.RRuleTest;
 import com.google.caja.lexer.CharProducerTest;
 import com.google.caja.lexer.CommentLexerTest;
 import com.google.caja.lexer.CssLexerTest;
@@ -33,7 +34,7 @@ import com.google.caja.parser.html.DomParserTest;
 import com.google.caja.parser.html.JsHtmlParserTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
-import com.google.caja.parser.quasiliteral.DefaultJsRewriterTest;
+import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
 import com.google.caja.parser.quasiliteral.MatchTest;
 import com.google.caja.parser.quasiliteral.QuasiBuilderTest;
 import com.google.caja.parser.quasiliteral.ScopeTest;
@@ -44,6 +45,7 @@ import com.google.caja.plugin.ExpressionSanitizerTest;
 import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
+import com.google.caja.plugin.HtmlSanitizerTest;
 import com.google.caja.plugin.HtmlWhitelistTest;
 import com.google.caja.plugin.PluginCompilerTest;
 import com.google.caja.plugin.UrlUtilTest;
@@ -76,7 +78,7 @@ public class AllTests {
           CssTreeTest.class,
           CssValidatorTest.class,
           DefaultGadgetRewriterTest.class,
-          DefaultJsRewriterTest.class,
+          DefaultCajaRewriterTest.class,
           DomParserTest.class,
           EscapingTest.class,
           ExpressionSanitizerTest.class,
@@ -86,6 +88,7 @@ public class AllTests {
           HcalTest.class,
           HtmlCompiledPluginTest.class,
           HtmlLexerTest.class,
+          HtmlSanitizerTest.class,
           HtmlWhitelistTest.class,
           JoinTest.class,
           JsHtmlParserTest.class,
@@ -97,6 +100,7 @@ public class AllTests {
           PluginCompilerTest.class,
           PunctuationTrieTest.class,
           QuasiBuilderTest.class,
+          RRuleTest.class,
           ScopeTest.class,
           SparseBitSetTest.class,
           StringLiteralTest.class,

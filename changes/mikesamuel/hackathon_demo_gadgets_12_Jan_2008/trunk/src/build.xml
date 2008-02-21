@@ -46,13 +46,13 @@
   <property name="reports"     location="ant-reports"/>  <!-- emma reports -->
   <property name="instr"       location="ant-instr"/>  <!-- instrumented src -->
   <property name="lib"         location="ant-lib"/>
-  <property name="testlib"     location="ant-testlib"/>
   <property name="docs"        location="ant-docs"/>
   <property name="jars"        location="ant-jars"/>
   <property name="www"         location="ant-www"/>  <!-- demo files dir -->
 
   <path id="classpath.compile">
     <pathelement path="${third_party}/java/jakarta_commons/commons-cli.jar"/>
+    <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
     <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
   </path>
 
@@ -62,14 +62,16 @@
 
   <path id="classpath.tests.compile">
     <pathelement path="${third_party}/java/junit/junit.jar"/>
+    <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
     <pathelement path="${third_party}/java/rhino/js.jar"/>
   </path>
 
   <path id="classpath.tests.run">
-    <pathelement path="${third_party}/java/junit/junit.jar"/>
-    <pathelement path="${third_party}/java/rhino/js.jar"/>
     <pathelement path="${third_party}/java/emma/emma.jar"/>
     <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
+    <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
+    <pathelement path="${third_party}/java/junit/junit.jar"/>
+    <pathelement path="${third_party}/java/rhino/js.jar"/>
     <pathelement path="${instr}/classes"/>
     <!-- In case instrumentation not enabled -->
     <pathelement path="${lib}"/>
@@ -106,7 +108,6 @@
     <delete dir="${instr}"/>
     <delete dir="${jars}"/>
     <delete dir="${lib}"/>
-    <delete dir="${testlib}"/>
     <delete dir="${www}"/>
   </target>
 
@@ -116,7 +117,6 @@
     <mkdir dir="${instr}"/>
     <mkdir dir="${jars}"/>
     <mkdir dir="${lib}"/>
-    <mkdir dir="${testlib}"/>
     <mkdir dir="${www}"/>
   </target>
 
@@ -125,10 +125,11 @@
     <!-- Instrument the compiled class files to gather code coverage stats -->
     <emma enabled="${emma.enabled}">
       <instr instrpath="${lib}" destdir="${instr}" mode="fullcopy"
-       metadatafile="${reports}/metadata.em" merge="true">
+       metadatafile="${reports}/coverage/metadata.em" merge="true">
         <filter value="${emma.filter}"/>
       </instr>
     </emma>
+    <mkdir dir="${reports}/tests"/>
     <!--
       - If this fails to run, try with -verbose.  If you see a problem with
       - forking, check your JAVA and JAVA_HOME environment variables and make
@@ -137,30 +138,33 @@
     <junit printsummary="yes" fork="yes">
       <assertions><enable/></assertions>  <!-- ignored unless fork="yes" -->
       <classpath refid="classpath.tests.run"/>
-      <formatter type="xml" usefile="true"/>
-      <batchtest todir="${reports}">
+      <formatter type="xml" usefile="true" unless="emma.enabled"/>
+      <batchtest todir="${reports}/tests" unless="emma.enabled">
         <fileset dir="${testsrc}">
           <include name="**/*Test.java"/>
         </fileset>
       </batchtest>
-      <sysproperty key="emma.coverage.out.file" value="${reports}/coverage.ec"/>
+      <sysproperty key="emma.coverage.out.file"
+       value="${reports}/coverage/coverage.ec"/>
       <sysproperty key="emma.coverage.out.merge" value="false"/>
+      <test name="com.google.caja.AllTests" if="emma.enabled"/>
     </junit>
     <!-- Generate the code coverage report. -->
     <emma enabled="${emma.enabled}">
       <report sourcepath="${src}:${testsrc}" sort="+block,+name,+method,+class"
        metrics="method:70,block:80,line:80,class:100">
-        <fileset dir="${reports}">
+        <fileset dir="${reports}/coverage">
           <include name="*.em" />
           <include name="*.ec" />
         </fileset>
-        <html outfile="${reports}/coverage.html" encoding="UTF-8"/>
+        <html outfile="${reports}/coverage/index.html" encoding="UTF-8"/>
       </report>
     </emma>
     <!-- Generate the test results report. -->
-    <junitreport todir="${reports}">
-      <fileset dir="${reports}" includes="TEST-*.xml"/>
-      <report format="frames" todir="${reports}"/>
+    <junitreport todir="${reports}/tests">
+      <fileset dir="${reports}/tests" includes="TEST-*.xml"/>
+      <report format="frames" todir="${reports}/tests"
+       styledir="${third_party}/ant/etc"/>
     </junitreport>
   </target>
 
@@ -168,20 +172,36 @@
     <mkdir dir="${docs}"/>
     <javadoc sourcepath="${src}" destdir="${docs}" access="private"
      author="true"
-     bottom="Copyright (C) 2007 Google Inc.&lt;br&gt;
+     bottom="Copyright (C) 2008 Google Inc.&lt;br&gt;
              &lt;a href=http://www.apache.org/licenses/LICENSE-2.0&gt;
              Licensed under the Apache License, Version 2.0&lt;/a&gt;"
      docencoding="utf-8"
      packagenames="com/google/caja/*"
-     classpathref="classpath.compile"/>
+     classpathref="classpath.compile"
+     linksource="yes"/>
      <!-- overview="${src}/overview.html" -->
   </target>
 
-  <target name="AllTests" depends="opensocial,pluginc,TestUtil,dirs">
+  <!-- Cajoles test resources that contain cajita to javascript. -->
+  <target name="CajoledTests" depends="pluginc,dirs">
+    <java classname="com.google.caja.plugin.PluginCompilerMain"
+     failonerror="yes">
+      <classpath refid="classpath.run"/>
+      <arg value="--out=${lib}/com/google/caja/plugin/domita_test_cajoled"/>
+      <arg value="--pathPrefix=/"/>
+      <arg file="${testsrc}/com/google/caja/plugin/domita_test.js"/>
+      <arg file="${testsrc}/com/google/caja/plugin/asserts.js"/>
+    </java>
+  </target>
+
+  <target name="AllTests"
+   depends="opensocial,pluginc,TestUtil,CajoledTests,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${testsrc}"/>
       <classpath refid="classpath.tests.compile"/>
       <include name="**/caja/AllTests.java"/>
+      <include name="**/caja/config/ConfigUtilTest.java"/>
+      <include name="**/caja/demos/calendar/RRuleTest.java"/>
       <include name="**/caja/demos/calendar/HcalTest.java"/>
       <include name="**/caja/lexer/CharProducerTest.java"/>
       <include name="**/caja/lexer/CommentLexerTest.java"/>
@@ -212,6 +232,7 @@
       <include name="**/caja/plugin/GxpCompilerTest.java"/>
       <include name="**/caja/plugin/GxpValidatorTest.java"/>
       <include name="**/caja/plugin/HtmlCompiledPluginTest.java"/>
+      <include name="**/caja/plugin/HtmlSanitizerTest.java"/>
       <include name="**/caja/plugin/HtmlWhitelistTest.java"/>
       <include name="**/caja/plugin/PluginCompilerTest.java"/>
       <include name="**/caja/plugin/UrlUtilTest.java"/>
@@ -220,8 +241,18 @@
       <include name="**/caja/util/SparseBitSetTest.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
+
+    <!-- TODO(mikesamuel): Can we replace these tree copies with something
+      - that builds a symlink tree? -->
     <copy todir="${lib}">
+      <fileset dir="${src}">
+        <include name="**/caja/plugin/domita.js"/>
+        <include name="**/caja/plugin/html4-defs.js"/>
+        <include name="**/caja/plugin/html-sanitizer.js"/>
+        <include name="**/caja/plugin/unicode.js"/>
+      </fileset>
       <fileset dir="${testsrc}">
+        <include name="**/caja/demos/calendar/*_test.html"/>
         <include name="**/caja/demos/calendar/*.js"/>
         <include name="**/caja/lexer/csslexergolden1.txt"/>
         <include name="**/caja/lexer/csslexerinput1.css"/>
@@ -240,6 +271,7 @@
         <include name="**/caja/opensocial/listfriends-inline.xml"/>
         <include name="**/caja/opensocial/listfriends.js"/>
         <include name="**/caja/opensocial/listfriends.xml"/>
+        <include name="**/caja/opensocial/SocialHelloWorld.xml"/>
         <include name="**/caja/opensocial/test-parsing.xml"/>
         <include name="**/caja/parser/css/cssparsergolden1.txt"/>
         <include name="**/caja/parser/css/cssparsergolden2.txt"/>
@@ -271,6 +303,8 @@
         <include name="**/caja/plugin/caps/wrap_capability_test.js"/>
         <include name="**/caja/plugin/console-stubs.js"/>
         <include name="**/caja/plugin/container.js"/>
+        <include name="**/caja/plugin/domita_test.html"/>
+        <include name="**/caja/plugin/jsunit.js"/>
         <include name="**/caja/plugin/gxpcompilergolden1.js"/>
         <include name="**/caja/plugin/gxpcompilergolden2.js"/>
         <include name="**/caja/plugin/gxpcompilergolden3.txt"/>
@@ -278,6 +312,8 @@
         <include name="**/caja/plugin/gxpcompilerinput2.gxp"/>
         <include name="**/caja/plugin/gxpcompilerinput3.gxp"/>
         <include name="**/caja/plugin/gxpcompilerinput4.gxp"/>
+        <include name="**/caja/plugin/html-sanitizer-test.js"/>
+        <include name="**/caja/plugin/test-sanitize.html"/>
         <include name="**/caja/plugin/jsunit.js"/>
         <include name="**/caja/plugin/plugintest-csstest.golden"/>
         <include name="**/caja/plugin/plugintest-csstest.input"/>
@@ -347,7 +383,7 @@
   </target>
 
   <target name="PluginCompiler"
-   depends="CssParserCore,HtmlParserCore,HtmlSchema,Quasiliterals,dirs">
+   depends="CssParserCore,HtmlParserCore,HtmlSchema,Quasiliterals,Config,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
@@ -363,6 +399,15 @@
         <include name="**/caja/plugin/html-sanitizer.js"/>
       </fileset>
     </copy>
+  </target>
+
+  <target name="Config" depends="Reporting">
+    <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
+      <src path="${src}"/>
+      <classpath refid="classpath.compile"/>
+      <include name="**/caja/config/*.java"/>
+      <compilerarg line="-Xlint:unchecked"/>
+    </javac>
   </target>
 
   <target name="PluginCapabilities">
@@ -589,7 +634,6 @@
      failonerror="yes">
       <classpath refid="classpath.run"/>
       <arg value="--out=${www}/contact-spring-graph/plugin-files/"/>
-      <arg value="--name=springGraph__"/>
       <arg value="--pathPrefix=/plugin-files/"/>
       <arg file="${demos}/contact-spring-graph/spring-graph.gxp"/>
       <arg file="${demos}/contact-spring-graph/spring-graph.css"/>
@@ -616,10 +660,6 @@
       <arg value="${www}/lolcat-search/searchbox-cajoled.css"/>
       <arg value="--css_prefix"/>
       <arg value="searchbox"/>
-      <arg value="--root_div_id"/>
-      <arg value="foo"/>
-      <arg value="--js_name"/>
-      <arg value="___OUTERS___"/>
     </java>
 
     <java classname="com.google.caja.plugin.HtmlPluginCompilerMain"
@@ -633,10 +673,6 @@
       <arg value="${www}/lolcat-search/kittens-cajoled.css"/>
       <arg value="--css_prefix"/>
       <arg value="kittens"/>
-      <arg value="--root_div_id"/>
-      <arg value="foo"/>
-      <arg value="--js_name"/>
-      <arg value="___OUTERS___"/>
     </java>
 
     <copy todir="${www}/lolcat-search">

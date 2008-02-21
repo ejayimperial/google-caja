@@ -17,7 +17,6 @@ package com.google.caja.plugin.stages;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.js.Block;
-import com.google.caja.plugin.ExpressionSanitizerBaja;
 import com.google.caja.plugin.ExpressionSanitizerCaja;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
@@ -33,25 +32,13 @@ public final class ValidateJavascriptStage implements Pipeline.Stage<Jobs> {
   public boolean apply(Jobs jobs) {
     boolean valid = true;
     for (Job job : jobs.getJobsByType(Job.JobType.JAVASCRIPT)) {
-      switch (jobs.getPluginMeta().scheme) {
-        case BAJA:
-          valid &= new ExpressionSanitizerBaja(
-              jobs.getMessageQueue(), jobs.getPluginMeta())
-          .sanitize(job.getRoot());
-        break;
-        case CAJA:
-          // Pass in the rootmost scope that has non-synthetic children, so that
-          // the Caja rules correctly identify global function declarations.
-          AncestorChain<?> nonSyntheticScopeRoot
-              = nonSyntheticScopeRoot(job.getRoot());
-          valid &= new ExpressionSanitizerCaja(
-              jobs.getMessageQueue(), jobs.getPluginMeta())
-              .sanitize(nonSyntheticScopeRoot);
-          break;
-        default:
-          throw new RuntimeException(
-              "Unrecognized scheme: " + jobs.getPluginMeta().scheme);
-      }
+      // Pass in the rootmost scope that has non-synthetic children, so that
+      // the Caja rules correctly identify global function declarations.
+      AncestorChain<?> nonSyntheticScopeRoot
+          = nonSyntheticScopeRoot(job.getRoot());
+      valid &= new ExpressionSanitizerCaja(
+          jobs.getMessageQueue(), jobs.getPluginMeta())
+          .sanitize(nonSyntheticScopeRoot);
     }
 
     return valid && jobs.hasNoFatalErrors();

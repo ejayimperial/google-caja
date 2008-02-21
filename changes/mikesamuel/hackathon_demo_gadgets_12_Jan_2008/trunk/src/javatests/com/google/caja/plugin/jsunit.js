@@ -35,8 +35,15 @@ function jsunitRun() {
 
   for (var i = 0; i < testNames.length; ++i) {
     var testName = testNames[i];
-    console.time(testName);
-    this[testName]();
-    console.timeEnd(testName);
+    (typeof console !== 'undefined') && (console.group('running %s', testName),
+                                         console.time(testName));
+    try {
+      (typeof setUp === 'function') && setUp();
+      this[testName]();
+      (typeof tearDown === 'function') && tearDown();
+    } finally {
+      (typeof console !== 'undefined') && (console.timeEnd(testName),
+                                           console.groupEnd());
+    }
   }
 }

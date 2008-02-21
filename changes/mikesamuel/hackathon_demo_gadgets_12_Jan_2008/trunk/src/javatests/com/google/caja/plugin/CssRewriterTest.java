@@ -110,6 +110,8 @@ public class CssRewriterTest extends TestCase {
     runTest("#foo { color: blue }", ".test #test-foo {\n  color: blue\n}");
     runTest("body.ie6 p { color: blue }",
             "body.ie6 .test p {\n  color: blue\n}");
+    runTest("body { margin: 0; }", ".test body {\n  margin: 0\n}");
+    runTest("body.ie6 { margin: 0; }", ".test body.ie6 {\n  margin: 0\n}");
     runTest("#foo > #bar { color: blue }",
             ".test #test-foo > #test-bar {\n  color: blue\n}");
     runTest("#foo .bar { color: blue }",
@@ -155,6 +157,14 @@ public class CssRewriterTest extends TestCase {
             true);
   }
 
+  /**
+   * "*" selectors should rewrite properly.
+   * <a href="http://code.google.com/p/google-caja/issues/detail?id=57">bug</a>
+   */
+  public void testWildcardSelectors() throws Exception {
+    runTest("div * { margin: 0; }", ".test div  * {\n  margin: 0\n}", false);
+  }
+
   private void runTest(String css, String golden) throws Exception {
     runTest(css, golden, false);
   }
@@ -173,10 +183,10 @@ public class CssRewriterTest extends TestCase {
     }
 
     new CssRewriter(
-        new PluginMeta("Plugin", "test", "/foo", "rootDiv",
-            PluginMeta.TranslationScheme.AAJA,
-            PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT), mq)
-            .rewrite(new AncestorChain<CssTree>(t));
+        new PluginMeta(
+            "test", "/foo", PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT),
+        mq)
+        .rewrite(new AncestorChain<CssTree>(t));
 
     {
       StringBuilder msgBuf = new StringBuilder();

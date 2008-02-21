@@ -107,20 +107,32 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
   
   /**
-   * The initial default ___.log(str) does nothing. 
+   * The initial default logging function does nothing. 
    * <p>
    * Note: JavaScript has no macros, so even in the "does nothing"
    * case, remember that the arguments are still evaluated. 
    */
-  var myLogFunc_ = function(str) {};
+  var myLogFunc_ = function(str, opt_stop) {};
 
   /**
-   * Gets the currently registered ___.log(str) function.
+   * Gets the currently registered logging function.
    */
   function getLogFunc() { return myLogFunc_; }
 
   /**
-   * Register newLogFunc to be called by ___.log(str)
+   * Register newLogFunc as the current logging function, to be called
+   * by <tt>___.log(str)</tt> and <tt>___.fail(...)</tt>. 
+   * <p>
+   * A logging function is assumed to have the signature 
+   * <tt>(str, opt_stop)</tt>, where<ul>
+   * <li><tt>str</tt> is the diagnostic string to be logged, and
+   * <li><tt>opt_stop</tt>, if present and <tt>true</tt>, indicates
+   *     that normal flow control is about to be terminated by a
+   *     throw. This provides the logging function the opportunity to
+   *     terminate normal control flow in its own way, such as by
+   *     invoking an undefined method, in order to trigger a Firebug
+   *     stacktrace. 
+   * </ul>
    */
   function setLogFunc(newLogFunc) { myLogFunc_ = newLogFunc; }
 
@@ -139,8 +151,9 @@ var ___;
    * the message of the Error that's thrown.
    */
   function fail(var_args) {
+    (typeof console !== 'undefined') && console.trace();
     var message = Array.prototype.slice.call(arguments, 0).join('');
-    log(message);
+    myLogFunc_(message, true);
     throw new Error(message);
   }
   
@@ -382,31 +395,35 @@ var ___;
    */
   function directConstructor(obj) {
     if (obj === null) { return undefined; }
-    if (typeof obj !== 'object') {
-      // Note that functions thereby return undefined,
-      // so directConstructor() doesn't provide access to the
-      // forbidden Function constructor.
-      return undefined;
+    try {
+      if (typeof obj !== 'object') {
+        // Note that functions thereby return undefined,
+        // so directConstructor() doesn't provide access to the
+        // forbidden Function constructor.
+        return undefined;
+      }
+      // The following test will initially return false in IE
+      if (hasOwnProp(obj, '__proto__')) { 
+        if (obj.__proto__ === null) { return undefined; }
+        return obj.__proto__.constructor; 
+      }
+      var result;
+      if (!hasOwnProp(obj, 'constructor')) { 
+        result = obj.constructor;
+      } else {
+        var oldConstr = obj.constructor;
+        if (!(delete obj.constructor)) { return undefined; }
+        result = obj.constructor;
+        obj.constructor = oldConstr;
+      }
+      if (result.prototype.constructor === result) {
+        // Memoize, so it'll be faster next time.
+        obj.__proto__ = result.prototype;
+      }
+      return result;
+    } catch (ex) {
+      return null;
     }
-    // The following test will initially return false in IE
-    if (hasOwnProp(obj, '__proto__')) { 
-      if (obj.__proto__ === null) { return undefined; }
-      return obj.__proto__.constructor; 
-    }
-    var result;
-    if (!hasOwnProp(obj, 'constructor')) { 
-      result = obj.constructor;
-    } else {
-      var oldConstr = obj.constructor;
-      if (!(delete obj.constructor)) { return undefined; }
-      result = obj.constructor;
-      obj.constructor = oldConstr;
-    }
-    if (result.prototype.constructor === result) {
-      // Memoize, so it'll be faster next time.
-      obj.__proto__ = result.prototype;
-    }
-    return result;
   }
   
   /**
@@ -1016,8 +1033,10 @@ var ___;
     if (canCallPub(obj, name)) {
       var meth = obj[name];
       return meth.apply(obj, args);
-    } else {
+    } else if (obj.handleCall___) {
       return obj.handleCall___(name, args);
+    } else {
+      fail('not callable %o %s', obj, name);
     }
   }
   

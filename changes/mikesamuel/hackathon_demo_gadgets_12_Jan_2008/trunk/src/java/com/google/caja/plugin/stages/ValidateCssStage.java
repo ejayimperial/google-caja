@@ -17,6 +17,7 @@ package com.google.caja.plugin.stages;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.plugin.CssRewriter;
+import com.google.caja.plugin.CssTemplate;
 import com.google.caja.plugin.CssValidator;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
@@ -46,7 +47,25 @@ public class ValidateCssStage implements Pipeline.Stage<Jobs> {
       valid &= v.validateCss(cssTree);
       valid &= rw.rewrite(cssTree);
     }
+    for (Job job : jobs.getJobsByType(Job.JobType.CSS_TEMPLATE)) {
+      AncestorChain<CssTemplate> tmpl = job.getRoot().cast(CssTemplate.class);
+      AncestorChain<CssTree> cssTree
+          = new AncestorChain<CssTree>(tmpl, tmpl.node.getCss());
+      valid &= v.validateCss(cssTree);
+      valid &= rw.rewrite(cssTree);
+    }
+    for (Job job : jobs.getJobsByType(Job.JobType.CSS_TEMPLATE)) {
+      // The parsetree node is a CssTree.StyleSheet
+      AncestorChain<CssTemplate> chain = job.getRoot().cast(CssTemplate.class);
+      valid &= validate(
+          v, rw, new AncestorChain<CssTree>(chain, chain.node.getCss()));
+    }
 
     return valid && jobs.hasNoFatalErrors();
+  }
+
+  private static final boolean validate(
+      CssValidator v, CssRewriter rw, AncestorChain<CssTree> css) {
+    return v.validateCss(css) & rw.rewrite(css);
   }
 }
