@@ -66,14 +66,13 @@ public class HtmlPluginCompiler {
     mc.inputSources = new ArrayList<InputSource>();
     jobs = new Jobs(mc, mq, meta);
     compilationPipeline = new Pipeline<Jobs>() {
-      long t0 = System.nanoTime();
       @Override
       protected boolean applyStage(
           Pipeline.Stage<? super Jobs> stage, Jobs jobs) {
         jobs.getMessageQueue().addMessage(
             MessageType.CHECKPOINT,
             MessagePart.Factory.valueOf(stage.getClass().getSimpleName()),
-            MessagePart.Factory.valueOf((System.nanoTime() - t0) / 1e9));
+            MessagePart.Factory.valueOf(System.nanoTime() / 1e9));
         return super.applyStage(stage, jobs);
       }
     };

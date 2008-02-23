@@ -14,8 +14,6 @@
 
 package com.google.caja.plugin;
 
-import com.google.caja.lexer.CharProducer;
-import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.AncestorChain;
@@ -23,27 +21,20 @@ import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.html.OpenElementStack;
-import com.google.caja.plugin.stages.OpenTemplateStage;
-import com.google.caja.plugin.stages.ConsolidateCodeStage;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.reporting.SimpleMessageQueue;
-import com.google.caja.util.Pipeline;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStreamReader;
 import java.io.Writer;
-import java.net.URI;
-import java.util.ListIterator;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -92,77 +83,46 @@ public final class HtmlPluginCompilerMain {
   private HtmlPluginCompilerMain() {}
 
   public static void main(String[] argv) {
-    int result;
-    try {
-      result = new HtmlPluginCompilerMain().run(argv);
-    } catch (Throwable th) {
-      th.printStackTrace();
-      result = -1;
-    }
-    if (result != 0) {
-      System.exit(result);
-    }
+    System.exit(new HtmlPluginCompilerMain().run(argv));
   }
 
   private int run(String[] argv) {
+    int rc = processArguments(argv);
+    if (rc != 0) return rc;
+
     MessageQueue mq = new SimpleMessageQueue();
-    MessageContext mc = null;
 
+    HtmlPluginCompiler compiler = new HtmlPluginCompiler(
+        mq, new PluginMeta(cssPrefix));
     try {
-      int rc = processArguments(argv);
-      if (rc != 0) { return rc; }
+      compiler.addInput(new AncestorChain<DomTree.Fragment>(
+          parseHtmlFromFile(inputFile, mq)));
 
-      PluginEnvironment env = new FileSystemEnvironment(
-          inputFile.getParentFile());
-
-      HtmlPluginCompiler compiler = new HtmlPluginCompiler(
-          mq, new PluginMeta(cssPrefix, "", env));
-
-      mc = compiler.getMessageContext();
-
-      for (ListIterator<Pipeline.Stage<Jobs>> it
-               = compiler.getCompilationPipeline().getStages().listIterator();
-           it.hasNext();) {
-        Pipeline.Stage<Jobs> stage = it.next();
-        if (stage instanceof ConsolidateCodeStage) {
-          it.add(new OpenTemplateStage());
-          break;
-        }
+      if (!compiler.run()) {
+        throw new RuntimeException();
       }
-      try {
-        compiler.addInput(new AncestorChain<DomTree.Fragment>(
-            parseHtmlFromFile(inputFile, mq)));
-
-        if (!compiler.run()) {
-          throw new RuntimeException();
-        }
-      } catch (ParseException e) {
-        e.toMessageQueue(compiler.getMessageQueue());
-        return -1;
-      } catch (IOException ex) {
-        System.err.println(ex);
-        return -1;
-      }
-
-      writeFile(outputJsFile, compiler.getJavascript());
-      writeFile(outputCssFile, compiler.getCss());
-
-      return 0;
-    } catch (Throwable th) {
-      th.printStackTrace();
+    } catch (ParseException e) {
+      e.toMessageQueue(compiler.getMessageQueue());
+      return -1;
+    } catch (IOException ex) {
+      System.err.println(ex);
       return -1;
     } finally {
-      if (mc == null) { mc = new MessageContext(); }
       try {
-        for (Message m : mq.getMessages()) {
+        for (Message m : compiler.getMessageQueue().getMessages()) {
           System.err.print(m.getMessageLevel().name() + ": ");
-          m.format(mc, System.err);
+          m.format(compiler.getMessageContext(), System.err);
           System.err.println();
         }
       } catch (IOException ex) {
         ex.printStackTrace();
       }
     }
+
+    writeFile(outputJsFile, compiler.getJavascript());
+    writeFile(outputCssFile, compiler.getCss());
+
+    return 0;
   }
 
   private int processArguments(String[] argv) {
@@ -252,54 +212,5 @@ public final class HtmlPluginCompilerMain {
         originalPathString :
         originalPathString.substring(0, originalPathString.lastIndexOf('.'));
     return new File(basePath + '.' + extension);
-  }
-}
-
-final class FileSystemEnvironment implements PluginEnvironment {
-  private final File directory;
-
-  FileSystemEnvironment(File directory) {
-    this.directory = directory;
-  }
-  
-  public CharProducer loadExternalResource(
-      ExternalReference ref, String mimeType) {
-    File f = toFileUnderSameDirectory(ref.getUri());
-    if (f == null) { return null; }
-    try {
-      return CharProducer.Factory.create(
-          new InputStreamReader(new FileInputStream(f), "UTF-8"),
-          new InputSource(f.toURI()));
-    } catch (UnsupportedEncodingException ex) {
-      throw new AssertionError(ex);
-    } catch (FileNotFoundException ex) {
-      return null;
-    }
-  }
-
-  public String rewriteUri(ExternalReference ref, String mimeType) {
-    File f = toFileUnderSameDirectory(ref.getUri());
-    if (f == null) { return null; }
-    return f.toURI().relativize(directory.toURI()).toString();
-  }
-
-  private File toFileUnderSameDirectory(URI uri) {
-    if (!uri.isAbsolute()
-        && !uri.isOpaque()
-        && uri.getScheme() == null
-        && uri.getAuthority() == null
-        && uri.getFragment() == null
-        && uri.getPath() != null
-        && uri.getQuery() == null
-        && uri.getFragment() == null) {
-      File f = new File(new File(directory, ".").toURI().resolve(uri));
-      // Check that f is a descendant of directory
-      for (File tmp = f; tmp != null; tmp = tmp.getParentFile()) {
-        if (directory.equals(tmp)) {
-          return f;
-        }
-      }
-    }
-    return null;
   }
 }
