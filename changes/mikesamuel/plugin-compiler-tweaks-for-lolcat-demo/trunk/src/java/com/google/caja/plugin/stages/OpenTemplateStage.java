@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Optimizes calls to {@code open(Template("html&hellip;"))}.
+ * Optimizes calls to {@code eval(Template("html&hellip;"))}.
  * TODO(mikesamuel): this could probably be more simply done as a
  * rewrite rule.
  *
@@ -64,7 +64,7 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
   private static void optimizeOpenTemplate(AncestorChain<?> chain, Jobs jobs) {
     ScopeChecker sc = new ScopeChecker();
     applyToScope(chain, sc);
-    if (sc.variablesInScope.contains("open")
+    if (sc.variablesInScope.contains("eval")
         || sc.variablesInScope.contains("Template")) {
       return;
     }
@@ -121,25 +121,25 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
       }
 
       // Look for
-      //   Operation : FUNCTION_CALL   ; openCall
-      //     Reference : open          ; openRef
+      //   Operation : FUNCTION_CALL   ; evalCall
+      //     Reference : eval          ; evalRef
       //     Operation : FUNCTION)CALL ; tmplCall
       //       Reference : Template    ; tmplRef
       //       String concatenation    ; content
 
-      Operation openCall = (Operation) chain.node;
-      if (openCall.getOperator() != Operator.FUNCTION_CALL
-          || openCall.children().size() != 2) {
+      Operation evalCall = (Operation) chain.node;
+      if (evalCall.getOperator() != Operator.FUNCTION_CALL
+          || evalCall.children().size() != 2) {
         return true;
       }
 
-      Expression openRef = openCall.children().get(0);
-      if (!(openRef instanceof Reference
-            && "open".equals(((Reference) openRef).getIdentifierName()))) {
+      Expression evalRef = evalCall.children().get(0);
+      if (!(evalRef instanceof Reference
+            && "eval".equals(((Reference) evalRef).getIdentifierName()))) {
         return true;
       }
 
-      Expression rhs = openCall.children().get(1);
+      Expression rhs = evalCall.children().get(1);
       if (!(rhs instanceof Operation && rhs.children().size() == 2)) {
         return false;
       }
