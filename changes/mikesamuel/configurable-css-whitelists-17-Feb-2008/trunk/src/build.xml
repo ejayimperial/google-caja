@@ -204,9 +204,11 @@
       <classpath refid="classpath.tests.compile"/>
       <include name="**/caja/AllTests.java"/>
       <include name="**/caja/config/ConfigUtilTest.java"/>
-      <include name="**/caja/demos/calendar/RRuleTest.java"/>
       <include name="**/caja/demos/calendar/HcalTest.java"/>
+      <include name="**/caja/demos/calendar/LayoutTest.java"/>
+      <include name="**/caja/demos/calendar/RRuleTest.java"/>
       <include name="**/caja/lang/css/CssSchemaTest.java"/>
+      <include name="**/caja/demos/calendar/LayoutTest.java"/>
       <include name="**/caja/lexer/CharProducerTest.java"/>
       <include name="**/caja/lexer/CommentLexerTest.java"/>
       <include name="**/caja/lexer/CssLexerTest.java"/>

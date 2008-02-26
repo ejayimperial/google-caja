@@ -17,6 +17,7 @@ package com.google.caja.plugin;
 import com.google.caja.CajaException;
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lexer.CharProducer;
+import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
@@ -46,6 +47,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -547,6 +549,35 @@ public class GxpCompilerTest extends TestCase {
 
   private PluginMeta makeTestPluginMeta() {
     return new PluginMeta(
-        "pre", "/testplugin", PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
+        "pre", "/testplugin",
+        new PluginEnvironment() {
+            @Override
+            public CharProducer loadExternalResource(
+                ExternalReference ref, String mimeType) {
+              return null;
+            }
+            @Override
+            public String rewriteUri(ExternalReference ref, String mimeType) {
+              URI uri = ref.getUri();
+
+              if (uri.getScheme() == null
+                  && uri.getHost() == null
+                  && uri.getPath() != null) {
+                try {
+                  String path = uri.getPath();
+                  path = (path.startsWith("/") ? "/testplugin" : "/testplugin/")
+                      + path;
+                  return new URI(
+                      null, null, path, uri.getQuery(), uri.getFragment())
+                      .toString();
+                } catch (URISyntaxException ex) {
+                  ex.printStackTrace();
+                  return null;
+                }
+              } else {
+                return null;
+              }
+            }
+        });
   }
 }

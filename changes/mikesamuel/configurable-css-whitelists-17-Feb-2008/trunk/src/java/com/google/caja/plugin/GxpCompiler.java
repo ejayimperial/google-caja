@@ -21,6 +21,7 @@ import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
+import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlTokenType;
 import com.google.caja.lexer.JsLexer;
@@ -1086,13 +1087,16 @@ public final class GxpCompiler {
         String uriStr = t.getAttribValue();
         try {
           URI uri = new URI(uriStr);
-          // TODO(msamuel): Put url in the appropriate file-space namespace
-          if (!UrlUtil.isDomainlessUrl(uri)) {
+          ExternalReference ref = new ExternalReference(
+              uri, t.getFilePosition());
+          String mimeType = "*/*";  // TODO(mikesamuel): fetch from htmlSchema
+          String xuri = gxpc.meta.getPluginEnvironment().rewriteUri(
+              ref, mimeType);
+          if (xuri == null) {
             throw new BadContentException(new Message(
                 PluginMessageType.DISALLOWED_URI,
                 t.getFilePosition(), MessagePart.Factory.valueOf(uriStr)));
           }
-          String xuri = UrlUtil.translateUrl(uri, gxpc.meta.pathPrefix);
           JsWriter.appendString(JsWriter.htmlEscape(xuri), tgtChain, b);
         } catch (URISyntaxException ex) {
           throw new BadContentException(new Message(
