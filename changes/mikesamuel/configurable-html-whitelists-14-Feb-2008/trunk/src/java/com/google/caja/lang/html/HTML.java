@@ -129,8 +129,13 @@ public final class HTML {
        *      The HTML 4.01 spec</a>
        */
       IDREFS,
-      /** An input or anchor name. */
-      NMTOKEN,
+      /**
+       * The semi-unique name of an element that ends up as a global variable in
+       * IE.
+       */
+      GLOBAL_NAME,
+      /** The name of an input, param, or meta tag. */
+      LOCAL_NAME,
       /** a space separated list of classes. */
       CLASSES,
       /**

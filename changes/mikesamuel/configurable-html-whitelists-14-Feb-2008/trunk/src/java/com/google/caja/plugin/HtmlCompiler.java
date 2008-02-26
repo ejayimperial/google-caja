@@ -433,8 +433,8 @@ public class HtmlCompiler {
       switch (a.getType()) {
         case ID:
         case IDREF:
-        case NMTOKEN:
-        case CLASSES:
+        case GLOBAL_NAME:
+        case CLASSES:  // TODO(mikesamuel): remove classes per DOMando rules
           return AttributeXform.NMTOKEN;
         case STYLE:
           return AttributeXform.STYLE;
@@ -455,11 +455,10 @@ public class HtmlCompiler {
         || "botton".equals(tagName);
   }
 
-  private static String guessMimeType(String tagName) {
-    if ("IMG".equalsIgnoreCase(tagName)) {
-      return "image/*";
-    }
-    return "*/*";
+  private String guessMimeType(String tagName, String attribName) {
+    HTML.Attribute type = schema.lookupAttribute(tagName, attribName);
+    String mimeType = type.getMimeTypes();
+    return mimeType != null ? mimeType : "*/*";
   }
 
   /**
@@ -576,8 +575,9 @@ public class HtmlCompiler {
                               MessagePart.Factory.valueOf(t.getAttribValue()));
           return;
         }
-        String mimeType = guessMimeType(
-            ((DomTree.Tag) tChain.getParentNode()).getTagName());
+        String mimeType = htmlc.guessMimeType(
+            ((DomTree.Tag) tChain.getParentNode()).getTagName(),
+            tChain.node.getAttribName());
         String rewrittenUri = htmlc.meta.getPluginEnvironment().rewriteUri(
             new ExternalReference(
                 uri, t.getAttribValueNode().getFilePosition()),
