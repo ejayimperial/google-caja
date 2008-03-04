@@ -52,72 +52,25 @@ public class ExpressionSanitizerTest extends TestCase {
     super.tearDown();
   }
 
-  /*
-
-  // TURN INTO FUNCTIONAL TESTS
-
+  public void testFoo() throws Exception {
+    runTest("x", "___OUTERS___.x");
   }
 
-  */
-
-  private void runTest(String input, String golden, boolean sanitary)
+  private void runTest(String input, String golden)
       throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = new EchoingMessageQueue(
         new PrintWriter(new OutputStreamWriter(System.err)), mc);
     PluginMeta meta = new PluginMeta("pre");
 
-    InputSource is = new InputSource(new URI("test:///" + getName()));
-    CharProducer cp = CharProducer.Factory.create(
-        new StringReader(input), is);
-    Block jsBlock;
-    {
-      JsLexer lexer = new JsLexer(cp);
-      JsTokenQueue tq = new JsTokenQueue(
-          lexer, is, JsTokenQueue.NO_NON_DIRECTIVE_COMMENT);
-      Parser p = new Parser(tq, mq);
-      jsBlock = p.parse();
-      p.getTokenQueue().expectEmpty();
-    }
+    Block inputNode = TestUtil.parse(input);
+    assertTrue(new ExpressionSanitizerCaja(mq, meta).sanitize(ac(inputNode)));
+    String inputCmp = TestUtil.render(inputNode);
 
-    boolean reallyFailed = false;
+    String goldenCmp = TestUtil.render(TestUtil.parse(golden));
 
-    boolean actualSanitary = new ExpressionSanitizerCaja(mq, meta)
-        .sanitize(ac(jsBlock));
-    if (actualSanitary) {
-      for (Message msg : mq.getMessages()) {
-        if (MessageLevel.ERROR.compareTo(msg.getMessageLevel()) <= 0) {
-          reallyFailed = true;
-          if (sanitary) {
-            fail(msg.toString());
-          }
-          break;
-        }
-      }
-    }
-
-    if (!sanitary) {
-      assertTrue(reallyFailed);
-    }
-
-    StringBuilder actualBuf = new StringBuilder();
-    RenderContext rc = new RenderContext(mc, actualBuf);
-
-    jsBlock.render(rc);
-
-    String actual = actualBuf.toString();
-
-    if (sanitary) {
-      // TODO(mikesamuel): replace with a reparse and structural comparison.
-      assertEquals(actual, golden.trim(), actual.trim());
-      assertEquals(input, sanitary, actualSanitary);
-    }
+    assertEquals(inputCmp, goldenCmp);
   }
-
-  /*
-
-
-  */
 
   private static <T extends ParseTreeNode> AncestorChain<T> ac(T node) {
     return new AncestorChain<T>(node);

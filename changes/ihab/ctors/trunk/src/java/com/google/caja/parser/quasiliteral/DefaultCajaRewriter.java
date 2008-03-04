@@ -117,7 +117,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Pair<ParseTreeNode, ParseTreeNode> oTemp = reuse(
             scope.newTempVariable(),
             bindings.get("o"),
-            scope.getParent() == null, // TODO(ihab.awad): isGlobal
+            scope.isGlobal(),
             this,
             scope,
             mq);
@@ -125,7 +125,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Pair<ParseTreeNode, ParseTreeNode> kTemp = reuse(
             scope.newTempVariable(),
             s(new UndefinedLiteral()),
-            scope.getParent() == null, // TODO(ihab.awad): isGlobal
+            scope.isGlobal(),
             this,
             scope,
             mq);
@@ -137,7 +137,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (isDecl) {
           Pair<ParseTreeNode, ParseTreeNode> kDecl = reuseEmpty(
               (String)bindings.get("k").getValue(),
-              scope.getParent() == null,  // TODO(ihab.awad): isGlobal
+              scope.isGlobal(),
               this,
               scope,
               mq);
@@ -256,7 +256,7 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match(ReservedNames.THIS, node, bindings)) {
-          return scope.getParent() == null ?  // TODO(ihab.awad): isGlobal
+          return scope.isGlobal() ?
               subst("___OUTERS___", bindings) :
               subst(ReservedNames.LOCAL_THIS, bindings);
         }
@@ -382,7 +382,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (match("this.@p", node, bindings)) {
           String propertyName = ((Reference)bindings.get("p")).getIdentifierName();
           Reference target = new Reference(new Identifier(
-              (scope.getParent() == null) ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));  // TODO(ihab.awad): isGlobal
+              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
             "@target.@fp ? @target.@p : ___.readProp(@target, @rp)",
             "p",  bindings.get("p"),
@@ -431,7 +431,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this[@s]", node, bindings)) {
           Reference target = new Reference(new Identifier(
-              (scope.getParent() == null) ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));  // TODO(ihab.awad): isGlobal
+              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
               "___.readProp(@target, @s)",
               "s", expand(bindings.get("s"), scope, mq),
@@ -490,7 +490,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (match("this.@p = @r", node, bindings)) {
           String propertyName = ((Reference)bindings.get("p")).getIdentifierName();
           Reference target = new Reference(new Identifier(
-              (scope.getParent() == null) ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));  // TODO(ihab.awad): isGlobal
+              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
               "(function() {" +
               "  var x___ = @r;" +
@@ -676,7 +676,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("var @v", node, bindings) &&
             !scope.isFunction(getIdentifierName(bindings.get("v")))) {
-          if (scope.getParent() != null) {  // TODO(ihab.awad): isGlobal
+          if (!scope.isGlobal()) {
             return node;
           } else {
             ParseTreeNode expr = substV(
@@ -779,7 +779,7 @@ public class DefaultCajaRewriter extends Rewriter {
               reuseAll(bindings.get("as"), false, this, scope, mq);
           String methodName = ((Reference)bindings.get("m")).getIdentifierName();
           Reference target = new Reference(new Identifier(
-              (scope.getParent() == null) ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));  // TODO(ihab.awad): isGlobal
+              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
               "(function() {" +
               "  @as*;" +

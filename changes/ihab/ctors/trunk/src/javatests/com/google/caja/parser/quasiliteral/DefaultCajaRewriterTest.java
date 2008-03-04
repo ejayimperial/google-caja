@@ -45,20 +45,20 @@ public class DefaultCajaRewriterTest extends TestCase {
   ////////////////////////////////////////////////////////////////////////
 
   public void testSyntheticIsUntouched() throws Exception {
-    ParseTreeNode input = parseText(
+    ParseTreeNode input = TestUtil.parse(
         "function foo() { this; arguments; }");
     setTreeSynthetic(input);
     checkSucceeds(input, input);
   }
 
   public void testNestedInsideSyntheticIsExpanded() throws Exception {
-    ParseTreeNode innerInput = parseText("function foo() {}");
+    ParseTreeNode innerInput = TestUtil.parse("function foo() {}");
     ParseTreeNode input = ParseTreeNodes.newNodeInstance(
         Block.class,
         null,
         Collections.singletonList(innerInput));
     setSynthetic(input);
-    ParseTreeNode expectedResult = parseText(
+    ParseTreeNode expectedResult = TestUtil.parse(
         "{ ___OUTERS___.foo = ___.simpleFunc(function foo() {}); }");
     checkSucceeds(input, expectedResult);
   }
@@ -100,6 +100,29 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "      ___OUTERS___.k = ___OUTERS___.x1___;" +
         "      ___OUTERS___.k;" +
+        "    }" +
+        "  }" +
+        "}");
+    }
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "try { } catch (e) { for (var k in x) { k; } }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    {" +
+        "      ___OUTERS___.x0___ = ___OUTERS___.x;" +
+        "      ___OUTERS___.x1___ = undefined;" +
+        "      ___OUTERS___.k;" +
+        "      for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
+        "        if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
+        "          ___OUTERS___.k = ___OUTERS___.x1___;" +
+        "          ___OUTERS___.k;" +
+        "        }" +
+        "      }" +
         "    }" +
         "  }" +
         "}");
@@ -380,6 +403,16 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "this;",
         "___OUTERS___;");
+    checkSucceeds(
+        "try { } catch (e) { this; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    ___OUTERS___;" +
+        "  }" +
+        "}");
   }
 
   public void testVarBadSuffix() throws Exception {
@@ -769,6 +802,16 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "var v;",
         "___OUTERS___.v;");
+    checkSucceeds(
+        "try { } catch (e) { var v; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    ___OUTERS___.v;" +
+        "  }" +
+        "}");
   }
 
   public void testNewCalllessCtor() throws Exception {
@@ -1441,7 +1484,7 @@ public class DefaultCajaRewriterTest extends TestCase {
   private void checkFails(String input, String error) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = TestUtil.createTestMessageQueue(mc);
-    new DefaultCajaRewriter(true).expand(parseText(input), mq);
+    new DefaultCajaRewriter(true).expand(TestUtil.parse(input), mq);
 
     assertFalse(mq.getMessages().isEmpty());
     
@@ -1458,7 +1501,7 @@ public class DefaultCajaRewriterTest extends TestCase {
   private void checkSucceeds(
       ParseTreeNode inputNode,
       ParseTreeNode expectedResultNode)
-      throws Exception{
+      throws Exception {
     MessageQueue mq = TestUtil.createTestMessageQueue(new MessageContext());
     ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
     for (Message m : mq.getMessages()) {
@@ -1470,48 +1513,23 @@ public class DefaultCajaRewriterTest extends TestCase {
       // Test that the source code-like renderings are identical. This will catch any
       // obvious differences between expected and actual.
       assertEquals(
-          render(expectedResultNode),
-          render(actualResultNode));
+          TestUtil.render(expectedResultNode),
+          TestUtil.render(actualResultNode));
       // Then, for good measure, test that the S-expression-like formatted representations
       // are also identical. This will catch any differences in tree topology that somehow
       // do not appear in the source code representation (usually due to programming errors).
       assertEquals(
-          format(expectedResultNode),
-          format(actualResultNode));
+          TestUtil.format(expectedResultNode),
+          TestUtil.format(actualResultNode));
     }
   }
 
   private void checkSucceeds(String input, String expectedResult) throws Exception {
-    checkSucceeds(parseText(input), parseText(expectedResult));
+    checkSucceeds(TestUtil.parse(input), TestUtil.parse(expectedResult));
   }
 
   private void checkSucceeds(String input) throws Exception {
-    checkSucceeds(parseText(input), null);
-  }
-
-  private static String format(ParseTreeNode n) throws Exception {
-    StringBuilder output = new StringBuilder();
-    n.format(new MessageContext(), output);
-    return output.toString();
-  }
-
-  private static String render(ParseTreeNode n) throws Exception {
-    StringBuilder output = new StringBuilder();
-    n.render(new RenderContext(new MessageContext(), output));
-    return output.toString();
-  }
-
-  public ParseTreeNode parseText(String text) throws Exception {
-    MessageContext mc = new MessageContext();
-    MessageQueue mq = TestUtil.createTestMessageQueue(mc);
-    InputSource is = new InputSource(new URI("file:///no/input/source"));
-    CharProducer cp = CharProducer.Factory.create(new StringReader(text), is);
-    JsLexer lexer = new JsLexer(cp);
-    JsTokenQueue tq = new JsTokenQueue(lexer, is, JsTokenQueue.NO_NON_DIRECTIVE_COMMENT);
-    Parser p = new Parser(tq, mq);
-    Statement stmt = p.parse();
-    p.getTokenQueue().expectEmpty();
-    return stmt;
+    checkSucceeds(TestUtil.parse(input), null);
   }
 
   private String readResource(String resource) throws Exception {
