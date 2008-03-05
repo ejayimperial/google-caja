@@ -48,7 +48,7 @@ import java.net.URI;
 public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewriter {
   private static final String DOM_PREFIX = "DOM-PREFIX";
 
-  private MessageQueue mq;
+  private final MessageQueue mq;
 
   public DefaultGadgetRewriter(MessageQueue mq) {
     this.mq = mq;
