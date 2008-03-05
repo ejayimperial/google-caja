@@ -90,7 +90,7 @@ public class GadgetRewriterMain {
     }
 
     public URI rewrite(ExternalReference extref, String mimeType) {
-      throw new UnsupportedOperationException();
+      return extref.getUri();
     }
   }
   

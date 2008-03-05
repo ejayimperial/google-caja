@@ -172,7 +172,7 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
     compiler.addInput(new AncestorChain<DomTree.Fragment>(content));
 
     if (!compiler.run()) {
-      throw new GadgetRewriteException();
+      throw new GadgetRewriteException("Gadget has compile errors");
     }
 
     return compiler;
