@@ -25,13 +25,20 @@ import java.io.IOException;
  * @author ihab.awad@gmail.com
  */
 public final class BuildInfo {
+  private static BuildInfo instance;
+
+  public static BuildInfo getInstance() {
+    if (instance == null) instance = new BuildInfo();
+    return instance;
+  }
+
   private ResourceBundle properties;
 
-  public BuildInfo(ResourceBundle properties) {
+  /* package private */ BuildInfo(ResourceBundle properties) {
     this.properties = properties;
   }
 
-  public BuildInfo() {
+  private BuildInfo() {
     try {
       properties = ResourceBundle.getBundle("com/google/caja/reporting/buildInfo");
     } catch (MissingResourceException e) {

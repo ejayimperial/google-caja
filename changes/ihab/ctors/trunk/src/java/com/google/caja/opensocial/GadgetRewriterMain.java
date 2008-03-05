@@ -146,7 +146,7 @@ public class GadgetRewriterMain {
   }
   
   private int usage(String msg) {
-    System.out.println(new BuildInfo().getBuildInfo());
+    System.out.println(BuildInfo.getInstance().getBuildInfo());
     System.out.println(msg);
     new HelpFormatter().printHelp(getClass().getName(), options);
     return -1;

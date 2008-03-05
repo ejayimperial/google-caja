@@ -499,7 +499,7 @@ public class DefaultCajaRewriter extends Rewriter {
               "r",  expand(bindings.get("r"), scope, mq),
               "p",  bindings.get("p"),
               "fp", new Reference(new Identifier(propertyName + "_canSet___")),
-              "rp", new StringLiteral("'" + propertyName + "'"),
+              "rp", new StringLiteral(StringLiteral.toQuotedValue(propertyName)),
               "target", target);
         }
         return NONE;
@@ -789,7 +789,7 @@ public class DefaultCajaRewriter extends Rewriter {
               "vs", aliases.a,
               "m",  bindings.get("m"),
               "fm", new Reference(new Identifier(methodName + "_canCall___")),
-              "rm", new StringLiteral("'" + methodName + "'"),
+              "rm", new StringLiteral(StringLiteral.toQuotedValue(methodName)),
               "target", target);
         }
         return NONE;

@@ -36,7 +36,7 @@ public class SimpleQuasiNode extends QuasiNode {
    * substitution.
    */  
   public static final FilePosition NULL_FILE_POSITION =
-      FilePosition.instance(QuasiBuilder.NULL_INPUT_SOURCE, 0, 0, 0, 0, 0, 0, 0, 0);
+      FilePosition.instance(QuasiBuilder.NULL_INPUT_SOURCE, 1, 1, 1, 1, 1, 1, 1, 1);
 
   private final Class<? extends ParseTreeNode> clazz;
   private final Object value;

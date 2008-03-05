@@ -65,7 +65,7 @@ public class HtmlPluginCompiler {
   private CssSchema cssSchema;
 
   public HtmlPluginCompiler(MessageQueue mq, PluginMeta meta) {
-    new BuildInfo().addBuildInfo(mq);
+    BuildInfo.getInstance().addBuildInfo(mq);
     MessageContext mc = new MessageContext();
     mc.inputSources = new ArrayList<InputSource>();
     jobs = new Jobs(mc, mq, meta);
