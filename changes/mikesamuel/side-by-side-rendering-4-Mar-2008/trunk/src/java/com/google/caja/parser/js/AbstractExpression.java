@@ -16,8 +16,8 @@ package com.google.caja.parser.js;
 
 import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AbstractParseTreeNode;
-import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.render.JsPrettyPrinter;
+import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.util.Callback;
 
 import java.io.IOException;

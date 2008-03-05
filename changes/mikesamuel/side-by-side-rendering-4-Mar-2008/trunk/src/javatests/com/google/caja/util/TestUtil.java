@@ -22,6 +22,7 @@ import com.google.caja.lexer.JsLexer;
 import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
@@ -33,6 +34,7 @@ import com.google.caja.reporting.EchoingMessageQueue;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.DevNullMessageQueue;
+import com.google.caja.reporting.RenderContext;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -218,7 +220,7 @@ public final class TestUtil {
     checkFilePositionInvariants(new AncestorChain<ParseTreeNode>(root));
   }
 
-  public static ParseTreeNode parse(String src) throws Exception {
+  public static Block parse(String src) throws Exception {
     InputSource inputSource
         = new InputSource(URI.create("built-in:///js-test"));
     Parser parser = new Parser(
@@ -233,9 +235,23 @@ public final class TestUtil {
 
     Statement topLevelStatement = parser.parse();
     parser.getTokenQueue().expectEmpty();
-    return topLevelStatement;
+    return (Block)topLevelStatement;
   }
 
+  public static String format(ParseTreeNode n) throws Exception {
+    StringBuilder output = new StringBuilder();
+    n.format(new MessageContext(), output);
+    return output.toString();
+  }
+
+  public static String render(ParseTreeNode n) throws Exception {
+    StringBuilder output = new StringBuilder();
+    TokenConsumer tc = n.makeRenderer(output, null);
+    n.render(new RenderContext(new MessageContext(), tc));
+    tc.noMoreTokens();
+    return output.toString();
+  }
+  
   private static void checkFilePositionInvariants(AncestorChain<?> nChain) {
     ParseTreeNode n = nChain.node;
     String msg = n + " : " + n.getFilePosition();
