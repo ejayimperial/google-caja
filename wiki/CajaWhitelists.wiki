@@ -113,8 +113,8 @@ For CSS Properties, we need the following type information:
 
 
 == Builtin WhiteLists ==
-  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/html/html4-elements-defs.json  resource:///com/google/caja/html/html4-elements.json]
-  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/html/html4-attribs.json resource:///com/google/caja/html/html4-attribs.json]
+  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/html/html4-elements.json  resource:///com/google/caja/html/html4-elements.json]
+  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/html/html4-attributes.json resource:///com/google/caja/html/html4-attributes.json]
   * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/css/css21.json resource:///com/google/caja/lang/css/css21.json]
 
 
