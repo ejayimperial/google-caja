@@ -14,6 +14,7 @@
 
 package com.google.caja.plugin.stages;
 
+import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
@@ -23,7 +24,6 @@ import com.google.caja.lexer.Token;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.MutableParseTreeNode;
 import com.google.caja.parser.Visitor;
-import com.google.caja.parser.css.Css2;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
@@ -161,20 +161,23 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       return;
     }
 
-    // Build a replacment element.
-    // <script type="text/javascript"></script>
-    DomTree.Tag emptyScript;
+    // Build a replacment element, <span/>, and link it to the extracted
+    // javascript, so that when the DOM is rendered, we can properly interleave
+    // the extract scripts with the scripts that generate markup.
+    DomTree.Tag placeholder;
     {
+      Token<HtmlTokenType> startToken = Token.instance(
+          "<span", HtmlTokenType.TAGBEGIN, scriptTag.getToken().pos);
       Token<HtmlTokenType> endToken = Token.instance(
-          ">", HtmlTokenType.TAGEND,
+          "/>", HtmlTokenType.TAGEND,
           FilePosition.endOf(scriptTag.getFilePosition()));
-      emptyScript = new DomTree.Tag(
-          Collections.<DomTree>emptyList(), scriptTag.getToken(), endToken);
-      emptyScript.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
+      placeholder = new DomTree.Tag(
+          Collections.<DomTree>emptyList(), startToken, endToken);
+      placeholder.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
     }
 
     // Replace the external script tag with the inlined script.
-    parent.replaceChild(emptyScript, scriptTag);
+    parent.replaceChild(placeholder, scriptTag);
   }
 
   private void rewriteStyleTag(
@@ -269,7 +272,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       if (mediaTypeArr.length != 1 || !"".equals(mediaTypeArr[0])) {
         mediaTypes = new LinkedHashSet<String>();
         for (String mediaType : mediaTypeArr) {
-          if (!Css2.isMediaType(mediaType)) {
+          if (!CssSchema.isMediaType(mediaType)) {
             jobs.getMessageQueue().addMessage(
                 PluginMessageType.UNRECOGNIZED_MEDIA_TYPE,
                 media.getFilePosition(),

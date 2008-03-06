@@ -14,6 +14,8 @@
 
 package com.google.caja.plugin;
 
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
@@ -41,6 +43,7 @@ import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
+import com.google.caja.reporting.BuildInfo;
 import com.google.caja.util.Criterion;
 import com.google.caja.util.Pipeline;
 
@@ -60,23 +63,16 @@ public class HtmlPluginCompiler {
    */
   private Pipeline<Jobs> compilationPipeline;
   private Jobs jobs;
+  private CssSchema cssSchema;
+  private HtmlSchema htmlSchema;
 
   public HtmlPluginCompiler(MessageQueue mq, PluginMeta meta) {
+    BuildInfo.getInstance().addBuildInfo(mq);
     MessageContext mc = new MessageContext();
     mc.inputSources = new ArrayList<InputSource>();
     jobs = new Jobs(mc, mq, meta);
-    compilationPipeline = new Pipeline<Jobs>() {
-      @Override
-      protected boolean applyStage(
-          Pipeline.Stage<? super Jobs> stage, Jobs jobs) {
-        jobs.getMessageQueue().addMessage(
-            MessageType.CHECKPOINT,
-            MessagePart.Factory.valueOf(stage.getClass().getSimpleName()),
-            MessagePart.Factory.valueOf(System.nanoTime() / 1e9));
-        return super.applyStage(stage, jobs);
-      }
-    };
-    setupCompilationPipeline();
+    cssSchema = CssSchema.getDefaultCss21Schema(mq);
+    htmlSchema = HtmlSchema.getDefault(mq);
   }
 
   public MessageQueue getMessageQueue() { return jobs.getMessageQueue(); }
@@ -93,6 +89,16 @@ public class HtmlPluginCompiler {
 
   public PluginMeta getPluginMeta() { return jobs.getPluginMeta(); }
 
+  public void setCssSchema(CssSchema cssSchema) {
+    this.cssSchema = cssSchema;
+    compilationPipeline = null;
+  }
+
+  public void setHtmlSchema(HtmlSchema htmlSchema) {
+    this.htmlSchema = htmlSchema;
+    compilationPipeline = null;
+  }
+
   public void addInput(AncestorChain<?> input) {
     jobs.getJobs().add(new Job(input));
     jobs.getMessageContext().inputSources.add(
@@ -100,11 +106,24 @@ public class HtmlPluginCompiler {
   }
 
   protected void setupCompilationPipeline() {
+    compilationPipeline = new Pipeline<Jobs>() {
+      long t0 = System.nanoTime();
+      @Override
+      protected boolean applyStage(
+          Pipeline.Stage<? super Jobs> stage, Jobs jobs) {
+        jobs.getMessageQueue().addMessage(
+            MessageType.CHECKPOINT,
+            MessagePart.Factory.valueOf(stage.getClass().getSimpleName()),
+            MessagePart.Factory.valueOf((System.nanoTime() - t0) / 1e9));
+        return super.applyStage(stage, jobs);
+      }
+    };
+
     List<Pipeline.Stage<Jobs>> stages = compilationPipeline.getStages();
     stages.add(new RewriteHtmlStage());
-    stages.add(new ValidateHtmlStage());
-    stages.add(new CompileHtmlStage());
-    stages.add(new ValidateCssStage());
+    stages.add(new ValidateHtmlStage(htmlSchema));
+    stages.add(new CompileHtmlStage(cssSchema, htmlSchema));
+    stages.add(new ValidateCssStage(cssSchema, htmlSchema));
     stages.add(new ConsolidateCodeStage());
     stages.add(new ValidateJavascriptStage());
     stages.add(new ConsolidateCssStage());
@@ -112,6 +131,7 @@ public class HtmlPluginCompiler {
   }
 
   public Pipeline<Jobs> getCompilationPipeline() {
+    if (compilationPipeline == null) { setupCompilationPipeline(); }
     return compilationPipeline;
   }
 
@@ -177,7 +197,7 @@ public class HtmlPluginCompiler {
    * @return true on success, false on failure.
    */
   public boolean run() {
-    return compilationPipeline.apply(jobs);
+    return getCompilationPipeline().apply(jobs);
   }
 
   public static Block parseJs(
