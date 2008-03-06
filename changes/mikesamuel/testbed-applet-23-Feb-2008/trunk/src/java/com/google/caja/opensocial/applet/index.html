@@ -47,9 +47,25 @@ function cajole() {
     window.frames.evalFrame.window.loadCaja(cajoledOutput);
   } else {
     document.getElementById('output').innerHTML
-        = '<center class="failure">Failed</center>';
+        = '<center class="failure">Failed<\/center>';
   }
   document.getElementById('messages').innerHTML = messages || '';
+}
+
+function innerText(node) {
+  var s = [];
+  innerTextHelper(node, s);
+  return s.join();
+}
+
+function innerTextHelper(node, buf) {
+  for (var child = node.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType === 3) {
+      buf.push(child.nodeValue);
+    } else {
+      innerTextHelper(child, buf);
+    }
+  }
 }
     </script>
 
@@ -57,6 +73,49 @@ function cajole() {
   <body bgcolor="white"
    onload="document.forms.cajolerForm.elements.src.select()">
     <h1>Caja Test Bed</h1>
+
+    <p>
+      <a href="http://code.google.com/p/google-caja/issues/entry"
+       target="_blank">File a bug</a>
+      <span id="instrlink">
+        |
+        <a href="javascript:void(
+          document.getElementById('instrs').style.display='',
+          document.getElementById('instrlink').style.display='none')"
+         title="Show Instructions">Instructions</a>
+      </span>
+    </p>
+    <div style="display:none" id="instrs">
+      <p>
+      Enter HTML into the textarea.  Contents of <code>&lt;style&gt;</code> and
+      <code>&lt;script&gt;</code> elements are extracted.  The rest is treated
+      as HTML and emitted normally.
+
+      <p>
+      Any Cajoler warnings are displayed in the top section.
+
+      <p>
+      The script and styles are rewritten and the rewritten gadget is displayed
+      in pretty printed form in the middle section to the right.
+      
+      <p>
+      Any value inside <code>$(...)</code> is logged in the bottom section, and
+      emitted HTML is displayed below that.
+
+      <p>Example:
+      <pre class=prettyprint style="cursor: pointer"
+       onclick="document.forms.cajolerForm.src.value = innerText(this)">
+      &lt;!-- Styles are displayed --&gt;
+      &lt;style&gt; p { color: purple } &lt;/style&gt;
+
+      &lt;!-- Scripts are executed --&gt;
+      &lt;script&gt;
+        $(2 + 2)  // You should see a missing semicolon warning too!
+      &lt;/script&gt;
+
+      &lt;!-- Regular HTML is emitted --&gt;
+      &lt;p&gt;Hello World&lt;/p&gt;</pre>
+    </div>
 
     <table cols="2"><tr valign="top">
     <td>
@@ -81,7 +140,9 @@ function cajole() {
     </table>
 
     <applet code="com.google.caja.opensocial.applet.CajaApplet" name="cajoler"
-     archive="testbed.jar, ../../third_party/java/htmlparser/htmlparser.jar"
+     archive="testbed.jar,
+              ../../third_party/java/htmlparser/htmlparser.jar,
+              ../../third_party/java/json_simple/json_simple.jar"
      codebase="." height="1" width="1" scriptable="true" MAYSCRIPT>
     </applet>
 
