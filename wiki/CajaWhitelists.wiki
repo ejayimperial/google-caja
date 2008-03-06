@@ -1,5 +1,5 @@
 #summary Schema for whitelists used by the Cajoler
-#labels Phase-Implementation
+#labels Phase-Deploy
 
 = Whitelist File Format and Schema =
 
@@ -113,9 +113,10 @@ For CSS Properties, we need the following type information:
 
 
 == Builtin WhiteLists ==
-  * {{{resource:///com/google/caja/html/tags.json}}}
-  * {{{resource:///com/google/caja/html/attribs.json}}}
-  * {{{resource:///com/google/caja/css/css2.1.json}}}
+  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/html/html4-elements-defs.json  resource:///com/google/caja/html/html4-elements.json]
+  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/html/html4-attribs.json resource:///com/google/caja/html/html4-attribs.json]
+  * [http://code.google.com/p/google-caja/source/browse/trunk/src/java/com/google/caja/lang/css/css21.json resource:///com/google/caja/lang/css/css21.json]
+
 
 
 == Specifying WhiteLists at the Command Line==
