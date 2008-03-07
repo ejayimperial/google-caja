@@ -103,7 +103,6 @@ public class GadgetParser {
     for (int n = 0 ; n < list.getLength() ; ++n) {
       Node node = list.item(n);
       NamedNodeMap attr = node.getAttributes();
-      check(attr.getLength() <= 2, "<Content> can have at most two attributes");
       Node viewNode = attr.getNamedItem("view");
       if (viewNode == null || ((Attr)viewNode).getValue().equals(view)) {
         contentNode = node;
@@ -115,6 +114,8 @@ public class GadgetParser {
     Attr typeAttr = (Attr) contentNode.getAttributes().getNamedItem("type");
     check(typeAttr != null, "No 'type' attribute for view '" + view + "'");
     String value = typeAttr.getValue();
+    
+    check(value.equals("html"), "Can't handle Content type '" + value +"'");
 
     spec.setContentType(value);
 
