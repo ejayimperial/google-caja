@@ -18,6 +18,7 @@ import com.google.caja.config.ConfigUtilTest;
 import com.google.caja.demos.calendar.HcalTest;
 import com.google.caja.demos.calendar.LayoutTest;
 import com.google.caja.demos.calendar.RRuleTest;
+import com.google.caja.lang.css.CssSchemaTest;
 import com.google.caja.lexer.CharProducerTest;
 import com.google.caja.lexer.CommentLexerTest;
 import com.google.caja.lexer.CssLexerTest;
@@ -29,7 +30,6 @@ import com.google.caja.lexer.escaping.EscapingTest;
 import com.google.caja.opensocial.DefaultGadgetRewriterTest;
 import com.google.caja.opensocial.GadgetParserTest;
 import com.google.caja.parser.ParseTreeNodeTest;
-import com.google.caja.parser.css.Css2Test;
 import com.google.caja.parser.css.CssParserTest;
 import com.google.caja.parser.css.CssTreeTest;
 import com.google.caja.parser.html.DomParserTest;
@@ -55,7 +55,7 @@ import com.google.caja.plugin.caps.CapabilityRewriterTest;
 import com.google.caja.reporting.SnippetProducerTest;
 import com.google.caja.util.JoinTest;
 import com.google.caja.util.SparseBitSetTest;
-
+import com.google.caja.reporting.BuildInfoTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -71,15 +71,16 @@ public class AllTests {
   public static Test suite() {
     TestSuite suite = new TestSuite("Caja Tests");
     Class<? extends TestCase>[] testClasses = new Class[] {
+          BuildInfoTest.class,
           CapabilityRewriterTest.class,
           CharProducerTest.class,
           CommentLexerTest.class,
           CompiledPluginTest.class,
           ConfigUtilTest.class,
-          Css2Test.class,
           CssLexerTest.class,
           CssParserTest.class,
           CssRewriterTest.class,
+          CssSchemaTest.class,
           CssTreeTest.class,
           CssValidatorTest.class,
           DefaultCajaRewriterTest.class,

@@ -1,3 +1,21 @@
 According to http://www.mozilla.org/rhino/download.html
 
-The source code for Rhino is available under MPL 1.1/GPL 2.0 license. In addition to getting the source from the zip files above, the source code for Rhino can be found in the CVS tree at mozilla/js/rhino. See source code via cvs for details on how to set up CVS, define your CVSROOT, and login. Once you've done that, just execute the command
+Source
+======
+The source code for Rhino is available under MPL 1.1/GPL 2.0
+license. In addition to getting the source from the zip files above,
+the source code for Rhino can be found in the CVS tree at
+mozilla/js/rhino. See source code via cvs for details on how to set up
+CVS, define your CVSROOT, and login. Once you've done that, just
+execute the command
+
+    cvs co mozilla/js/rhino
+
+to get the latest source.
+
+The latest source can also be viewed using LXR at
+http://lxr.mozilla.org/mozilla/source/js/rhino/.
+
+Rhino uses Ant as its build system. Running ant command at the top
+directory of Rhino distribution should print the list of available
+build targets.
