@@ -14,27 +14,17 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.CharProducer;
-import com.google.caja.lexer.InputSource;
-import com.google.caja.lexer.JsLexer;
-import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.js.Parser;
-import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.Block;
-import com.google.caja.render.JsPrettyPrinter;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
-import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.TestUtil;
 import com.google.caja.plugin.SyntheticNodes;
 import junit.framework.TestCase;
 
-import java.io.StringReader;
-import java.net.URI;
 import java.util.Collections;
 
 /**
@@ -1533,29 +1523,7 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(TestUtil.parse(input), null);
   }
 
-  private static String format(ParseTreeNode n) throws Exception {
-    StringBuilder output = new StringBuilder();
-    JsPrettyPrinter pp = new JsPrettyPrinter(output, null);
-    n.render(new RenderContext(new MessageContext(), pp));
-    // Alternative, to get "S-expression" tree representation for debug:
-    //   n.format(new MessageContext(), output);
-    return output.toString();
-  }
-
-  public ParseTreeNode parseText(String text) throws Exception {
-    MessageContext mc = new MessageContext();
-    MessageQueue mq = TestUtil.createTestMessageQueue(mc);
-    InputSource is = new InputSource(new URI("file:///no/input/source"));
-    CharProducer cp = CharProducer.Factory.create(new StringReader(text), is);
-    JsLexer lexer = new JsLexer(cp);
-    JsTokenQueue tq = new JsTokenQueue(lexer, is, JsTokenQueue.NO_NON_DIRECTIVE_COMMENT);
-    Parser p = new Parser(tq, mq);
-    Statement stmt = p.parse();
-    p.getTokenQueue().expectEmpty();
-    return stmt;
-  }
-
   private String readResource(String resource) throws Exception {
-    return TestUtil.readResource(getClass(), resource);
+    return TestUtil.readResource(getClass(), resource);    
   }
 }
