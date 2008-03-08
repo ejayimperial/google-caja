@@ -179,8 +179,7 @@ public final class HtmlSchema {
     assert attribName.equals(attribName.toLowerCase());
     Criterion<String> specific
         = attributeCriteria.get(tagName + ":" + attribName);
-    Criterion<String> general
-        = attributeCriteria.get("*:" + attribName);
+    Criterion<String> general = attributeCriteria.get("*:" + attribName);
     if (specific != null) {
       return (general != null)
           ? Criterion.Factory.and(specific, general)

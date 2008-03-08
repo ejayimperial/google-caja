@@ -71,12 +71,15 @@ public interface Criterion<T> {
     }
 
     /**
-     * A criterion that is true if any of the given criteria accept
+     * A criterion that is true iff any of the given criteria accept
      * the candidate.
+     * @param a non null.
+     * @param b non null.
      * @return non null.
      */
     public static <T> Criterion<T> or(
-        final Criterion<T> a, final Criterion<T> b) {
+        final Criterion<T> a, final Criterion<? super T> b) {
+      if (a == null || b == null) { throw new NullPointerException(); }
       return new Criterion<T>() {
           public boolean accept(T candidate) {
             return a.accept(candidate) || b.accept(candidate);
@@ -87,10 +90,13 @@ public interface Criterion<T> {
     /**
      * A criterion that is true iff all of the given criteria accept
      * the candidate.
+     * @param a non null.
+     * @param b non null.
      * @return non null.
      */
     public static <T> Criterion<T> and(
-        final Criterion<T> a, final Criterion<T> b) {
+        final Criterion<T> a, final Criterion<? super T> b) {
+      if (null == a || null == b) { throw new NullPointerException(); }
       return new Criterion<T>() {
           public boolean accept(T candidate) {
             return a.accept(candidate) && b.accept(candidate);

@@ -207,7 +207,7 @@ public class ScopeTest extends TestCase {
     FunctionConstructor fc = (FunctionConstructor)fd.getInitializer();
     Block body = fc.getBody();
 
-    Scope s0 = Scope.fromRootBlock((Block)n, mq);
+    Scope s0 = Scope.fromRootBlock(n, mq);
     Scope s1 = Scope.fromBlock(s0, body);
 
     assertEquals(0, mq.getMessages().size());
@@ -250,7 +250,7 @@ public class ScopeTest extends TestCase {
     Declaration d = findNodeWithIdentifier(n, Declaration.class, "foo");
     FunctionConstructor fc = (FunctionConstructor)d.getInitializer();
 
-    Scope s0 = Scope.fromRootBlock((Block)n, mq);
+    Scope s0 = Scope.fromRootBlock(n, mq);
     Scope s1 = Scope.fromCatchStmt(s0, c);
     Scope.fromFunctionConstructor(s1, fc);
 
