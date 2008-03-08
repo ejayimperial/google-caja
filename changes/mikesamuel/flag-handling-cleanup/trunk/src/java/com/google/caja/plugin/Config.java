@@ -179,16 +179,11 @@ final class Config {
     new HelpFormatter().printHelp(
         out, HelpFormatter.DEFAULT_WIDTH,
         (mainClass.getSimpleName()
-         + " --input <in.html> [--output_js <out.js> [--output_css <out.css>]]"
-         + " --css_prefix <prefix>"),
+         + " --input <in.html> --css_prefix <prefix>"
+         + " [[--output_js <out.js> [--output_css <out.css>]] | --out <out>]"),
         "\n", options,
         HelpFormatter.DEFAULT_LEFT_PAD, HelpFormatter.DEFAULT_DESC_PAD,
         "\n" + usageText, false);
-  }
-
-  public static void main(String[] argv) {
-    Config config = new Config(Config.class, System.err, "Does some stuff.");
-    System.err.println(config.processArguments(argv));
   }
 
   private File substituteExtension(File file, String extension) {
@@ -199,5 +194,10 @@ final class Config {
     }
     return new File(file.getParentFile(),
                     fileName.substring(0, lastDot) + "." + extension);
+  }
+
+  public static void main(String[] argv) {
+    Config config = new Config(Config.class, System.err, "Does some stuff.");
+    System.err.println(config.processArguments(argv));
   }
 }
