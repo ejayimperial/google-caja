@@ -14,8 +14,12 @@
 
 package com.google.caja;
 
+import com.google.caja.config.ConfigUtilTest;
 import com.google.caja.demos.calendar.HcalTest;
+import com.google.caja.demos.calendar.LayoutTest;
 import com.google.caja.demos.calendar.RRuleTest;
+import com.google.caja.lang.css.CssSchemaTest;
+import com.google.caja.lang.html.HtmlSchemaTest;
 import com.google.caja.lexer.CharProducerTest;
 import com.google.caja.lexer.CommentLexerTest;
 import com.google.caja.lexer.CssLexerTest;
@@ -27,7 +31,6 @@ import com.google.caja.lexer.escaping.EscapingTest;
 import com.google.caja.opensocial.DefaultGadgetRewriterTest;
 import com.google.caja.opensocial.GadgetParserTest;
 import com.google.caja.parser.ParseTreeNodeTest;
-import com.google.caja.parser.css.Css2Test;
 import com.google.caja.parser.css.CssParserTest;
 import com.google.caja.parser.css.CssTreeTest;
 import com.google.caja.parser.html.DomParserTest;
@@ -46,12 +49,13 @@ import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
-import com.google.caja.plugin.HtmlWhitelistTest;
 import com.google.caja.plugin.PluginCompilerTest;
 import com.google.caja.plugin.UrlUtilTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
+import com.google.caja.reporting.SnippetProducerTest;
 import com.google.caja.util.JoinTest;
 import com.google.caja.util.SparseBitSetTest;
+import com.google.caja.reporting.BuildInfoTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -67,18 +71,20 @@ public class AllTests {
   public static Test suite() {
     TestSuite suite = new TestSuite("Caja Tests");
     Class<? extends TestCase>[] testClasses = new Class[] {
+          BuildInfoTest.class,
           CapabilityRewriterTest.class,
           CharProducerTest.class,
           CommentLexerTest.class,
           CompiledPluginTest.class,
-          Css2Test.class,
+          ConfigUtilTest.class,
           CssLexerTest.class,
           CssParserTest.class,
           CssRewriterTest.class,
+          CssSchemaTest.class,
           CssTreeTest.class,
           CssValidatorTest.class,
-          DefaultGadgetRewriterTest.class,
           DefaultCajaRewriterTest.class,
+          DefaultGadgetRewriterTest.class,
           DomParserTest.class,
           EscapingTest.class,
           ExpressionSanitizerTest.class,
@@ -89,10 +95,11 @@ public class AllTests {
           HtmlCompiledPluginTest.class,
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
-          HtmlWhitelistTest.class,
+          HtmlSchemaTest.class,
           JoinTest.class,
           JsHtmlParserTest.class,
           JsLexerTest.class,
+          LayoutTest.class,
           LookaheadCharProducerTest.class,
           MatchTest.class,
           ParseTreeNodeTest.class,
@@ -102,6 +109,7 @@ public class AllTests {
           QuasiBuilderTest.class,
           RRuleTest.class,
           ScopeTest.class,
+          SnippetProducerTest.class,
           SparseBitSetTest.class,
           StringLiteralTest.class,
           UrlUtilTest.class,

@@ -65,7 +65,7 @@ function doSearch(button) {
         var n = results.length;
         if (!n) {
           resultList.setInnerHTML(
-              open(Template('<center>No results</center>')));
+              eval(Template('<center>No results</center>')));
           return;
         }
         for (var i = 0; i < n; ++i) {
@@ -74,7 +74,7 @@ function doSearch(button) {
           var snippetText = result.snippetHtml.replace(
               /<\/?[A-Za-z][^>]*>/g, ' ');
           var titleText = result.titleHtml.replace(/<\/?[A-Za-z][^>]*>/g, ' ');
-          li.setInnerHTML(open(Template(
+          li.setInnerHTML(eval(Template(
               '<b>$titleText</b> &mdash; '
               + '<tt><a href="#">${result.url}</a></tt>'))
               );

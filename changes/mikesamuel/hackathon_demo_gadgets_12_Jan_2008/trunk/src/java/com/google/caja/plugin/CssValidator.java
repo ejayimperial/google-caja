@@ -14,13 +14,13 @@
 
 package com.google.caja.plugin;
 
-import com.google.caja.html.HTML4;
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.css.CssPropertySignature;
 import com.google.caja.parser.css.CssTree;
-import com.google.caja.parser.css.Css2;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
@@ -68,13 +68,21 @@ public final class CssValidator {
   public static final SyntheticAttributeKey<Boolean> INVALID =
     new SyntheticAttributeKey<Boolean>(Boolean.class, "cssValidator-invalid");
 
+  private final CssSchema cssSchema;
+  private final HtmlSchema htmlSchema;
   private final MessageQueue mq;
-  public CssValidator(MessageQueue mq) {
-    if (null == mq) { throw new NullPointerException(); }
+
+  public CssValidator(
+      CssSchema cssSchema, HtmlSchema htmlSchema, MessageQueue mq) {
+    if (null == cssSchema || null == htmlSchema || null == mq) {
+      throw new NullPointerException();
+    }
+    this.cssSchema = cssSchema;
+    this.htmlSchema = htmlSchema;
     this.mq = mq;
   }
 
-  /** True iff the given css tree is valid according to CSS2. */
+  /** True iff the given css tree is valid according to the CSS Schema. */
   public boolean validateCss(AncestorChain<? extends CssTree> css) {
     if (css.node instanceof CssTree.Declaration) {
       return validateDeclaration((CssTree.Declaration) css.node);
@@ -103,7 +111,8 @@ public final class CssValidator {
     // insists that a noop is a full-class declaration.
     if (decl.children().isEmpty()) { return true; }
     CssTree.Property prop = decl.getProperty();
-    Css2.CssPropertyInfo pinfo = Css2.getCssProperty(prop.getPropertyName());
+    CssSchema.CssPropertyInfo pinfo = cssSchema.getCssProperty(
+        prop.getPropertyName());
     if (null == pinfo) {
       mq.addMessage(
           PluginMessageType.UNKNOWN_CSS_PROPERTY, prop.getFilePosition(),
@@ -126,14 +135,14 @@ public final class CssValidator {
   private boolean validateSimpleSelector(CssTree.SimpleSelector sel) {
     String tagName = sel.getElementName();
     if (null == tagName) { return true; }
-    tagName = tagName.toUpperCase();
-    if (null != HTML4.lookupElement(tagName)) {
-      if (HtmlWhitelist.ALLOWED_TAGS.contains(tagName)
+    tagName = tagName.toLowerCase();
+    if (null != htmlSchema.lookupElement(tagName)) {
+      if (htmlSchema.isElementAllowed(tagName)
           // Make an exception for BODY which is handled specially by the
           // rewriter and which can be used as the basis for browser specific
           // rules, e.g.  body.ie6 p { ... }
-          // TODO(msamuel): parameterize the whitelist
-          || "BODY".equals(tagName)) {
+          // TODO(mikesamuel): parameterize the whitelist
+          || "body".equals(tagName)) {
         return true;
       }
       mq.addMessage(PluginMessageType.UNSAFE_TAG, sel.getFilePosition(),
@@ -151,8 +160,8 @@ public final class CssValidator {
    * Attrib must exist in html 4 whitelist.
    */
   private boolean validateAttrib(CssTree.Attrib attr) {
-    String attribName = attr.getIdent().toUpperCase();
-    if (null != HTML4.getWhitelist().lookupAttribute(attribName)) {
+    String attribName = attr.getIdent().toLowerCase();
+    if (null != htmlSchema.lookupAttribute("*", attribName)) {
       return true;
     } else {
       mq.addMessage(
@@ -178,7 +187,7 @@ public final class CssValidator {
    */
   private boolean applySignature(
       String propertyName, CssTree.Expr expr, CssPropertySignature sig) {
-    SignatureResolver resolver = new SignatureResolver(expr);
+    SignatureResolver resolver = new SignatureResolver(expr, cssSchema);
     List<Candidate> matches = resolver.applySignature(
         Collections.singletonList(new Candidate(0, null, null)),
         propertyName, sig);
@@ -315,9 +324,11 @@ final class SignatureResolver {
   private Candidate best;
   /** The css expression.  Non null. */
   private final CssTree.Expr expr;
+  private final CssSchema cssSchema;
 
-  SignatureResolver(CssTree.Expr expr) {
+  SignatureResolver(CssTree.Expr expr, CssSchema cssSchema) {
     this.expr = expr;
+    this.cssSchema = cssSchema;
   }
 
   Candidate getBestAttempt() { return best; }
@@ -546,7 +557,7 @@ final class SignatureResolver {
       CssPropertySignature.SymbolSignature ssig,
       Candidate candidate, String propertyName, List<Candidate> passed) {
 
-    Css2.SymbolInfo symbolInfo = Css2.getSymbol(
+    CssSchema.SymbolInfo symbolInfo = cssSchema.getSymbol(
         ssig.symbolName.toLowerCase());
     if (null != symbolInfo) {
       if (false) {
@@ -567,8 +578,8 @@ final class SignatureResolver {
       CssPropertySignature.PropertyRefSignature ssig,
       Candidate candidate, String propertyName, List<Candidate> passed) {
 
-    Css2.CssPropertyInfo info =
-      Css2.getCssProperty(ssig.getPropertyName().toLowerCase());
+    CssSchema.CssPropertyInfo info = cssSchema.getCssProperty(
+        ssig.getPropertyName().toLowerCase());
     if (null == info) {
       throw new AssertionError(
           "Unknown property in css property signature: " + propertyName);
@@ -599,7 +610,7 @@ final class SignatureResolver {
           Candidate inFnSpace = new Candidate(
               0, candidate.match, candidate.warning);
           for (Candidate resultInFnSpace :
-               new SignatureResolver(actuals).applySignature(
+               new SignatureResolver(actuals, cssSchema).applySignature(
                    Collections.singletonList(inFnSpace), propertyName,
                    formals)) {
             passed.add(new Candidate(
@@ -666,7 +677,7 @@ final class SignatureResolver {
 
   /**
    * Handles symbols for which we don't have a signature.  Anything not handled
-   * by {@link Css2#getSymbol}.
+   * by {@link CssSchema#getSymbol}.
    */
   private boolean symbolMatch(
       Candidate candidate, String propertyName,
@@ -747,7 +758,7 @@ final class SignatureResolver {
       String name;
       if (atom instanceof CssTree.IdentLiteral) {
         name = ((CssTree.IdentLiteral) atom).getValue();
-        if (Css2.isKeyword(name)) { return false; }
+        if (cssSchema.isKeyword(name)) { return false; }
       } else if (atom instanceof CssTree.StringLiteral) {
         name = ((CssTree.StringLiteral) atom).getValue();
       } else {
@@ -807,7 +818,7 @@ final class SignatureResolver {
       String name;
       if (atom instanceof CssTree.IdentLiteral) {
         name = ((CssTree.IdentLiteral) atom).getValue();
-        if (Css2.isKeyword(name)) { return false; }
+        if (cssSchema.isKeyword(name)) { return false; }
       } else if (atom instanceof CssTree.StringLiteral) {
         name = ((CssTree.StringLiteral) atom).getValue();
       } else {

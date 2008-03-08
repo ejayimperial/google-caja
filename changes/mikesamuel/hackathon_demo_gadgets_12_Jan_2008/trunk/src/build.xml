@@ -40,7 +40,7 @@
   <property name="src"         location="java"/>
   <property name="testsrc"     location="javatests"/>
   <property name="javascript"  location="js"/>
-  <property name="third_party" location="./third_party"/>
+  <property name="third_party" location="third_party"/>
   <property name="demos"       location="java/com/google/caja/demos"/>
   <!--== outputs ==-->
   <property name="reports"     location="ant-reports"/>  <!-- emma reports -->
@@ -50,14 +50,21 @@
   <property name="jars"        location="ant-jars"/>
   <property name="www"         location="ant-www"/>  <!-- demo files dir -->
 
+  <property
+      name="build.info.file"
+      location="${lib}/com/google/caja/reporting/buildInfo.properties"/>  
+
   <path id="classpath.compile">
+    <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
     <pathelement path="${third_party}/java/jakarta_commons/commons-cli.jar"/>
     <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
-    <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
   </path>
 
   <path id="classpath.run">
     <pathelement path="${lib}"/>
+    <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
+    <pathelement path="${third_party}/java/jakarta_commons/commons-cli.jar"/>
+    <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
   </path>
 
   <path id="classpath.tests.compile">
@@ -187,9 +194,13 @@
     <java classname="com.google.caja.plugin.PluginCompilerMain"
      failonerror="yes">
       <classpath refid="classpath.run"/>
-      <arg value="--out=${lib}/com/google/caja/plugin/domita_test_cajoled"/>
-      <arg value="--pathPrefix=/"/>
+      <arg value="--css_prefix"/>
+      <arg value="plugin"/>
+      <arg value="--out"/>
+      <arg file="${lib}/com/google/caja/plugin/domita_test_cajoled"/>
+      <arg value="--input"/>
       <arg file="${testsrc}/com/google/caja/plugin/domita_test.js"/>
+      <arg value="--input"/>
       <arg file="${testsrc}/com/google/caja/plugin/asserts.js"/>
     </java>
   </target>
@@ -201,8 +212,11 @@
       <classpath refid="classpath.tests.compile"/>
       <include name="**/caja/AllTests.java"/>
       <include name="**/caja/config/ConfigUtilTest.java"/>
+      <include name="**/caja/demos/calendar/*Test.java"/>
+      <include name="**/caja/lang/html/HtmlSchemaTest.java"/>
       <include name="**/caja/demos/calendar/RRuleTest.java"/>
-      <include name="**/caja/demos/calendar/HcalTest.java"/>
+      <include name="**/caja/lang/css/CssSchemaTest.java"/>
+      <include name="**/caja/demos/calendar/LayoutTest.java"/>
       <include name="**/caja/lexer/CharProducerTest.java"/>
       <include name="**/caja/lexer/CommentLexerTest.java"/>
       <include name="**/caja/lexer/CssLexerTest.java"/>
@@ -214,17 +228,16 @@
       <include name="**/caja/opensocial/DefaultGadgetRewriterTest.java"/>
       <include name="**/caja/opensocial/GadgetParserTest.java"/>
       <include name="**/caja/parser/ParseTreeNodeTest.java"/>
-      <include name="**/caja/parser/css/Css2Test.java"/>
       <include name="**/caja/parser/css/CssParserTest.java"/>
       <include name="**/caja/parser/css/CssTreeTest.java"/>
       <include name="**/caja/parser/html/DomParserTest.java"/>
       <include name="**/caja/parser/html/JsHtmlParserTest.java"/>
-      <include name="**/caja/parser/quasiliteral/DefaultJsRewriterTest.java"/>
+      <include name="**/caja/parser/js/ParserTest.java"/>
+      <include name="**/caja/parser/js/StringLiteralTest.java"/>
+      <include name="**/caja/parser/quasiliteral/DefaultCajaRewriterTest.java"/>
       <include name="**/caja/parser/quasiliteral/MatchTest.java"/>
       <include name="**/caja/parser/quasiliteral/QuasiBuilderTest.java"/>
       <include name="**/caja/parser/quasiliteral/ScopeTest.java"/>
-      <include name="**/caja/parser/js/ParserTest.java"/>
-      <include name="**/caja/parser/js/StringLiteralTest.java"/>
       <include name="**/caja/plugin/CompiledPluginTest.java"/>
       <include name="**/caja/plugin/CssRewriterTest.java"/>
       <include name="**/caja/plugin/CssValidatorTest.java"/>
@@ -233,7 +246,6 @@
       <include name="**/caja/plugin/GxpValidatorTest.java"/>
       <include name="**/caja/plugin/HtmlCompiledPluginTest.java"/>
       <include name="**/caja/plugin/HtmlSanitizerTest.java"/>
-      <include name="**/caja/plugin/HtmlWhitelistTest.java"/>
       <include name="**/caja/plugin/PluginCompilerTest.java"/>
       <include name="**/caja/plugin/UrlUtilTest.java"/>
       <include name="**/caja/plugin/caps/CapabilityRewriterTest.java"/>
@@ -297,7 +309,6 @@
         <include name="**/caja/parser/js/rendergolden5.txt"/>
         <include name="**/caja/parser/js/rendergolden6.txt"/>
         <include name="**/caja/parser/quasiliteral/clickme.js"/>
-        <include name="**/caja/parser/quasiliteral/function.js"/>
         <include name="**/caja/parser/quasiliteral/listfriends.js"/>
         <include name="**/caja/plugin/asserts.js"/>
         <include name="**/caja/plugin/caps/wrap_capability_test.js"/>
@@ -321,9 +332,7 @@
         <include name="**/caja/plugin/plugintest-helloworld.input"/>
         <include name="**/caja/plugin/plugintest-references.golden"/>
         <include name="**/caja/plugin/plugintest-references.input"/>
-        <include name="**/caja/plugin/sanitizergolden1.js"/>
         <include name="**/caja/plugin/sanitizergolden2.txt"/>
-        <include name="**/caja/plugin/sanitizerinput1.js"/>
         <include name="**/caja/plugin/tmp-caja.js"/>
       </fileset>
       <fileset dir="${src}">
@@ -343,13 +352,38 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/opensocial/*.java"/>
-      <include name="**/caja/plugin/HtmlPluginCompiler.java"/>
       <include name="**/caja/plugin/HtmlPluginCompilerMain.java"/>
       <include name="**/caja/plugin/PluginCompilerMain.java"/>
     </javac>
   </target>
 
-  <target name="pluginc" depends="PluginCompiler,dirs,opensocial">
+  <target name="build.info">
+    <tstamp>
+      <format
+          property="build.timestamp"
+          pattern="yyyy-MM-dd HH:mm:ss"/>
+    </tstamp>
+    <exec
+        executable="svnversion"
+        failonerror="false"
+        failifexecutionfails="false"
+        dir="."
+        outputproperty="build.svnVersion"/>
+    <echo
+        append="false"
+        file="${build.info.file}"
+        message="# Caja Build Information${line.separator}"/>
+    <echo
+        append="true"
+        file="${build.info.file}"
+        message="svnVersion: ${build.svnVersion}${line.separator}"/>
+    <echo
+        append="true"
+        file="${build.info.file}"
+        message="timestamp: ${build.timestamp}${line.separator}"/>
+  </target>
+
+  <target name="pluginc" depends="PluginCompiler,dirs,opensocial,build.info">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
@@ -383,7 +417,7 @@
   </target>
 
   <target name="PluginCompiler"
-   depends="CssParserCore,HtmlParserCore,HtmlSchema,Quasiliterals,Config,dirs">
+   depends="CssParserCore,HtmlParserCore,Schemas,Quasiliterals,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
@@ -427,25 +461,25 @@
     </javac>
   </target>
 
-  <target name="HtmlSchema" depends="dirs">
+  <target name="Schemas" depends="dirs,Config">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
-      <include name="**/caja/html/HTML.java"/>
-      <include name="**/caja/html/HTML4.java"/>
-      <include name="**/caja/html/HtmlWhitelist.java"/>
+      <include name="**/caja/lang/*/*.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
+    <copy todir="${lib}">
+      <fileset dir="${src}">
+        <include name="**/caja/lang/*/*.json"/>
+      </fileset>
+    </copy>
   </target>
 
   <target name="CssParserCore" depends="Parser,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
-      <include name="**/caja/parser/css/Css2.java"/>
-      <include name="**/caja/parser/css/CssParser.java"/>
-      <include name="**/caja/parser/css/CssPropertySignature.java"/>
-      <include name="**/caja/parser/css/CssTree.java"/>
+      <include name="**/caja/parser/css/*.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
   </target>
@@ -531,10 +565,12 @@
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
+      <include name="**/caja/parser/AbstractParseTreeNode.java"/>
+      <include name="**/caja/parser/AncestorChain.java"/>
       <include name="**/caja/parser/MutableParseTreeNode.java"/>
       <include name="**/caja/parser/ParseTreeNode.java"/>
+      <include name="**/caja/parser/ParseTreeNodes.java"/>
       <include name="**/caja/parser/Visitor.java"/>
-      <include name="**/caja/parser/AbstractParseTreeNode.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
   </target>
@@ -577,15 +613,11 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/CajaException.java"/>
-      <include name="**/caja/reporting/Message.java"/>
-      <include name="**/caja/reporting/MessageGroup.java"/>
-      <include name="**/caja/reporting/MessageLevel.java"/>
-      <include name="**/caja/reporting/MessageQueue.java"/>
-      <include name="**/caja/reporting/MessageType.java"/>
-      <include name="**/caja/reporting/MessageTypeInt.java"/>
-      <include name="**/caja/reporting/DevNullMessageQueue.java"/>
-      <include name="**/caja/reporting/EchoingMessageQueue.java"/>
-      <include name="**/caja/reporting/SimpleMessageQueue.java"/>
+      <include name="**/caja/reporting/*.java"/>
+      <exclude name="**/caja/reporting/MessageContext.java"/>
+      <exclude name="**/caja/reporting/MessagePart.java"/>
+      <exclude name="**/caja/reporting/RenderContext.java"/>
+      <exclude name="**/caja/reporting/Renderable.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
   </target>
@@ -633,12 +665,19 @@
     <java classname="com.google.caja.plugin.PluginCompilerMain"
      failonerror="yes">
       <classpath refid="classpath.run"/>
-      <arg value="--out=${www}/contact-spring-graph/plugin-files/"/>
-      <arg value="--pathPrefix=/plugin-files/"/>
+      <arg value="--css_prefix"/>
+      <arg value="plugin"/>
+      <arg value="--out"/>
+      <arg file="${www}/contact-spring-graph/plugin-files/"/>
+      <arg value="--input"/>
       <arg file="${demos}/contact-spring-graph/spring-graph.gxp"/>
+      <arg value="--input"/>
       <arg file="${demos}/contact-spring-graph/spring-graph.css"/>
+      <arg value="--input"/>
       <arg file="${demos}/contact-spring-graph/position.css"/>
+      <arg value="--input"/>
       <arg file="${demos}/contact-spring-graph/spring-graph.js"/>
+      <arg value="--input"/>
       <arg file="${demos}/contact-spring-graph/plugin-main.js"/>
     </java>
   </target>

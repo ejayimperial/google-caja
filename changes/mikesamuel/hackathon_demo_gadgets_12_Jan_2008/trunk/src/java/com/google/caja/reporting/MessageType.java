@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Formatter;
 
 /**
- * The type of a {Message message}.
+ * The type of a {@link Message message}.
  *
  * @author mikesamuel@gmail.com
  */
@@ -151,6 +151,8 @@ public enum MessageType implements MessageTypeInt {
 
   // logging
   CHECKPOINT("Checkpoint: %s at T+%s seconds", MessageLevel.LOG),
+  BUILD_INFO("Google Caja. Copyright (C) 2008, Google Inc. Rev %s built on %s.",
+             MessageLevel.LOG),    
   ;
 
   private final String formatString;

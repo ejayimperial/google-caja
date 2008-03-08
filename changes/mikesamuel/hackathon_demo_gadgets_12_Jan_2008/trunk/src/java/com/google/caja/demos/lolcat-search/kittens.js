@@ -57,7 +57,7 @@ function showKitten(result) {
 }
 
 function renderKittenTable(imageUrl, snippet) {
-  document.getElementById('base').setInnerHTML(open(Template(
+  document.getElementById('base').setInnerHTML(eval(Template(
       '<table><tr><td align=center><img src="${imageUrl}"></tr>'
       + '<tr><td style=width:30em align=center>${katTranzlator(snippet || "")}'
       + '</table>')));
