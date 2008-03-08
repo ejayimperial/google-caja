@@ -38,7 +38,7 @@ public interface GadgetRewriter {
    *
    * @param ref a reference to the gadget spec to rewrite.
    * @param uriCallback a {@link UriCallback} object for resolving URIs.
-   * @param view the view to rewrite.
+   * @param view the view to rewrite (see http://code.google.com/apis/opensocial/docs/0.7/devguide.html#Multiple_Content).
    * @param output an {@code Appendable} to which the rewriter will write the Caja parsed
    * gadget specification, as a literal string of content.
    * @exception UriCallbackException if the {@code urlCallback} threw an exception.
@@ -57,7 +57,7 @@ public interface GadgetRewriter {
    * will be interpreted.
    * @param gadgetSpec the source text of the gadget specification.
    * @param uriCallback a {@link UriCallback} object for resolving URIs.
-   * @param view the view to rewrite.
+   * @param view the view to rewrite (see http://code.google.com/apis/opensocial/docs/0.7/devguide.html#Multiple_Content).
    * @param output an {@code Appendable} to which the rewriter will write the Caja parsed
    * gadget specification, as a literal string of content.
    * @exception UriCallbackException if the {@code urlCallback} threw an exception.
