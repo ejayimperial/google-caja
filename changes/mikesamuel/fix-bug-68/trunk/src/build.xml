@@ -148,7 +148,7 @@
       <formatter type="xml" usefile="true" unless="emma.enabled"/>
       <batchtest todir="${reports}/tests" unless="emma.enabled">
         <fileset dir="${testsrc}">
-          <include name="**/ParserTest.java"/>
+          <include name="**/*Test.java"/>
         </fileset>
       </batchtest>
       <sysproperty key="emma.coverage.out.file"
