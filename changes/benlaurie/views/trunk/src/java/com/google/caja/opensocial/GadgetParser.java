@@ -35,6 +35,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Safe XML parser for gadget specifications. Rejects invalid markup.
@@ -104,7 +105,9 @@ public class GadgetParser {
       Node node = list.item(n);
       NamedNodeMap attr = node.getAttributes();
       Node viewNode = attr.getNamedItem("view");
-      if (viewNode == null || ((Attr)viewNode).getValue().equals(view)) {
+      if (viewNode == null
+          || Arrays.asList(((Attr) viewNode).getValue().split("[\\s*,]"))
+             .contains(view)) {
         contentNode = node;
         break;
       }
