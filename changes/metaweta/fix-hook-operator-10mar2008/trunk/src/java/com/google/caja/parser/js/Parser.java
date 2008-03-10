@@ -828,7 +828,7 @@ public final class Parser extends ParserBase {
         case TERNARY:
           {
             tq.expectToken(op.getClosingSymbol());
-            Expression farRight = parseOp(opprec, insertionProtected);
+            Expression farRight = parseOp(Integer.MAX_VALUE, insertionProtected);
             left = new Operation(op, left, right, farRight);
           }
           break;
