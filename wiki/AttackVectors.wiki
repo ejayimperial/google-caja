@@ -24,6 +24,7 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * StringObfuscationIsEasy -- Approaches that rely on detecting code for other languages in string literals is easy to defeat
   * ParentCircumventsScoping -- The javascript1.2 feature {{{__parent__}}} circumvents normal scoping.
   * JsControlFormatChars -- {{{[:Cf:]}}} can be used hide code in string or comments.
+  * IncosistentlyReservedKeywords -- Different reserved keyword set can cause parser ambiguity
 
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
