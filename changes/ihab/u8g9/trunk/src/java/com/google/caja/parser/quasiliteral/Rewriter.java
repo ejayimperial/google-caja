@@ -101,7 +101,7 @@ public abstract class Rewriter {
    * {@link com.google.caja.parser.quasiliteral.Rule#getName() name}.
    *
    * @param rule a rewriting rule.
-   * @exception IllegalArgumentException if a rule with a dupliate name is added.
+   * @exception IllegalArgumentException if a rule with a duplicate name is added.
    */
   public void addRule(Rule rule) {
     // We keep 'ruleNames' as a guard against programming errors

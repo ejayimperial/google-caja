@@ -1451,6 +1451,18 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    addRule(new Rule("otherTypeof", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("typeof @f", node, bindings)) {
+          return substV(
+              "typeof @f",
+              "f", expand(bindings.get("f"), scope, mq));
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("otherBadInstanceof", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();

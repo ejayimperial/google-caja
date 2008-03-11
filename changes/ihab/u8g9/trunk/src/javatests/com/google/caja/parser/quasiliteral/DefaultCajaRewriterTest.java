@@ -61,6 +61,10 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    ___.readPub(___OUTERS___, '" + varName + "', true))";
   }
 
+  public void testFoo() throws Exception {
+    checkSucceedsUnchanged("typeof x;");
+  }
+
   ////////////////////////////////////////////////////////////////////////
   // Handling of synthetic nodes
   ////////////////////////////////////////////////////////////////////////
@@ -1375,6 +1379,12 @@ public class DefaultCajaRewriterTest extends TestCase {
         "x instanceof foo;",
         weldSetOuters("foo", "___.simpleFunc(function foo() {})") + ";" +
         weldReadOuters("x") + " instanceof ___.primFreeze(" + weldReadOuters("foo") + ");");
+  }
+
+  public void testOtherTypeof() throws Exception {
+    checkSucceeds(
+        "typeof x;",
+        "typeof " + weldReadOuters("x") + ";");
   }
 
   public void testOtherBadInstanceof() throws Exception {
