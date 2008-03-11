@@ -14,42 +14,23 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.CharProducer;
-import com.google.caja.lexer.InputSource;
-import com.google.caja.lexer.JsLexer;
-import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.js.Parser;
-import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.Block;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
-import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.TestUtil;
 import com.google.caja.plugin.SyntheticNodes;
 import junit.framework.TestCase;
 
-import java.io.StringReader;
-import java.net.URI;
 import java.util.Collections;
 
 /**
  * @author ihab.awad@gmail.com
  */
 public class DefaultCajaRewriterTest extends TestCase {
-  ////////////////////////////////////////////////////////////////////////
-  // Handling of synthetic nodes
-  ////////////////////////////////////////////////////////////////////////
-
-  public void testSyntheticIsUntouched() throws Exception {
-    ParseTreeNode input = TestUtil.parse(
-        "function foo() { this; arguments; }");
-    setTreeSynthetic(input);
-    checkSucceeds(input, input);
-  }
 
   /**
    * Welds together a string representing the repeated pattern of expected test output for
@@ -78,6 +59,17 @@ public class DefaultCajaRewriterTest extends TestCase {
         "(___OUTERS___." + varName + "_canRead___ ?" +
         "    ___OUTERS___." + varName + ":" +
         "    ___.readPub(___OUTERS___, '" + varName + "', true))";
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // Handling of synthetic nodes
+  ////////////////////////////////////////////////////////////////////////
+
+  public void testSyntheticIsUntouched() throws Exception {
+    ParseTreeNode input = TestUtil.parse(
+        "function foo() { this; arguments; }");
+    setTreeSynthetic(input);
+    checkSucceeds(input, input);
   }
 
   public void testNestedInsideSyntheticIsExpanded() throws Exception {
@@ -138,7 +130,6 @@ public class DefaultCajaRewriterTest extends TestCase {
     // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
     checkSucceeds(
         "try { } catch (e) { for (var k in x) { k; } }",
-        // TODO(ihab.awad): review welds
         "try {" +
         "} catch (ex___) {" +
         "  try {" +
@@ -562,7 +553,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "Properties cannot end in \"__\"");
   }
 
-  public void testReadGlobal() throws Exception {
+  public void testReadGlobalViaThis() throws Exception {
     checkSucceeds(
         "this.x;",
         weldReadOuters("x") + ";");
@@ -948,7 +939,6 @@ public class DefaultCajaRewriterTest extends TestCase {
         weldSetOuters("foo", "___.simpleFunc(function foo() {})") + ";" +
         "new (___.asCtor(" + weldReadOuters("foo") + "))" +
         "    (" + weldReadOuters("x") + ", " + weldReadOuters("y") + ");");
-     // TODO(weld)
     checkSucceeds(
         "function foo() {}" +
         "new foo();",
@@ -1211,11 +1201,23 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    [" + weldReadOuters("z") + ", " + weldReadOuters("t") + "]);");
   }
 
+  public void testCallGlobalFunc() throws Exception {
+    checkSucceeds(
+        "foo(x, y);",
+        "___.asSimpleFunc(___.readPub(___OUTERS___, 'foo', true))(" +
+        "    " + weldReadOuters("x") + "," +
+        "    " + weldReadOuters("y") +
+        ");");
+  }
+
   public void testCallFunc() throws Exception {
     checkSucceeds(
-        "f(x, y);",
-        "___.asSimpleFunc(" + weldReadOuters("f") + ")" +
-        "                (" + weldReadOuters("x") + ", " + weldReadOuters("y") + ");");
+        "function() { var f; f(x, y); }",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "    var f;" +
+        "    ___.asSimpleFunc(f)" +
+        "        (" + weldReadOuters("x") + ", " + weldReadOuters("y") + ");" +
+        "}));");
   }
 
   public void testFuncAnonSimple() throws Exception {
@@ -1567,7 +1569,6 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "1 + 2 * 3 / 4 - -5",
         "1 + 2 * 3 / 4 - -5");
-    // TODO(weld)
     checkSucceeds(
         "x  = y = 3;",
         weldSetOuters("x", weldSetOuters("y", "3")));

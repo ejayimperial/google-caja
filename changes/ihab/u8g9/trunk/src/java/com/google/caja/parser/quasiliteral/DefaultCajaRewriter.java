@@ -389,7 +389,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("readGlobal", this) {
+    addRule(new Rule("readGlobalViaThis", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this.@p", node, bindings) && scope.isGlobal()) {
@@ -1116,14 +1116,36 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+
+    addRule(new Rule("callGlobalFunc", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("@f(@as*)", node, bindings)) {
+          String propertyName = getReferenceName(bindings.get("f"));
+          if (scope.isGlobal(propertyName)) {
+            return substV(
+                "___.asSimpleFunc(___.readPub(___OUTERS___, @fName, true))(@as*);",
+                "fName", new StringLiteral(StringLiteral.toQuotedValue(propertyName)),
+                "as",  expandAll(bindings.get("as"), scope, mq));
+          }
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("callFunc", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("@f(@as*)", node, bindings)) {
-          expandEntries(bindings, scope, mq);
-          return subst(
-              "___.asSimpleFunc(@f)(@as*)", bindings
-          );
+
+          System.out.println(scope.isGlobal(getIdentifierName(bindings.get("f").children().get(0))));
+
+          ParseTreeNode q = expand(bindings.get("f"), scope, mq);
+
+          return substV(
+              "___.asSimpleFunc(@f)(@as*)",
+              "f", q, // expand(bindings.get("f"), scope, mq),
+              "as", expandAll(bindings.get("as"), scope, mq));
         }
         return NONE;
       }
