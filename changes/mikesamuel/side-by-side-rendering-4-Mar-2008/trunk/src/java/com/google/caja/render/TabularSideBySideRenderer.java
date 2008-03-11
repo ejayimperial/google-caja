@@ -144,8 +144,8 @@ public class TabularSideBySideRenderer extends SideBySideRenderer {
       StringBuilder sb = new StringBuilder();
       sb.append("/* ");
       sb.append(
-          orig.replaceAll("[:Cf:]", "\uFFFD")
-          .replace("@", "\uFFFD")
+          orig.replaceAll("[\\p{javaIdentifierIgnorable}]", "\uFFFD")
+          .replace('@', '\uFFFD')
           .replace("*/", "\uFFFD/")
           .replace("-->", "-\uFFFD>")
           .replace("<!", "<\uFFFD")
