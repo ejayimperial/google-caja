@@ -27,7 +27,10 @@ import com.google.caja.plugin.stages.OpenTemplateStage;
 import com.google.caja.plugin.stages.ConsolidateCodeStage;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.MessageLevel;
+import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
+import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.util.Pipeline;
@@ -45,83 +48,42 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.ListIterator;
 
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-
 /**
  * Executable that invokes {@link HtmlPluginCompiler}.
  *
  * @author ihab.awad@gmail.com
  */
 public final class HtmlPluginCompilerMain {
-  private static final Option INPUT =
-      new Option("i", "input", true,
-          "Input file path containing mixed HTML, JS and CSS");
+  private final MessageQueue mq;
 
-  private static final Option OUTPUT_JS =
-      new Option("j", "output_js", true,
-          "Output file path for translated JS" +
-          " (defaults to input with \".js\")");
-
-  private static final Option OUTPUT_CSS =
-      new Option("c", "output_css", true,
-          "Output file path for translated CSS" +
-          " (defaults to input with \".css\")");
-
-  private static final Option CSS_PREFIX =
-      new Option("p", "css_prefix", true,
-          "Plugin CSS namespace prefix");
-
-  private static final Options options = new Options();
-
-  static {
-    options.addOption(INPUT);
-    options.addOption(OUTPUT_JS);
-    options.addOption(OUTPUT_CSS);
-    options.addOption(CSS_PREFIX);
+  private HtmlPluginCompilerMain() {
+    mq = new SimpleMessageQueue();
   }
 
-  private File inputFile = null;
-  private File outputJsFile = null;
-  private File outputCssFile = null;
-  private String cssPrefix = null;
-
-  private HtmlPluginCompilerMain() {}
-
   public static void main(String[] argv) {
-    int result;
-    try {
-      result = new HtmlPluginCompilerMain().run(argv);
-    } catch (Throwable th) {
-      th.printStackTrace();
-      result = -1;
-    }
-    if (result != 0) {
-      System.exit(result);
-    }
+    System.exit(new HtmlPluginCompilerMain().run(argv));
   }
 
   private int run(String[] argv) {
-    MessageQueue mq = new SimpleMessageQueue();
+    Config config = new Config(getClass(), System.err,
+                               "Cajoles an HTML file to JS and CSS.");
+    if (!config.processArguments(argv)) {
+      return -1;
+    }
+
+    MessageLevel maxMessageLevel;
     MessageContext mc = null;
-
     try {
-      int rc = processArguments(argv);
-      if (rc != 0) { return rc; }
-
-      PluginEnvironment env = new FileSystemEnvironment(
-          inputFile.getParentFile());
-
-      HtmlPluginCompiler compiler = new HtmlPluginCompiler(
-          mq, new PluginMeta(cssPrefix, "", env));
-
+      PluginMeta meta = new PluginMeta(
+          config.getCssPrefix(),
+          new FileSystemEnvironment(
+              config.getInputFiles().iterator().next().getAbsoluteFile()
+              .getParentFile()));
+      HtmlPluginCompiler compiler = new HtmlPluginCompiler(mq, meta);
       mc = compiler.getMessageContext();
 
       for (ListIterator<Pipeline.Stage<Jobs>> it
-               = compiler.getCompilationPipeline().getStages().listIterator();
+             = compiler.getCompilationPipeline().getStages().listIterator();
            it.hasNext();) {
         Pipeline.Stage<Jobs> stage = it.next();
         if (stage instanceof ConsolidateCodeStage) {
@@ -129,9 +91,13 @@ public final class HtmlPluginCompilerMain {
           break;
         }
       }
+
       try {
-        compiler.addInput(new AncestorChain<DomTree.Fragment>(
-            parseHtmlFromFile(inputFile, mq)));
+        for (File input : config.getInputFiles()) {
+          compiler.addInput(
+              new AncestorChain<DomTree.Fragment>(
+                  parseHtmlFromFile(input, mq)));
+        }
 
         if (!compiler.run()) {
           throw new RuntimeException();
@@ -139,72 +105,22 @@ public final class HtmlPluginCompilerMain {
       } catch (ParseException e) {
         e.toMessageQueue(compiler.getMessageQueue());
         return -1;
-      } catch (IOException ex) {
-        System.err.println(ex);
+      } catch (IOException e) {
+        mq.addMessage(MessageType.
+            IO_ERROR, MessagePart.Factory.valueOf(e.toString()));
         return -1;
       }
 
-      writeFile(outputJsFile, compiler.getJavascript());
-      writeFile(outputCssFile, compiler.getCss());
+      writeFile(config.getOutputJsFile(), compiler.getJavascript());
+      writeFile(config.getOutputCssFile(), compiler.getCss());
 
-      return 0;
-    } catch (Throwable th) {
-      th.printStackTrace();
-      return -1;
     } finally {
       if (mc == null) { mc = new MessageContext(); }
-      try {
-        for (Message m : mq.getMessages()) {
-          System.err.print(m.getMessageLevel().name() + ": ");
-          m.format(mc, System.err);
-          System.err.println();
-        }
-      } catch (IOException ex) {
-        ex.printStackTrace();
-      }
-    }
-  }
 
-  private int processArguments(String[] argv) {
-    CommandLine cl;
-    try {
-      cl = new BasicParser().parse(options, argv);
-    } catch (org.apache.commons.cli.ParseException e) {
-      throw new RuntimeException(e);
+      maxMessageLevel = dumpMessages(mq, mc, System.err);
     }
 
-    if (cl.getOptionValue(INPUT.getOpt()) == null)
-      return usage("Option \"" + INPUT.getLongOpt() + "\" missing");
-    inputFile = new File(cl.getOptionValue(INPUT.getOpt()));
-    if (!inputFile.exists()) {
-      return usage("File \"" + inputFile + "\" does not exist");
-    }
-    if (!inputFile.isFile()) {
-      return usage("File \"" + inputFile + "\" is not a regular file");
-    }
-
-    outputJsFile =
-        cl.getOptionValue(OUTPUT_JS.getOpt()) == null ?
-            substituteExtension(inputFile, "js") :
-            new File(cl.getOptionValue(OUTPUT_JS.getOpt()));
-
-    outputCssFile =
-        cl.getOptionValue(OUTPUT_CSS.getOpt()) == null ?
-            substituteExtension(inputFile, "css") :
-            new File(cl.getOptionValue(OUTPUT_CSS.getOpt()));
-
-    cssPrefix = cl.getOptionValue(CSS_PREFIX.getOpt());
-    if (cssPrefix == null) {
-      return usage("Option \"" + CSS_PREFIX.getLongOpt() + "\" missing");
-    }
-
-    return 0;
-  }
-
-  private int usage(String msg) {
-    System.out.println(msg);
-    new HelpFormatter().printHelp(getClass().getName(), options);
-    return -1;
+    return MessageLevel.ERROR.compareTo(maxMessageLevel) > 0 ? 0 : -1;
   }
 
   private DomTree.Fragment parseHtmlFromFile(File f, MessageQueue mq)
@@ -242,16 +158,43 @@ public final class HtmlPluginCompilerMain {
       w.flush();
       w.close();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      mq.addMessage(MessageType.IO_ERROR,
+                    MessagePart.Factory.valueOf(e.toString()));
     }
   }
 
-  private File substituteExtension(File originalPath, String extension) {
-    String originalPathString = originalPath.getAbsolutePath();
-    String basePath = originalPathString.indexOf('.') == -1 ?
-        originalPathString :
-        originalPathString.substring(0, originalPathString.lastIndexOf('.'));
-    return new File(basePath + '.' + extension);
+  /**
+   * Dumps messages to the given output stream, returning the highest message
+   * level seen.
+   */
+  static MessageLevel dumpMessages(
+      MessageQueue mq, MessageContext mc, Appendable out) {
+    MessageLevel maxLevel = MessageLevel.values()[0];
+    for (Message m : mq.getMessages()) {
+      MessageLevel level = m.getMessageLevel();
+      if (maxLevel.compareTo(level) < 0) { maxLevel = level; }
+    }
+    MessageLevel ignoreLevel = null;
+    if (maxLevel.compareTo(MessageLevel.LINT) < 0) {
+      // If there's only checkpoints, be quiet.
+      ignoreLevel = MessageLevel.LOG;
+    }
+    try {
+      for (Message m : mq.getMessages()) {
+        MessageLevel level = m.getMessageLevel();
+        if (ignoreLevel != null && level.compareTo(ignoreLevel) <= 0) {
+          continue;
+        }
+        out.append(level.name() + ": ");
+        m.format(mc, out);
+        out.append("\n");
+
+        if (maxLevel.compareTo(level) < 0) { maxLevel = level; }
+      }
+    } catch (IOException ex) {
+      ex.printStackTrace();
+    }
+    return maxLevel;
   }
 }
 

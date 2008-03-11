@@ -56,12 +56,16 @@ import java.util.Set;
 public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
   public boolean apply(Jobs jobs) {
     for (Job job : jobs.getJobsByType(Job.JobType.JAVASCRIPT)) {
-      optimizeOpenTemplate(job.getRoot(), jobs);
+      optimizeEvalTemplate(job.getRoot(), jobs);
     }
     return jobs.hasNoFatalErrors();
   }
 
-  private static void optimizeOpenTemplate(AncestorChain<?> chain, Jobs jobs) {
+  /**
+   * Inlines calls to {@code eval(Template(...))} where {@code eval} and
+   * {@code Template} are bound to the global scope.
+   */
+  private static void optimizeEvalTemplate(AncestorChain<?> chain, Jobs jobs) {
     ScopeChecker sc = new ScopeChecker();
     applyToScope(chain, sc);
     if (sc.variablesInScope.contains("eval")
@@ -72,10 +76,14 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
     applyToScope(chain, new Optimizer(jobs));
 
     for (AncestorChain<FunctionConstructor> innerScope : sc.innerScopes) {
-      optimizeOpenTemplate(innerScope, jobs);
+      optimizeEvalTemplate(innerScope, jobs);
     }
   }
 
+  /**
+   * Applies a visitor to the nodes in the current scope, not recursing into
+   * nested functions.
+   */
   private static void applyToScope(AncestorChain<?> chain, Visitor v) {
     if (chain.node instanceof FunctionConstructor) {
       for (ParseTreeNode child : chain.node.children()) {
@@ -86,6 +94,10 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
     }
   }
 
+  /**
+   * Walks a function and compiles a set of all local variables
+   * declared in that function.
+   */
   private static class ScopeChecker implements Visitor {
     final Set<String> variablesInScope = new HashSet<String>();
     final List<AncestorChain<FunctionConstructor>> innerScopes
@@ -105,6 +117,9 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
     }
   }
 
+  /**
+   * Walks a function and inlines calls to {@code eval(Template(...))}.
+   */
   private static class Optimizer implements Visitor {
     Jobs jobs;
 
@@ -177,6 +192,10 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
     }
   }
 
+  /**
+   * Given a constructs like {@code "Hello " + "World"}, to a {@code List}
+   * containing the individual string literals.
+   */
   private static List<StringLiteral> flattenStringConcatenation(Expression e) {
     return flattenStringsOnto(e, new ArrayList<StringLiteral>());
   }
@@ -198,13 +217,51 @@ public final class OpenTemplateStage implements Pipeline.Stage<Jobs> {
   }
 }
 
+/**
+ * Splits a sequence of string literals containing <code>${...}</code> and
+ * <code>$name</code> into expressions, by looking for that pattern in the
+ * string literals and parsing the content of substitutions as javascript.
+ * <p>
+ * The output contains alternating literal and substitutions, and is careful
+ * to preserve file positions into the original source.
+ * <p>
+ * This code takes a list of string literals and keeps track of positions as
+ * (stringLiteralIndex, characterIndexInUndecodedLiteral) pairs.
+ */
 final class Splitter {
+  /**
+   * Cursor that is moved from left to right as we process the string literals.
+   */
   int startString = 0;
   int startOffset = 1;
+
+  /**
+   * The string literals being processed.  If we're dealing with
+   * {@code eval(Template("Foo $bar" + " baz"))} then the two string literals
+   * will be {@code "Foo $bar"} and {@code " baz"}.
+   */
   List<StringLiteral> literals = new ArrayList<StringLiteral>();
+  /**
+   * Output array.  Alternating literals (StringLiteral) and substitutions
+   * (arbitrary Expression).  For {@code eval(Template("Foo $bar Baz"))} this is
+   * {@code [StringLiteral('Foo '), Reference("bar"), StringLiteral(' Baz')]}.
+   * <p>
+   * Note that not all {@link StringLiteral}s are literals.
+   * In {@code eval(Template("Foo ${'bar'} Baz"))}, the sole substitution is a
+   * StringLiteral.
+   */
   List<Expression> parts = new ArrayList<Expression>();
+  /**
+   * Used to keep track of whether we're inside a substitution or not.
+   */
   State state = State.LITERAL;
+  /**
+   * Indices into the literal list, and the current literal.
+   */
   int i, j;
+  /**
+   * A queue to which parse errors are written.
+   */
   MessageQueue mq;
 
   Splitter(List<StringLiteral> literals, MessageQueue mq) {
@@ -220,6 +277,7 @@ final class Splitter {
     ;
   }
 
+  /** Walk the literal list and generate the output parts list. */
   void split() {
     int n = literals.size();
     for (j = 0; j < n; ++j) {
@@ -314,11 +372,20 @@ final class Splitter {
     }
   }
 
+  /**
+   * Track the last position processed.
+   * @param delta number of characters from the current position in the
+   *    string literals.
+   */
   private void mark(int delta) {
     startString = j;
     startOffset = i + delta;
   }
 
+  /**
+   * Push a literal part onto the output list.
+   * @param delta of the end of the literal relative to the cursor.
+   */
   private void finishLiteral(int delta) {
     FilePosition start = null, end = null;
     StringBuilder sb = new StringBuilder();
@@ -332,6 +399,10 @@ final class Splitter {
     parts.add(lit);
   }
 
+  /**
+   * Push a reference onto the output list.
+   * @param delta of the end of the reference to the cursor.
+   */
   private void finishReference(int delta) {
     FilePosition start = null, end = null;
     StringBuilder sb = new StringBuilder();
@@ -348,6 +419,10 @@ final class Splitter {
     parts.add(ref);
   }
 
+  /**
+   * Parse a substitution expression and push it onto the output list.
+   * @param delta of the end of the block to the cursor.
+   */
   private void finishBlock(int delta) {
     FilePosition start = null, end = null;
     List<CharProducer> producers = new ArrayList<CharProducer>();
@@ -382,6 +457,10 @@ final class Splitter {
     parts.add(result);
   }
 
+  /**
+   * Compute the pieces of the string literals that span from
+   * the mark to the given delta.
+   */
   private List<Pair<String, FilePosition>> upTo(int delta) {
     int currentString = startString;
     int currentOffset = startOffset;
@@ -430,6 +509,9 @@ final class Splitter {
     return parts;
   }
 
+  /**
+   * Interpolate the position of a substring of a StringLiteral.
+   */
   private static FilePosition clippedPos(FilePosition p, int start, int end) {
     if (end <= 0) {
       return FilePosition.startOf(p);

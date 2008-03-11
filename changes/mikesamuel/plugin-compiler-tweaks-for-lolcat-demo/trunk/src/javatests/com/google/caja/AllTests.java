@@ -19,6 +19,7 @@ import com.google.caja.demos.calendar.HcalTest;
 import com.google.caja.demos.calendar.LayoutTest;
 import com.google.caja.demos.calendar.RRuleTest;
 import com.google.caja.lang.css.CssSchemaTest;
+import com.google.caja.lang.html.HtmlSchemaTest;
 import com.google.caja.lexer.CharProducerTest;
 import com.google.caja.lexer.CommentLexerTest;
 import com.google.caja.lexer.CssLexerTest;
@@ -48,14 +49,13 @@ import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
-import com.google.caja.plugin.HtmlWhitelistTest;
 import com.google.caja.plugin.PluginCompilerTest;
 import com.google.caja.plugin.UrlUtilTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
 import com.google.caja.reporting.SnippetProducerTest;
 import com.google.caja.util.JoinTest;
 import com.google.caja.util.SparseBitSetTest;
-
+import com.google.caja.reporting.BuildInfoTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -71,6 +71,7 @@ public class AllTests {
   public static Test suite() {
     TestSuite suite = new TestSuite("Caja Tests");
     Class<? extends TestCase>[] testClasses = new Class[] {
+          BuildInfoTest.class,
           CapabilityRewriterTest.class,
           CharProducerTest.class,
           CommentLexerTest.class,
@@ -94,7 +95,7 @@ public class AllTests {
           HtmlCompiledPluginTest.class,
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
-          HtmlWhitelistTest.class,
+          HtmlSchemaTest.class,
           JoinTest.class,
           JsHtmlParserTest.class,
           JsLexerTest.class,
