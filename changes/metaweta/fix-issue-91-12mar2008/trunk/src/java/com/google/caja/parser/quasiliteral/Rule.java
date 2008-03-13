@@ -245,17 +245,15 @@ public abstract class Rule implements MessagePart {
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    ParseTreeNode variableNameNode;
     ParseTreeNode variableDefinition;
     
     variableDefinition = substV(
         "var @ref = @rhs;",
         "ref", SyntheticNodes.s(new Identifier(variableName)),
         "rhs", rewriter.expand(value, scope, mq));
-    variableNameNode = newReference(variableName);
 
     return new Pair<ParseTreeNode, ParseTreeNode>(
-        variableNameNode,
+        newReference(variableName),
         variableDefinition);
   }
 
