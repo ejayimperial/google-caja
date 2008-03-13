@@ -33,8 +33,12 @@ function html(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function getCajoler() {
+  return document.applets.cajoler;
+}
+
 function cajole() {
-  var result = document.applets.cajoler.cajole(
+  var result = getCajoler().cajole(
       document.forms.cajolerForm.elements.src.value.replace(/^\s+|\s+$/g, ''));
   var cajoledOutput = result[0];
   var messages = String(result[1]);
@@ -72,7 +76,17 @@ function innerTextHelper(node, buf) {
   </head>
   <body bgcolor="white"
    onload="document.forms.cajolerForm.elements.src.select()">
-    <h1>Caja Test Bed</h1>
+
+    <applet code="com.google.caja.opensocial.applet.CajaApplet" name="cajoler"
+     archive="testbed.jar,
+              ../../third_party/java/htmlparser/htmlparser.jar,
+              ../../third_party/java/json_simple/json_simple.jar"
+     codebase="." height="1" width="1" scriptable="true" MAYSCRIPT>
+    </applet>
+
+    <h1>Caja Test Bed <small><script>
+      document.write(' : ' + getCajoler().getVersion());
+    </script></small></h1>
 
     <p>
       <a href="http://code.google.com/p/google-caja/issues/entry"
@@ -138,13 +152,6 @@ function innerTextHelper(node, buf) {
       <iframe name="evalFrame" frameborder="0" src="eval.html"
        style="width: 40em"></iframe>
     </table>
-
-    <applet code="com.google.caja.opensocial.applet.CajaApplet" name="cajoler"
-     archive="testbed.jar,
-              ../../third_party/java/htmlparser/htmlparser.jar,
-              ../../third_party/java/json_simple/json_simple.jar"
-     codebase="." height="1" width="1" scriptable="true" MAYSCRIPT>
-    </applet>
 
   </body>
 </html>

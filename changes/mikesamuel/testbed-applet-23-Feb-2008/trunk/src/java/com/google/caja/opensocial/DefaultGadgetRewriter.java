@@ -14,6 +14,8 @@
 
 package com.google.caja.opensocial;
 
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.HtmlLexer;
@@ -49,6 +51,8 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
   private static final String DOM_PREFIX = "DOM-PREFIX";
 
   private final MessageQueue mq;
+  private CssSchema cssSchema;
+  private HtmlSchema htmlSchema;
 
   public DefaultGadgetRewriter(MessageQueue mq) {
     this.mq = mq;
@@ -58,21 +62,30 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
     return mq;
   }
 
+  public void setCssSchema(CssSchema cssSchema) {
+    this.cssSchema = cssSchema;
+  }
+  public void setHtmlSchema(HtmlSchema htmlSchema) {
+    this.htmlSchema = htmlSchema;
+  }
+
   public void rewrite(ExternalReference gadgetRef, UriCallback uriCallback,
-                      Appendable output)
+                      String view, Appendable output)
       throws UriCallbackException, GadgetRewriteException, IOException {
     assert gadgetRef.getUri().isAbsolute() : gadgetRef.toString();
     rewrite(
         gadgetRef.getUri(),
         uriCallback.retrieve(gadgetRef, "text/xml"),
         uriCallback,
+        view,
         output);
   }
 
-  public void rewrite(URI baseUri, Readable gadgetSpec, UriCallback uriCallback, Appendable output)
+  public void rewrite(URI baseUri, Readable gadgetSpec, UriCallback uriCallback,
+                      String view, Appendable output)
       throws GadgetRewriteException, IOException {
     GadgetParser parser = new GadgetParser();
-    GadgetSpec spec = parser.parse(gadgetSpec);
+    GadgetSpec spec = parser.parse(gadgetSpec, view);
     StringBuilder rewritten = new StringBuilder();
     rewriteContent(
         baseUri, new StringReader(spec.getContent()), uriCallback, rewritten);
@@ -178,12 +191,13 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
         });
     
     HtmlPluginCompiler compiler = new HtmlPluginCompiler(mq, meta);
+    if (cssSchema != null) { compiler.setCssSchema(cssSchema); }
+    if (htmlSchema != null) { compiler.setHtmlSchema(htmlSchema); }
 
-    // Compile
     compiler.addInput(new AncestorChain<DomTree.Fragment>(content));
 
     if (!compiler.run()) {
-      throw new GadgetRewriteException();
+      throw new GadgetRewriteException("Gadget has compile errors");
     }
 
     return compiler;

@@ -23,6 +23,7 @@ import com.google.caja.opensocial.DefaultGadgetRewriter;
 import com.google.caja.opensocial.GadgetRewriteException;
 import com.google.caja.opensocial.UriCallback;
 import com.google.caja.opensocial.UriCallbackOption;
+import com.google.caja.reporting.BuildInfo;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
@@ -71,6 +72,10 @@ public class CajaApplet extends Applet {
       pw.flush();
       return new Object[] { null, "<pre>" + html(sw.toString()) + "</pre>" };
     }
+  }
+
+  public String getVersion() {
+    return BuildInfo.getInstance().getBuildInfo();
   }
 
   private Object[] runCajoler(String cajaInput) {
