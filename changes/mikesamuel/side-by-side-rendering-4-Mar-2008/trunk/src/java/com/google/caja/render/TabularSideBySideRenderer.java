@@ -147,6 +147,7 @@ public class TabularSideBySideRenderer extends SideBySideRenderer {
           orig.replaceAll("[\\p{javaIdentifierIgnorable}]", "\uFFFD")
           .replace('@', '\uFFFD')
           .replace("*/", "\uFFFD/")
+          .replace("<!", "<\uFFFD")
           .replace("-->", "-\uFFFD>")
           .replace("<!", "<\uFFFD")
           .replace("]]>", "]\uFFFD>")

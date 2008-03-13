@@ -70,6 +70,8 @@ public final class HtmlPluginCompilerMain {
       HtmlPluginCompiler compiler = new HtmlPluginCompiler(
           mq, new PluginMeta(config.getCssPrefix()));
       mc = compiler.getMessageContext();
+      compiler.setCssSchema(config.getCssSchema(mq));
+      compiler.setHtmlSchema(config.getHtmlSchema(mq));
       try {
         for (File input : config.getInputFiles()) {
           compiler.addInput(
@@ -84,8 +86,8 @@ public final class HtmlPluginCompilerMain {
         e.toMessageQueue(compiler.getMessageQueue());
         return -1;
       } catch (IOException e) {
-        mq.addMessage(MessageType.
-            IO_ERROR, MessagePart.Factory.valueOf(e.toString()));
+        mq.addMessage(MessageType.IO_ERROR,
+                      MessagePart.Factory.valueOf(e.toString()));
         return -1;
       }
 
