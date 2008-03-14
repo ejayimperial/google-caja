@@ -39,7 +39,8 @@ function getCajoler() {
 
 function cajole() {
   var result = getCajoler().cajole(
-      document.forms.cajolerForm.elements.src.value.replace(/^\s+|\s+$/g, ''));
+      document.forms.cajolerForm.elements.src.value.replace(/^\s+|\s+$/g, ''),
+      Boolean(document.forms.cajolerForm.elements.embeddable.checked));
   var cajoledOutput = result[0];
   var messages = String(result[1]);
 
@@ -133,9 +134,12 @@ function innerTextHelper(node, buf) {
 
     <table cols="2"><tr valign="top">
     <td>
-      <button onclick="cajole()">&#161;Cajole!</button>
-      <br>
+      <button onclick="cajole()">Cajole</button>
       <form name="cajolerForm" onsubmit="return false">
+        <input name="embeddable" type="checkbox">
+        <label for=embeddable title="Output can be embedded in HTML/XML"
+         >Embeddable</label>
+        <br>
         <textarea cols="81" rows="40" name="src"
 >&lt;script type="text/javascript"&gt;
 
@@ -143,7 +147,7 @@ function innerTextHelper(node, buf) {
 </textarea>
       </form>
       <br>
-      <button onclick="cajole()">&#161;Cajole!</button>
+      <button onclick="cajole()">Cajole</button>
     <td>
       <pre id="messages" class="prettyprint"></pre>
       <hr>
