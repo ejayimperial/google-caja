@@ -1,5 +1,5 @@
 #labels Attack-Vector
-=Global Object Poisoning=
+=Control Format Characters=
 
 ==Effect==
 Can confuse the lexer causing executable code to be interpreted as the content of strings or comments, allowing an attacker to slip arbitrary unsafe code past a rewriter  or verifier.
