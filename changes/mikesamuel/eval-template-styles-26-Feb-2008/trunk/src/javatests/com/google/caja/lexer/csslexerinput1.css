@@ -149,3 +149,5 @@ subs {
   top: ${"3{".length}in;
   color: ${({ color: '#fff'}).color};
 }
+
+<!-- an escaping -text <span> -->

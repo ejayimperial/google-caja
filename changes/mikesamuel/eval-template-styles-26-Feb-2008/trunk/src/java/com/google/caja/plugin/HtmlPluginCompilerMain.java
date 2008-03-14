@@ -85,6 +85,8 @@ public final class HtmlPluginCompilerMain {
     try {
       HtmlPluginCompiler compiler = new HtmlPluginCompiler(
           mq, new PluginMeta(config.getCssPrefix()));
+      compiler.setCssSchema(config.getCssSchema(mq));
+      compiler.setHtmlSchema(config.getHtmlSchema(mq));
       mc = compiler.getMessageContext();
 
       for (ListIterator<Pipeline.Stage<Jobs>> it
@@ -111,8 +113,8 @@ public final class HtmlPluginCompilerMain {
         e.toMessageQueue(compiler.getMessageQueue());
         return -1;
       } catch (IOException e) {
-        mq.addMessage(MessageType.
-            IO_ERROR, MessagePart.Factory.valueOf(e.toString()));
+        mq.addMessage(MessageType.IO_ERROR,
+                      MessagePart.Factory.valueOf(e.toString()));
         return -1;
       }
 
