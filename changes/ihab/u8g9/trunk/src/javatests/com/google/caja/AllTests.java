@@ -35,6 +35,7 @@ import com.google.caja.parser.css.CssParserTest;
 import com.google.caja.parser.css.CssTreeTest;
 import com.google.caja.parser.html.DomParserTest;
 import com.google.caja.parser.html.JsHtmlParserTest;
+import com.google.caja.parser.js.NumberLiteralTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
 import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
@@ -49,7 +50,7 @@ import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
-import com.google.caja.plugin.PluginCompilerTest;
+import com.google.caja.plugin.HtmlValidatorTest;
 import com.google.caja.plugin.UrlUtilTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
 import com.google.caja.reporting.SnippetProducerTest;
@@ -96,15 +97,16 @@ public class AllTests {
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
           HtmlSchemaTest.class,
+          HtmlValidatorTest.class,
           JoinTest.class,
           JsHtmlParserTest.class,
           JsLexerTest.class,
           LayoutTest.class,
           LookaheadCharProducerTest.class,
           MatchTest.class,
+          NumberLiteralTest.class,
           ParseTreeNodeTest.class,
           ParserTest.class,
-          PluginCompilerTest.class,
           PunctuationTrieTest.class,
           QuasiBuilderTest.class,
           RRuleTest.class,

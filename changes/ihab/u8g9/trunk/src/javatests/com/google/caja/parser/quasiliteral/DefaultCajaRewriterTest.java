@@ -61,10 +61,6 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    ___.readPub(___OUTERS___, '" + varName + "', true))";
   }
 
-  public void testFoo() throws Exception {
-    checkSucceedsUnchanged("typeof x;");
-  }
-
   ////////////////////////////////////////////////////////////////////////
   // Handling of synthetic nodes
   ////////////////////////////////////////////////////////////////////////
@@ -121,7 +117,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "{" +
         "  ___OUTERS___.x0___ = " + weldReadOuters("x") + ";" +
         "  ___OUTERS___.x1___ = undefined;" +
-        "  " + weldReadOuters("k") + ";" +
+        "  ;" +
         "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
         "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "      " + weldSetOuters("k", "___OUTERS___.x1___") + ";" +
@@ -142,7 +138,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    {" +
         "      ___OUTERS___.x0___ = " + weldReadOuters("x") + ";" +
         "      ___OUTERS___.x1___ = undefined;" +
-        "      " + weldReadOuters("k") + ";" +
+        "      ;" +
         "      for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
         "        if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "          " + weldSetOuters("k", "___OUTERS___.x1___") + ";" +
@@ -170,6 +166,25 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    }" +
         "  }" +
         "}));");
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "function() {" +
+        "  for (z[0] in x) { z; }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  {" +
+        "    var x0___ = " + weldReadOuters("x") + ";" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumPub(x0___, x1___)) {" +
+        "        ___.simpleFunc(" + weldReadOuters("z") + ")(0) = x1___;" +
+        "        " + weldReadOuters("z") + ";" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}));");
+    }
     if (false) {
     // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
     checkSucceeds(
@@ -281,7 +296,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  ___OUTERS___.x1___ = undefined;" +
         "  " + weldReadOuters("k") + ";" +
         "  for (x1___ in x0___) {" +
-        "    if (___.canEnumProp(x0___, x1___)) {" +
+        "    if (___.canEnumPub(x0___, x1___)) {" +
         "      " + weldSetOuters("k", "x1___") + ";" +
         "      " + weldReadOuters("k") + ";" +
         "    }" +
@@ -755,7 +770,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "___.setMemberMap(" +
         "    " + weldReadOuters("foo") + ", {" +
         "    k0: " + weldReadOuters("v0") + "," +
-        "    k1: ___.method(foo, function() { " +
+        "    k1: ___.method(" + weldReadOuters("foo") + ", function() { " +
         "      var t___ = this;" +
         "      (function() {" +
         "        var x___ = 3;" +
@@ -1036,18 +1051,14 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   public void testCallCajaDef2() throws Exception {
     checkSucceeds(
-        "function() {" +
-        "  function Point() {}" +
-        "  caja.def(Point, Object);" +
-        "  function WigglyPoint() {}" +
-        "  caja.def(WigglyPoint, Point);" +
-        "};",
-        "___.primFreeze(___.simpleFunc(function() {" +
-        "  var Point = ___.simpleFunc(function Point() {});" +
-        "  caja.def(Point, Object);" +
-        "  var WigglyPoint = ___.simpleFunc(function WigglyPoint() {});" +
-        "  caja.def(WigglyPoint, Point);" +
-        "}));");
+        "function Point() {}" +
+        "caja.def(Point, Object);" +
+        "function WigglyPoint() {}" +
+        "caja.def(WigglyPoint, Point);",
+        weldSetOuters("Point", "___.simpleFunc(function Point() {})") + ";" +
+        "caja.def(" + weldReadOuters("Point") + ", " + weldReadOuters("Object") + ");" +
+        weldSetOuters("WigglyPoint", "___.simpleFunc(function WigglyPoint() {})") + ";" +
+        "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ");");
   }
 
   public void testCallCajaDef2Bad() throws Exception {
@@ -1067,54 +1078,46 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   public void testCallCajaDef3Plus() throws Exception {
     checkSucceeds(
-        "function() {" +
-        "  function Point() {}" +
-        "  function WigglyPoint() {}" +
-        "  caja.def(WigglyPoint, Point, { m0: x, m1: function() { this.p = 3; } });" +
-        "};",
-        "___.primFreeze(___.simpleFunc(function() {" +
-        "  var Point = ___.simpleFunc(function Point() {});" +
-        "  var WigglyPoint = ___.simpleFunc(function WigglyPoint() {});" +
-        "  caja.def(WigglyPoint, Point, {" +
-        "      m0: " + weldReadOuters("x") + "," +
-        "      m1: ___.method(WigglyPoint, function() {" +
-        "        var t___ = this;" +
-        "        (function() {" +
-        "          var x___ = 3;" +
-        "          return t___.p_canSet___ ?" +
-        "              (t___.p = x___) : " +
-        "              ___.setProp(t___, 'p', x___);" +
-        "        })();" +
-        "      })" +
-        "  });" +
-        "}));");
+        "function Point() {}" +
+        "function WigglyPoint() {}" +
+        "caja.def(WigglyPoint, Point, { m0: x, m1: function() { this.p = 3; } });",
+        weldSetOuters("Point", "___.simpleFunc(function Point() {})") + ";" +
+        weldSetOuters("WigglyPoint", "___.simpleFunc(function WigglyPoint() {})") + ";" +
+        "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ", {" +
+        "    m0: " + weldReadOuters("x") + "," +
+        "    m1: ___.method(" + weldReadOuters("WigglyPoint") + ", function() {" +
+        "      var t___ = this;" +
+        "      (function() {" +
+        "        var x___ = 3;" +
+        "        return t___.p_canSet___ ?" +
+        "            (t___.p = x___) : " +
+        "            ___.setProp(t___, 'p', x___);" +
+        "      })();" +
+        "    })" +
+        "});");
     checkSucceeds(
-        "function() {" +
-        "  function Point() {}" +
-        "  function WigglyPoint() {}" +
-        "  caja.def(WigglyPoint, Point," +
-        "      { m0: x, m1: function() { this.p = 3; } }," +
-        "      { s0: y, s1: function() { return 3; } });" +
-        "};",
-        "___.primFreeze(___.simpleFunc(function() {" +
-        "  var Point = ___.simpleFunc(function Point() {});" +
-        "  var WigglyPoint = ___.simpleFunc(function WigglyPoint() {});" +
-        "  caja.def(WigglyPoint, Point, {" +
-        "      m0: " + weldReadOuters("x") + "," +
-        "      m1: ___.method(WigglyPoint, function() {" +
-        "        var t___ = this;" +
-        "        (function() {" +
-        "          var x___ = 3;" +
-        "          return t___.p_canSet___ ?" +
-        "              (t___.p = x___) : " +
-        "              ___.setProp(t___, 'p', x___);" +
-        "        })();" +
-        "      })" +
-        "  }, {" +
-        "      s0: " + weldReadOuters("y") + "," +
-        "      s1: ___.primFreeze(___.simpleFunc(function() { return 3; }))" +
-        "  });" +
-        "}));");
+        "function Point() {}" +
+        "function WigglyPoint() {}" +
+        "caja.def(WigglyPoint, Point," +
+        "    { m0: x, m1: function() { this.p = 3; } }," +
+        "    { s0: y, s1: function() { return 3; } });",
+        weldSetOuters("Point", "___.simpleFunc(function Point() {})") + ";" +
+        weldSetOuters("WigglyPoint", "___.simpleFunc(function WigglyPoint() {})") + ";" +
+        "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ", {" +
+        "    m0: " + weldReadOuters("x") + "," +
+        "    m1: ___.method(" + weldReadOuters("WigglyPoint") + ", function() {" +
+        "      var t___ = this;" +
+        "      (function() {" +
+        "        var x___ = 3;" +
+        "        return t___.p_canSet___ ?" +
+        "            (t___.p = x___) : " +
+        "            ___.setProp(t___, 'p', x___);" +
+        "      })();" +
+        "    })" +
+        "}, {" +
+        "    s0: " + weldReadOuters("y") + "," +
+        "    s1: ___.primFreeze(___.simpleFunc(function() { return 3; }))" +
+        "});");
     checkFails(
         "function() {" +
         "  function Point() {}" +
@@ -1205,15 +1208,6 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    [" + weldReadOuters("z") + ", " + weldReadOuters("t") + "]);");
   }
 
-  public void testCallGlobalFunc() throws Exception {
-    checkSucceeds(
-        "foo(x, y);",
-        "___.asSimpleFunc(___.readPub(___OUTERS___, 'foo', true))(" +
-        "    " + weldReadOuters("x") + "," +
-        "    " + weldReadOuters("y") +
-        ");");
-  }
-
   public void testCallFunc() throws Exception {
     checkSucceeds(
         "function() { var f; f(x, y); }",
@@ -1222,6 +1216,12 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    ___.asSimpleFunc(f)" +
         "        (" + weldReadOuters("x") + ", " + weldReadOuters("y") + ");" +
         "}));");
+    checkSucceeds(
+        "foo(x, y);",
+        "___.asSimpleFunc(" + weldReadOuters("foo") + ")(" +
+        "    " + weldReadOuters("x") + "," +
+        "    " + weldReadOuters("y") +
+        ");");
   }
 
   public void testFuncAnonSimple() throws Exception {

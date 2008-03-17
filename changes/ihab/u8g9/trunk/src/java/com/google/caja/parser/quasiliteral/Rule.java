@@ -306,6 +306,10 @@ public abstract class Rule implements MessagePart {
         new ParseTreeNodeContainer(rhss));
   }
 
+  // TODO(ihab.awad): Refactor so the global case of this is not redundant with the
+  // rewriting we do for assignment in the global scope. Part of the problem is that
+  // the helper functions here "pretend" not to know about the rewriting rules, when
+  // in fact they are pretty closely coupled with them.
   protected ParseTreeNode expandDef(
       ParseTreeNode symbol,
       ParseTreeNode value,
@@ -361,7 +365,7 @@ public abstract class Rule implements MessagePart {
             "  @fh*;" +
             "  @bs*;" +
             "});",
-            "fname", fname,
+            "fname", expandReferenceToOuters(fname, scope, mq),
             "ps",    bindings.get("ps"),
             "bs",    rewriter.expand(bindings.get("bs"), s2, mq),
             "fh",    getFunctionHeadDeclarations(rule, s2, mq));
@@ -415,6 +419,7 @@ public abstract class Rule implements MessagePart {
     return memberMap;
   }
 
+  // TODO(erights): Remove this when first class constructors are checked in.
   protected ParseTreeNode expandReferenceToOuters(
       ParseTreeNode ref,
       Scope scope,
