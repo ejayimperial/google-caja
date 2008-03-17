@@ -33,11 +33,11 @@ public enum RewriterMessageType implements MessageTypeInt {
   CANNOT_DERIVE_FROM_NON_CONSTRUCTOR(
       "%s: Cannot derive from non-constructor: %s, %s",
       MessageLevel.FATAL_ERROR),
-	
+
   PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS(
       "%s: Parameters to super constructor may not contain \"this\": %s, %s",
       MessageLevel.FATAL_ERROR),
-	
+
   VARIABLES_CANNOT_END_IN_DOUBLE_UNDERSCORE(
       "%s: Variables cannot end in \"__\": %s, %s",
       MessageLevel.FATAL_ERROR),

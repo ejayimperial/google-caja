@@ -1031,68 +1031,68 @@ public class DefaultCajaRewriter extends Rewriter {
               scope,
               (FunctionConstructor)node.children().get(1));
           if (s2.hasFreeThis()) {
-          	Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
-          	// To subclass, the very first line must be a call to the super constructor.
-          	ParseTreeNode bNode = bindings.get("b").children().get(0);
-          	if (match("@super.call(this, @params*);", bNode, superBindings)){
-          		Scope paramScope = Scope.fromParseTreeNodeContainer(
-          				s2, 
-          				(ParseTreeNodeContainer)superBindings.get("params"));
-          		// The rest of the parameters must not contain "this".
-          		if (paramScope.hasFreeThis()) {
+            Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
+            // To subclass, the very first line must be a call to the super constructor.
+            ParseTreeNode bNode = bindings.get("b").children().get(0);
+            if (match("@super.call(this, @params*);", bNode, superBindings)){
+              Scope paramScope = Scope.fromParseTreeNodeContainer(
+                  s2, 
+                  (ParseTreeNodeContainer)superBindings.get("params"));
+              // The rest of the parameters must not contain "this".
+              if (paramScope.hasFreeThis()) {
                 mq.addMessage(
                     RewriterMessageType.PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS,
                     node.getFilePosition(), 
                     this, 
                     bNode);
                 return node;
-          		}
-          		// Check that "@super" is bound to a constructor
-          		if (!s2.isConstructor(((Reference)superBindings.get("super")).getIdentifierName())){
+              }
+              // Check that "@super" is bound to a constructor
+              if (!s2.isConstructor(((Reference)superBindings.get("super")).getIdentifierName())){
                 mq.addMessage(
                     RewriterMessageType.CANNOT_DERIVE_FROM_NON_CONSTRUCTOR,
                     node.getFilePosition(), 
                     this, 
                     bNode);
                 return node;
-          		}
-          		// Expand the parameters, but not the call itself. 
-            	bNode = new ExpressionStmt((Expression)substV(
-            			"@super.call(this, @params*);",
-            			"super", superBindings.get("super"),
-            			"params", expand(superBindings.get("params"),s2, mq)
-            	));
-          	} else {
-          	  // If it's not a call to a constructor, expand the entire node.
-          	  bNode = expand(bindings.get("b"), s2, mq);
-          	}
-          	// These references get used multiple times below, so compute them just once.
-          	Identifier f_init___ = new Identifier(
-								((Identifier)bindings.get("f")).getName() + "_init___");
-          	Identifier f = (Identifier)bindings.get("f");
-          	Reference fRef = new Reference(f);
-          	// See the comment on splitCtor() in caja.js for details.
-	        	s2.addStartOfBlockStmt(
-		            substV(
-		      					"___.splitCtor(@f, @f_init);",
-		      					"f", fRef,
-		      					"f_init", new Reference(f_init___)
-		      			)
-	        	);
+              }
+              // Expand the parameters, but not the call itself. 
+              bNode = new ExpressionStmt((Expression)substV(
+                  "@super.call(this, @params*);",
+                  "super", superBindings.get("super"),
+                  "params", expand(superBindings.get("params"),s2, mq)
+              ));
+            } else {
+              // If it's not a call to a constructor, expand the entire node.
+              bNode = expand(bindings.get("b"), s2, mq);
+            }
+            // These references get used multiple times below, so compute them just once.
+            Identifier f_init___ = new Identifier(
+                ((Identifier)bindings.get("f")).getName() + "_init___");
+            Identifier f = (Identifier)bindings.get("f");
+            Reference fRef = new Reference(f);
+            // See the comment on splitCtor() in caja.js for details.
+            s2.addStartOfBlockStmt(
+                substV(
+                    "___.splitCtor(@f, @f_init);",
+                    "f", fRef,
+                    "f_init", new Reference(f_init___)
+                )
+            );
             return substV(
-		            "function @f(var_args){ return @fRef.make___(arguments); }" +
-		            "function @f_init(@ps*){" +
-		            "  @fh*;" +
-		            "  @b;" +
-		            "  @bs*;" +
-		            "}",
-		            "f", f,
-		            "fRef", fRef,
-		            "f_init", f_init___,
-		            "ps", bindings.get("ps"),
-		            "fh", getFunctionHeadDeclarations(this, s2, mq),
-		            "b", bNode,
-		            "bs", expandAll(bindings.get("bs"), s2, mq)
+                "function @f(var_args){ return @fRef.make___(arguments); }" +
+                "function @f_init(@ps*){" +
+                "  @fh*;" +
+                "  @b;" +
+                "  @bs*;" +
+                "}",
+                "f", f,
+                "fRef", fRef,
+                "f_init", f_init___,
+                "ps", bindings.get("ps"),
+                "fh", getFunctionHeadDeclarations(this, s2, mq),
+                "b", bNode,
+                "bs", expandAll(bindings.get("bs"), s2, mq)
             );
           }
         }
@@ -1108,7 +1108,7 @@ public class DefaultCajaRewriter extends Rewriter {
           Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           // If the method contains "this", it's a constructor.
           if (s2.hasFreeThis()) {
-          	Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
+            Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
             // To subclass, the very first line must be a call to the super constructor.
             ParseTreeNode bNode = bindings.get("b").children().get(0);
             if (match("@super.call(this, @params*);", bNode, superBindings)){
@@ -1309,9 +1309,9 @@ public class DefaultCajaRewriter extends Rewriter {
           allBlockStatements.addAll(scope.getStartOfBlockStmts());
           allBlockStatements.addAll(children);
           return ParseTreeNodes.newNodeInstance(
-          	  Block.class,
-          	  null,
-          	  allBlockStatements);          
+              Block.class,
+              null,
+              allBlockStatements);          
         }
         return NONE;      
       }

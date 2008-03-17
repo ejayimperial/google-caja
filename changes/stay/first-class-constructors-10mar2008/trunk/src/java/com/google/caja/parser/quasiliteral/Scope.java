@@ -469,10 +469,10 @@ public class Scope {
   }
   
   public List<ParseTreeNode> getStartOfBlockStmts() {
-	  return startOfBlockStmts;
+    return startOfBlockStmts;
   }
   
   public boolean addStartOfBlockStmt(ParseTreeNode node) {
-	  return startOfBlockStmts.add(node);
+    return startOfBlockStmts.add(node);
   }
 }
