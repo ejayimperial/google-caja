@@ -14,6 +14,8 @@
 
 package com.google.caja.opensocial;
 
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.HtmlTokenType;
@@ -26,7 +28,7 @@ import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Block;
-import com.google.caja.plugin.HtmlPluginCompiler;
+import com.google.caja.plugin.PluginCompiler;
 import com.google.caja.plugin.PluginEnvironment;
 import com.google.caja.plugin.PluginMeta;
 import com.google.caja.reporting.MessageContext;
@@ -47,7 +49,9 @@ import java.net.URI;
 public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewriter {
   private static final String DOM_PREFIX = "DOM-PREFIX";
 
-  private MessageQueue mq;
+  private final MessageQueue mq;
+  private CssSchema cssSchema;
+  private HtmlSchema htmlSchema;
 
   public DefaultGadgetRewriter(MessageQueue mq) {
     this.mq = mq;
@@ -57,21 +61,30 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
     return mq;
   }
 
+  public void setCssSchema(CssSchema cssSchema) {
+    this.cssSchema = cssSchema;
+  }
+  public void setHtmlSchema(HtmlSchema htmlSchema) {
+    this.htmlSchema = htmlSchema;
+  }
+
   public void rewrite(ExternalReference gadgetRef, UriCallback uriCallback,
-                      Appendable output)
+                      String view, Appendable output)
       throws UriCallbackException, GadgetRewriteException, IOException {
     assert gadgetRef.getUri().isAbsolute() : gadgetRef.toString();
     rewrite(
         gadgetRef.getUri(),
         uriCallback.retrieve(gadgetRef, "text/xml"),
         uriCallback,
+        view,
         output);
   }
 
-  public void rewrite(URI baseUri, Readable gadgetSpec, UriCallback uriCallback, Appendable output)
+  public void rewrite(URI baseUri, Readable gadgetSpec, UriCallback uriCallback,
+                      String view, Appendable output)
       throws GadgetRewriteException, IOException {
     GadgetParser parser = new GadgetParser();
-    GadgetSpec spec = parser.parse(gadgetSpec);
+    GadgetSpec spec = parser.parse(gadgetSpec, view);
     spec.setContent(rewriteContent(baseUri, spec.getContent(), uriCallback));
     parser.render(spec, output);
   }
@@ -97,13 +110,13 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
       throw new GadgetRewriteException(ex);
     }
 
-    HtmlPluginCompiler compiler = compileGadget(htmlContent, baseUri, callback);
+    PluginCompiler compiler = compileGadget(htmlContent, baseUri, callback);
 
     MessageContext mc = compiler.getMessageContext();
     StringBuilder style = new StringBuilder();
     StringBuilder script = new StringBuilder();
     try {
-      CssTree css = compiler.getCss(); 
+      CssTree css = compiler.getCss();
       if (css != null) { css.render(createRenderContext(style, mc)); }
       Block js = compiler.getJavascript();
       if (js != null) { js.render(createRenderContext(script, mc)); }
@@ -131,7 +144,7 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
     return contentTree;
   }
 
-  private HtmlPluginCompiler compileGadget(
+  private PluginCompiler compileGadget(
       DomTree.Fragment content, final URI baseUri, final UriCallback callback)
       throws GadgetRewriteException {
     PluginMeta meta = new PluginMeta(DOM_PREFIX,
@@ -163,14 +176,15 @@ public class DefaultGadgetRewriter implements GadgetRewriter, GadgetContentRewri
             }
           }
         });
-    
-    HtmlPluginCompiler compiler = new HtmlPluginCompiler(mq, meta);
 
-    // Compile
+    PluginCompiler compiler = new PluginCompiler(meta, mq);
+    if (cssSchema != null) { compiler.setCssSchema(cssSchema); }
+    if (htmlSchema != null) { compiler.setHtmlSchema(htmlSchema); }
+
     compiler.addInput(new AncestorChain<DomTree.Fragment>(content));
 
     if (!compiler.run()) {
-      throw new GadgetRewriteException();
+      throw new GadgetRewriteException("Gadget has compile errors");
     }
 
     return compiler;

@@ -52,7 +52,7 @@
 
   <property
       name="build.info.file"
-      location="${lib}/com/google/caja/reporting/buildInfo.properties"/>  
+      location="${lib}/com/google/caja/reporting/buildInfo.properties"/>
 
   <path id="classpath.compile">
     <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
@@ -242,9 +242,11 @@
       <include name="**/caja/plugin/GxpValidatorTest.java"/>
       <include name="**/caja/plugin/HtmlCompiledPluginTest.java"/>
       <include name="**/caja/plugin/HtmlSanitizerTest.java"/>
+      <include name="**/caja/plugin/HtmlValidatorTest.java"/>
       <include name="**/caja/plugin/PluginCompilerTest.java"/>
       <include name="**/caja/plugin/UrlUtilTest.java"/>
       <include name="**/caja/plugin/caps/CapabilityRewriterTest.java"/>
+      <include name="**/caja/reporting/*Test.java"/>
       <include name="**/caja/util/JoinTest.java"/>
       <include name="**/caja/util/SparseBitSetTest.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
@@ -281,11 +283,9 @@
         <include name="**/caja/opensocial/listfriends.xml"/>
         <include name="**/caja/opensocial/SocialHelloWorld.xml"/>
         <include name="**/caja/opensocial/test-parsing.xml"/>
-        <include name="**/caja/parser/css/cssparsergolden1.txt"/>
-        <include name="**/caja/parser/css/cssparsergolden2.txt"/>
-        <include name="**/caja/parser/css/cssparserinput1.css"/>
-        <include name="**/caja/parser/css/cssparserinput2.css"/>
-        <include name="**/caja/parser/css/cssrendergolden1.txt"/>
+        <include name="**/caja/parser/css/cssparsergolden*.txt"/>
+        <include name="**/caja/parser/css/cssparserinput*.css"/>
+        <include name="**/caja/parser/css/cssrendergolden*.txt"/>
         <include name="**/caja/parser/html/htmlparsertest1.gxp"/>
         <include name="**/caja/parser/html/htmlparsergolden1.txt"/>
         <include name="**/caja/parser/js/*.js"/>
@@ -334,7 +334,6 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/opensocial/*.java"/>
-      <include name="**/caja/plugin/HtmlPluginCompilerMain.java"/>
       <include name="**/caja/plugin/PluginCompilerMain.java"/>
     </javac>
   </target>
@@ -370,16 +369,23 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/plugin/PluginCompilerMain.java"/>
-      <include name="**/caja/plugin/HtmlPluginCompilerMain.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
-    <unjar src="${third_party}/java/jakarta_commons/commons-cli.jar"
-     dest="${lib}"/>
-    <unjar src="${third_party}/java/htmlparser/htmlparser.jar" dest="${lib}"/>
+    <copy todir="${jars}">
+      <fileset dir="${third_party}/java/jakarta_commons">
+        <include name="commons-cli.jar"/>
+      </fileset>
+      <fileset dir="${third_party}/java/htmlparser">
+        <include name="htmlparser.jar"/>
+      </fileset>
+      <fileset dir="${third_party}/java/json_simple">
+        <include name="json_simple.jar"/>
+      </fileset>
+    </copy>
     <jar destfile="${jars}/pluginc.jar" basedir="${lib}">
       <manifest>
         <attribute name="Main-Class"
-         value="com.google.caja.plugin.HtmlPluginCompilerMain"/>
+         value="com.google.caja.plugin.PluginCompilerMain"/>
       </manifest>
     </jar>
     <jar destfile="${jars}/pluginc-src.jar" basedir="${src}">
@@ -578,6 +584,7 @@
       <include name="**/caja/lexer/LineContinuingCharProducer.java"/>
       <include name="**/caja/lexer/LookaheadCharProducer.java"/>
       <include name="**/caja/lexer/NumberRecognizer.java"/>
+      <include name="**/caja/lexer/NumericEscapes.java"/>
       <include name="**/caja/lexer/ParseException.java"/>
       <include name="**/caja/lexer/Punctuation.java"/>
       <include name="**/caja/lexer/PunctuationTrie.java"/>

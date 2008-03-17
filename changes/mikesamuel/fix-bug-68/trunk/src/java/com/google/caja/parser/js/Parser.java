@@ -779,6 +779,8 @@ public final class Parser extends ParserBase {
           }
         } else if (OperatorType.POSTFIX == op.getType()) {
           right = null;
+        } else if (OperatorType.TERNARY == op.getType()) {
+          right = parseExpressionPart(insertionProtected);
         } else if (Operator.MEMBER_ACCESS != op) {
           right = parseOp(opprec, insertionProtected);
         } else {
@@ -825,7 +827,7 @@ public final class Parser extends ParserBase {
         case TERNARY:
           {
             tq.expectToken(op.getClosingSymbol());
-            Expression farRight = parseOp(opprec, insertionProtected);
+            Expression farRight = parseExpressionPart(insertionProtected);
             left = new Operation(op, left, right, farRight);
           }
           break;
@@ -868,21 +870,12 @@ public final class Parser extends ParserBase {
   }
 
   private double toNumber(Token<JsTokenType> t) {
-    if ("NaN".equals(t.text)) {
-      return Double.NaN;
-    } else if ("Infinity".equals(t.text)) {
-      return Double.POSITIVE_INFINITY;
-    }
     // Double.parseDouble is not locale dependent.
     return Double.parseDouble(t.text);
   }
 
   private String floatToString(Token<JsTokenType> t) {
-    if ("NaN".equals(t.text) || "Infinity".equals(t.text)) {
-      return t.text;
-    } else {
-      return NumberLiteral.numberToString(new BigDecimal(t.text));
-    }
+    return NumberLiteral.numberToString(new BigDecimal(t.text));
   }
 
   private NumberLiteral toNumberLiteral(Token<JsTokenType> t) {
