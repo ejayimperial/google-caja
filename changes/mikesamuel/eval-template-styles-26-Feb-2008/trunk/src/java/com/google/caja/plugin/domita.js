@@ -136,10 +136,11 @@ attachDocumentStub = (function () {
     subClass.prototype.constructor = subClass;
   }
 
+  // TODO(mikesamuel): replace with Mike Stay's trademarking.
   function makeSealerUnsealerPair(exposeAsPrimitive) {
     var cache;
     function seal(x) {
-      o = { test___: function () { cache = x; } };
+      var o = { test___: function () { cache = x; } };
       if (exposeAsPrimitive) {
         o.valueOf = function (typeHint) { return x; };
         o.toString = function () { return String(x); };
@@ -147,10 +148,14 @@ attachDocumentStub = (function () {
       return o;
     }
     function unseal(sealed) {
-      cache = null;
-      sealed && sealed.test___ && sealed.test___();
-      var x = cache;
-      cache = null;
+      var x;
+      try {
+        cache = null;
+        sealed && sealed.test___ && sealed.test___();
+        x = cache;
+      } finally {
+        cache = null;
+      }
       return x;
     }
     return { seal: seal, unseal: unseal };
