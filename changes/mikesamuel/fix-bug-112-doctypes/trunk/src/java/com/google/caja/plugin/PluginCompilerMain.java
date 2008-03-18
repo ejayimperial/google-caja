@@ -17,6 +17,7 @@ package com.google.caja.plugin;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
+import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
@@ -44,11 +45,14 @@ import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.util.Criterion;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
@@ -84,7 +88,7 @@ public final class PluginCompilerMain {
     MessageContext mc = null;
     try {
       PluginMeta meta = new PluginMeta(
-          config.getCssPrefix(), PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
+          config.getCssPrefix(), makeEnvironment(config));
       PluginCompiler compiler = new PluginCompiler(meta, mq);
       mc = compiler.getMessageContext();
       compiler.setCssSchema(config.getCssSchema(mq));
@@ -168,7 +172,7 @@ public final class PluginCompilerMain {
       tq.expectEmpty();
     } else if (path.endsWith(".html") || path.endsWith(".xhtml")) {
       DomParser p = new DomParser(new HtmlLexer(cp), is, mq);
-      input = p.parseDocument();
+      input = p.parseFragment();
       p.getTokenQueue().expectEmpty();
     } else if (path.endsWith(".css")) {
       CssLexer lexer = new CssLexer(cp);
@@ -310,6 +314,15 @@ public final class PluginCompilerMain {
     return maxLevel;
   }
 
+  private PluginEnvironment makeEnvironment(Config config) {
+    try {
+      return new FileSystemEnvironment(
+          new File(config.getInputUris().iterator().next()).getParentFile());
+    } catch (IllegalArgumentException ex) {  // Not a file: URI
+      return PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT;
+    }
+  }
+
   public static void main(String[] args) {
     int exitCode;
     try {
@@ -326,4 +339,53 @@ public final class PluginCompilerMain {
       // so just suppress the security exception and return normally.
     }
   }
+}
+
+final class FileSystemEnvironment implements PluginEnvironment {
+ private final File directory;
+
+ FileSystemEnvironment(File directory) {
+   this.directory = directory;
+ }
+ 
+ public CharProducer loadExternalResource(
+     ExternalReference ref, String mimeType) {
+   File f = toFileUnderSameDirectory(ref.getUri());
+   if (f == null) { return null; }
+   try {
+     return CharProducer.Factory.create(
+         new InputStreamReader(new FileInputStream(f), "UTF-8"),
+         new InputSource(f.toURI()));
+   } catch (UnsupportedEncodingException ex) {
+     throw new AssertionError(ex);
+   } catch (FileNotFoundException ex) {
+     return null;
+   }
+ }
+
+ public String rewriteUri(ExternalReference ref, String mimeType) {
+   File f = toFileUnderSameDirectory(ref.getUri());
+   if (f == null) { return null; }
+   return f.toURI().relativize(directory.toURI()).toString();
+ }
+
+ private File toFileUnderSameDirectory(URI uri) {
+   if (!uri.isAbsolute()
+       && !uri.isOpaque()
+       && uri.getScheme() == null
+       && uri.getAuthority() == null
+       && uri.getFragment() == null
+       && uri.getPath() != null
+       && uri.getQuery() == null
+       && uri.getFragment() == null) {
+     File f = new File(new File(directory, ".").toURI().resolve(uri));
+     // Check that f is a descendant of directory
+     for (File tmp = f; tmp != null; tmp = tmp.getParentFile()) {
+       if (directory.equals(tmp)) {
+         return f;
+       }
+     }
+   }
+   return null;
+ }
 }
