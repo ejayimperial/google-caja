@@ -57,8 +57,8 @@ import java.util.Set;
  * <li>Reports warnings on a queue where an error doesn't prevent any further
  *   errors, so that we can report multiple errors in a single compile pass
  *   instead of forcing developers to play whack-a-mole.
- * <li>Does not parse {@code with} blocks.  TODO: duplicate the code that
- *   handles {@link Keyword#WHILE}.
+ * <li>Does not parse {@code with} blocks.
+ *   TODO(mikesamuel): duplicate the code that handles {@link Keyword#WHILE}.
  * <li>Does not parse Firefox style {@code catch (<Identifier> if <Expression>)}
  *   since those don't work on IE and many other interpreters.
  * <li>Recognizes {@code const} since many interpreters do (not IE) but warns.
@@ -125,7 +125,7 @@ import java.util.Set;
  *                            <Body>
  *                          | 'for' '(' <DeclarationStart> 'in' <Expression> ')'
  *                            <Body>
- *                          | 'for' '(' <Identifier> 'in' <Expression> ')'
+ *                          | 'for' '(' <LValue> 'in' <Expression> ')'
  *                            <Body>
  *                          | 'for' '(' <Declaration> ';' <ExpressionOrNoop>
  *                            <Expression>? ')' <Body>
@@ -347,30 +347,29 @@ public final class Parser extends ParserBase {
                   && !tq.lookaheadToken(Punctuation.SEMI)
                   && (initializerExpr = ((ExpressionStmt) initializer)
                       .getExpression()) instanceof Operation
-                  && Operator.IN == ((Operation) initializerExpr)
-                  .getOperator()
-                  && initializerExpr.children().get(0)
-                     instanceof Reference)) {
+                  && Operator.IN == ((Operation) initializerExpr).getOperator()
+                  && (((Operation) initializerExpr).children().get(0)
+                      .isLeftHandSide()))) {
 
             Expression iterable;
-            Reference var;
+            Expression lvalue;
             if (null == initializerExpr) {
               iterable = parseExpressionInt(true);
-              var = null;
+              lvalue = null;
             } else {
               Operation op = (Operation) initializerExpr;
-              var = (Reference) op.children().get(0);
+              lvalue = op.children().get(0);
               iterable = op.children().get(1);
             }
 
             tq.expectToken(Punctuation.RPAREN);
             Statement body = parseBody(true);
 
-            if (null == var) {
+            if (null == lvalue) {
               s = new ForEachLoop(
                   label, (Declaration) initializer, iterable, body);
             } else {
-              s = new ForEachLoop(label, var, iterable, body);
+              s = new ForEachLoop(label, lvalue, iterable, body);
             }
 
           } else {

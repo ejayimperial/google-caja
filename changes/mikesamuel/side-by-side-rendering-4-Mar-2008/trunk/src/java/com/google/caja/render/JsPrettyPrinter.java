@@ -226,6 +226,7 @@ public final class JsPrettyPrinter implements TokenConsumer {
           case ']':
             breakBefore = false;
             spaceBefore = !"}".equals(lastToken);
+            spaceAfter = ' ';
             popIndentStack();
             break;
           case ',':

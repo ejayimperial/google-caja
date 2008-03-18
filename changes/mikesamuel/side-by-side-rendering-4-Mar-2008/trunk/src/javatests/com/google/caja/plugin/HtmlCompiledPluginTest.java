@@ -375,7 +375,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         new PrintWriter(System.err), mc, true);
     PluginMeta meta = new PluginMeta(
         "test", PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
-    HtmlPluginCompiler compiler = new HtmlPluginCompiler(mq, meta);
+    PluginCompiler compiler = new PluginCompiler(meta, mq);
     compiler.setMessageContext(mc);
     DomTree html = parseHtml(gadgetSpec, mq);
     if (html != null) { compiler.addInput(new AncestorChain<DomTree>(html)); }

@@ -17,6 +17,7 @@ package com.google.caja.plugin;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
+import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
@@ -35,7 +36,6 @@ import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Parser;
-import com.google.caja.parser.js.Statement;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
@@ -49,12 +49,15 @@ import com.google.caja.util.Criterion;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,7 +70,7 @@ import java.util.regex.Pattern;
  *
  * @author mikesamuel@gmail.com
  */
-public class PluginCompilerMain {
+public final class PluginCompilerMain {
   private final MessageQueue mq;
   private final MessageContext mc;
 
@@ -79,46 +82,39 @@ public class PluginCompilerMain {
 
   private int run(String[] argv) {
     Config config = new Config(
-        getClass(), System.err,
-        "Cajoles an HTML, CSS, and JS files to JS and CSS.");
+        getClass(), System.err, "Cajoles HTML, CSS, and JS files to JS & CSS.");
     if (!config.processArguments(argv)) {
       return -1;
     }
 
-    PluginMeta meta = new PluginMeta(
-        config.getCssPrefix(), PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
-    PluginCompiler compiler = new PluginCompiler(meta, mq);
-    compiler.setCssSchema(config.getCssSchema(mq));
-    compiler.setHtmlSchema(config.getHtmlSchema(mq));
-
-    boolean success;
+    boolean success = false;
+    MessageContext mc = null;
     try {
-      success = parseInputs(config.getInputFiles(), compiler);
+      PluginMeta meta = new PluginMeta(
+          config.getCssPrefix(), makeEnvironment(config));
+      PluginCompiler compiler = new PluginCompiler(meta, mq);
+      mc = compiler.getMessageContext();
+      compiler.setCssSchema(config.getCssSchema(mq));
+      compiler.setHtmlSchema(config.getHtmlSchema(mq));
+
+      success = parseInputs(config.getInputUris(), compiler) && compiler.run();
+
       if (success) {
-        success = compiler.run();
-      }
-      if (success) {
-        try {
-          dumpOutputs(compiler.getOutputs(), config.getOutputBase());
-        } catch (IOException ex) {
-          ex.printStackTrace();
-          System.err.println("Failed to write outputs");
-          success = false;
-        }
+        writeFile(config.getOutputJsFile(), compiler.getJavascript());
+        writeFile(config.getOutputCssFile(), compiler.getCss());
       }
     } finally {
-      if (MessageLevel.ERROR.compareTo(
-              HtmlPluginCompilerMain.dumpMessages(mq, mc, System.err)) <= 0) {
-        success = false;
-      }
+      if (mc == null) { mc = new MessageContext(); }
+      MessageLevel maxMessageLevel = dumpMessages(mq, mc, System.err);
+      success &= MessageLevel.ERROR.compareTo(maxMessageLevel) > 0;
     }
 
     return success ? 0 : -1;
   }
 
-  private boolean parseInputs(Collection<File> inputs, PluginCompiler pluginc) {
+  private boolean parseInputs(Collection<URI> inputs, PluginCompiler pluginc) {
     boolean parsePassed = true;
-    for (File input : inputs) {
+    for (URI input : inputs) {
       try {
         ParseTreeNode parseTree = parseInput(input);
         if (null == parseTree) {
@@ -128,32 +124,36 @@ public class PluginCompilerMain {
         }
       } catch (ParseException ex) {
         ex.toMessageQueue(mq);
+        parsePassed = false;
+      } catch (IOException ex) {
+        mq.addMessage(MessageType.IO_ERROR,
+                      MessagePart.Factory.valueOf(ex.toString()));
+        parsePassed = false;
       }
     }
     return parsePassed;
   }
 
-  private ParseTreeNode parseInput(File input)
-      throws ParseException {
+  /** Parse one input from a URI. */
+  private ParseTreeNode parseInput(URI input)
+      throws IOException, ParseException {
     InputSource is = new InputSource(input);
-
     mc.inputSources.add(is);
+
+    // TODO(mikesamuel): capture the input as bytes, guess encoding, and
+    // store in a map so we can generate message snippets and side-by-side
+    // output.
+    InputStream in = input.toURL().openStream();
+    CharProducer cp = CharProducer.Factory.create(
+        new InputStreamReader(in, "UTF-8"), is);
     try {
-      InputStream in = new FileInputStream(input);
-      CharProducer cp = CharProducer.Factory.create(
-          new InputStreamReader(in, "UTF-8"), is);
-      try {
-        return parseInput(is, cp, mq);
-      } finally {
-        cp.close();
-      }
-    } catch (IOException ex) {
-      ex.printStackTrace();
-      System.err.println("Failed to read from " + is.getUri());
-      return null;
+      return parseInput(is, cp, mq);
+    } finally {
+      cp.close();
     }
   }
 
+  /** Classify an input by extension and use the appropriate parser. */
   static ParseTreeNode parseInput(
       InputSource is, CharProducer cp, MessageQueue mq)
       throws ParseException {
@@ -170,10 +170,16 @@ public class PluginCompilerMain {
     } else if (path.endsWith(".gxp")) {
       HtmlLexer lexer = new HtmlLexer(cp);
       lexer.setTreatedAsXml(true);
-      TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(
-          lexer, is, Criterion.Factory.<Token<HtmlTokenType>>optimist());
+      TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(lexer, is);
       input = DomParser.parseDocument(
           tq, OpenElementStack.Factory.createXmlElementStack());
+      tq.expectEmpty();
+    } else if (path.endsWith(".html")) {
+      HtmlLexer lexer = new HtmlLexer(cp);
+      lexer.setTreatedAsXml(false);
+      TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(lexer, is);
+      input = DomParser.parseFragment(
+          tq, OpenElementStack.Factory.createHtml5ElementStack(mq));
       tq.expectEmpty();
     } else if (path.endsWith(".css")) {
       CssLexer lexer = new CssLexer(cp);
@@ -181,7 +187,7 @@ public class PluginCompilerMain {
           lexer, is, new Criterion<Token<CssTokenType>>() {
             public boolean accept(Token<CssTokenType> tok) {
               return tok.type != CssTokenType.COMMENT
-              && tok.type != CssTokenType.SPACE;
+                  && tok.type != CssTokenType.SPACE;
             }
           });
 
@@ -221,6 +227,10 @@ public class PluginCompilerMain {
     return input;
   }
 
+  /**
+   * Look for a construct like @foo('bar'); in CSS which serves as a CSS
+   * template directive.
+   */
   private static CssTree.FunctionCall requireSingleStringLiteralCall(
       Mark startMark, TokenQueue<CssTokenType> tq) throws ParseException {
     tq.expectToken("(");
@@ -257,56 +267,73 @@ public class PluginCompilerMain {
 
   /** Valid name for a css template or one of its parameters. */
   private static final Pattern CSS_TEMPLATE_OR_PARAM_NAME =
-    Pattern.compile("[\"\'](_?[a-z][a-z0-9_]*)[\"\']");
+      Pattern.compile("[\"\'](_?[a-z][a-z0-9_]*)[\"\']");
 
-  private void dumpOutputs(
-      Collection<? extends ParseTreeNode> outputs, File outBase)
-      throws IOException {
-    File prefix = outBase.isDirectory() ? new File(outBase, "plugin") : outBase;
-    File cssFile = new File(prefix + ".css");
-    File jsFile = new File(prefix + ".js");
-    Writer cssOut = null, jsOut = null;
+  /** Write the given parse tree to the given file. */
+  private void writeFile(File f, ParseTreeNode output) {
+    if (output == null) { return; }
+    Callback<IOException> ioHandler = new Callback<IOException>() {
+      public void handle(IOException ex) {
+        mq.addMessage(
+            MessageType.IO_ERROR, MessagePart.Factory.valueOf(ex.toString()));
+      }
+    };
     try {
-      Callback<IOException> ioHandler = new Callback<IOException>() {
-        public void handle(IOException ex) {
-          mq.addMessage(
-              MessageType.IO_ERROR, MessagePart.Factory.valueOf(ex.toString()));
-        }
-      };
-      for (ParseTreeNode output : outputs) {
-        Writer out;
-        if (output instanceof Statement) {
-          if (null == jsOut) {
-            jsOut = new OutputStreamWriter(
-                new FileOutputStream(jsFile), "UTF-8");
-          }
-          out = jsOut;
-        } else if (output instanceof CssTree) {
-          if (null == cssOut) {
-            cssOut = new OutputStreamWriter(
-                new FileOutputStream(cssFile), "UTF-8");
-          }
-          out = cssOut;
-        } else {
-          throw new AssertionError(output.getClass().getName());
-        }
+      Writer out = new OutputStreamWriter(new FileOutputStream(f), "UTF-8");
+      try {
         TokenConsumer tc = output.makeRenderer(out, ioHandler);
         RenderContext rc = new RenderContext(mc, true, tc);
         output.render(rc);
         tc.noMoreTokens();
         out.append('\n');
+      } finally {
+        out.close();
       }
-    } finally {
-      try {
-        if (null != cssOut) { cssOut.close(); }
-      } catch (IOException ex) {
-        ex.printStackTrace();
+    } catch (IOException ex) {
+      ioHandler.handle(ex);
+    }
+  }
+
+  /**
+   * Dumps messages to the given output stream, returning the highest message
+   * level seen.
+   */
+  static MessageLevel dumpMessages(
+      MessageQueue mq, MessageContext mc, Appendable out) {
+    MessageLevel maxLevel = MessageLevel.values()[0];
+    for (Message m : mq.getMessages()) {
+      MessageLevel level = m.getMessageLevel();
+      if (maxLevel.compareTo(level) < 0) { maxLevel = level; }
+    }
+    MessageLevel ignoreLevel = null;
+    if (maxLevel.compareTo(MessageLevel.LINT) < 0) {
+      // If there's only checkpoints, be quiet.
+      ignoreLevel = MessageLevel.LOG;
+    }
+    try {
+      for (Message m : mq.getMessages()) {
+        MessageLevel level = m.getMessageLevel();
+        if (ignoreLevel != null && level.compareTo(ignoreLevel) <= 0) {
+          continue;
+        }
+        out.append(level.name() + ": ");
+        m.format(mc, out);
+        out.append("\n");
+
+        if (maxLevel.compareTo(level) < 0) { maxLevel = level; }
       }
-      try {
-        if (null != jsOut) { jsOut.close(); }
-      } catch (IOException ex) {
-        ex.printStackTrace();
-      }
+    } catch (IOException ex) {
+      ex.printStackTrace();
+    }
+    return maxLevel;
+  }
+
+  private PluginEnvironment makeEnvironment(Config config) {
+    try {
+      return new FileSystemEnvironment(
+          new File(config.getInputUris().iterator().next()).getParentFile());
+    } catch (IllegalArgumentException ex) {  // Not a file: URI
+      return PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT;
     }
   }
 
@@ -326,4 +353,53 @@ public class PluginCompilerMain {
       // so just suppress the security exception and return normally.
     }
   }
+}
+
+final class FileSystemEnvironment implements PluginEnvironment {
+ private final File directory;
+
+ FileSystemEnvironment(File directory) {
+   this.directory = directory;
+ }
+ 
+ public CharProducer loadExternalResource(
+     ExternalReference ref, String mimeType) {
+   File f = toFileUnderSameDirectory(ref.getUri());
+   if (f == null) { return null; }
+   try {
+     return CharProducer.Factory.create(
+         new InputStreamReader(new FileInputStream(f), "UTF-8"),
+         new InputSource(f.toURI()));
+   } catch (UnsupportedEncodingException ex) {
+     throw new AssertionError(ex);
+   } catch (FileNotFoundException ex) {
+     return null;
+   }
+ }
+
+ public String rewriteUri(ExternalReference ref, String mimeType) {
+   File f = toFileUnderSameDirectory(ref.getUri());
+   if (f == null) { return null; }
+   return f.toURI().relativize(directory.toURI()).toString();
+ }
+
+ private File toFileUnderSameDirectory(URI uri) {
+   if (!uri.isAbsolute()
+       && !uri.isOpaque()
+       && uri.getScheme() == null
+       && uri.getAuthority() == null
+       && uri.getFragment() == null
+       && uri.getPath() != null
+       && uri.getQuery() == null
+       && uri.getFragment() == null) {
+     File f = new File(new File(directory, ".").toURI().resolve(uri));
+     // Check that f is a descendant of directory
+     for (File tmp = f; tmp != null; tmp = tmp.getParentFile()) {
+       if (directory.equals(tmp)) {
+         return f;
+       }
+     }
+   }
+   return null;
+ }
 }
