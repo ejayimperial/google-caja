@@ -14,20 +14,27 @@
 
 package com.google.caja.plugin.stages;
 
+import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lexer.CharProducer;
+import com.google.caja.lexer.CssLexer;
+import com.google.caja.lexer.CssTokenType;
 import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlTokenType;
+import com.google.caja.lexer.InputSource;
+import com.google.caja.lexer.JsLexer;
+import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
+import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.MutableParseTreeNode;
 import com.google.caja.parser.Visitor;
-import com.google.caja.parser.css.Css2;
+import com.google.caja.parser.css.CssParser;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
-import com.google.caja.plugin.HtmlPluginCompiler;
+import com.google.caja.parser.js.Parser;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
 import com.google.caja.plugin.PluginEnvironment;
@@ -35,6 +42,8 @@ import com.google.caja.plugin.PluginMessageType;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
+import com.google.caja.reporting.MessageQueue;
+import com.google.caja.util.Criterion;
 import com.google.caja.util.Pipeline;
 import com.google.caja.util.SyntheticAttributeKey;
 
@@ -51,7 +60,7 @@ import java.util.Set;
  * Extract unsafe bits from HTML for processing by later stages.
  * Specifically, extracts {@code onclick} and other handlers, the contents of
  * {@code <script>} elements, and the contents of {@code <style>} elements,
- * and the content referred to by {@code <link rel=stylesheet>} elements. 
+ * and the content referred to by {@code <link rel=stylesheet>} elements.
  */
 public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
 
@@ -68,7 +77,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     }
     return jobs.hasNoFatalErrors();
   }
-  
+
   DomTree rewriteDomTree(DomTree t, final Jobs jobs) {
     // Rewrite styles and scripts.
     // <script>foo()</script>  ->  <script>(cajoled foo)</script>
@@ -102,7 +111,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
   private void rewriteScriptTag(
       DomTree.Tag scriptTag, MutableParseTreeNode parent, Jobs jobs) {
     PluginEnvironment env = jobs.getPluginMeta().getPluginEnvironment();
-    
+
     DomTree.Attrib type = lookupAttribute(scriptTag, "type");
     DomTree.Attrib src = lookupAttribute(scriptTag, "src");
     if (type != null && !isJavaScriptContentType(type.getAttribValue())) {
@@ -152,29 +161,31 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     // loadModule.
     Block parsedScriptBody;
     try {
-      parsedScriptBody = HtmlPluginCompiler.parseJs(
-          jsStream.getCurrentPosition().source(), jsStream,
-          jobs.getMessageQueue());
+      parsedScriptBody = parseJs(jsStream.getCurrentPosition().source(),
+                                 jsStream, jobs.getMessageQueue());
     } catch (ParseException ex) {
       ex.toMessageQueue(jobs.getMessageQueue());
       parent.removeChild(scriptTag);
       return;
     }
 
-    // Build a replacment element.
-    // <script type="text/javascript"></script>
-    DomTree.Tag emptyScript;
+    // Build a replacment element, <span/>, and link it to the extracted
+    // javascript, so that when the DOM is rendered, we can properly interleave
+    // the extract scripts with the scripts that generate markup.
+    DomTree.Tag placeholder;
     {
+      Token<HtmlTokenType> startToken = Token.instance(
+          "<span", HtmlTokenType.TAGBEGIN, scriptTag.getToken().pos);
       Token<HtmlTokenType> endToken = Token.instance(
-          ">", HtmlTokenType.TAGEND,
+          "/>", HtmlTokenType.TAGEND,
           FilePosition.endOf(scriptTag.getFilePosition()));
-      emptyScript = new DomTree.Tag(
-          Collections.<DomTree>emptyList(), scriptTag.getToken(), endToken);
-      emptyScript.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
+      placeholder = new DomTree.Tag(
+          Collections.<DomTree>emptyList(), startToken, endToken);
+      placeholder.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
     }
 
     // Replace the external script tag with the inlined script.
-    parent.replaceChild(emptyScript, scriptTag);
+    parent.replaceChild(placeholder, scriptTag);
   }
 
   private void rewriteStyleTag(
@@ -238,7 +249,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
 
     extractStyles(styleTag, cssStream, media, jobs);
   }
-  
+
   private void extractStyles(
       DomTree.Tag styleTag, CharProducer cssStream, DomTree.Attrib media,
       Jobs jobs) {
@@ -255,8 +266,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
 
     CssTree.StyleSheet stylesheet;
     try {
-      stylesheet = HtmlPluginCompiler.parseCss(
-          cssStream.getCurrentPosition().source(), cssStream);
+      stylesheet = parseCss(cssStream.getCurrentPosition().source(), cssStream);
       if (stylesheet == null) { return; }  // If all tokens ignorable.
     } catch (ParseException ex) {
       ex.toMessageQueue(jobs.getMessageQueue());
@@ -269,7 +279,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       if (mediaTypeArr.length != 1 || !"".equals(mediaTypeArr[0])) {
         mediaTypes = new LinkedHashSet<String>();
         for (String mediaType : mediaTypeArr) {
-          if (!Css2.isMediaType(mediaType)) {
+          if (!CssSchema.isMediaType(mediaType)) {
             jobs.getMessageQueue().addMessage(
                 PluginMessageType.UNRECOGNIZED_MEDIA_TYPE,
                 media.getFilePosition(),
@@ -313,7 +323,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     jobs.getJobs().add(
         new Job(new AncestorChain<CssTree.StyleSheet>(stylesheet)));
   }
-  
+
   /**
    * A CharProducer that produces characters from the concatenation of all
    * the text nodes in the given node list.
@@ -378,5 +388,36 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       }
     }
     return null;
+  }
+
+
+  public static Block parseJs(
+      InputSource is, CharProducer cp, MessageQueue localMessageQueue)
+      throws ParseException {
+    JsLexer lexer = new JsLexer(cp);
+    JsTokenQueue tq = new JsTokenQueue(lexer, is);
+    Parser p = new Parser(tq, localMessageQueue);
+    Block body = p.parse();
+    tq.expectEmpty();
+    return body;
+  }
+
+  public static CssTree.StyleSheet parseCss(InputSource is, CharProducer cp)
+      throws ParseException {
+    CssLexer lexer = new CssLexer(cp);
+    CssTree.StyleSheet input;
+    TokenQueue<CssTokenType> tq = new TokenQueue<CssTokenType>(
+        lexer, is, new Criterion<Token<CssTokenType>>() {
+          public boolean accept(Token<CssTokenType> tok) {
+            return tok.type != CssTokenType.COMMENT
+                && tok.type != CssTokenType.SPACE;
+          }
+        });
+    if (tq.isEmpty()) { return null; }
+
+    CssParser p = new CssParser(tq);
+    input = p.parseStyleSheet();
+    tq.expectEmpty();
+    return input;
   }
 }

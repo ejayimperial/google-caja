@@ -14,6 +14,8 @@
 
 package com.google.caja.plugin.stages;
 
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
@@ -28,6 +30,7 @@ import com.google.caja.plugin.GxpCompiler;
 import com.google.caja.plugin.HtmlCompiler;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
+import com.google.caja.plugin.ReservedNames;
 import com.google.caja.util.Pipeline;
 import static com.google.caja.plugin.SyntheticNodes.s;
 
@@ -42,10 +45,20 @@ import java.util.ListIterator;
  *
  * @author mikesamuel@gmail.com
  */
-public class CompileHtmlStage implements Pipeline.Stage<Jobs> {
+public final class CompileHtmlStage implements Pipeline.Stage<Jobs> {
+  private final CssSchema cssSchema;
+  private final HtmlSchema htmlSchema;
+
+  public CompileHtmlStage(CssSchema cssSchema, HtmlSchema htmlSchema) {
+    if (null == cssSchema) { throw new NullPointerException(); }
+    if (null == htmlSchema) { throw new NullPointerException(); }
+    this.cssSchema = cssSchema;
+    this.htmlSchema = htmlSchema;
+  }
+
   public boolean apply(Jobs jobs) {
     HtmlCompiler htmlc = new HtmlCompiler(
-        jobs.getMessageQueue(), jobs.getPluginMeta());
+        cssSchema, htmlSchema, jobs.getMessageQueue(), jobs.getPluginMeta());
 
     List<Statement> renderedHtmlStatements = new ArrayList<Statement>();
 
@@ -64,18 +77,15 @@ public class CompileHtmlStage implements Pipeline.Stage<Jobs> {
     }
 
     for (FunctionDeclaration handler : htmlc.getEventHandlers()) {
-      // function foo() { ... }
-      // => ___OUTERS___.foo = function foo() { ... };
-      // assuming meta.namespaceName is ___OUTERS___.
+      // function c_1___() { ... }
+      // => ___OUTERS___.c_1___ = function c_1___() { ... };
       Statement def = s(new ExpressionStmt(
           s(new Operation(
                 Operator.ASSIGN,
                 s(new Operation(
                       Operator.MEMBER_ACCESS,
-                      s(new Reference(s(
-                          new Identifier(
-                              jobs.getPluginMeta().namespaceName)))),
-                      s(new Reference(handler.getIdentifier())))),
+                      s(new Reference(s(new Identifier(ReservedNames.OUTERS)))),
+                      s(new Reference(s(handler.getIdentifier()))))),
                 handler.getInitializer()))));
       jobs.getJobs().add(
           new Job(new AncestorChain<Block>(

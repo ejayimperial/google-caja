@@ -27,7 +27,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,7 +39,7 @@ import org.mozilla.javascript.ScriptableObject;
 
 /**
  * A testbed that allows running javascript via the Rhino interpreter.
- * TODO: maybe replace this with the JSR 223 stuff.
+ * TODO(mikesamuel): maybe replace this with the JSR 223 stuff.
  *
  * @author mikesamuel@gmail.com
  */

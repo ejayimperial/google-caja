@@ -15,7 +15,10 @@
 package com.google.caja.plugin;
 
 import com.google.caja.CajaException;
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.CharProducer;
+import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
@@ -45,6 +48,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +79,9 @@ public class GxpCompilerTest extends TestCase {
         getClass(), "gxpcompilerinput1.gxp", mq);
     DomTree.Tag domTree = (DomTree.Tag) DomParser.parseDocument(
         tq, OpenElementStack.Factory.createXmlElementStack());
-    GxpCompiler gxpc = new GxpCompiler(mq, makeTestPluginMeta());
+    GxpCompiler gxpc = new GxpCompiler(
+        CssSchema.getDefaultCss21Schema(mq), HtmlSchema.getDefault(mq),
+        makeTestPluginMeta(), mq);
     GxpCompiler.TemplateSignature sig = gxpc.compileTemplateSignature(domTree);
     ParseTreeNode compiled = gxpc.compileDocument(sig);
 
@@ -98,7 +104,9 @@ public class GxpCompilerTest extends TestCase {
         getClass(), "gxpcompilerinput2.gxp", mq);
     DomTree.Tag domTree = (DomTree.Tag) DomParser.parseDocument(
         tq, OpenElementStack.Factory.createXmlElementStack());
-    GxpCompiler gxpc = new GxpCompiler(mq, makeTestPluginMeta());
+    GxpCompiler gxpc = new GxpCompiler(
+        CssSchema.getDefaultCss21Schema(mq), HtmlSchema.getDefault(mq),
+        makeTestPluginMeta(), mq);
     GxpCompiler.TemplateSignature sig = gxpc.compileTemplateSignature(domTree);
     ParseTreeNode compiled = gxpc.compileDocument(sig);
 
@@ -140,7 +148,9 @@ public class GxpCompilerTest extends TestCase {
     DomTree.Tag gxp3 = (DomTree.Tag) DomParser.parseDocument(
         TestUtil.parseXml(getClass(), "gxpcompilerinput4.gxp", mq),
         OpenElementStack.Factory.createXmlElementStack());
-    GxpCompiler gxpc = new GxpCompiler(mq, makeTestPluginMeta());
+    GxpCompiler gxpc = new GxpCompiler(
+        CssSchema.getDefaultCss21Schema(mq), HtmlSchema.getDefault(mq),
+        makeTestPluginMeta(), mq);
     GxpCompiler.TemplateSignature sig2 = gxpc.compileTemplateSignature(gxp2),
                                   sig3 = gxpc.compileTemplateSignature(gxp3);
 
@@ -328,7 +338,7 @@ public class GxpCompilerTest extends TestCase {
   public void testUnrewrittenAttrAttrib() throws Exception {
     assertOutput(
         "out___.push('<img src=\\\"/testplugin/blank.gif\\\" width=\\\"', "
-        + "plugin_htmlAttr___(screenWidth() / 2), '\\\">');",
+        + "___OUTERS___.plugin_htmlAttr___(screenWidth() / 2), '\\\">');",
         true,
         "<gxp:template name=\"Test\">"
         + "<img src=\"blank.gif\">"
@@ -367,8 +377,9 @@ public class GxpCompilerTest extends TestCase {
   public void testCssSubstitution() throws Exception {
     assertOutput(
         "out___.push('<div style=\\\"position: absolute;\\nleft: ', "
-        + "plugin_cssNumber___(x + 10), 'px;\\nright: ', "
-        + "plugin_cssNumber___(x + 50), 'px\\\" id=\\\"pre-foo\\\">\\n"
+        + "___OUTERS___.plugin_cssNumber___(x + 10), 'px;\\nright: ', "
+        + "___OUTERS___.plugin_cssNumber___(x + 50), 'px\\\""
+        + " id=\\\"pre-foo\\\">\\n"
         + "Hello\\n</div>');",
         true,
         "<gxp:template name=\"Test\">\n"
@@ -406,11 +417,14 @@ public class GxpCompilerTest extends TestCase {
 
     GxpCompiler.TemplateSignature[] sigs =
       new GxpCompiler.TemplateSignature[doms.length];
-    GxpCompiler gxpc = new GxpCompiler(mq, meta);
+    GxpCompiler gxpc = new GxpCompiler(
+        CssSchema.getDefaultCss21Schema(mq), HtmlSchema.getDefault(mq),
+        meta, mq);
     boolean valid = true;
     for (int i = 0; i < doms.length; ++i) {
       DomTree.Tag dom = doms[i];
-      if (!new GxpValidator(mq).validate(new AncestorChain<DomTree>(dom))) {
+      if (!new GxpValidator(HtmlSchema.getDefault(mq), mq)
+          .validate(new AncestorChain<DomTree>(dom))) {
         valid = false;
         break;
       }
@@ -465,9 +479,8 @@ public class GxpCompilerTest extends TestCase {
   private void assertOutput(String golden, boolean expectValid, String... gxps)
       throws Exception {
     MessageContext mc = new MessageContext();
-    MessageQueue mq = //new SimpleMessageQueue();
-      new EchoingMessageQueue(
-          new PrintWriter(new OutputStreamWriter(System.out)), mc);
+    MessageQueue mq = new EchoingMessageQueue(
+        new PrintWriter(new OutputStreamWriter(System.err)), mc);
     PluginMeta meta = makeTestPluginMeta();
 
     DomTree.Tag[] doms = new DomTree.Tag[gxps.length];
@@ -487,11 +500,14 @@ public class GxpCompilerTest extends TestCase {
 
     GxpCompiler.TemplateSignature[] sigs =
       new GxpCompiler.TemplateSignature[doms.length];
-    GxpCompiler gxpc = new GxpCompiler(mq, meta);
+    GxpCompiler gxpc = new GxpCompiler(
+        CssSchema.getDefaultCss21Schema(mq), HtmlSchema.getDefault(mq),
+        meta, mq);
     boolean valid = true;
     for (int i = 0; i < doms.length; ++i) {
       DomTree.Tag dom = doms[i];
-      if (!new GxpValidator(mq).validate(new AncestorChain<DomTree>(dom))) {
+      if (!new GxpValidator(HtmlSchema.getDefault(mq), mq)
+          .validate(new AncestorChain<DomTree>(dom))) {
         valid = false;
         break;
       }
@@ -520,14 +536,17 @@ public class GxpCompilerTest extends TestCase {
       StringBuilder actualBuf = new StringBuilder();
       RenderContext rc = new RenderContext(mc, actualBuf);
       for (ParseTreeNode javascript : javascripts) {
-        javascript.render(rc);
-        rc.newLine();
+        if (javascript != null) {
+          javascript.render(rc);
+          rc.newLine();
+        }
       }
 
       String actual = actualBuf.toString().trim();
       // get rid of boilerplate
       String pre = "function Test() {\n  var out___ = [];\n  ",
-            post = "\n  return plugin_blessHtml___(out___.join(''));\n}";
+          post = ("\n  return ___OUTERS___.plugin_blessHtml___"
+                  + "(out___.join(''));\n}");
       assertTrue(actual, actual.startsWith(pre));
       assertTrue(actual, actual.endsWith(post));
       actual = actual.substring(pre.length(), actual.length() - post.length())
@@ -540,8 +559,33 @@ public class GxpCompilerTest extends TestCase {
 
   private PluginMeta makeTestPluginMeta() {
     return new PluginMeta(
-        "TestPlugin", "pre", "/testplugin", "rootDiv",
-        PluginMeta.TranslationScheme.AAJA,
-        PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
+        "pre",
+        new PluginEnvironment() {
+            public CharProducer loadExternalResource(
+                ExternalReference ref, String mimeType) {
+              return null;
+            }
+            public String rewriteUri(ExternalReference ref, String mimeType) {
+              URI uri = ref.getUri();
+
+              if (uri.getScheme() == null
+                  && uri.getHost() == null
+                  && uri.getPath() != null) {
+                try {
+                  String path = uri.getPath();
+                  path = (path.startsWith("/") ? "/testplugin" : "/testplugin/")
+                      + path;
+                  return new URI(
+                      null, null, path, uri.getQuery(), uri.getFragment())
+                      .toString();
+                } catch (URISyntaxException ex) {
+                  ex.printStackTrace();
+                  return null;
+                }
+              } else {
+                return null;
+              }
+            }
+        });
   }
 }

@@ -21,6 +21,7 @@ import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
+import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.TreeConstruction;
 import com.google.caja.util.Pipeline;
 import static com.google.caja.plugin.SyntheticNodes.s;
@@ -41,20 +42,31 @@ public final class ConsolidateCodeStage implements Pipeline.Stage<Jobs> {
     Block initFunctionBody = s(new Block(Collections.<Statement>emptyList()));
 
     MutableParseTreeNode.Mutation mut = initFunctionBody.createMutation();
-    
+
     ListIterator<Job> it = jobs.getJobs().listIterator();
     while (it.hasNext()) {
       Job job = it.next();
       if (Job.JobType.JAVASCRIPT != job.getType()) { continue; }
-      
-      Block body = (Block) job.getRoot().node;
-      MutableParseTreeNode.Mutation old = body.createMutation();
-      for (Statement s : body.children()) {
-        old.removeChild(s);
-        mut.appendChild(s);
+
+      if (job.getTarget() != null) {
+        AncestorChain<?> toReplace = job.getTarget();
+        ((MutableParseTreeNode) toReplace.parent.node).replaceChild(
+            job.getRoot().node, toReplace.node);
+      } else {
+        Statement stmt = (Statement) job.getRoot().node;
+        if (stmt instanceof Block) {
+          Block body = (Block) stmt;
+          MutableParseTreeNode.Mutation old = body.createMutation();
+          for (Statement s : body.children()) {
+            old.removeChild(s);
+            mut.appendChild(s);
+          }
+          old.execute();
+        } else {
+          mut.appendChild(stmt);
+        }
       }
-      old.execute();
-      
+
       it.remove();
     }
     mut.execute();
@@ -66,11 +78,10 @@ public final class ConsolidateCodeStage implements Pipeline.Stage<Jobs> {
             TreeConstruction.memberAccess("___", "loadModule"),
             TreeConstruction.function(  // function (___OUTERS___)
                 null, initFunctionBody,
-                jobs.getPluginMeta().namespaceName)))))));
+                ReservedNames.OUTERS)))))));
 
     jobs.getJobs().add(new Job(new AncestorChain<Block>(jsTree)));
 
     return jobs.hasNoFatalErrors();
   }
 }
-

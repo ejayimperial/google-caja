@@ -14,6 +14,8 @@
 
 package com.google.caja.plugin;
 
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
@@ -601,7 +603,33 @@ public final class CssValidatorTest extends TestCase {
   }
 
   public void testContent() throws Exception {
-    // TODO
+    // Tests a string that is not a URL.
+    runTest("body:before { content: 'Hello ' } body:after { content: 'World' }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : body\n"
+            + "        Pseudo\n"
+            + "          IdentLiteral : before\n"
+            + "    Declaration\n"
+            + "      Property : content\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=STRING"
+                        + " ; cssPropertyPart=content\n"
+            + "          StringLiteral : Hello \n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : body\n"
+            + "        Pseudo\n"
+            + "          IdentLiteral : after\n"
+            + "    Declaration\n"
+            + "      Property : content\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=STRING"
+                        + " ; cssPropertyPart=content\n"
+            + "          StringLiteral : World\n");
   }
 
   public void testBackground() throws Exception {
@@ -732,14 +760,14 @@ public final class CssValidatorTest extends TestCase {
 
   private void fails(String css) throws Exception {
     CssTree t = parseCss(css);
-    CssValidator v = new CssValidator(mq);
+    CssValidator v = makeCssValidator(mq);
     assertTrue(css, !v.validateCss(ac(t)));
   }
 
   private void warns(String css) throws Exception {
     CssTree t = parseCss(css);
     MessageQueue smq = new SimpleMessageQueue();
-    CssValidator v = new CssValidator(smq);
+    CssValidator v = makeCssValidator(smq);
     boolean valid = v.validateCss(ac(t));
     mq.getMessages().addAll(smq.getMessages());
     assertTrue(css, valid);
@@ -750,7 +778,7 @@ public final class CssValidatorTest extends TestCase {
     MessageContext mc = new MessageContext();
     CssTree cssTree = parseCss(css);
     MessageQueue smq = new SimpleMessageQueue();
-    CssValidator v = new CssValidator(smq);
+    CssValidator v = makeCssValidator(smq);
     boolean valid = v.validateCss(ac(cssTree));
     mq.getMessages().addAll(smq.getMessages());
     assertTrue(css, valid);
@@ -763,6 +791,11 @@ public final class CssValidatorTest extends TestCase {
     cssTree.format(mc, sb);
     assertEquals(css, golden.trim(), sb.toString().trim());
     assertTrue(css, smq.getMessages().isEmpty());
+  }
+
+  private static CssValidator makeCssValidator(MessageQueue mq) {
+    return new CssValidator(
+        CssSchema.getDefaultCss21Schema(mq), HtmlSchema.getDefault(mq), mq);
   }
 
   private static <T extends ParseTreeNode> AncestorChain<T> ac(T node) {

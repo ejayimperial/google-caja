@@ -14,6 +14,8 @@
 
 package com.google.caja.plugin.stages;
 
+import com.google.caja.lang.html.HtmlSchema;
+import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.plugin.HtmlValidator;
 import com.google.caja.plugin.Job;
@@ -28,13 +30,20 @@ import com.google.caja.util.Pipeline;
  *
  * @author mikesamuel@gmail.com
  */
-public class ValidateHtmlStage implements Pipeline.Stage<Jobs> {
+public final class ValidateHtmlStage implements Pipeline.Stage<Jobs> {
+  private final HtmlSchema htmlSchema;
+
+  public ValidateHtmlStage(HtmlSchema htmlSchema) {
+    if (null == htmlSchema) { throw new NullPointerException(); }
+    this.htmlSchema = htmlSchema;
+  }
+
   public boolean apply(Jobs jobs) {
-    HtmlValidator v = new HtmlValidator(jobs.getMessageQueue());
+    HtmlValidator v = new HtmlValidator(htmlSchema, jobs.getMessageQueue());
 
     boolean valid = true;
     for (Job job : jobs.getJobsByType(Job.JobType.HTML)) {
-      if (!v.validate((DomTree) job.getRoot().node, null)) {
+      if (!v.validate(job.getRoot().cast(DomTree.class))) {
         valid = false;
         // Keep going so that we can display error messages for all inputs.
       }

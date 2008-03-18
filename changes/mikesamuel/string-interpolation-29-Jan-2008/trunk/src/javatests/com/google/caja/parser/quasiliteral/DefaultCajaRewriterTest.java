@@ -14,26 +14,17 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.CharProducer;
-import com.google.caja.lexer.InputSource;
-import com.google.caja.lexer.JsLexer;
-import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.js.Parser;
-import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.Block;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
-import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.TestUtil;
 import com.google.caja.plugin.SyntheticNodes;
 import junit.framework.TestCase;
 
-import java.io.StringReader;
-import java.net.URI;
 import java.util.Collections;
 
 /**
@@ -45,20 +36,20 @@ public class DefaultCajaRewriterTest extends TestCase {
   ////////////////////////////////////////////////////////////////////////
 
   public void testSyntheticIsUntouched() throws Exception {
-    ParseTreeNode input = parseText(
+    ParseTreeNode input = TestUtil.parse(
         "function foo() { this; arguments; }");
     setTreeSynthetic(input);
     checkSucceeds(input, input);
   }
 
   public void testNestedInsideSyntheticIsExpanded() throws Exception {
-    ParseTreeNode innerInput = parseText("function foo() {}");
+    ParseTreeNode innerInput = TestUtil.parse("function foo() {}");
     ParseTreeNode input = ParseTreeNodes.newNodeInstance(
         Block.class,
         null,
         Collections.singletonList(innerInput));
     setSynthetic(input);
-    ParseTreeNode expectedResult = parseText(
+    ParseTreeNode expectedResult = TestUtil.parse(
         "{ ___OUTERS___.foo = ___.simpleFunc(function foo() {}); }");
     checkSucceeds(input, expectedResult);
   }
@@ -87,6 +78,235 @@ public class DefaultCajaRewriterTest extends TestCase {
     // Our parser does not recognize "with" at all.
   }
 
+  public void testForeach() throws Exception {
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "for (var k in x) { k; }",
+        "{" +
+        "  ___OUTERS___.x0___ = ___OUTERS___.x;" +
+        "  ___OUTERS___.x1___ = undefined;" +
+        "  ___OUTERS___.k;" +
+        "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
+        "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
+        "      ___OUTERS___.k = ___OUTERS___.x1___;" +
+        "      ___OUTERS___.k;" +
+        "    }" +
+        "  }" +
+        "}");
+    }
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "try { } catch (e) { for (var k in x) { k; } }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    {" +
+        "      ___OUTERS___.x0___ = ___OUTERS___.x;" +
+        "      ___OUTERS___.x1___ = undefined;" +
+        "      ___OUTERS___.k;" +
+        "      for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
+        "        if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
+        "          ___OUTERS___.k = ___OUTERS___.x1___;" +
+        "          ___OUTERS___.k;" +
+        "        }" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}");
+    }
+    checkSucceeds(
+        "function() {" +
+        "  for (var k in x) { k; }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  {" +
+        "    var x0___ = ___OUTERS___.x;" +
+        "    var x1___ = undefined;" +
+        "    var k;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumPub(x0___, x1___)) {" +
+        "        k = x1___;" +
+        "        k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}));");
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed      
+    checkSucceeds(
+        "for (k in x) { k; }",
+        "{" +
+        "  ___OUTERS___.x0___ = ___OUTERS___.x;" +
+        "  ___OUTERS___.x1___ = undefined;" +
+        "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
+        "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
+        "      ___OUTERS___.k = ___OUTERS___.x1___;" +
+        "      ___OUTERS___.k;" +
+        "    }" +
+        "  }" +
+        "}");
+    }
+    checkSucceeds(
+        "function() {" +
+        "  for (k in x) { k; }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  {" +
+        "    var x0___ = ___OUTERS___.x;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumPub(x0___, x1___)) {" +
+        "        ___OUTERS___.k = x1___;" +
+        "        ___OUTERS___.k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}));");
+    checkSucceeds(
+        "function() {" +
+        "  var k;" +
+        "  for (k in x) { k; }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  var k;" +
+        "  {" +
+        "    var x0___ = ___OUTERS___.x;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumPub(x0___, x1___)) {" +
+        "        k = x1___;" +
+        "        k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}));");
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "for (y.k in x) { y.k; }",
+        "{" +
+        "  ___OUTERS___.x0___ = ___OUTERS___.x;" +
+        "  ___OUTERS___.x1___ = undefined;" +
+        "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
+        "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
+        "      ___OUTERS___.y.k = ___OUTERS___.x1___;" +
+        "      ___OUTERS___.y.k;" +
+        "    }" +
+        "  }" +
+        "}");
+    }
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "function() {" +
+        "  for (y.k in x) { y.k; }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  {" +
+        "    var x0___ = ___OUTERS___.x;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumPub(x0___, x1___)) {" +
+        "        ___OUTERS___.y.k = x1___;" +
+        "        ___OUTERS___.y.k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}));");
+    }
+    checkSucceeds(
+        "function foo() {" +
+        "  for (var k in this) { k; }" +
+        "}",
+        "___OUTERS___.foo = ___.ctor(function foo() {" +
+        "  var t___ = this;" +
+        "  {" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    var k;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        k = x1___;" +
+        "        k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "});");
+    checkSucceeds(
+        "for (var k in this) { k; }",
+        "{" +
+        "  ___OUTERS___.x0___ = ___OUTERS___;" +
+        "  ___OUTERS___.x1___ = undefined;" +
+        "  ___OUTERS___.k;" +
+        "  for (x1___ in x0___) {" +
+        "    if (___.canEnumProp(x0___, x1___)) {" +
+        "      ___OUTERS___.k = x1___;" +
+        "      ___OUTERS___.k;" +
+        "    }" +
+        "  }" +
+        "}");
+    checkSucceeds(
+        "function foo() {" +
+        "  for (k in this) { k; }" +
+        "}",
+        "___OUTERS___.foo = ___.ctor(function foo() {" +
+        "  var t___ = this;" +
+        "  {" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        ___OUTERS___.k = x1___;" +
+        "        ___OUTERS___.k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "});");
+    checkSucceeds(
+        "function foo() {" +
+        "  var k;" +
+        "  for (k in this) { k; }" +
+        "}",
+        "___OUTERS___.foo = ___.ctor(function foo() {" +
+        "  var t___ = this;" +
+        "  var k;" +
+        "  {" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        k = x1___;" +
+        "        k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "});");
+    if (false) {
+    // TODO(ihab.awad): Enable when http://code.google.com/p/google-caja/issues/detail?id=68 fixed
+    checkSucceeds(
+        "function foo() {" +
+        "  for (y.k in this) { y.k; }" +
+        "}",
+        "___OUTERS___.foo = ___.ctor(function foo() {" +
+        "  var t___ = this;" +
+        "  {" +
+        "    var x0___ = t___;" +
+        "    var x1___ = undefined;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumProp(x0___, x1___)) {" +
+        "        ___OUTERS___.y.k = x1___;" +
+        "        ___OUTERS___.y.k;" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "});");
+    }
+  }
+
   public void testTryCatch() throws Exception {
     checkSucceeds(
         "try {" +
@@ -99,9 +319,13 @@ public class DefaultCajaRewriterTest extends TestCase {
         "try {" +
         "  ___OUTERS___.e;" +
         "  ___OUTERS___.x;" +
-        "} catch (e) {" +
-        "  e;" +
-        "  ___OUTERS___.y;" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    e;" +
+        "    ___OUTERS___.y;" +
+        "  }" +
         "}");
   }
 
@@ -120,9 +344,13 @@ public class DefaultCajaRewriterTest extends TestCase {
         "try {" +
         "  ___OUTERS___.e;" +
         "  ___OUTERS___.x;" +
-        "} catch (e) {" +
-        "  e;" +
-        "  ___OUTERS___.y;" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    e;" +
+        "    ___OUTERS___.y;" +
+        "  }" +
         "} finally {" +
         "  ___OUTERS___.e;" +
         "  ___OUTERS___.z;" +
@@ -166,6 +394,16 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "this;",
         "___OUTERS___;");
+    checkSucceeds(
+        "try { } catch (e) { this; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    ___OUTERS___;" +
+        "  }" +
+        "}");
   }
 
   public void testVarBadSuffix() throws Exception {
@@ -176,6 +414,27 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "function() { var foo_ = 3; }",
         "___.primFreeze(___.simpleFunc(function() { var foo_ = 3; }))");
+  }
+
+  public void testVarBadSuffixDeclaration() throws Exception {
+    checkFails(
+        "function foo__() { }",
+        "Variables cannot end in \"__\"");
+    checkFails(
+        "var foo__ = 3;",
+        "Variables cannot end in \"__\"");
+    checkFails(
+        "var foo__;",
+        "Variables cannot end in \"__\"");
+    checkFails(
+        "function() { function foo__() { } };",
+        "Variables cannot end in \"__\"");
+    checkFails(
+        "function() { var foo__ = 3; };",
+        "Variables cannot end in \"__\"");
+    checkFails(
+        "function() { var foo__; };",
+        "Variables cannot end in \"__\"");
   }
 
   public void testVarBadGlobalSuffix() throws Exception {
@@ -263,6 +522,19 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    ___OUTERS___.p = t___.x_canRead___ ? t___.x : ___.readProp(t___, 'x');" +
         "  });" +
         "}));");
+    checkSucceeds(
+        "this.x;",
+        "___OUTERS___.x_canRead___ ? ___OUTERS___.x : ___.readProp(___OUTERS___, 'x');");
+    checkSucceeds(
+        "try { } catch (e) { this.x; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    ___OUTERS___.x_canRead___ ? ___OUTERS___.x : ___.readProp(___OUTERS___, 'x');" +
+        "  }" +
+        "}");
   }
 
   public void testReadBadInternal() throws Exception {
@@ -289,6 +561,19 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    ___OUTERS___.p = ___.readProp(t___, 3);" +
         "  }" +
         ");");
+    checkSucceeds(
+        "this[3];",
+        "___.readProp(___OUTERS___, 3);");
+    checkSucceeds(
+        "try { } catch (e) { this[3]; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    ___.readProp(___OUTERS___, 3);" +
+        "  }" +
+        "}");
   }
   
   public void testReadIndexPublic() throws Exception {
@@ -299,6 +584,15 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    var foo;" +
         "    ___OUTERS___.p = ___.readPub(foo, 3);" +
         "}));");
+  }
+
+  public void testSetBadThis() throws Exception {
+    checkFails(
+        "this = 3;",
+        "Cannot assign to \"this\"");
+    checkFails(
+        "function f() { this = 3; }",
+        "Cannot assign to \"this\"");
   }
 
   public void testSetBadSuffix() throws Exception {
@@ -317,10 +611,33 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    var t___ = this;" +
         "    (function() {" +
         "      var x___ = ___OUTERS___.x;" +
-        "      t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
+        "      return t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
         "    })();" +
         "  });" +
         "}));");
+    checkSucceeds(
+        "this.p = x;",
+        "(function() {" +
+        "  var x___ = ___OUTERS___.x;" +
+        "  return ___OUTERS___.p_canSet___ ?" +
+        "      (___OUTERS___.p = x___) :" +
+        "      ___.setProp(___OUTERS___, 'p', x___);" +
+        "})();");
+    checkSucceeds(
+        "try { } catch (e) { this.p = x; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "      (function() {" +
+        "        var x___ = ___OUTERS___.x;" +
+        "        return ___OUTERS___.p_canSet___ ?" +
+        "            (___OUTERS___.p = x___) :" +
+        "            ___.setProp(___OUTERS___, 'p', x___);" +
+        "      })();" +
+        "  }" +
+        "}");
   }
 
   public void testSetMember() throws Exception {
@@ -333,7 +650,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  var foo = ___.simpleFunc(function foo() {});" +
         "  (function() {" +
         "    var x___ = ___OUTERS___.x;" +
-        "    ___.setMember(foo, 'p', x___);" +
+        "    return ___.setMember(foo, 'p', x___);" +
         "  })();" +
         "}));");
     checkSucceeds(
@@ -348,7 +665,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "      var t___ = this;" +
         "      t___;" +
         "    });" +
-        "    ___.setMember(foo, 'p', x___);" +
+        "    return ___.setMember(foo, 'p', x___);" +
         "  })();" +            
         "}));");
   }
@@ -379,7 +696,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "      var t___ = this;" +
         "      (function() {" +
         "        var x___ = 3;" +
-        "        t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
+        "        return t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
         "      })();" +
         "    })" +
         "});");
@@ -408,7 +725,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  (function() {" +
         "    var x___ = x;" +
         "    var x0___ = ___OUTERS___.y;" +
-        "    x___.p_canSet___ ? (x___.p = x0___) : ___.setPub(x___, 'p', x0___);" +
+        "    return x___.p_canSet___ ? (x___.p = x0___) : ___.setPub(x___, 'p', x0___);" +
         "  })();" +
         "}));");
   }
@@ -440,7 +757,13 @@ public class DefaultCajaRewriterTest extends TestCase {
         "}));");
   }
 
-  public  void testSetInitialize() throws Exception {
+  public void testSetBadInitialize() throws Exception {
+    checkFails(
+        "var x__ = 3",
+        "Variables cannot end in \"__\"");
+  }
+
+  public void testSetInitialize() throws Exception {
     checkSucceeds(
         "function() {" +
         "  var v = x;" +
@@ -453,6 +776,12 @@ public class DefaultCajaRewriterTest extends TestCase {
         "___OUTERS___.v = ___OUTERS___.x");
   }  
   
+  public void testSetBadDeclare() throws Exception {
+    checkFails(
+        "var x__",
+        "Variables cannot end in \"__\"");
+  }
+
   public  void testSetDeclare() throws Exception {
     checkSucceeds(
         "function() {" +
@@ -464,6 +793,35 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "var v;",
         "___OUTERS___.v;");
+    checkSucceeds(
+        "try { } catch (e) { var v; }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    ___OUTERS___.v;" +
+        "  }" +
+        "}");
+  }
+
+  public void testNewCalllessCtor() throws Exception {
+    checkSucceeds(
+        "function foo() { this.p = 3; }" +
+        "new foo;",
+        "___OUTERS___.foo = ___.ctor(function foo() {" +
+        "  var t___ = this;" +
+        "  (function() {" +
+        "    var x___ = 3;" +
+        "    return t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
+        "  })();" +
+        "});" +
+        "new (___.asCtor(___OUTERS___.foo))();");
+    checkSucceeds(
+        "function foo() {}" +
+        "new foo;",
+        "___OUTERS___.foo = ___.simpleFunc(function foo() {});" +
+        "new (___.asCtor(___OUTERS___.foo))();");
   }
 
   public void testNewCtor() throws Exception {
@@ -474,7 +832,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  var t___ = this;" +
         "  (function() {" +
         "    var x___ = 3;" +
-        "    t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
+        "    return t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
         "  })();" +
         "});" +
         "new (___.asCtor(___OUTERS___.foo))(___OUTERS___.x, ___OUTERS___.y);");
@@ -483,6 +841,11 @@ public class DefaultCajaRewriterTest extends TestCase {
         "new foo(x, y);",
         "___OUTERS___.foo = ___.simpleFunc(function foo() {});" +
         "new (___.asCtor(___OUTERS___.foo))(___OUTERS___.x, ___OUTERS___.y);");
+    checkSucceeds(
+        "function foo() {}" +
+        "new foo();",
+        "___OUTERS___.foo = ___.simpleFunc(function foo() {});" +
+        "new (___.asCtor(___OUTERS___.foo))();");
   }
 
   public void testNewBadCtor() throws Exception {
@@ -527,11 +890,32 @@ public class DefaultCajaRewriterTest extends TestCase {
         "      var x0___ = ___OUTERS___.x;" +
         "      var x1___ = ___OUTERS___.y;" +
         "      return t___.f_canCall___ ?" +
-        "          this.f(x0___, x1___) :" +
+        "          t___.f(x0___, x1___) :" +
         "          ___.callProp(t___, 'f', [x0___, x1___]);" +
         "    })();" +
         "  });" +
         "}));");
+    checkSucceeds(
+        "this.f()",
+        "(function() {" +
+        "  return ___OUTERS___.f_canCall___ ?" +
+        "      ___OUTERS___.f() :" +
+        "      ___.callProp(___OUTERS___, 'f', []);" +
+        "})()");
+    checkSucceeds(
+        "try { } catch (e) { this.f(); }",
+        "try {" +
+        "} catch (ex___) {" +
+        "  try {" +
+        "    throw ___.tameException(ex___);" +
+        "  } catch (e) {" +
+        "    (function() {" +
+        "      return ___OUTERS___.f_canCall___ ?" +
+        "          ___OUTERS___.f() :" +
+        "          ___.callProp(___OUTERS___, 'f', []);" +
+        "    })()" +
+        "  }" +
+        "}");
   }
 
   public void testCallBadInternal() throws Exception {
@@ -587,7 +971,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "        var t___ = this;" +
         "        (function() {" +
         "          var x___ = 3;" +
-        "          t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
+        "          return t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
         "        })();" +            
         "      })" +
         "  });" +
@@ -609,7 +993,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "        var t___ = this;" +
         "        (function() {" +
         "          var x___ = 3;" +
-        "          t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
+        "          return t___.p_canSet___ ? (t___.p = x___) : ___.setProp(t___, 'p', x___);" +
         "        })();" +
         "      })" +
         "  }, {" +
@@ -814,6 +1198,24 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    y = ___OUTERS___.z;" +            
         "  });" +
         "}));");
+    checkSucceeds(
+        "function() {" +
+        "  function foo() {" +
+        "    var self = this;" +
+        "    return function() { return self; };" +
+        "  }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  var foo = ___.ctor(function foo() {" +
+        "    var t___ = this;" +
+        "    var self = t___;" +
+        "    return ___.primFreeze(___.simpleFunc(function() {" +
+        "      return self;" +            
+        "    }));" +
+        "  });" +
+        "}));");
+
+
   }
 
   public void testMapEmpty() throws Exception {
@@ -919,8 +1321,26 @@ public class DefaultCajaRewriterTest extends TestCase {
     // Tested implicitly by other cases
   }
 
+  public void testRecurseArrayConstructor() throws Exception {
+    checkSucceeds(
+        "foo = [ bar, baz ];",
+        "___OUTERS___.foo = [ ___OUTERS___.bar, ___OUTERS___.baz ];");
+  }
+
   public void testRecurseBlock() throws Exception {
     // Tested implicitly by other cases
+  }
+
+  public void testRecurseBreakStmt() throws Exception {
+    checkSucceeds(
+        "while (true) { break; }",
+        "while (true) { break; }");
+  }
+
+  public void testRecurseCaseStmt() throws Exception {
+    checkSucceeds(
+        "switch (x) { case 1: break; }",
+        "switch (___OUTERS___.x) { case 1: break; }");
   }
 
   public void testRecurseConditional() throws Exception {
@@ -941,6 +1361,18 @@ public class DefaultCajaRewriterTest extends TestCase {
         "}");
   }
 
+  public void testRecurseContinueStmt() throws Exception {
+    checkSucceeds(
+        "while (true) { continue; }",
+        "while (true) { continue; }");
+  }
+
+  public void testRecurseDefaultCaseStmt() throws Exception {
+    checkSucceeds(
+        "switch (x) { default: break; }",
+        "switch(___OUTERS___.x) { default: break; }");
+  }
+  
   public void testRecurseExpressionStmt() throws Exception {
     // Tested implicitly by other cases
   }
@@ -986,6 +1418,12 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "x + y;",
         "___OUTERS___.x + ___OUTERS___.y");
+    checkSucceeds(
+        "1 + 2 * 3 / 4 - -5",
+        "1 + 2 * 3 / 4 - -5");
+    checkSucceeds(
+        "x  = y = 3;",
+        "___OUTERS___.x = ___OUTERS___.y = 3;");
   }
 
   public void testRecurseReturnStmt() throws Exception {
@@ -994,6 +1432,12 @@ public class DefaultCajaRewriterTest extends TestCase {
         "return ___OUTERS___.x;");
   }
 
+  public void testRecurseSwitchStmt() throws Exception {
+    checkSucceeds(
+        "switch (x) { }",
+        "switch (___OUTERS___.x) { }");
+  }
+  
   public void testRecurseThrowStmt() throws Exception {
     checkSucceeds(
         "throw x;",
@@ -1031,8 +1475,10 @@ public class DefaultCajaRewriterTest extends TestCase {
   private void checkFails(String input, String error) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = TestUtil.createTestMessageQueue(mc);
-    new DefaultCajaRewriter(true).expand(parseText(input), mq);
+    new DefaultCajaRewriter(true).expand(TestUtil.parse(input), mq);
 
+    assertFalse(mq.getMessages().isEmpty());
+    
     StringBuilder messageText = new StringBuilder();
     for (Message m : mq.getMessages()) {
       m.format(mc, messageText);
@@ -1046,7 +1492,7 @@ public class DefaultCajaRewriterTest extends TestCase {
   private void checkSucceeds(
       ParseTreeNode inputNode,
       ParseTreeNode expectedResultNode)
-      throws Exception{
+      throws Exception {
     MessageQueue mq = TestUtil.createTestMessageQueue(new MessageContext());
     ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
     for (Message m : mq.getMessages()) {
@@ -1055,39 +1501,26 @@ public class DefaultCajaRewriterTest extends TestCase {
       }
     }
     if (expectedResultNode != null) {
+      // Test that the source code-like renderings are identical. This will catch any
+      // obvious differences between expected and actual.
       assertEquals(
-          format(expectedResultNode),
-          format(actualResultNode));
+          TestUtil.render(expectedResultNode),
+          TestUtil.render(actualResultNode));
+      // Then, for good measure, test that the S-expression-like formatted representations
+      // are also identical. This will catch any differences in tree topology that somehow
+      // do not appear in the source code representation (usually due to programming errors).
+      assertEquals(
+          TestUtil.format(expectedResultNode),
+          TestUtil.format(actualResultNode));
     }
   }
 
   private void checkSucceeds(String input, String expectedResult) throws Exception {
-    checkSucceeds(parseText(input), parseText(expectedResult));
+    checkSucceeds(TestUtil.parse(input), TestUtil.parse(expectedResult));
   }
 
   private void checkSucceeds(String input) throws Exception {
-    checkSucceeds(parseText(input), null);
-  }
-
-  private static String format(ParseTreeNode n) throws Exception {
-    StringBuilder output = new StringBuilder();
-    n.render(new RenderContext(new MessageContext(), output));
-    // Alternative, to get "S-expression" tree representation for debug:
-    //   n.format(new MessageContext(), output);
-    return output.toString();
-  }
-
-  public ParseTreeNode parseText(String text) throws Exception {
-    MessageContext mc = new MessageContext();
-    MessageQueue mq = TestUtil.createTestMessageQueue(mc);
-    InputSource is = new InputSource(new URI("file:///no/input/source"));
-    CharProducer cp = CharProducer.Factory.create(new StringReader(text), is);
-    JsLexer lexer = new JsLexer(cp);
-    JsTokenQueue tq = new JsTokenQueue(lexer, is, JsTokenQueue.NO_NON_DIRECTIVE_COMMENT);
-    Parser p = new Parser(tq, mq);
-    Statement stmt = p.parse();
-    p.getTokenQueue().expectEmpty();
-    return stmt;
+    checkSucceeds(TestUtil.parse(input), null);
   }
 
   private String readResource(String resource) throws Exception {

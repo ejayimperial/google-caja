@@ -15,7 +15,6 @@
 package com.google.caja.plugin;
 
 import com.google.caja.util.RhinoTestBed;
-import com.google.caja.util.TestUtil;
 import java.io.StringReader;
 import junit.framework.TestCase;
 
@@ -28,6 +27,7 @@ public final class HtmlSanitizerTest extends TestCase {
   public void testHtmlSanitizer() throws Exception {
     RhinoTestBed.runJs(
         null,
+        new RhinoTestBed.Input(getClass(), "html4-defs.js"),
         new RhinoTestBed.Input(getClass(), "html-sanitizer.js"),
         new RhinoTestBed.Input(getClass(), "asserts.js"),
         new RhinoTestBed.Input(getClass(), "html-sanitizer-test.js"),

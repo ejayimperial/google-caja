@@ -14,9 +14,12 @@
 
 package com.google.caja.plugin.stages;
 
+import com.google.caja.lang.css.CssSchema;
+import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.plugin.CssRewriter;
+import com.google.caja.plugin.CssTemplate;
 import com.google.caja.plugin.CssValidator;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
@@ -26,7 +29,17 @@ import com.google.caja.util.Pipeline;
  * Make sure the css is well formed and prefix all rules
  * so that they don't affect nodes outside the plugin.
  */
-public class ValidateCssStage implements Pipeline.Stage<Jobs> {
+public final class ValidateCssStage implements Pipeline.Stage<Jobs> {
+  private final CssSchema cssSchema;
+  private final HtmlSchema htmlSchema;
+
+  public ValidateCssStage(CssSchema cssSchema, HtmlSchema htmlSchema) {
+    if (null == cssSchema) { throw new NullPointerException(); }
+    if (null == htmlSchema) { throw new NullPointerException(); }
+    this.cssSchema = cssSchema;
+    this.htmlSchema = htmlSchema;
+  }
+
   /**
    * Sanitizes and namespace any css jobs.
    * @return true if the input css was safe.  False if any destructive
@@ -37,7 +50,8 @@ public class ValidateCssStage implements Pipeline.Stage<Jobs> {
     // TODO(mikesamuel): build up a list of classes and ids for use in
     // generating "no such symbol" warnings from the GXPs.
     boolean valid = true;
-    CssValidator v = new CssValidator(jobs.getMessageQueue());
+    CssValidator v = new CssValidator(
+        cssSchema, htmlSchema, jobs.getMessageQueue());
     CssRewriter rw = new CssRewriter(
         jobs.getPluginMeta(), jobs.getMessageQueue());
     for (Job job : jobs.getJobsByType(Job.JobType.CSS)) {
@@ -46,7 +60,25 @@ public class ValidateCssStage implements Pipeline.Stage<Jobs> {
       valid &= v.validateCss(cssTree);
       valid &= rw.rewrite(cssTree);
     }
+    for (Job job : jobs.getJobsByType(Job.JobType.CSS_TEMPLATE)) {
+      AncestorChain<CssTemplate> tmpl = job.getRoot().cast(CssTemplate.class);
+      AncestorChain<CssTree> cssTree
+          = new AncestorChain<CssTree>(tmpl, tmpl.node.getCss());
+      valid &= v.validateCss(cssTree);
+      valid &= rw.rewrite(cssTree);
+    }
+    for (Job job : jobs.getJobsByType(Job.JobType.CSS_TEMPLATE)) {
+      // The parsetree node is a CssTree.StyleSheet
+      AncestorChain<CssTemplate> chain = job.getRoot().cast(CssTemplate.class);
+      valid &= validate(
+          v, rw, new AncestorChain<CssTree>(chain, chain.node.getCss()));
+    }
 
     return valid && jobs.hasNoFatalErrors();
+  }
+
+  private static final boolean validate(
+      CssValidator v, CssRewriter rw, AncestorChain<CssTree> css) {
+    return v.validateCss(css) & rw.rewrite(css);
   }
 }

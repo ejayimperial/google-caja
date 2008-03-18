@@ -17,6 +17,7 @@ package com.google.caja.plugin;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
+import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
@@ -34,26 +35,29 @@ import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Parser;
-import com.google.caja.parser.js.Statement;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
+import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.util.Criterion;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -64,166 +68,90 @@ import java.util.regex.Pattern;
  *
  * @author mikesamuel@gmail.com
  */
-public class PluginCompilerMain {
-  private String outPath = null;
-  private String namespaceName = "PLUGIN";
-  private String namespacePrefix = "plugin";
-  private String pathPrefix = "/plugin";
-  private MessageQueue mq = new SimpleMessageQueue();
-  private MessageContext mc = new MessageContext();
-  private PluginMeta meta;
-  private PluginCompiler compiler;
+public final class PluginCompilerMain {
+  private final MessageQueue mq;
+  private final MessageContext mc;
 
-  {
+  private PluginCompilerMain() {
+    mq = new SimpleMessageQueue();
+    mc = new MessageContext();
     mc.inputSources = new ArrayList<InputSource>();
   }
 
-  private boolean run(String[] args) {
+  private int run(String[] argv) {
+    Config config = new Config(
+        getClass(), System.err, "Cajoles HTML, CSS, and JS files to JS & CSS.");
+    if (!config.processArguments(argv)) {
+      return -1;
+    }
+
+    boolean success = false;
+    MessageContext mc = null;
     try {
-      args = parseFlags(args);
+      PluginMeta meta = new PluginMeta(
+          config.getCssPrefix(), makeEnvironment(config));
+      PluginCompiler compiler = new PluginCompiler(meta, mq);
+      mc = compiler.getMessageContext();
+      compiler.setCssSchema(config.getCssSchema(mq));
+      compiler.setHtmlSchema(config.getHtmlSchema(mq));
 
-      meta = new PluginMeta(
-          namespaceName, namespacePrefix, pathPrefix, "",
-          PluginMeta.TranslationScheme.AAJA,
-          PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
-      compiler = new PluginCompiler(meta);
+      success = parseInputs(config.getInputUris(), compiler) && compiler.run();
 
-      boolean success = true;
-      if (args.length == 0) {
-        usage();
-        System.err.println(
-            "Please specify 1 or more input .js, .css, or .gxp files");
-        success = false;
-      }
       if (success) {
-        success = parseInputs(args);
+        writeFile(config.getOutputJsFile(), compiler.getJavascript());
+        writeFile(config.getOutputCssFile(), compiler.getCss());
       }
-      if (success) {
-        success = compiler.run();
-      }
-      if (success) {
-        try {
-          dumpOutputs();
-        } catch (IOException ex) {
-          ex.printStackTrace();
-          System.err.println("Failed to write outputs");
-          success = false;
-        }
-      }
-      return success;
     } finally {
-      dumpMessages();
+      if (mc == null) { mc = new MessageContext(); }
+      MessageLevel maxMessageLevel = dumpMessages(mq, mc, System.err);
+      success &= MessageLevel.ERROR.compareTo(maxMessageLevel) > 0;
     }
+
+    return success ? 0 : -1;
   }
 
-  private String[] parseFlags(String[] args) {
-    // TODO(mikesamuel): replace with a CLI parsing library.
-    int i = 0;
-    while (i < args.length) {
-      String arg = args[i];
-      if (!arg.startsWith("--")) { break; }
-      if ("--".equals(arg)) {
-        ++i;
-        break;
-      }
-
-      String name, value;
-      int eq = arg.indexOf('=');
-      if (eq >= 0) {
-        name = arg.substring(0, eq);
-        value = arg.substring(eq + 1);
-        ++i;
-      } else {
-        name = arg;
-        value = args.length > ++i ? args[i++] : "";
-      }
-      if ("--out".equals(name)) {
-        this.outPath = value;
-      } else if ("--name".equals(name)) {
-        this.namespaceName = value;
-      } else if ("--prefix".equals(name)) {
-        this.namespacePrefix = value;
-      } else if ("--pathPrefix".equals(name)) {
-        while (value.endsWith("/") && value.length() > 1) {
-          value = value.substring(0, value.length() - 1);
-        }
-        this.pathPrefix = value;
-      } else {
-        usage();
-        System.exit(1);
-      }
-    }
-    if (i > 0) {
-      String[] argsLeft = new String[args.length - i];
-      System.arraycopy(args, i, argsLeft, 0, argsLeft.length);
-      args = argsLeft;
-    }
-    if (null == this.outPath) {
-      usage();
-      System.err.println("Please specify an output path prefix via --out");
-      System.exit(1);
-    }
-    return args;
-  }
-
-  private void usage() {
-    System.err.println(
-        "Usage: --out=<dir> [--name=<jsIdent>]"
-        + " [--prefix=<cssIdent>] [--pathPrefix=<uriPath>]");
-    // TODO: flesh out
-  }
-
-  private boolean parseInputs(String[] inputs) {
+  private boolean parseInputs(Collection<URI> inputs, PluginCompiler pluginc) {
     boolean parsePassed = true;
-    for (String input : inputs) {
+    for (URI input : inputs) {
       try {
         ParseTreeNode parseTree = parseInput(input);
         if (null == parseTree) {
           parsePassed = false;
         } else {
-          compiler.addInput(new AncestorChain<ParseTreeNode>(parseTree));
+          pluginc.addInput(new AncestorChain<ParseTreeNode>(parseTree));
         }
       } catch (ParseException ex) {
         ex.toMessageQueue(mq);
+        parsePassed = false;
+      } catch (IOException ex) {
+        mq.addMessage(MessageType.IO_ERROR,
+                      MessagePart.Factory.valueOf(ex.toString()));
+        parsePassed = false;
       }
     }
     return parsePassed;
   }
 
-  private static final Pattern ABS_URI_RE = Pattern.compile("^\\w+://");
-
-  private ParseTreeNode parseInput(String inputPath)
-      throws ParseException {
-    InputSource is;
-    if (ABS_URI_RE.matcher(inputPath).find()) {
-      try {
-        is = new InputSource(new URI(inputPath));
-      } catch (URISyntaxException ex) {
-        System.err.println("Bad input URI: " + inputPath);
-        System.exit(-1);
-        return null;
-      }
-    } else {
-      is = new InputSource(new File(inputPath));
-    }
-
+  /** Parse one input from a URI. */
+  private ParseTreeNode parseInput(URI input)
+      throws IOException, ParseException {
+    InputSource is = new InputSource(input);
     mc.inputSources.add(is);
+
+    // TODO(mikesamuel): capture the input as bytes, guess encoding, and
+    // store in a map so we can generate message snippets and side-by-side
+    // output.
+    InputStream in = input.toURL().openStream();
+    CharProducer cp = CharProducer.Factory.create(
+        new InputStreamReader(in, "UTF-8"), is);
     try {
-      InputStream in = new URL(is.getUri().toString()).openStream();
-      CharProducer cp = CharProducer.Factory.create(
-          new InputStreamReader(in, "UTF-8"), is);
-      try {
-        return parseInput(is, cp, mq);
-      } finally {
-        cp.close();
-      }
-    } catch (IOException ex) {
-      ex.printStackTrace();
-      System.err.println("Failed to read from " + is.getUri());
-      return null;
+      return parseInput(is, cp, mq);
+    } finally {
+      cp.close();
     }
   }
 
+  /** Classify an input by extension and use the appropriate parser. */
   static ParseTreeNode parseInput(
       InputSource is, CharProducer cp, MessageQueue mq)
       throws ParseException {
@@ -240,10 +168,16 @@ public class PluginCompilerMain {
     } else if (path.endsWith(".gxp")) {
       HtmlLexer lexer = new HtmlLexer(cp);
       lexer.setTreatedAsXml(true);
-      TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(
-          lexer, is, Criterion.Factory.<Token<HtmlTokenType>>optimist());
+      TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(lexer, is);
       input = DomParser.parseDocument(
           tq, OpenElementStack.Factory.createXmlElementStack());
+      tq.expectEmpty();
+    } else if (path.endsWith(".html")) {
+      HtmlLexer lexer = new HtmlLexer(cp);
+      lexer.setTreatedAsXml(false);
+      TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(lexer, is);
+      input = DomParser.parseFragment(
+          tq, OpenElementStack.Factory.createHtml5ElementStack(mq));
       tq.expectEmpty();
     } else if (path.endsWith(".css")) {
       CssLexer lexer = new CssLexer(cp);
@@ -251,7 +185,7 @@ public class PluginCompilerMain {
           lexer, is, new Criterion<Token<CssTokenType>>() {
             public boolean accept(Token<CssTokenType> tok) {
               return tok.type != CssTokenType.COMMENT
-              && tok.type != CssTokenType.SPACE;
+                  && tok.type != CssTokenType.SPACE;
             }
           });
 
@@ -291,6 +225,10 @@ public class PluginCompilerMain {
     return input;
   }
 
+  /**
+   * Look for a construct like @foo('bar'); in CSS which serves as a CSS
+   * template directive.
+   */
   private static CssTree.FunctionCall requireSingleStringLiteralCall(
       Mark startMark, TokenQueue<CssTokenType> tq) throws ParseException {
     tq.expectToken("(");
@@ -327,59 +265,66 @@ public class PluginCompilerMain {
 
   /** Valid name for a css template or one of its parameters. */
   private static final Pattern CSS_TEMPLATE_OR_PARAM_NAME =
-    Pattern.compile("[\"\'](_?[a-z][a-z0-9_]*)[\"\']");
+      Pattern.compile("[\"\'](_?[a-z][a-z0-9_]*)[\"\']");
 
-  private void dumpOutputs() throws IOException {
-    File f = new File(this.outPath);
-    File prefix = f.isDirectory() ? new File(f, "plugin") : f;
-    File cssFile = new File(prefix + ".css");
-    File jsFile = new File(prefix + ".js");
-    Writer cssOut = null, jsOut = null;
+  /** Write the given parse tree to the given file. */
+  private void writeFile(File f, ParseTreeNode output) {
+    if (output == null) { return; }
     try {
-      for (ParseTreeNode output : compiler.getOutputs()) {
-        Writer out;
-        if (output instanceof Statement) {
-          if (null == jsOut) {
-            jsOut = new OutputStreamWriter(
-                new FileOutputStream(jsFile), "UTF-8");
-          }
-          out = jsOut;
-        } else if (output instanceof CssTree) {
-          if (null == cssOut) {
-            cssOut = new OutputStreamWriter(
-                new FileOutputStream(cssFile), "UTF-8");
-          }
-          out = cssOut;
-        } else {
-          throw new AssertionError(output.getClass().getName());
-        }
+      Writer out = new OutputStreamWriter(new FileOutputStream(f), "UTF-8");
+      try {
         RenderContext rc = new RenderContext(mc, out, true);
         output.render(rc);
         rc.newLine();
+      } finally {
+        out.close();
       }
-    } finally {
-      try {
-        if (null != cssOut) { cssOut.close(); }
-      } catch (IOException ex) {
-        ex.printStackTrace();
-      }
-      try {
-        if (null != jsOut) { jsOut.close(); }
-      } catch (IOException ex) {
-        ex.printStackTrace();
-      }
+    } catch (IOException ex) {
+      mq.addMessage(MessageType.IO_ERROR,
+                    MessagePart.Factory.valueOf(ex.toString()));
     }
   }
 
-  private void dumpMessages() {
+  /**
+   * Dumps messages to the given output stream, returning the highest message
+   * level seen.
+   */
+  static MessageLevel dumpMessages(
+      MessageQueue mq, MessageContext mc, Appendable out) {
+    MessageLevel maxLevel = MessageLevel.values()[0];
+    for (Message m : mq.getMessages()) {
+      MessageLevel level = m.getMessageLevel();
+      if (maxLevel.compareTo(level) < 0) { maxLevel = level; }
+    }
+    MessageLevel ignoreLevel = null;
+    if (maxLevel.compareTo(MessageLevel.LINT) < 0) {
+      // If there's only checkpoints, be quiet.
+      ignoreLevel = MessageLevel.LOG;
+    }
     try {
       for (Message m : mq.getMessages()) {
-        System.out.print(m.getMessageLevel() + ":");
-        m.format(mc, System.out);
-        System.out.println();
+        MessageLevel level = m.getMessageLevel();
+        if (ignoreLevel != null && level.compareTo(ignoreLevel) <= 0) {
+          continue;
+        }
+        out.append(level.name() + ": ");
+        m.format(mc, out);
+        out.append("\n");
+
+        if (maxLevel.compareTo(level) < 0) { maxLevel = level; }
       }
     } catch (IOException ex) {
       ex.printStackTrace();
+    }
+    return maxLevel;
+  }
+
+  private PluginEnvironment makeEnvironment(Config config) {
+    try {
+      return new FileSystemEnvironment(
+          new File(config.getInputUris().iterator().next()).getParentFile());
+    } catch (IllegalArgumentException ex) {  // Not a file: URI
+      return PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT;
     }
   }
 
@@ -387,8 +332,7 @@ public class PluginCompilerMain {
     int exitCode;
     try {
       PluginCompilerMain main = new PluginCompilerMain();
-      boolean success = main.run(args);
-      exitCode = success ? 0 : 1;
+      exitCode = main.run(args);
     } catch (Exception ex) {
       ex.printStackTrace();
       exitCode = -1;
@@ -400,4 +344,53 @@ public class PluginCompilerMain {
       // so just suppress the security exception and return normally.
     }
   }
+}
+
+final class FileSystemEnvironment implements PluginEnvironment {
+ private final File directory;
+
+ FileSystemEnvironment(File directory) {
+   this.directory = directory;
+ }
+ 
+ public CharProducer loadExternalResource(
+     ExternalReference ref, String mimeType) {
+   File f = toFileUnderSameDirectory(ref.getUri());
+   if (f == null) { return null; }
+   try {
+     return CharProducer.Factory.create(
+         new InputStreamReader(new FileInputStream(f), "UTF-8"),
+         new InputSource(f.toURI()));
+   } catch (UnsupportedEncodingException ex) {
+     throw new AssertionError(ex);
+   } catch (FileNotFoundException ex) {
+     return null;
+   }
+ }
+
+ public String rewriteUri(ExternalReference ref, String mimeType) {
+   File f = toFileUnderSameDirectory(ref.getUri());
+   if (f == null) { return null; }
+   return f.toURI().relativize(directory.toURI()).toString();
+ }
+
+ private File toFileUnderSameDirectory(URI uri) {
+   if (!uri.isAbsolute()
+       && !uri.isOpaque()
+       && uri.getScheme() == null
+       && uri.getAuthority() == null
+       && uri.getFragment() == null
+       && uri.getPath() != null
+       && uri.getQuery() == null
+       && uri.getFragment() == null) {
+     File f = new File(new File(directory, ".").toURI().resolve(uri));
+     // Check that f is a descendant of directory
+     for (File tmp = f; tmp != null; tmp = tmp.getParentFile()) {
+       if (directory.equals(tmp)) {
+         return f;
+       }
+     }
+   }
+   return null;
+ }
 }

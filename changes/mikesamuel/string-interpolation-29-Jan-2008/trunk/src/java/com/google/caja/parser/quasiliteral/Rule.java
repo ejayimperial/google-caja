@@ -25,6 +25,7 @@ import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
+import static com.google.caja.plugin.SyntheticNodes.s;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
@@ -149,7 +150,7 @@ public abstract class Rule implements MessagePart {
 
   protected final ParseTreeNode expandAllTo(
       ParseTreeNode node,
-      Class parentNodeClass,
+      Class<? extends ParseTreeNode> parentNodeClass,
       Scope scope,
       MessageQueue mq) {
     List<ParseTreeNode> rewrittenChildren = new ArrayList<ParseTreeNode>();
@@ -195,7 +196,6 @@ public abstract class Rule implements MessagePart {
     return subst((String)args[0], bindings);
   }
 
-
   protected ParseTreeNode getFunctionHeadDeclarations(
       Rule rule,
       Scope scope,
@@ -218,22 +218,65 @@ public abstract class Rule implements MessagePart {
     return new ParseTreeNodeContainer(stmts);
   }
 
-  protected Pair<ParseTreeNode, ParseTreeNode> reuse(
+  protected Reference newReference(String name) {
+    return
+        SyntheticNodes.s(new Reference(SyntheticNodes.s(new Identifier(name))));    
+  }
+
+  protected Pair<ParseTreeNode, ParseTreeNode> reuseEmpty(
       String variableName,
-      ParseTreeNode value,
+      boolean inOuters,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
+    ParseTreeNode variableDefinition;
+
+    if (scope.getParent() == null) {
+      variableDefinition = substV(
+          "___OUTERS___.@ref;",
+          "ref", SyntheticNodes.s(new Reference(new Identifier(variableName))));
+      variableDefinition = s(new ExpressionStmt((Expression)variableDefinition));
+    } else {
+      variableDefinition = substV(
+          "var @ref;",
+          "ref", SyntheticNodes.s(new Identifier(variableName)));
+    }
+
     return new Pair<ParseTreeNode, ParseTreeNode>(
-        new Reference(new Identifier(variableName)),
-        substV(
-            "var @ref = @rhs;",
-            "ref", new Identifier(variableName),
-            "rhs", rewriter.expand(value, scope, mq)));
+        newReference(variableName),
+        variableDefinition);
+  }
+
+  protected Pair<ParseTreeNode, ParseTreeNode> reuse(
+      String variableName,
+      ParseTreeNode value,
+      boolean inOuters,
+      Rule rule,
+      Scope scope,
+      MessageQueue mq) {
+    ParseTreeNode variableDefinition;
+
+    if (inOuters) {
+      variableDefinition = substV(
+          "___OUTERS___.@ref = @rhs;",
+          "ref", SyntheticNodes.s(new Reference(new Identifier(variableName))),
+          "rhs", rewriter.expand(value, scope, mq));
+      variableDefinition = s(new ExpressionStmt((Expression)variableDefinition));
+    } else {
+      variableDefinition = substV(
+          "var @ref = @rhs;",
+          "ref", SyntheticNodes.s(new Identifier(variableName)),
+          "rhs", rewriter.expand(value, scope, mq));
+    }
+
+    return new Pair<ParseTreeNode, ParseTreeNode>(
+        newReference(variableName),
+        variableDefinition);
   }
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuseAll(
       ParseTreeNode arguments,
+      boolean inOuters,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
@@ -244,6 +287,7 @@ public abstract class Rule implements MessagePart {
       Pair<ParseTreeNode, ParseTreeNode> p = reuse(
           "x" + i + "___",
           arguments.children().get(i),
+          inOuters,
           rule,
           scope,
           mq);
@@ -336,7 +380,7 @@ public abstract class Rule implements MessagePart {
       if (literalsEndWith(bindings.get("keys"), "__")) {
         mq.addMessage(
             RewriterMessageType.MEMBER_KEY_MAY_NOT_END_IN_DOUBLE_UNDERSCORE,
-            rule, memberMap);
+            memberMap.getFilePosition(), rule, memberMap);
         return memberMap;
       }
 
@@ -347,7 +391,7 @@ public abstract class Rule implements MessagePart {
     }
 
     mq.addMessage(RewriterMessageType.MAP_EXPRESSION_EXPECTED,
-        rule, memberMap);
+        memberMap.getFilePosition(), rule, memberMap);
     return memberMap;
   }
 
@@ -372,12 +416,12 @@ public abstract class Rule implements MessagePart {
     if (!match("({@keys*: @vals*})", node, bindings)) {
       mq.addMessage(
           RewriterMessageType.MAP_EXPRESSION_EXPECTED,
-          rule, node);
+          node.getFilePosition(), rule, node);
       return false;
     } else if (literalsEndWith(bindings.get("keys"), "_")) {
       mq.addMessage(
           RewriterMessageType.KEY_MAY_NOT_END_IN_UNDERSCORE,
-          rule, node);
+          node.getFilePosition(), rule, node);
       return false;
     }
     return true;
