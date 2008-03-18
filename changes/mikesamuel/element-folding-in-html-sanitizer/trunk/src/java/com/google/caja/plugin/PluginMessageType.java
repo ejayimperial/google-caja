@@ -42,6 +42,11 @@ public enum PluginMessageType implements MessageTypeInt {
   DUPLICATE_ATTRIBUTE(
       "%s: attribute %s duplicates one at %s", MessageLevel.WARNING),
   UNKNOWN_ATTRIBUTE("%s: unknown attribute %s on %s", MessageLevel.ERROR),
+  UNSAFE_ATTRIBUTE("%s: attribute %s is not allowed on tag %s",
+                   MessageLevel.ERROR),
+  FOLDING_ELEMENT("%s: folding element %s into parent", MessageLevel.WARNING),
+  CANNOT_FOLD_ATTRIBUTE("%s: cannot fold attribute %s on %s into parent",
+                        MessageLevel.ERROR),
   DISALLOWED_ATTRIBUTE_VALUE("%s: attribute %s cannot have value %s",
                              MessageLevel.ERROR),
   EXTRANEOUS_CONTENT("%s: unused content in tag %s", MessageLevel.FATAL_ERROR),

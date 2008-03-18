@@ -131,12 +131,12 @@ public class HtmlSanitizerTest extends TestCase {
   }
   public void testElementFolding1() throws Exception {
     assertInvalid(xml("<body bgcolor=\"red\">Zoicks</body>"),
-                  "WARNING: tag body is not allowed",
-                  "ERROR: unknown attribute bgcolor on body");
+                  "WARNING: folding element body into parent",
+                  "ERROR: cannot fold attribute bgcolor on body into parent");
   }
   public void testElementFolding2() throws Exception {
     assertValid(xml("<body>Zoicks</body>"),
-                "Zoicks", "WARNING: tag body is not allowed");
+                "Zoicks", "WARNING: folding element body into parent");
   }
   public void testElementFolding3() throws Exception {
     assertInvalid(xml("<html>"
@@ -151,10 +151,10 @@ public class HtmlSanitizerTest extends TestCase {
                       + "<x>Four</x>"
                       + "</body>"
                       + "</html>"),
-                  "WARNING: tag html is not allowed",
-                  "WARNING: tag head is not allowed",
+                  "WARNING: folding element html into parent",
+                  "WARNING: folding element head into parent",
                   "WARNING: tag title is not allowed",
-                  "WARNING: tag body is not allowed",
+                  "WARNING: folding element body into parent",
                   "ERROR: unknown attribute styleo on p",
                   "ERROR: unknown tag x");
   }
@@ -172,10 +172,10 @@ public class HtmlSanitizerTest extends TestCase {
                     + "</body>"
                     + "</html>"),
                 "<p>Foo</p><p>One</p><p>Two</p>Three<p>Four</p>",
-                "WARNING: tag html is not allowed",
-                "WARNING: tag head is not allowed",
+                "WARNING: folding element html into parent",
+                "WARNING: folding element head into parent",
                 "WARNING: tag title is not allowed",
-                "WARNING: tag body is not allowed");
+                "WARNING: folding element body into parent");
   }
   public void testIgnoredElement() throws Exception {
     assertValid(

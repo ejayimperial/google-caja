@@ -53,6 +53,11 @@ public final class HtmlSanitizer {
     this.mq = mq;
   }
 
+  /**
+   * @param htmlRoot the node to sanitize.
+   * @return true iff the htmlRoot can be safely used.  If false, explanatory
+   *     messages were added to the MessageQueue passed to the constructor.
+   */
   public boolean sanitize(AncestorChain<? extends DomTree> htmlRoot) {
     DomTree t = htmlRoot.node;
 
@@ -65,6 +70,10 @@ public final class HtmlSanitizer {
       {
         String tagName = t.getValue();
         if (!schema.isElementAllowed(tagName)) {
+          PluginMessageType msgType = schema.lookupElement(tagName) != null
+              ? PluginMessageType.UNSAFE_TAG
+              : PluginMessageType.UNKNOWN_TAG;
+
           // Figure out what to do with the disallowed tag.  We can remove it
           // from the node, replace it with its children (fold), or error out.
           boolean ignore = false, fold = false;
@@ -74,14 +83,12 @@ public final class HtmlSanitizer {
               ignore = true;
             } else if (isElementFoldable(tagName)) {
               fold = true;
+              msgType = PluginMessageType.FOLDING_ELEMENT;
             }
           }
 
-          PluginMessageType msgType = schema.lookupElement(tagName) != null
-              ? PluginMessageType.UNSAFE_TAG
-              : PluginMessageType.UNKNOWN_TAG;
-          MessageLevel msgLevel =
-              ignore || fold ? MessageLevel.WARNING : msgType.getLevel();
+          MessageLevel msgLevel
+              = ignore || fold ? MessageLevel.WARNING : msgType.getLevel();
           mq.getMessages().add(new Message(
               msgType, msgLevel, t.getFilePosition(),
               MessagePart.Factory.valueOf(t.getValue())));
@@ -110,8 +117,10 @@ public final class HtmlSanitizer {
       HTML.Attribute a = schema.lookupAttribute(tagName, attrName);
       if (null == a || !schema.isAttributeAllowed(tagName, attrName)) {
         mq.addMessage(
-            PluginMessageType.UNKNOWN_ATTRIBUTE, t.getFilePosition(),
-            MessagePart.Factory.valueOf(attrName),
+            (null == a
+             ? PluginMessageType.UNKNOWN_ATTRIBUTE
+             : PluginMessageType.UNSAFE_ATTRIBUTE),
+            t.getFilePosition(), MessagePart.Factory.valueOf(attrName),
             MessagePart.Factory.valueOf(tagName));
         valid = false;
       }
@@ -188,7 +197,7 @@ public final class HtmlSanitizer {
       switch (child.getType()) {
         case ATTRNAME:  // Can't fold attributes cross element.
           mq.addMessage(
-              PluginMessageType.UNKNOWN_ATTRIBUTE, child.getFilePosition(),
+              PluginMessageType.CANNOT_FOLD_ATTRIBUTE, child.getFilePosition(),
               MessagePart.Factory.valueOf(child.getValue()),
               MessagePart.Factory.valueOf(el.node.getValue()));
           valid = false;
