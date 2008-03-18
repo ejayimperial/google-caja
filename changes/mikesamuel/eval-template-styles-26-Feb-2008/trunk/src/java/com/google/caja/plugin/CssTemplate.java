@@ -125,7 +125,8 @@ public final class CssTemplate extends AbstractParseTreeNode<ParseTreeNode> {
   }
 
   public void render(RenderContext r) {
-    throw new UnsupportedOperationException("NOT IMPLEMENTED YET");  // TODO
+    // TODO(mikesamuel): implement me
+    throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
   }
 
   /**
@@ -171,7 +172,7 @@ public final class CssTemplate extends AbstractParseTreeNode<ParseTreeNode> {
     List<Expression> blessCallOperands = new ArrayList<Expression>();
     blessCallOperands.add(
         TreeConstruction.memberAccess(
-            ReservedNames.OUTERS, "blessCss___"));
+            ReservedNames.OUTERS, ReservedNames.BLESS_CSS));
     blessCallOperands.addAll(parts);
 
     // return ___OUTERS___.blessCss___(...);
@@ -390,7 +391,7 @@ public final class CssTemplate extends AbstractParseTreeNode<ParseTreeNode> {
             // ___OUTERS___.cssNumber___(...)
             e = TreeConstruction.call(
                 TreeConstruction.memberAccess(
-                    ReservedNames.OUTERS, "cssNumber___"),
+                    ReservedNames.OUTERS, ReservedNames.CSS_NUMBER),
                 e);
             suffix = sub.getSuffix();
             break;
@@ -398,12 +399,12 @@ public final class CssTemplate extends AbstractParseTreeNode<ParseTreeNode> {
             // ___OUTERS___.cssUri___(...)
             e = TreeConstruction.call(
                 TreeConstruction.memberAccess(
-                    ReservedNames.OUTERS, "cssUri___"),
+                    ReservedNames.OUTERS, ReservedNames.CSS_URI),
                 e);
             if (esc == JsWriter.Esc.HTML_ATTRIB) {
               e = TreeConstruction.call(
                   TreeConstruction.memberAccess(
-                      ReservedNames.OUTERS, "htmlAttr___"),
+                      ReservedNames.OUTERS, ReservedNames.HTML_ATTR),
                   e);
             }
             suffix = "";
@@ -412,7 +413,7 @@ public final class CssTemplate extends AbstractParseTreeNode<ParseTreeNode> {
             // ___OUTERS___.cssColor___(...)
             e = TreeConstruction.call(
                 TreeConstruction.memberAccess(
-                    ReservedNames.OUTERS, "cssColor___"),
+                    ReservedNames.OUTERS, ReservedNames.CSS_COLOR),
                 e);
             suffix = "";
             break;

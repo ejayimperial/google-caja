@@ -211,15 +211,14 @@ public final class GxpCompiler {
       params.add(param);
     }
 
-    String OUTPUT_ARRAY_NAME = "out___";
     // Chunks of html should be pushed onto an array called out___
-    List<String> tgtChain = Arrays.asList(OUTPUT_ARRAY_NAME, "push");
+    List<String> tgtChain = Arrays.asList(ReservedNames.OUTPUT_BUFFER, "push");
 
     // var out___ = [];
     Block body = s(new Block(Collections.<Statement>emptyList()));
     body.insertBefore(
         s(new Declaration(
-              new Identifier(OUTPUT_ARRAY_NAME),
+              new Identifier(ReservedNames.OUTPUT_BUFFER),
               s(new ArrayConstructor(
                     Collections.<Expression>emptyList())))), null);
 
@@ -232,9 +231,10 @@ public final class GxpCompiler {
     ReturnStmt result = s(new ReturnStmt(
         TreeConstruction.call(
             TreeConstruction.memberAccess(
-                ReservedNames.OUTERS, "blessHtml___"),
+                ReservedNames.OUTERS, ReservedNames.BLESS_HTML),
             TreeConstruction.call(
-                TreeConstruction.memberAccess(OUTPUT_ARRAY_NAME, "join"),
+                TreeConstruction.memberAccess(
+                    ReservedNames.OUTPUT_BUFFER, "join"),
                 s(new StringLiteral("''"))))));
     body.insertBefore(result, null);
     return s(new FunctionConstructor(s(new Identifier(sig.templateName)),
@@ -460,7 +460,7 @@ public final class GxpCompiler {
                 JsWriter.append(
                     TreeConstruction.call(
                         TreeConstruction.memberAccess(
-                            ReservedNames.OUTERS, "htmlAttr___"),
+                            ReservedNames.OUTERS, ReservedNames.HTML_ATTR),
                         TreeConstruction.call(
                             TreeConstruction.memberAccess(
                                 ReservedNames.OUTERS, wrapperFn),
@@ -529,7 +529,7 @@ public final class GxpCompiler {
       "^[a-z][_a-z0-9]*$", Pattern.CASE_INSENSITIVE);
   private static String assertSafeJsIdentifier(String s, DomTree node)
       throws BadContentException {
-    if (!JS_ID.matcher(s).matches() || s.endsWith("___")) {
+    if (!JS_ID.matcher(s).matches() || s.endsWith("__")) {
       throw new BadContentException(
           new Message(PluginMessageType.BAD_IDENTIFIER, node.getFilePosition(),
                       MessagePart.Factory.valueOf(s)));
@@ -776,10 +776,10 @@ public final class GxpCompiler {
     String fnName;
     switch (escaping) {
       case HTML:
-        fnName = "html___";
+        fnName = ReservedNames.HTML;
         break;
       case HTML_ATTRIB:
-        fnName = "htmlAttr___";
+        fnName = ReservedNames.HTML_ATTR;
         break;
       default:
         fnName = null;
@@ -848,7 +848,7 @@ public final class GxpCompiler {
     operands[1] = s(new Reference(s(new Identifier(ReservedNames.OUTERS))));
 
     Operation call = TreeConstruction.call(
-        TreeConstruction.memberAccess(ReservedNames.OUTERS, "html___"),
+        TreeConstruction.memberAccess(ReservedNames.OUTERS, ReservedNames.HTML),
         s(new Operation(Operator.FUNCTION_CALL, operands)));
     JsWriter.append(call, tgtChain, b);
   }
@@ -1077,7 +1077,7 @@ public final class GxpCompiler {
       @Override
       String runtimeFunction(String tagName, String attribName, DomTree t,
                              GxpCompiler gxpc) {
-        return "prefix___";
+        return ReservedNames.PREFIX;
       }
     },
     URI {
@@ -1111,7 +1111,7 @@ public final class GxpCompiler {
       @Override
       String runtimeFunction(String tagName, String attribName, DomTree t,
                              GxpCompiler gxpc) {
-        return "rewriteUri___";
+        return ReservedNames.REWRITE_URI;
       }
     },
     STYLE {
