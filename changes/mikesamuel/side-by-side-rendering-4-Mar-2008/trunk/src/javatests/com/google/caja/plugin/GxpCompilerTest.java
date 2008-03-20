@@ -340,7 +340,7 @@ public class GxpCompilerTest extends TestCase {
   public void testUnrewrittenAttrAttrib() throws Exception {
     assertOutput(
         "out___.push('<img src=\\\"/testplugin/blank.gif\\\" width=\\\"', "
-        + "___OUTERS___.plugin_htmlAttr___(screenWidth() / 2), '\\\">');",
+        + "___OUTERS___.htmlAttr___(screenWidth() / 2), '\\\">');",
         true,
         "<gxp:template name=\"Test\">"
         + "<img src=\"blank.gif\">"
@@ -379,14 +379,14 @@ public class GxpCompilerTest extends TestCase {
   public void testCssSubstitution() throws Exception {
     assertOutput(
         "out___.push('<div style=\\\"position: absolute;\\nleft: ', "
-        + "___OUTERS___.plugin_cssNumber___(x + 10), 'px;\\nright: ', "
-        + "___OUTERS___.plugin_cssNumber___(x + 50), 'px\\\""
+        + "___OUTERS___.cssNumber___(x + 10), 'px;\\nright: ', "
+        + "___OUTERS___.cssNumber___(x + 50), 'px\\\""
         + " id=\\\"pre-foo\\\">\\n"
         + "Hello\\n</div>');",
         true,
         "<gxp:template name=\"Test\">\n"
         + "<div style=\n"
-        +   "\"position: absolute; left: $(x + 10)px; right: $(x + 50)px\"\n"
+        +   "\"position: absolute; left: ${x + 10}px; right: ${x + 50}px\"\n"
         + " id=\"foo\">\n"
         + "Hello\n"
         + "</div>\n"
@@ -547,7 +547,7 @@ public class GxpCompilerTest extends TestCase {
       String actual = actualBuf.toString().trim();
       // get rid of boilerplate
       String pre = "function Test() {\n  var out___ = [ ];\n  ",
-          post = ("\n  return ___OUTERS___.plugin_blessHtml___"
+          post = ("\n  return ___OUTERS___.blessHtml___"
                   + "(out___.join(''));\n}");
       assertTrue(actual, actual.startsWith(pre));
       assertTrue(actual, actual.endsWith(post));

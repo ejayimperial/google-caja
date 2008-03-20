@@ -63,7 +63,7 @@ public final class CssRewriter {
    * @param t non null.  modified in place.
    * @return true if the resulting tree is safe.
    */
-  public boolean rewrite(AncestorChain<CssTree> t) {
+  public boolean rewrite(AncestorChain<? extends CssTree> t) {
     boolean valid = true;
     // Once at the beginning, and again at the end.
     valid &= removeUnsafeConstructs(t);
@@ -81,7 +81,7 @@ public final class CssRewriter {
     return valid;
   }
 
-  private void removeEmptyDeclarations(AncestorChain<CssTree> t) {
+  private void removeEmptyDeclarations(AncestorChain<? extends CssTree> t) {
     t.node.acceptPreOrder(new Visitor() {
         public boolean visit(AncestorChain<?> ancestors) {
           ParseTreeNode node = ancestors.node;
@@ -97,7 +97,7 @@ public final class CssRewriter {
         }
       }, t.parent);
   }
-  private void removeEmptyRuleSets(AncestorChain<CssTree> t) {
+  private void removeEmptyRuleSets(AncestorChain<? extends CssTree> t) {
     t.node.acceptPreOrder(new Visitor() {
         public boolean visit(AncestorChain<?> ancestors) {
           ParseTreeNode node = ancestors.node;
@@ -117,7 +117,7 @@ public final class CssRewriter {
         }
       }, t.parent);
   }
-  private void namespaceIdents(AncestorChain<CssTree> t) {
+  private void namespaceIdents(AncestorChain<? extends CssTree> t) {
     // Namespace classes and ids
     t.node.acceptPreOrder(new Visitor() {
         public boolean visit(AncestorChain<?> ancestors) {
@@ -202,7 +202,7 @@ public final class CssRewriter {
       new HashSet<String>(Arrays.asList(
           "link", "visited", "hover", "active", "first-child", "first-letter"
           ));
-  boolean removeUnsafeConstructs(AncestorChain<CssTree> t) {
+  boolean removeUnsafeConstructs(AncestorChain<? extends CssTree> t) {
     final Switch rewrote = new Switch();
 
     // 1) Check that all classes, ids, property names, etc. are valid
@@ -318,9 +318,13 @@ public final class CssRewriter {
             Message removeMsg = null;
 
             CssTree term = (CssTree.Term) node;
-
             CssTree.CssLiteral content =
                 (CssTree.CssLiteral) term.children().get(0);
+
+            if (content instanceof CssTree.Substitution) {
+              return true;  // Handled by later pass.
+            }
+
             String uriStr = content.getValue();
             try {
               URI uri = new URI(uriStr);
@@ -393,7 +397,7 @@ public final class CssRewriter {
     return !rewrote.get();
   }
 
-  private void translateUrls(AncestorChain<CssTree> t) {
+  private void translateUrls(AncestorChain<? extends CssTree> t) {
       t.node.acceptPreOrder(new Visitor() {
           public boolean visit(AncestorChain<?> ancestors) {
             ParseTreeNode node = ancestors.node;
@@ -405,6 +409,10 @@ public final class CssRewriter {
 
               CssTree.CssLiteral content =
                   (CssTree.CssLiteral) term.children().get(0);
+              if (content instanceof CssTree.Substitution) {
+                return true;  // Handled by later pass.
+              }
+
               String uriStr = content.getValue();
               try {
                 URI uri = new URI(uriStr);

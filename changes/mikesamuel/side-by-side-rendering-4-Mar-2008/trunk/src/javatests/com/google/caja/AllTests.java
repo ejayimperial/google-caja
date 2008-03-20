@@ -50,9 +50,8 @@ import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
-import com.google.caja.plugin.HtmlValidatorTest;
+import com.google.caja.plugin.JsHtmlSanitizerTest;
 import com.google.caja.plugin.PluginCompilerTest;
-import com.google.caja.plugin.UrlUtilTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
 import com.google.caja.reporting.SnippetProducerTest;
 import com.google.caja.render.JsPrettyPrinterTest;
@@ -100,9 +99,9 @@ public class AllTests {
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
           HtmlSchemaTest.class,
-          HtmlValidatorTest.class,
           JoinTest.class,
           JsHtmlParserTest.class,
+          JsHtmlSanitizerTest.class,
           JsLexerTest.class,
           JsPrettyPrinterTest.class,
           LayoutTest.class,
@@ -120,7 +119,6 @@ public class AllTests {
           SnippetProducerTest.class,
           SparseBitSetTest.class,
           StringLiteralTest.class,
-          UrlUtilTest.class,
         };
     Pattern testFilter = Pattern.compile(System.getProperty("test.filter", ""));
     for (Class<? extends TestCase> testClass : testClasses) {

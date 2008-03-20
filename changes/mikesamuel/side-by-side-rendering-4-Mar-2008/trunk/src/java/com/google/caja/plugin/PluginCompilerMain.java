@@ -35,6 +35,7 @@ import com.google.caja.parser.css.CssParser;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.OpenElementStack;
+import com.google.caja.parser.js.Identifier;
 import com.google.caja.parser.js.Parser;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
@@ -196,13 +197,13 @@ public final class PluginCompilerMain {
       // followed by parameter declarations like
       //   @param('myParam');
       Mark m = tq.mark();
-      CssTree.FunctionCall name = null;
-      List<CssTree.FunctionCall> params = null;
+      Identifier name = null;
+      List<Identifier> params = null;
       if (tq.checkToken("@template")) {
         lexer.allowSubstitutions(true);
         name = requireSingleStringLiteralCall(m, tq);
 
-        params = new ArrayList<CssTree.FunctionCall>();
+        params = new ArrayList<Identifier>();
         while (!tq.isEmpty()) {
           m = tq.mark();
           if (!tq.checkToken("@param")) { break; }
@@ -231,7 +232,7 @@ public final class PluginCompilerMain {
    * Look for a construct like @foo('bar'); in CSS which serves as a CSS
    * template directive.
    */
-  private static CssTree.FunctionCall requireSingleStringLiteralCall(
+  private static Identifier requireSingleStringLiteralCall(
       Mark startMark, TokenQueue<CssTokenType> tq) throws ParseException {
     tq.expectToken("(");
     Token<CssTokenType> t = tq.expectTokenOfType(CssTokenType.STRING);
@@ -257,12 +258,10 @@ public final class PluginCompilerMain {
                       MessagePart.Factory.valueOf(t.text)));
     }
 
-    CssTree.StringLiteral literal =
-      new CssTree.StringLiteral(t.pos, m.group(1));
-    CssTree.Term term = new CssTree.Term(t.pos, null, literal);
-    CssTree.Expr arg = new CssTree.Expr(t.pos, Collections.singletonList(term));
+    Identifier ident = new Identifier(m.group(1));
+    ident.setFilePosition(t.pos);
 
-    return new CssTree.FunctionCall(pos, name, arg);
+    return ident;
   }
 
   /** Valid name for a css template or one of its parameters. */
