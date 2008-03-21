@@ -1,0 +1,113 @@
+#summary How to install Caja and run it from the command line.
+#labels Phase-Deploy,Featured
+
+= Getting Started with Caja =
+
+== Prerequisites ==
+
+Assumes basic familiarity with Java including how to manage a CLASSPATH and how to run a java app from the command line or from within an IDE like [http://www.eclipse.org/downloads/ Eclipse].  If you are not familiar with java, see [http://java.sun.com/docs/books/tutorial/essential/environment/paths.html PATH and CLASSPATH], [http://java.sun.com/docs/books/tutorial/essential/environment/cmdLineArgs.html the command line].
+
+Caja requires
+  * [http://java.sun.com/javase/downloads/index.jsp JDK] 5 or 6
+  * The [http://subversion.tigris.org/project_packages.html subversion] version manager
+  * The [http://ant.apache.org/manual/install.html Apache Ant] build system unless you build using Eclipse.
+  * The [http://sourceforge.net/project/showfiles.php?group_id=15278&package_id=12472 JUnit] testing framework.  Just drop {{{junit.jar}}} in the {{{$ANT_HOME/lib}}} directory you set up for Ant.
+
+
+== Building Caja via Ant ===
+
+Once you have subversion installed, follow the instructions at [http://code.google.com/p/google-caja/source/checkout] to checkout the Caja source.
+
+You should see a lot of lines like:
+{{{
+A  google-caja
+A  google-caja/docs
+}}}
+ad nauseam as it pulls source files from {{{code.google.com}}}.
+
+Then, from the command line:
+{{{
+$ cd google-caja/src
+$ ant
+}}}
+
+If Ant is properly installed, you should see the following:
+{{{
+Buildfile: build.xml
+
+dirs:
+    [mkdir] Created dir: ...
+...
+
+docs:
+  [javadoc] Generating javadoc
+...
+
+BUILD SUCCESSFUL
+Total time: 5 seconds
+}}}
+
+You can see the set of build targets by running {{{ant -projecthelp}}}, and those targets can follow the {{{ant}}} command,
+so {{{ant runtests}}} will build and run tests, and {{{ant clean}}}
+will wipe out all generated files, so you can build from scratch.
+
+If you look at the directory structure after building, you'll see a
+number of {{{ant-*}}} directories
+  * {{{ant-lib}}} - compiled class files and resources
+  * {{{ant-jars}}} - all the jars you need to run the Cajoler.  You can run caja by doing {{{java -cp "$(ls ant-jars/*.jar | tr ' ' :)" com.google.caja.plugin.PluginCompilerMain ...}}}.  {{{ant-jars/pluginc.jar}}} contains the compiled Cajoler.
+  * {{{ant-reports/tests/index.html}}} - unit test status and logs
+  * {{{ant-reports/coverage/index.html}}} - emma test coverage reports.  See {{{ant emma runtests}}}.
+  * {{{ant-www}}} - demo output.  See {{{ant demos}}}
+  * {{{ant-docs}}} - javadoc (and eventually jsdoc) output.
+
+
+== Code Layout ==
+
+{{{
+src
+|
++--docs : documentation files.
+|
++--java : source code
+|  |
+|  +--com
+|     |
+|     +--google
+|        |
+|        +--caja
+|           |
+|           +--lexer : Tokenization and escaping
+|           |
+|           +--parser : Parsers and tree implementations
+|           |  |
+|           |  +--ParseTreeNode.java : Main parse tree interface
+|           |  |
+|           |  +--quasiliteral : Syntactic sugar for parse tree xforms
+|           |
+|           +--opensocial : Dealing with Gadget specs
+|           |
+|           +--plugin : Transformations
+|           |  |
+|           |  +--PluginCompilerMain.java : main class
+|           |  |
+|           |  +--stages : Parse tree transforms
+|           |
+|           +--reporting : Error and warning messaging.
+|
++--javatests : test files and resources
+}}}
+
+
+
+== Other Resources ==
+
+[http://code.google.com/p/caja/] : The source code repository, bug
+tracker, and wiki.
+
+[http://groups.google.com/google-caja-discuss/] : The public
+discussion list.
+
+[http://www.cajadores.com/ Cajadores.com] periodically generates test
+and coverage status reports, and includes a snapshot of generated
+code, including the [http://www.cajadores.com/demos/testbed/index.html
+Testbed applet] and other demos that can be linked to.
