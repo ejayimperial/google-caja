@@ -48,7 +48,7 @@ public final class CssLexer implements TokenStream<CssTokenType> {
   }
 
   /**
-   * @param allowSubstitutions true iff $(...) style substitutions should be
+   * @param allowSubstitutions true iff ${...} style substitutions should be
    *   allowed as described at {@link CssTokenType#SUBSTITUTION}
    */
   public CssLexer(CharProducer cp, boolean allowSubstitutions) {
@@ -67,7 +67,7 @@ public final class CssLexer implements TokenStream<CssTokenType> {
   }
 
   /**
-   * True iff $(...) style substitutions should be
+   * True iff ${...} style substitutions should be
    * allowed as described at {@link CssTokenType#SUBSTITUTION}
    * @see #allowSubstitutions(boolean)
    */
@@ -172,12 +172,13 @@ final class CssSplitter implements TokenStream<CssTokenType> {
   private Token<CssTokenType> pending;
 
   /**
-   * @param allowSubstitutions true iff $(...) style substitutions should be
+   * @param allowSubstitutions true iff ${...} style substitutions should be
    *   allowed as described at {@link CssTokenType#SUBSTITUTION}
    */
   CssSplitter(CharProducer cp, boolean allowSubstitutions) {
     assert null != cp;
-    this.cp = LookaheadCharProducer.create(cp);
+    // Longest punctuation tokens are <!-- and --> so need LA(3).
+    this.cp = new LookaheadCharProducer(cp, 3);
     this.allowSubstitutions = allowSubstitutions;
   }
 
@@ -312,6 +313,30 @@ final class CssSplitter implements TokenStream<CssTokenType> {
           type = CssTokenType.PUNCTUATION;
         }
 
+      } else if (ch == '<' || ch == '-') {
+        // "<!--"          CDO
+        // "-->"           CDC
+
+        String tail = ch == '<' ? "!--" : "->";
+
+        sb.append(ch);
+        cp.read();
+
+        cp.fetch(tail.length());
+
+        boolean matchedTail = true;
+        for (int i = 0; i < tail.length(); ++i) {
+          if (cp.peek(i) != tail.charAt(i)) {
+            matchedTail = false;
+            break;
+          }
+        }
+        type = CssTokenType.PUNCTUATION;
+        if (matchedTail) {
+          sb.append(tail);
+          cp.consume(tail.length());
+        }
+
       } else if ((ch >= '0' && ch <= '9') || '.' == ch) {
         // {num}em         EMS
         // {num}ex         EXS
@@ -398,11 +423,11 @@ final class CssSplitter implements TokenStream<CssTokenType> {
         }
 
       } else if (ch == '$' && allowSubstitutions) {
-        // $(<javascript tokens>)
+        // ${<javascript tokens>}
         sb.append(ch);
         cp.read();
 
-        if (cp.lookahead() != '(') {
+        if (cp.lookahead() != '{') {
           type = CssTokenType.PUNCTUATION;
         } else {
           // 0 - non string
@@ -423,9 +448,9 @@ final class CssSplitter implements TokenStream<CssTokenType> {
                 if (ch == '"' || ch == '\'') {
                   delim = ch;
                   state = 1;
-                } else if (ch == '(') {
+                } else if (ch == '{') {
                   ++nOpen;
-                } else if (ch == ')') {
+                } else if (ch == '}') {
                   if (--nOpen == 0) {
                     state = 3;
                   }

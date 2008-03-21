@@ -30,8 +30,8 @@ import java.io.IOException;
  */
 public enum RewriterMessageType implements MessageTypeInt {
 
-  CANNOT_DERIVE_FROM_NON_CONSTRUCTOR(
-      "%s: Cannot derive from non-constructor: %s, %s",
+  CANNOT_DERIVE_FROM_UNDECLARED_FUNCTION(
+      "%s: Cannot derive from undeclared function: %s, %s",
       MessageLevel.FATAL_ERROR),
 
   PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS(

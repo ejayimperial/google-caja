@@ -52,7 +52,7 @@
 
   <property
       name="build.info.file"
-      location="${lib}/com/google/caja/reporting/buildInfo.properties"/>  
+      location="${lib}/com/google/caja/reporting/buildInfo.properties"/>
 
   <path id="classpath.compile">
     <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
@@ -190,7 +190,7 @@
   </target>
 
   <!-- Cajoles test resources that contain cajita to javascript. -->
-  <target name="CajoledTests" depends="pluginc,dirs">
+  <target name="CajoledTests" depends="opensocial,dirs">
     <java classname="com.google.caja.plugin.PluginCompilerMain"
      failonerror="yes">
       <classpath refid="classpath.run"/>
@@ -206,14 +206,14 @@
   </target>
 
   <target name="AllTests"
-   depends="opensocial,pluginc,TestUtil,CajoledTests,dirs">
+   depends="opensocial,TestUtil,CajoledTests,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${testsrc}"/>
       <classpath refid="classpath.tests.compile"/>
       <include name="**/caja/AllTests.java"/>
       <include name="**/caja/config/ConfigUtilTest.java"/>
       <include name="**/caja/demos/calendar/*Test.java"/>
-      <include name="**/caja/lang/html/HtmlSchemaTest.java"/>
+      <include name="**/caja/lang/*/*Test.java"/>
       <include name="**/caja/demos/calendar/RRuleTest.java"/>
       <include name="**/caja/lang/css/CssSchemaTest.java"/>
       <include name="**/caja/demos/calendar/LayoutTest.java"/>
@@ -234,17 +234,10 @@
       <include name="**/caja/parser/html/JsHtmlParserTest.java"/>
       <include name="**/caja/parser/js/*Test.java"/>
       <include name="**/caja/parser/quasiliteral/*Test.java"/>
-      <include name="**/caja/plugin/CompiledPluginTest.java"/>
-      <include name="**/caja/plugin/CssRewriterTest.java"/>
-      <include name="**/caja/plugin/CssValidatorTest.java"/>
-      <include name="**/caja/plugin/ExpressionSanitizerTest.java"/>
-      <include name="**/caja/plugin/GxpCompilerTest.java"/>
-      <include name="**/caja/plugin/GxpValidatorTest.java"/>
-      <include name="**/caja/plugin/HtmlCompiledPluginTest.java"/>
-      <include name="**/caja/plugin/HtmlSanitizerTest.java"/>
-      <include name="**/caja/plugin/PluginCompilerTest.java"/>
-      <include name="**/caja/plugin/UrlUtilTest.java"/>
+      <include name="**/caja/plugin/*Test.java"/>
       <include name="**/caja/plugin/caps/CapabilityRewriterTest.java"/>
+      <include name="**/caja/plugin/stages/*Test.java"/>
+      <include name="**/caja/reporting/*Test.java"/>
       <include name="**/caja/util/JoinTest.java"/>
       <include name="**/caja/util/SparseBitSetTest.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
@@ -281,11 +274,9 @@
         <include name="**/caja/opensocial/listfriends.xml"/>
         <include name="**/caja/opensocial/SocialHelloWorld.xml"/>
         <include name="**/caja/opensocial/test-parsing.xml"/>
-        <include name="**/caja/parser/css/cssparsergolden1.txt"/>
-        <include name="**/caja/parser/css/cssparsergolden2.txt"/>
-        <include name="**/caja/parser/css/cssparserinput1.css"/>
-        <include name="**/caja/parser/css/cssparserinput2.css"/>
-        <include name="**/caja/parser/css/cssrendergolden1.txt"/>
+        <include name="**/caja/parser/css/cssparsergolden*.txt"/>
+        <include name="**/caja/parser/css/cssparserinput*.css"/>
+        <include name="**/caja/parser/css/cssrendergolden*.txt"/>
         <include name="**/caja/parser/html/htmlparsertest1.gxp"/>
         <include name="**/caja/parser/html/htmlparsergolden1.txt"/>
         <include name="**/caja/parser/js/*.js"/>
@@ -334,7 +325,6 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/opensocial/*.java"/>
-      <include name="**/caja/plugin/HtmlPluginCompilerMain.java"/>
       <include name="**/caja/plugin/PluginCompilerMain.java"/>
     </javac>
   </target>
@@ -370,16 +360,23 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/plugin/PluginCompilerMain.java"/>
-      <include name="**/caja/plugin/HtmlPluginCompilerMain.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
-    <unjar src="${third_party}/java/jakarta_commons/commons-cli.jar"
-     dest="${lib}"/>
-    <unjar src="${third_party}/java/htmlparser/htmlparser.jar" dest="${lib}"/>
+    <copy todir="${jars}">
+      <fileset dir="${third_party}/java/jakarta_commons">
+        <include name="commons-cli.jar"/>
+      </fileset>
+      <fileset dir="${third_party}/java/htmlparser">
+        <include name="htmlparser.jar"/>
+      </fileset>
+      <fileset dir="${third_party}/java/json_simple">
+        <include name="json_simple.jar"/>
+      </fileset>
+    </copy>
     <jar destfile="${jars}/pluginc.jar" basedir="${lib}">
       <manifest>
         <attribute name="Main-Class"
-         value="com.google.caja.plugin.HtmlPluginCompilerMain"/>
+         value="com.google.caja.plugin.PluginCompilerMain"/>
       </manifest>
     </jar>
     <jar destfile="${jars}/pluginc-src.jar" basedir="${src}">
@@ -578,6 +575,7 @@
       <include name="**/caja/lexer/LineContinuingCharProducer.java"/>
       <include name="**/caja/lexer/LookaheadCharProducer.java"/>
       <include name="**/caja/lexer/NumberRecognizer.java"/>
+      <include name="**/caja/lexer/NumericEscapes.java"/>
       <include name="**/caja/lexer/ParseException.java"/>
       <include name="**/caja/lexer/Punctuation.java"/>
       <include name="**/caja/lexer/PunctuationTrie.java"/>
@@ -620,8 +618,12 @@
     </javac>
   </target>
 
-  <target name="demos" depends="dirs,pluginc"
-   description="Puts all the demo files together for easy browsing.">
+  <target name="demos" depends="springgraph,lolcat-search"
+   description="Puts all the demo files together for easy browsing."/>
+
+  <target name="springgraph" depends="dirs,pluginc"
+   description="A spring graph demo gadget">
+
     <mkdir dir="${www}/contact-spring-graph/plugin-files/"/>
 
     <copy todir="${www}/contact-spring-graph">
@@ -630,13 +632,11 @@
         <include name="event-list.js"/>
         <include name="plugin-api.js"/>
       </fileset>
-    </copy>
-    <copy todir="${www}/contact-spring-graph">
+
       <fileset dir="${src}/com/google/caja/plugin">
         <include name="plugin-base.js"/>
       </fileset>
-    </copy>
-    <copy todir="${www}/contact-spring-graph">
+
       <fileset dir="${src}/com/google/caja/plugin/caps">
         <include name="wrap_capability.js"/>
       </fileset>
@@ -661,6 +661,57 @@
       <arg file="${demos}/contact-spring-graph/plugin-main.js"/>
     </java>
   </target>
+
+
+  <target name="lolcat-search" depends="dirs,pluginc"
+   description="IM IN UR BUILD DEMOING UR GADGETZ">
+
+    <mkdir dir="${www}/lolcat-search/"/>
+
+    <java classname="com.google.caja.plugin.PluginCompilerMain"
+     failonerror="yes">
+      <classpath refid="classpath.run"/>
+      <arg value="--input"/>
+      <arg value="${src}/com/google/caja/demos/lolcat-search/searchbox.html"/>
+      <arg value="--output_js"/>
+      <arg value="${www}/lolcat-search/searchbox-cajoled.js"/>
+      <arg value="--output_css"/>
+      <arg value="${www}/lolcat-search/searchbox-cajoled.css"/>
+      <arg value="--css_prefix"/>
+      <arg value="searchbox"/>
+    </java>
+
+    <java classname="com.google.caja.plugin.PluginCompilerMain"
+     failonerror="yes">
+      <classpath refid="classpath.run"/>
+      <arg value="--input"/>
+      <arg value="${src}/com/google/caja/demos/lolcat-search/kittens.html"/>
+      <arg value="--output_js"/>
+      <arg value="${www}/lolcat-search/kittens-cajoled.js"/>
+      <arg value="--output_css"/>
+      <arg value="${www}/lolcat-search/kittens-cajoled.css"/>
+      <arg value="--css_prefix"/>
+      <arg value="kittens"/>
+    </java>
+
+    <copy todir="${www}/lolcat-search">
+      <fileset dir="${javascript}/com/google/caja">
+        <include name="caja.js"/>
+      </fileset>
+      <fileset dir="${third_party}/js/firebug">
+        <include name="firebugx.js"/>
+      </fileset>
+      <fileset dir="${src}/com/google/caja/demos/lolcat-search">
+        <include name="container.js"/>
+        <include name="chtml.js"/>
+        <include name="error.jpg"/>
+        <include name="loading.jpg"/>
+        <include name="search.html"/>
+        <include name="searchengine.js"/>
+      </fileset>
+    </copy>
+  </target>
+
 
   <!--
     - Enable Emma

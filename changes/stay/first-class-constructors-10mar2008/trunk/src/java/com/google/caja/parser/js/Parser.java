@@ -57,8 +57,8 @@ import java.util.Set;
  * <li>Reports warnings on a queue where an error doesn't prevent any further
  *   errors, so that we can report multiple errors in a single compile pass
  *   instead of forcing developers to play whack-a-mole.
- * <li>Does not parse {@code with} blocks.  TODO: duplicate the code that
- *   handles {@link Keyword#WHILE}.
+ * <li>Does not parse {@code with} blocks.
+ *   TODO(mikesamuel): duplicate the code that handles {@link Keyword#WHILE}.
  * <li>Does not parse Firefox style {@code catch (<Identifier> if <Expression>)}
  *   since those don't work on IE and many other interpreters.
  * <li>Recognizes {@code const} since many interpreters do (not IE) but warns.
@@ -125,7 +125,7 @@ import java.util.Set;
  *                            <Body>
  *                          | 'for' '(' <DeclarationStart> 'in' <Expression> ')'
  *                            <Body>
- *                          | 'for' '(' <Identifier> 'in' <Expression> ')'
+ *                          | 'for' '(' <LValue> 'in' <Expression> ')'
  *                            <Body>
  *                          | 'for' '(' <Declaration> ';' <ExpressionOrNoop>
  *                            <Expression>? ')' <Body>
@@ -347,30 +347,29 @@ public final class Parser extends ParserBase {
                   && !tq.lookaheadToken(Punctuation.SEMI)
                   && (initializerExpr = ((ExpressionStmt) initializer)
                       .getExpression()) instanceof Operation
-                  && Operator.IN == ((Operation) initializerExpr)
-                  .getOperator()
-                  && initializerExpr.children().get(0)
-                     instanceof Reference)) {
+                  && Operator.IN == ((Operation) initializerExpr).getOperator()
+                  && (((Operation) initializerExpr).children().get(0)
+                      .isLeftHandSide()))) {
 
             Expression iterable;
-            Reference var;
+            Expression lvalue;
             if (null == initializerExpr) {
               iterable = parseExpressionInt(true);
-              var = null;
+              lvalue = null;
             } else {
               Operation op = (Operation) initializerExpr;
-              var = (Reference) op.children().get(0);
+              lvalue = op.children().get(0);
               iterable = op.children().get(1);
             }
 
             tq.expectToken(Punctuation.RPAREN);
             Statement body = parseBody(true);
 
-            if (null == var) {
+            if (null == lvalue) {
               s = new ForEachLoop(
                   label, (Declaration) initializer, iterable, body);
             } else {
-              s = new ForEachLoop(label, var, iterable, body);
+              s = new ForEachLoop(label, lvalue, iterable, body);
             }
 
           } else {
@@ -673,7 +672,7 @@ public final class Parser extends ParserBase {
       // The comma operator is left-associative so parse expression part in loop
       // instead of recursing
       Expression right = parseExpressionPart(insertionProtected);
-      e = new Operation(Operator.COMMA, e, right);
+      e = Operation.create(Operator.COMMA, e, right);
       finish(e, m);
     }
     return e;
@@ -717,7 +716,7 @@ public final class Parser extends ParserBase {
               new Message(MessageType.UNEXPECTED_TOKEN, t.pos,
                           MessagePart.Factory.valueOf(t.text)));
         }
-        left = new Operation(op, left);
+        left = Operation.create(op, left);
         finish(left, m);
         // Not pulling multiple operators off the stack means that
         // some prefix operator nestings are impossible.  This is intended.
@@ -829,7 +828,7 @@ public final class Parser extends ParserBase {
           {
             tq.expectToken(op.getClosingSymbol());
             Expression farRight = parseExpressionPart(insertionProtected);
-            left = new Operation(op, left, right, farRight);
+            left = Operation.create(op, left, right, farRight);
           }
           break;
           case BRACKET:
@@ -843,16 +842,16 @@ public final class Parser extends ParserBase {
               for (int i = 1; i < operands.length; ++i) {
                 operands[i] = params.get(i - 1);
               }
-              left = new Operation(op, operands);
+              left = Operation.create(op, operands);
             } else {
-              left = new Operation(op, left, right);
+              left = Operation.create(op, left, right);
             }
             break;
           case INFIX:
-            left = new Operation(op, left, right);
+            left = Operation.create(op, left, right);
             break;
           case POSTFIX:
-            left = new Operation(op, left);
+            left = Operation.create(op, left);
             break;
           default:
             throw new AssertionError();
@@ -871,21 +870,12 @@ public final class Parser extends ParserBase {
   }
 
   private double toNumber(Token<JsTokenType> t) {
-    if ("NaN".equals(t.text)) {
-      return Double.NaN;
-    } else if ("Infinity".equals(t.text)) {
-      return Double.POSITIVE_INFINITY;
-    }
     // Double.parseDouble is not locale dependent.
     return Double.parseDouble(t.text);
   }
 
   private String floatToString(Token<JsTokenType> t) {
-    if ("NaN".equals(t.text) || "Infinity".equals(t.text)) {
-      return t.text;
-    } else {
-      return NumberLiteral.numberToString(new BigDecimal(t.text));
-    }
+    return NumberLiteral.numberToString(new BigDecimal(t.text));
   }
 
   private NumberLiteral toNumberLiteral(Token<JsTokenType> t) {

@@ -236,8 +236,11 @@ var ___;
     /**
      * 
      */
-    handleRead: function(obj, name) {
+    handleRead: function(obj, name, opt_shouldThrow) {
       log('Not readable: (' + obj + ').' + name);
+      if (opt_shouldThrow) { 
+        throw new ReferenceError('' + name + ' is not defined');
+      }
       return undefined; 
     },
 
@@ -276,12 +279,12 @@ var ___;
   /**
    * 
    */
-  Object.prototype.handleRead___ = function(name) {
+  Object.prototype.handleRead___ = function(name, opt_shouldThrow) {
     var handlerName = name + '_getter___';
     if (this[handlerName]) {
-      return this[handlerName]();
+      return this[handlerName](opt_shouldThrow);
     }
-    return myKeeper_.handleRead(this, name);
+    return myKeeper_.handleRead(this, name, opt_shouldThrow);
   };
 
   /**
@@ -615,9 +618,9 @@ var ___;
   // Classifying functions
   ////////////////////////////////////////////////////////////////////////
 
-  function isCtor(constr)    { return !!constr.CONSTRUCTOR___; }
+  function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
   function isMethod(meth)    { return 'METHOD_OF___' in meth; }
-  function isSimpleFunc(fun) { return !!fun.SIMPLE_FUNC___; }
+  function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
 
   /**
    * Mark <tt>constr</tt> as a constructor.
@@ -643,7 +646,7 @@ var ___;
     if (isSimpleFunc(constr)) {
       fail("Simple-functions can't be constructors: ", constr);
     }
-    constr.CONSTRUCTOR___ = true;
+    constr.___CONSTRUCTOR___ = true;
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
       if (hasOwnProp(constr, 'Super')) {
@@ -698,11 +701,16 @@ var ___;
     // assign to the other as well.
     constr.make___.prototype = constr.prototype;
     constr.call = function(that, var_args) {
-        constr.init___.apply(that, arguments);
+      // Skip <tt>that</tt> in <tt>arguments[0]</tt>.
+      // It would be nice to use <tt>Array.slice</tt>, but
+      // <tt>arguments</tt> isn't an array.
+      var args = [];
+      for (var i=1; i<arguments.length; ++i) args[i-1] = arguments[i];
+      constr.init___.apply(that, args);
     };
     return constr;
   }
-  
+
   /** 
    * Mark meth as a method of instances of constr. 
    * <p>
@@ -873,7 +881,8 @@ var ___;
    */
   function readProp(that, name) {
     name = String(name);
-    return canReadProp(that, name) ? that[name] : that.handleRead___(name);
+    if (canReadProp(that, name)) { return that[name]; }
+    return that.handleRead___(name, false);
   }
   
   /** 
@@ -898,11 +907,16 @@ var ___;
    * Caja code attempting to read a property on something besides
    * <tt>this</tt>.
    * <p>
-   * If it can't, it reads <tt>undefined</tt> instead.
+   * If it can't and <tt>opt_shouldThrow</tt> is absent or 
+   * false-ish, then <ttreadPub</tt> returns <tt>undefined</tt> 
+   * instead. But if <tt>opt_shouldThrow</tt> is true-ish, then 
+   * <tt>readPub</tt> throws <tt>ReferenceError</tt>, in order to
+   * simulate an attempt to read a non-existent global variable.
    */
-  function readPub(obj, name) {
+  function readPub(obj, name, opt_shouldThrow) {
     name = String(name);
-    return canReadPub(obj, name) ? obj[name] : obj.handleRead___(name);
+    if (canReadPub(obj, name)) { return obj[name]; }
+    return obj.handleRead___(name, opt_shouldThrow);
   }
   
   /**
@@ -1282,11 +1296,11 @@ var ___;
 
   /**
    * Arrange to handle read-faults on <tt>obj[name]</tt>
-   * by calling <tt>getHandler()</tt> as a method on the faulted
-   * object. 
+   * by calling <tt>getHandler(opt_shouldThrow)</tt> as a method on
+   * the faulted object. 
    * <p>
    * In order for this fault-handler to get control, it's important
-   * that no one does a conflicting allowRead().
+   * that no one does a conflicting <tt>allowRead()</tt>.
    */
   function useGetHandler(obj, name, getHandler) {
     obj[name + '_getter___'] = getHandler;
@@ -1813,6 +1827,7 @@ var ___;
     isSimpleFunc: isSimpleFunc,
     ctor: ctor,                   asCtorOnly: asCtorOnly,
     asCtor: asCtor,
+    splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
     setMember: setMember,

@@ -16,12 +16,14 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.js.ArrayConstructor;
+import com.google.caja.parser.AbstractParseTreeNode;
+import com.google.caja.parser.js.AssignOperation;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.BreakStmt;
 import com.google.caja.parser.js.CaseStmt;
 import com.google.caja.parser.js.Conditional;
 import com.google.caja.parser.js.ContinueStmt;
+import com.google.caja.parser.js.ControlOperation;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.DefaultCaseStmt;
 import com.google.caja.parser.js.Expression;
@@ -33,19 +35,23 @@ import com.google.caja.parser.js.Literal;
 import com.google.caja.parser.js.Loop;
 import com.google.caja.parser.js.MultiDeclaration;
 import com.google.caja.parser.js.Noop;
-import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.ReturnStmt;
+import com.google.caja.parser.js.SimpleOperation;
+import com.google.caja.parser.js.SpecialOperation;
 import com.google.caja.parser.js.SwitchStmt;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.parser.js.TryStmt;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.UndefinedLiteral;
+import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.plugin.ReservedNames;
+import com.google.caja.plugin.SyntheticNodes;
 import static com.google.caja.plugin.SyntheticNodes.s;
 import com.google.caja.util.Pair;
+import com.google.caja.util.SyntheticAttributes;
 import com.google.caja.reporting.MessageQueue;
 
 import java.util.LinkedHashMap;
@@ -63,7 +69,7 @@ public class DefaultCajaRewriter extends Rewriter {
   public DefaultCajaRewriter() {
     this(true);
   }
-  
+
   public DefaultCajaRewriter(boolean logging) {
     super(logging);
 
@@ -102,13 +108,14 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         boolean isDecl;
-        
+
         if (match("for (var @k in @o) { @ss*; }", node, bindings)) {
           isDecl = true;
+          bindings.put("k", new Reference((Identifier)bindings.get("k")));
         } else if (match("for (@k in @o) { @ss*; }", node, bindings)) {
-          // Upon match, "k" points to an ExpressionStmt. Pull out the Reference within it.
-          bindings.put("k", bindings.get("k").children().get(0).children().get(0));
           isDecl = false;
+          ExpressionStmt es = (ExpressionStmt)bindings.get("k");
+          bindings.put("k", es.getExpression());
         } else {
           return NONE;
         }
@@ -135,7 +142,7 @@ public class DefaultCajaRewriter extends Rewriter {
 
         if (isDecl) {
           Pair<ParseTreeNode, ParseTreeNode> kDecl = reuseEmpty(
-              (String)bindings.get("k").getValue(),
+              ((Reference)bindings.get("k")).getIdentifierName(),
               scope.isGlobal(),
               this,
               scope,
@@ -143,27 +150,36 @@ public class DefaultCajaRewriter extends Rewriter {
           declsList.add((Statement)kDecl.b);
         }
 
+        ParseTreeNode kAssignment = substV(
+            "@k = @kTempRef;",
+            "k", bindings.get("k"),
+            "kTempRef", kTemp.a);
+        kAssignment.getAttributes().remove(SyntheticNodes.SYNTHETIC);
+        kAssignment = expand(kAssignment, scope, mq);
+        kAssignment = s(new ExpressionStmt((Expression)kAssignment));
+
         // Note that we use 'canEnumProp' even if 'this' is actually the global object (in
         // which case 'this' will get rewritten to '___OUTERS___'. Statements in the global
         // scope *are* effectively executing with 'this === ___OUTERS___'.
 
         boolean isThis = ReservedNames.THIS.equals(bindings.get("o").children().get(0).getValue());
-        Reference canEnum = new Reference(new Identifier(isThis ? "canEnumProp" : "canEnumPub"));
-        
+        String canEnumName = isThis && !scope.isGlobal() ? "canEnumProp" : "canEnumPub";
+        Reference canEnum = new Reference(new Identifier(canEnumName));
+
         return substV(
             "@decls*;" +
             "for (@kTempStmt in @oTempRef) {" +
             "  if (___.@canEnum(@oTempRef, @kTempRef)) {" +
-            "    @k = @kTempRef;" +
+            "    @kAssignment;" +
             "    @ss*;" +
             "  }" +
             "}",
             "canEnum", canEnum,
             "decls", new ParseTreeNodeContainer(declsList),
-            "k", expand(new Reference((Identifier)bindings.get("k")), scope, mq),
             "oTempRef", oTemp.a,
             "kTempRef", kTemp.a,
             "kTempStmt", s(new ExpressionStmt((Expression)kTemp.a)),
+            "kAssignment", kAssignment,
             "ss", expand(bindings.get("ss"), scope, mq));
       }
     });
@@ -195,10 +211,10 @@ public class DefaultCajaRewriter extends Rewriter {
         return NONE;
       }
     });
-        
+
     addRule(new Rule("tryCatchFinally", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();        
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }", node, bindings)) {
           TryStmt t = (TryStmt)node;
           return substV(
@@ -216,13 +232,13 @@ public class DefaultCajaRewriter extends Rewriter {
             "s0",  expandAll(bindings.get("s0"), scope, mq),
             "s1",  expandAll(bindings.get("s1"),
                              Scope.fromCatchStmt(scope, t.getCatchClause()), mq),
-            "s2",  expandAll(bindings.get("s2"), scope, mq),              
+            "s2",  expandAll(bindings.get("s2"), scope, mq),
             "x", bindings.get("x"));
         }
         return NONE;
       }
     });
-     
+
     addRule(new Rule("tryFinally", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -287,7 +303,7 @@ public class DefaultCajaRewriter extends Rewriter {
         return NONE;
       }
     });
-    
+
     addRule(new Rule("varBadGlobalSuffix", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -296,7 +312,7 @@ public class DefaultCajaRewriter extends Rewriter {
           if (scope.isGlobal(symbol)) {
             mq.addMessage(
                 RewriterMessageType.GLOBALS_CANNOT_END_IN_UNDERSCORE,
-                node.getFilePosition(), this, node); 
+                node.getFilePosition(), this, node);
             return node;
           }
         }
@@ -359,19 +375,26 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    addRule(new Rule("readGlobalViaThis", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("this.@p", node, bindings) && scope.isGlobal()) {
+          return expandReferenceToOuters(bindings.get("p"), scope, mq);
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("readInternal", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this.@p", node, bindings)) {
           String propertyName = ((Reference)bindings.get("p")).getIdentifierName();
-          Reference target = new Reference(new Identifier(
-              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
-            "@target.@fp ? @target.@p : ___.readProp(@target, @rp)",
+            "t___.@fp ? t___.@p : ___.readProp(t___, @rp)",
             "p",  bindings.get("p"),
             "fp", new Reference(new Identifier(propertyName + "_canRead___")),
-            "rp", new StringLiteral("'" + propertyName + "'"),
-            "target", target);
+            "rp", new StringLiteral("'" + propertyName + "'"));
         }
         return NONE;
       }
@@ -409,16 +432,25 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    addRule(new Rule("readIndexGlobal", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("this[@s]", node, bindings) && scope.isGlobal()) {
+          return substV(
+              "___.readPub(___OUTERS___, @s)",
+              "s", expand(bindings.get("s"), scope, mq));
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("readIndexInternal", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this[@s]", node, bindings)) {
-          Reference target = new Reference(new Identifier(
-              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
-              "___.readProp(@target, @s)",
-              "s", expand(bindings.get("s"), scope, mq),
-              "target", target);
+              "___.readProp(t___, @s)",
+              "s", expand(bindings.get("s"), scope, mq));
         }
         return NONE;
       }
@@ -440,6 +472,30 @@ public class DefaultCajaRewriter extends Rewriter {
     ////////////////////////////////////////////////////////////////////////
     // set - assignments
     ////////////////////////////////////////////////////////////////////////
+
+    addRule(new Rule("setGlobal", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("@p = @r", node, bindings) &&
+            bindings.get("p") instanceof Reference) {
+          String propertyName = getReferenceName(bindings.get("p"));
+          if (scope.isGlobal(propertyName) && !ReservedNames.THIS.equals(propertyName)) {
+            return substV(
+                "(function() {" +
+                "  var x___ = @r;" +
+                "  return ___OUTERS___.@fp ?" +
+                "      (___OUTERS___.@p = x___) :" +
+                "      ___.setPub(___OUTERS___, @rp, x___);" +
+                "})()",
+                "r",  expand(bindings.get("r"), scope, mq),
+                "p",  bindings.get("p"),
+                "fp", new Reference(new Identifier(propertyName + "_canSet___")),
+                "rp", new StringLiteral(StringLiteral.toQuotedValue(propertyName)));
+          }
+        }
+        return NONE;
+      }
+    });
 
     addRule(new Rule("setBadThis", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -467,6 +523,27 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    addRule(new Rule("setGlobalViaThis", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("this.@p = @r", node, bindings) && scope.isGlobal()) {
+          String propertyName = ((Reference)bindings.get("p")).getIdentifierName();
+          return substV(
+              "(function() {" +
+              "  var x___ = @r;" +
+              "  return ___OUTERS___.@fp ?" +
+              "      (___OUTERS___.@p = x___) :" +
+              "      ___.setPub(___OUTERS___, @rp, x___);" +
+              "})()",
+              "r",  expand(bindings.get("r"), scope, mq),
+              "p",  bindings.get("p"),
+              "fp", new Reference(new Identifier(propertyName + "_canSet___")),
+              "rp", new StringLiteral(StringLiteral.toQuotedValue(propertyName)));
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("setInternal", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -477,7 +554,7 @@ public class DefaultCajaRewriter extends Rewriter {
           return substV(
               "(function() {" +
               "  var x___ = @r;" +
-              "  return @target.@fp ? (@target.@p = x___) : ___.setProp(@target, @rp, x___);" +
+              "  return t___.@fp ? (t___.@p = x___) : ___.setProp(t___, @rp, x___);" +
               "})()",
               "r",  expand(bindings.get("r"), scope, mq),
               "p",  bindings.get("p"),
@@ -492,6 +569,12 @@ public class DefaultCajaRewriter extends Rewriter {
     addRule(new Rule("setMember", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+
+        // BUG TODO(erights,ihab): We must only recognize (and thus allow) this
+        // expression when it is evaluated for effects only, not for value.
+        // Currently, since we have no such test, the translated expression will
+        // safely evaluate to <tt>undefined</tt>, but this behavior is not within
+        // a fail-stop subset of JavaScript.
         if (match("@fname.prototype.@p = @m;", node, bindings)) {
           String fname = getReferenceName(bindings.get("fname"));
           if (scope.isDeclaredFunction(fname)) {
@@ -525,20 +608,6 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("setMemberMap", this) {
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (match("@fname.prototype = @mm", node, bindings) &&
-            scope.isFunction(getReferenceName(bindings.get("fname")))) {
-          return substV(
-              "___.setMemberMap(@fname, @mm)",
-              "fname", expand(bindings.get("fname"), scope, mq),
-              "mm", expandMemberMap(bindings.get("fname"), bindings.get("mm"), this, scope, mq));
-        }
-        return NONE;
-      }
-    });
-
     addRule(new Rule("setStatic", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -550,7 +619,7 @@ public class DefaultCajaRewriter extends Rewriter {
             return substV(
                 "___.setPub(@fname, @rp, @r)",
                 "fname", bindings.get("fname"),
-                "rp", new StringLiteral("'" + propertyName + "'"),                
+                "rp", new StringLiteral("'" + propertyName + "'"),
                 "r", expand(bindings.get("r"), scope, mq));
           }
         }
@@ -571,7 +640,8 @@ public class DefaultCajaRewriter extends Rewriter {
               "(function() {" +
               "  @pob;" +
               "  @prb;" +
-              "  return @poa.@pCanSet ? (@poa.@p = @pra) : ___.setPub(@poa, @pName, @pra);" +
+              "  return @poa.@pCanSet ? (@poa.@p = @pra) : " +
+              "                         ___.setPub(@poa, @pName, @pra);" +
               "})();",
               "pName", new StringLiteral("'" + propertyName + "'"),
               "p", bindings.get("p"),
@@ -640,7 +710,7 @@ public class DefaultCajaRewriter extends Rewriter {
         return NONE;
       }
     });
-    
+
     addRule(new Rule("setBadDeclare", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -662,15 +732,98 @@ public class DefaultCajaRewriter extends Rewriter {
           if (!scope.isGlobal()) {
             return node;
           } else {
+            ParseTreeNode v = bindings.get("v");
+            String vName = getIdentifierName(v);
             ParseTreeNode expr = substV(
-                ReservedNames.OUTERS + ".@v",
-                "v", new Reference((Identifier)bindings.get("v")));
+                "___.setPub(___OUTERS___, @vName, ___.readPub(___OUTERS___, @vName));",
+                "vName", new StringLiteral("'" + vName + "'"));
             // Must now wrap the Expression in something Statement-like since
             // that is what the enclosing context expects:
             return ParseTreeNodes.newNodeInstance(
                 ExpressionStmt.class,
                 null,
                 Arrays.asList(new ParseTreeNode[] { expr }));
+          }
+        }
+        return NONE;
+      }
+    });
+
+    // TODO(erights): Need a general way to expand lValues
+    addRule(new Rule("setVar", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("@v = @r", node, bindings)) {
+          ParseTreeNode v = bindings.get("v");
+          ParseTreeNode r = bindings.get("r");
+          if (v instanceof Reference) {
+            String vName = getReferenceName(v);
+            if (!scope.isFunction(vName)) {
+              if (scope.isGlobal(vName)) {
+                Pair<ParseTreeNode, ParseTreeNode> pr =
+                    reuse("x___", r, true, this, scope, mq);
+                return substV(
+                    "(function() {" +
+                    "  @prb;" +
+                    "  return ___OUTERS___.@vCanSet ? (___OUTERS___.@v = @pra) :" +
+                    "                                 ___.setPub(___OUTERS___, @vName, @pra);" +
+                    "})();",
+                    "v", v,
+                    "vCanSet", new Reference(new Identifier(vName + "_canSet___")),
+                    "vName", new StringLiteral(StringLiteral.toQuotedValue(vName)),
+                    "pra", pr.a,
+                    "prb", pr.b);
+              } else {
+                return substV(
+                    "@v = @r",
+                    "v", v,
+                    "r", expand(r, scope, mq));
+              }
+            }
+          }
+        }
+        return NONE;
+      }
+    });
+
+    // TODO(erights): Need a general way to expand readModifyWrite lValues.
+    // For now, we're just picking off a few common special cases as they
+    // come up.
+
+    addRule(new Rule("setReadModifyWriteLocalVar", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof AssignOperation) {
+          AssignOperation aNode = (AssignOperation)node;
+          Operator op = aNode.getOperator();
+          if (op != Operator.ASSIGN) {
+            Expression lValue = aNode.children().get(0);
+            if (lValue instanceof Reference) {
+              String lStr = getReferenceName(lValue);
+              if (!scope.isGlobal(lStr)) {
+                return expandAll(node, scope, mq);
+              }
+            }
+          }
+        }
+        return NONE;
+      }
+    });
+
+    addRule(new Rule("setPostIncrGlobal", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("@v ++", node, bindings)) {
+          ParseTreeNode v = bindings.get("v");
+          if (v instanceof Reference) {
+            if (scope.isGlobal(getReferenceName(v))) {
+              return substV(
+                  "(function() {" +
+                  "  var x___ = Number(___.readPub(___OUTERS___, @vName, true));" +
+                  "  ___.setPub(___OUTERS___, @vName, x___ + 1);" +
+                  "  return x___;" +
+                  "})()",
+                  "vName", new StringLiteral(StringLiteral.toQuotedValue(getReferenceName(v))));
+            }
           }
         }
         return NONE;
@@ -689,7 +842,7 @@ public class DefaultCajaRewriter extends Rewriter {
             scope.isDeclaredFunction(getReferenceName(bindings.get("ctor")))) {
           return substV(
               "new (___.asCtor(@ctor))()",
-              "ctor", expandReferenceToOuters(bindings.get("ctor"), scope, mq));              
+              "ctor", expandReferenceToOuters(bindings.get("ctor"), scope, mq));
         }
         return NONE;
       }
@@ -754,6 +907,30 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    addRule(new Rule("callGlobalViaThis", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("this.@m(@as*)", node, bindings) && scope.isGlobal()) {
+          Pair<ParseTreeNode, ParseTreeNode> aliases =
+              reuseAll(bindings.get("as"), false, this, scope, mq);
+          String methodName = ((Reference)bindings.get("m")).getIdentifierName();
+          return substV(
+              "(function() {" +
+              "  @as*;" +
+              "  return ___OUTERS___.@fm ?" +
+              "      ___OUTERS___.@m(@vs*) :" +
+              "      ___.callPub(___OUTERS___, @rm, [@vs*]);" +
+              "})()",
+              "as", aliases.b,
+              "vs", aliases.a,
+              "m",  bindings.get("m"),
+              "fm", new Reference(new Identifier(methodName + "_canCall___")),
+              "rm", new StringLiteral(StringLiteral.toQuotedValue(methodName)));
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("callInternal", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -761,19 +938,16 @@ public class DefaultCajaRewriter extends Rewriter {
           Pair<ParseTreeNode, ParseTreeNode> aliases =
               reuseAll(bindings.get("as"), false, this, scope, mq);
           String methodName = ((Reference)bindings.get("m")).getIdentifierName();
-          Reference target = new Reference(new Identifier(
-              scope.isGlobal() ? ReservedNames.OUTERS : ReservedNames.LOCAL_THIS));
           return substV(
               "(function() {" +
               "  @as*;" +
-              "  return @target.@fm ? @target.@m(@vs*) : ___.callProp(@target, @rm, [@vs*]);" +
+              "  return t___.@fm ? t___.@m(@vs*) : ___.callProp(t___, @rm, [@vs*]);" +
               "})()",
               "as", aliases.b,
               "vs", aliases.a,
               "m",  bindings.get("m"),
               "fm", new Reference(new Identifier(methodName + "_canCall___")),
-              "rm", new StringLiteral(StringLiteral.toQuotedValue(methodName)),
-              "target", target);
+              "rm", new StringLiteral(StringLiteral.toQuotedValue(methodName)));
         }
         return NONE;
       }
@@ -798,9 +972,10 @@ public class DefaultCajaRewriter extends Rewriter {
         if (match("caja.def(@fname, @base)", node, bindings) &&
             scope.isFunction(getReferenceName(bindings.get("fname"))) &&
             scope.isFunction(getReferenceName(bindings.get("base")))) {
-          return subst(
-              "caja.def(@fname, @base)", bindings
-          );
+          return substV(
+              "caja.def(@fname, @base)",
+              "fname", expandReferenceToOuters(bindings.get("fname"), scope, mq),
+              "base", expandReferenceToOuters(bindings.get("base"), scope, mq));
         }
         return NONE;
       }
@@ -836,8 +1011,8 @@ public class DefaultCajaRewriter extends Rewriter {
               expandAll(bindings.get("ss"), scope, mq);
           return substV(
               "caja.def(@fname, @base, @mm, @ss?)",
-              "fname", bindings.get("fname"),
-              "base", bindings.get("base"),
+              "fname", expandReferenceToOuters(bindings.get("fname"), scope, mq),
+              "base", expandReferenceToOuters(bindings.get("base"), scope, mq),
               "mm", expandMemberMap(bindings.get("fname"), bindings.get("mm"), this, scope, mq),
               "ss", ss);
         }
@@ -912,10 +1087,10 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("@f(@as*)", node, bindings)) {
-          expandEntries(bindings, scope, mq);
-          return subst(
-              "___.asSimpleFunc(@f)(@as*)", bindings
-          );
+          return substV(
+              "___.asSimpleFunc(@f)(@as*)",
+              "f", expand(bindings.get("f"), scope, mq),
+              "as", expandAll(bindings.get("as"), scope, mq));
         }
         return NONE;
       }
@@ -948,55 +1123,36 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("funcNamedSimpleDecl", this) {
+    addRule(new Rule("funcNamedSimple", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // Named simple function declaration
-        if (node.getClass() == FunctionDeclaration.class &&
-            match("function @f(@ps*) { @bs*; }", node.children().get(1), bindings)) {
+        boolean declaration = node instanceof FunctionDeclaration;
+        ParseTreeNode constructorNode = declaration? node.children().get(1) : node;
+        if (match("function @f(@ps*) { @bs*; }", constructorNode, bindings)) {
           Scope s2 = Scope.fromFunctionConstructor(
               scope,
-              (FunctionConstructor)node.children().get(1));
+              (FunctionConstructor)constructorNode);
           if (!s2.hasFreeThis()) {
-            return expandDef(
-                new Reference((Identifier)bindings.get("f")),
-                substV(
-                    "___.simpleFunc(" +
-                    "  function @f(@ps*) {" +
-                    "    @fh*;" +
-                    "    @bs*;" +
-                    "});",
-                    "f", bindings.get("f"),
-                    "ps", bindings.get("ps"),
-                    "bs", expand(bindings.get("bs"), s2, mq),
-                    "fh", getFunctionHeadDeclarations(this, s2, mq)),
-                this,
-                scope,
-                mq);
-          }
-        }
-        return NONE;
-      }
-    });
-
-    addRule(new Rule("funcNamedSimpleValue", this) {
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        // Named simple function constructor
-        if (match(getPatternNode("function @f(@ps*) { @bs* }"), node, bindings)) {
-          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
-          if (!s2.hasFreeThis()) {
-            return substV(
-                "___.primFreeze(" +
-                "  ___.simpleFunc(" +
-                "    function @f(@ps*) {" +
-                "      @fh*;" +
-                "      @bs*;" +
-                "}));",
+            ParseTreeNode result = substV(
+                "___.simpleFunc(" +
+                "  function @f(@ps*) {" +
+                "    @fh*;" +
+                "    @bs*;" +
+                "});",
+                "f", bindings.get("f"),
                 "ps", bindings.get("ps"),
-                "fh", getFunctionHeadDeclarations(this, s2, mq),
                 "bs", expand(bindings.get("bs"), s2, mq),
-                "f",  bindings.get("f"));
+                "fh", getFunctionHeadDeclarations(this, s2, mq));
+            return declaration ?
+                expandDef(
+                    new Reference((Identifier)bindings.get("f")),
+                    result,
+                    this,
+                    scope,
+                    mq) :
+                substV("___.primFreeze(@result);",
+                    "result", result);
           }
         }
         return NONE;
@@ -1021,148 +1177,84 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    // This rule handles constructor declaration statements.
-    addRule(new Rule("funcCtorDecl", this) {
+    addRule(new Rule("funcCtor", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (node instanceof FunctionDeclaration &&
-            match("function @f(@ps*) { @b; @bs*; }", node.children().get(1), bindings)) {
-          Scope s2 = Scope.fromFunctionConstructor(
-              scope,
-              (FunctionConstructor)node.children().get(1));
+        boolean declaration = node instanceof FunctionDeclaration;
+        ParseTreeNode constructorNode = declaration ? node.children().get(1) : node;
+        if (match("function @f(@ps*) { @b; @bs*; }", constructorNode, bindings)) {
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
+          ParseTreeNode bNode = bindings.get("b");
           if (s2.hasFreeThis()) {
-            Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
-            // To subclass, the very first line must be a call to the super constructor.
-            ParseTreeNode bNode = bindings.get("b").children().get(0);
-            if (match("@super.call(this, @params*);", bNode, superBindings)){
-              Scope paramScope = Scope.fromParseTreeNodeContainer(
-                  s2, 
-                  (ParseTreeNodeContainer)superBindings.get("params"));
-              // The rest of the parameters must not contain "this".
-              if (paramScope.hasFreeThis()) {
-                mq.addMessage(
-                    RewriterMessageType.PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS,
-                    node.getFilePosition(), 
-                    this, 
-                    bNode);
-                return node;
-              }
-              // Check that "@super" is bound to a constructor
-              if (!s2.isConstructor(((Reference)superBindings.get("super")).getIdentifierName())){
-                mq.addMessage(
-                    RewriterMessageType.CANNOT_DERIVE_FROM_NON_CONSTRUCTOR,
-                    node.getFilePosition(), 
-                    this, 
-                    bNode);
-                return node;
-              }
-              // Expand the parameters, but not the call itself. 
-              bNode = new ExpressionStmt((Expression)substV(
-                  "@super.call(this, @params*);",
-                  "super", superBindings.get("super"),
-                  "params", expand(superBindings.get("params"),s2, mq)
-              ));
-            } else {
-              // If it's not a call to a constructor, expand the entire node.
-              bNode = expand(bindings.get("b"), s2, mq);
+            if (bNode instanceof ExpressionStmt) {
+              // Rebind bNode to the Expression part of the ExpressionStmt.
+              bNode = bNode.children().get(0);
             }
-            // These references get used multiple times below, so compute them just once.
-            Identifier f_init___ = new Identifier(
-                ((Identifier)bindings.get("f")).getName() + "_init___");
-            Identifier f = (Identifier)bindings.get("f");
-            Reference fRef = new Reference(f);
-            // See the comment on splitCtor() in caja.js for details.
-            s2.addStartOfBlockStmt(
-                substV(
-                    "___.splitCtor(@f, @f_init);",
-                    "f", fRef,
-                    "f_init", new Reference(f_init___)
-                )
-            );
-            return substV(
-                "function @f(var_args){ return @fRef.make___(arguments); }" +
-                "function @f_init(@ps*){" +
-                "  @fh*;" +
-                "  @b;" +
-                "  @bs*;" +
-                "}",
-                "f", f,
-                "fRef", fRef,
-                "f_init", f_init___,
-                "ps", bindings.get("ps"),
-                "fh", getFunctionHeadDeclarations(this, s2, mq),
-                "b", bNode,
-                "bs", expandAll(bindings.get("bs"), s2, mq)
-            );
-          }
-        }
-        return NONE;
-      }
-    });
-
-    // This rule handles constructor expressions.
-    addRule(new Rule("funcCtorExpr", this) {
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (match("function @f(@ps*) { @b; @bs*; }", node, bindings)) {
-          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
-          // If the method contains "this", it's a constructor.
-          if (s2.hasFreeThis()) {
             Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
             // To subclass, the very first line must be a call to the super constructor.
-            ParseTreeNode bNode = bindings.get("b").children().get(0);
             if (match("@super.call(this, @params*);", bNode, superBindings)){
                 Scope paramScope = Scope.fromParseTreeNodeContainer(
-                        s2, 
-                        (ParseTreeNodeContainer)superBindings.get("params"));
+                    s2, 
+                    (ParseTreeNodeContainer)superBindings.get("params"));
                 // The rest of the parameters must not contain "this".
                 if (paramScope.hasFreeThis()) {
-                mq.addMessage(
-                    RewriterMessageType.PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS,
-                    node.getFilePosition(), 
-                    this, 
-                    bNode);
+                  mq.addMessage(
+                      RewriterMessageType.PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS,
+                      node.getFilePosition(), 
+                      this, 
+                      bNode);
                   return node;
                 }
-                // Check that "@super" is bound to a constructor
-                if (!s2.isConstructor(((Reference)superBindings.get("super")).getIdentifierName())){
-                mq.addMessage(
-                    RewriterMessageType.CANNOT_DERIVE_FROM_NON_CONSTRUCTOR,
-                    node.getFilePosition(), 
-                    this, 
-                    bNode);
+                // Check that "@super" is bound to a declared function.
+                if (!s2.isDeclaredFunction(((Reference)superBindings.get("super")).getIdentifierName())){
+                  mq.addMessage(
+                      RewriterMessageType.CANNOT_DERIVE_FROM_UNDECLARED_FUNCTION,
+                      node.getFilePosition(), 
+                      this, 
+                      bNode);
                   return node;
                 }
                 // Expand the parameters, but not the call itself. 
                 bNode = new ExpressionStmt((Expression)substV(
-                        "@super.call(this, @params*);",
-                        "super", superBindings.get("super"),
-                        "params", expand(superBindings.get("params"),s2, mq)
-                ));
+                    "@super.call(this, @params*);",
+                    "super", expandReferenceToOuters((Reference)superBindings.get("super"), s2, mq),
+                    "params", expand(superBindings.get("params"), s2, mq)));
             } else {
               // If it's not a call to a constructor, expand the entire node.
               bNode = expand(bindings.get("b"), s2, mq);
             }
-            return substV(
-                "___.primFreeze(" +
-                "  ___.splitCtor((function(){" +
-                "    function @f(var_args){" +
-                "      return new @fRef.make___(arguments);" +
-                "    }" +
-                "    return function (@ps*) {" +
-                "      @fh*;" +
-                "      @b;" +
-                "      @bs*;" +
-                "    }" +
-                "  })()" +
-                "))",
-                "f", bindings.get("f"),
-                "fRef", new Reference((Identifier)bindings.get("f")),
+            Identifier f = (Identifier)bindings.get("f");
+            Reference fRef = new Reference(f);
+            Identifier f_init___ = new Identifier(f.getName() + "_init___");
+            Reference f_init___Ref = new Reference(f_init___);
+            ParseTreeNode result = substV(
+                "(function () {" +
+                "  ___.splitCtor(@fRef, @f_init___Ref);" +
+                "  function @f(var_args) { return new @fRef.make___(arguments); }" +
+                "  function @f_init(@ps*) {" +
+                "    @fh*;" +
+                "    @b;" +
+                "    @bs*;" +
+                "  }" +
+                "  return @fRef;" +
+                "})()",
+                "f", f,
+                "fRef", fRef,
+                "f_init", f_init___,
+                "f_init___Ref", f_init___Ref,
                 "ps", bindings.get("ps"),
                 "fh", getFunctionHeadDeclarations(this, s2, mq),
                 "b", bNode,
-                "bs", expand(bindings.get("bs"), s2, mq)
-            );
+                "bs", expand(bindings.get("bs"), s2, mq));
+            return declaration ?
+                expandDef(
+                    new Reference((Identifier)bindings.get("f")),
+                    result,
+                    this,
+                    scope,
+                    mq) :
+                substV("___.primFreeze(@result);",
+                    "result", result);
           }
         }
         return NONE;
@@ -1244,7 +1336,7 @@ public class DefaultCajaRewriter extends Rewriter {
                   results.get(i),
               });
               output = ParseTreeNodes.newNodeInstance(
-                  Operation.class,
+                  SpecialOperation.class,
                   Operator.COMMA,
                   children);
             }
@@ -1282,6 +1374,18 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    addRule(new Rule("otherTypeof", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("typeof @f", node, bindings)) {
+          return substV(
+              "typeof @f",
+              "f", expand(bindings.get("f"), scope, mq));
+        }
+        return NONE;
+      }
+    });
+
     addRule(new Rule("otherBadInstanceof", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1295,28 +1399,6 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("block", this) {
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (node instanceof Block) {
-          //Scope s2 = Scope.fromBlock(scope, (Block)node);
-          List<ParseTreeNode> children = new ArrayList<ParseTreeNode>();
-          for (ParseTreeNode c : node.children()) {
-            children.add(
-              expand(c, scope, mq)
-            );
-          }
-          List<ParseTreeNode> allBlockStatements = new ArrayList<ParseTreeNode>();
-          allBlockStatements.addAll(scope.getStartOfBlockStmts());
-          allBlockStatements.addAll(children);
-          return ParseTreeNodes.newNodeInstance(
-              Block.class,
-              null,
-              allBlockStatements);          
-        }
-        return NONE;      
-      }
-    });
-
     ////////////////////////////////////////////////////////////////////////
     // recurse - automatically recurse into some structures
     ////////////////////////////////////////////////////////////////////////
@@ -1326,6 +1408,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (node instanceof ParseTreeNodeContainer ||
             node instanceof ArrayConstructor ||
             node instanceof BreakStmt ||
+            node instanceof Block ||
             node instanceof CaseStmt ||
             node instanceof Conditional ||
             node instanceof ContinueStmt ||
@@ -1336,7 +1419,8 @@ public class DefaultCajaRewriter extends Rewriter {
             node instanceof Loop ||
             node instanceof MultiDeclaration ||
             node instanceof Noop ||
-            node instanceof Operation ||
+            node instanceof SimpleOperation ||
+            node instanceof ControlOperation ||
             node instanceof ReturnStmt ||
             node instanceof SwitchStmt ||
             node instanceof ThrowStmt) {
