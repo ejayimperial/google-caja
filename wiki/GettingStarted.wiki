@@ -101,7 +101,7 @@ src
 
 == Other Resources ==
 
-[http://code.google.com/p/caja/] : The source code repository, bug
+[http://code.google.com/p/google-caja/] : The source code repository, bug
 tracker, and wiki.
 
 [http://groups.google.com/google-caja-discuss/] : The public
