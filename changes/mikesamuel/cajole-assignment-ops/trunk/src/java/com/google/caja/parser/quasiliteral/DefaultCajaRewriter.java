@@ -767,6 +767,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    // TODO(erights): Need a general way to expand lValues
     addRule(new Rule("setVar", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -808,6 +809,8 @@ public class DefaultCajaRewriter extends Rewriter {
     // come up.
 
     addRule(new Rule("setReadModifyWriteLocalVar", this) {
+      // Handle x += 3 and similar ops by rewriting them to x = (x + 3) before
+      // recursively expanding.
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (!(node instanceof AssignOperation)) { return NONE; }
