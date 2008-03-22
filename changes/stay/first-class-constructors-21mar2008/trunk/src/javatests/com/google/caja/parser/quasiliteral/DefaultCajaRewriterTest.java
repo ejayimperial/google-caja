@@ -121,7 +121,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
         "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "      " + weldSetOuters("k", "___OUTERS___.x1___") + ";" +
-        "      " + weldReadOuters("k") + ";" +
+        "      { " + weldReadOuters("k") + "; }" +
         "    }" +
         "  }" +
         "}");
@@ -142,7 +142,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "      for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
         "        if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "          " + weldSetOuters("k", "___OUTERS___.x1___") + ";" +
-        "          " + weldReadOuters("k") + ";" +
+        "          { " + weldReadOuters("k") + "; }" +
         "        }" +
         "      }" +
         "    }" +
@@ -152,6 +152,23 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "function() {" +
         "  for (var k in x) { k; }" +
+        "};",
+        "___.primFreeze(___.simpleFunc(function() {" +
+        "  {" +
+        "    var x0___ = " + weldReadOuters("x") + ";" +
+        "    var x1___ = undefined;" +
+        "    var k;" +
+        "    for (x1___ in x0___) {" +
+        "      if (___.canEnumPub(x0___, x1___)) {" +
+        "        k = x1___;" +
+        "        { k; }" +
+        "      }" +
+        "    }" +
+        "  }" +
+        "}));");
+    checkSucceeds(
+        "function() {" +
+        "  for (var k in x) k;" +
         "};",
         "___.primFreeze(___.simpleFunc(function() {" +
         "  {" +
@@ -179,7 +196,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    for (x1___ in x0___) {" +
         "      if (___.canEnumPub(x0___, x1___)) {" +
         "        ___.simpleFunc(" + weldReadOuters("z") + ")[0] = x1___;" +
-        "        " + weldReadOuters("z") + ";" +
+        "        { " + weldReadOuters("z") + "; }" +
         "      }" +
         "    }" +
         "  }" +
@@ -195,7 +212,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
         "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "      " + weldSetOuters("k", "___OUTERS___.x1___") + ";" +
-        "      " + weldReadOuters("k") + ";" +
+        "      { " + weldReadOuters("k") + "; }" +
         "    }" +
         "  }" +
         "}");
@@ -211,7 +228,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    for (x1___ in x0___) {" +
         "      if (___.canEnumPub(x0___, x1___)) {" +
         "        " + weldSetOuters("k", "x1___") + ";" +
-        "        " + weldReadOuters("k") + ";" +
+        "        { " + weldReadOuters("k") + "; }" +
         "      }" +
         "    }" +
         "  }" +
@@ -229,7 +246,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    for (x1___ in x0___) {" +
         "      if (___.canEnumPub(x0___, x1___)) {" +
         "        k = x1___;" +
-        "        k;" +
+        "        { k; }" +
         "      }" +
         "    }" +
         "  }" +
@@ -244,7 +261,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  for (___OUTERS___.x1 in ___OUTERS___.x0___) {" +
         "    if (___.canEnumPub(___OUTERS___.x0___, ___OUTERS___.x1___)) {" +
         "      " + weldReadOuters("y") + ".k = ___OUTERS___.x1___;" +
-        "      " + weldReadOuters("y") + ".k;" +
+        "      { " + weldReadOuters("y") + ".k; }" +
         "    }" +
         "  }" +
         "}");
@@ -262,7 +279,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    for (x1___ in x0___) {" +
         "      if (___.canEnumPub(x0___, x1___)) {" +
         "        " + weldReadOuters("y") + ".k = x1___;" +
-        "        " + weldReadOuters("y") + ".k;" +
+        "        { " + weldReadOuters("y") + ".k; }" +
         "      }" +
         "    }" +
         "  }" +
@@ -304,7 +321,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  for (x1___ in x0___) {" +
         "    if (___.canEnumPub(x0___, x1___)) {" +
         "      " + weldSetOuters("k", "x1___") + ";" +
-        "      " + weldReadOuters("k") + ";" +
+        "      { " + weldReadOuters("k") + "; }" +
         "    }" +
         "  }" +
         "}");
@@ -322,7 +339,7 @@ public class DefaultCajaRewriterTest extends TestCase {
             "    for (x1___ in x0___) {" +
             "      if (___.canEnumProp(x0___, x1___)) {" +
             "        " + weldSetOuters("k", "x1___") + ";" +
-            "        " + weldReadOuters("k") + ";" +
+            "        { " + weldReadOuters("k") + "; }" +
             "      }" +
             "    }" +
             "  }" +
@@ -344,7 +361,7 @@ public class DefaultCajaRewriterTest extends TestCase {
             "    for (x1___ in x0___) {" +
             "      if (___.canEnumProp(x0___, x1___)) {" +
             "        k = x1___;" +
-            "        k;" +
+            "        { k; }" +
             "      }" +
             "    }" +
             "  }" +
@@ -364,7 +381,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    for (x1___ in x0___) {" +
         "      if (___.canEnumProp(x0___, x1___)) {" +
         "        " + weldReadOuters("y") + ".k = x1___;" +
-        "        " + weldReadOuters("y") + ".k;" +
+        "        { " + weldReadOuters("y") + ".k; }" +
         "      }" +
         "    }" +
         "  }" +
