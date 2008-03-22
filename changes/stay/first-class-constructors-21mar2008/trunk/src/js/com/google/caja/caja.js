@@ -678,18 +678,27 @@ var ___;
    *     this.x_ = x;
    *     this.y_ = y;
    * }</pre> into two function definitions and an initialization:<pre>
-   *   function Point(var_args) // declares the original name
-   *     return new Point.make___(arguments); // delegates the rest
-   *   }
-   *   function Point_init___(x, y) {   // normally translated params
-   *     ___.setProp(this,'x_',x);      // normally translated body
-   *     ___.setProp(this,'y_',y);
-   *   }
-   *   ___.splitCtor(Point,Point_init___); // Initialize Point
+   * var Point = (function () {
+   *     ___.splitCtor(Point, Point_init___);
+   *     function Point(var_args) {
+   *       return new Point.make___(arguments);
+   *     }
+   *     function Point_init___(x, y) {
+   *       var t___ = this;
+   *       (function () {
+   *           var x___ = x;
+   *           return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);
+   *         })();
+   *       (function () {
+   *           var x___ = y;
+   *           return t___.y__canSet___ ? (t___.y_ = x___) : ___.setProp(t___, 'y_', x___);
+   *         })();
+   *     }
+   *     return Point;
+   *   })();
    * </pre>
-   * The call to <tt>___.splitCtor()</tt> must be moved to the top of
-   * the enclosing function so that it runs before any other possible
-   * uses of <tt>Point</tt>.
+   * The result assigned to a variable of the same name (as above) if translating a 
+   * declaration; the result is frozen instead if the function is in expression context.
    */
   function splitCtor(constr, initer, opt_Sup, opt_name) {
     ctor(constr, opt_Sup, opt_name);

@@ -449,6 +449,13 @@ public class HtmlCompiledPluginTest extends TestCase {
         "})()</script>",
         ""
         );
+    execGadget(
+        "<script>function(){function Point(x, y) {" +
+        "  this.x_ = x;" +
+        "  this.y_ = y;" +
+        "}}</script>",
+        ""
+        );
   }
   
   private void execGadget(String gadgetSpec, String tests) throws Exception {
