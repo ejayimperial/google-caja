@@ -1779,13 +1779,19 @@ public class DefaultCajaRewriterTest extends TestCase {
         null,
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(
-            "var unittestResult___ = '--NEVER-SET--';\n"
+            // Initialize the output field to something containing a unique
+            // object value that will not compare identically across runs.
+            "var unittestResult___ = { toString:\n"
+            + "    function () { return '--NO-RESULT--'; }}\n"
+            // Set up the outers environment.
             + "var testOuters = ___.copy(___.sharedOuters);\n"
             + "___.getNewModuleHandler().setOuters(testOuters);",
             getName()),
+        // Load the cajoled code.
         new RhinoTestBed.Input(
             "___.loadModule(function (___OUTERS___) {" + cajoledJs + "\n});",
             getName() + "-cajoled"),
+        // Return the output field as the value of the run.
         new RhinoTestBed.Input("unittestResult___", getName()));
 
     System.err.println("Result: " + cajoledResult + " for " + getName());
