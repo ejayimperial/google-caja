@@ -32,6 +32,7 @@ import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.IntegerLiteral;
 import com.google.caja.parser.js.Literal;
 import com.google.caja.parser.js.Loop;
 import com.google.caja.parser.js.MultiDeclaration;
@@ -811,23 +812,24 @@ public class DefaultCajaRewriter extends Rewriter {
     addRule(new Rule("setReadModifyWriteLocalVar", this) {
       // Handle x += 3 and similar ops by rewriting them to x = (x + 3) before
       // recursively expanding.
-      public ParseTreeNode fire(
-          ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (!(node instanceof AssignOperation)) { return NONE; }
-        AssignOperation assignment = (AssignOperation) node;
-        Operator op = assignment.getOperator();
-        if (op.getAssignmentDelegate() == null) { return NONE; }
-        Expression left = assignment.children().get(0),
-            right = assignment.children().get(1);
-        Operation value = Operation.create(
-            op.getAssignmentDelegate(), left, right);
-        Operation expanded = Operation.create(Operator.ASSIGN, left, value);
-        FilePosition pos = assignment.getFilePosition();
-        if (pos != null) {
-          expanded.setFilePosition(pos);
-          value.setFilePosition(pos);
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof AssignOperation) {
+          AssignOperation aNode = (AssignOperation)node;
+          Operator op = aNode.getOperator();
+          if (op.getAssignmentDelegate() == null) { return NONE; }
+          Expression left = aNode.children().get(0),
+              right = aNode.children().get(1);
+          Operation value = Operation.create(
+              op.getAssignmentDelegate(), left, right);
+          Operation expanded = Operation.create(Operator.ASSIGN, left, value);
+          FilePosition pos = aNode.getFilePosition();
+          if (pos != null) {
+            expanded.setFilePosition(pos);
+            value.setFilePosition(pos);
+          }
+          return expand(expanded, scope, mq);
         }
-        return expand(expanded, scope, mq);
+        return NONE;
       }
     });
 
@@ -835,8 +837,9 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("@v ++", node, bindings)) {
-          ParseTreeNode v = bindings.get("v");
+          Expression v = (Expression) bindings.get("v");
           if (v instanceof Reference) {
+            String name = getReferenceName(v);
             if (scope.isGlobal(getReferenceName(v))) {
               return substV(
                   "(function() {" +
@@ -845,6 +848,8 @@ public class DefaultCajaRewriter extends Rewriter {
                   "  return x___;" +
                   "})()",
                   "vName", new StringLiteral(StringLiteral.toQuotedValue(getReferenceName(v))));
+            } else if (!name.endsWith("__")) {
+              return expandAll(node, scope, mq);
             }
           }
         }
@@ -856,15 +861,18 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("++@v", node, bindings)) {
-          ParseTreeNode v = bindings.get("v");
+          Expression v = (Expression) bindings.get("v");
           if (v instanceof Reference) {
-            if (scope.isGlobal(getReferenceName(v))) {
+            String name = getReferenceName(v);
+            if (scope.isGlobal(name)) {
               return substV(
                   "(function() {" +
                   "  var x___ = ___.readPub(___OUTERS___, @vName, true) - -1;" +
                   "  return ___.setPub(___OUTERS___, @vName, x___);" +
                   "})()",
                   "vName", new StringLiteral(StringLiteral.toQuotedValue(getReferenceName(v))));
+            } else if (!name.endsWith("__")) {
+              return expandAll(node, scope, mq);
             }
           }
         }
@@ -876,9 +884,10 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("@v --", node, bindings)) {
-          ParseTreeNode v = bindings.get("v");
+          Expression v = (Expression) bindings.get("v");
           if (v instanceof Reference) {
-            if (scope.isGlobal(getReferenceName(v))) {
+            String name = getReferenceName(v);
+            if (scope.isGlobal(name)) {
               return substV(
                   "(function() {" +
                   "  var x___ = Number(___.readPub(___OUTERS___, @vName, true));" +
@@ -886,6 +895,8 @@ public class DefaultCajaRewriter extends Rewriter {
                   "  return x___;" +
                   "})()",
                   "vName", new StringLiteral(StringLiteral.toQuotedValue(getReferenceName(v))));
+            } else if (!name.endsWith("__")) {
+              return expandAll(node, scope, mq);
             }
           }
         }
@@ -897,19 +908,61 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("--@v", node, bindings)) {
-          ParseTreeNode v = bindings.get("v");
+          Expression v = (Expression) bindings.get("v");
           if (v instanceof Reference) {
-            if (scope.isGlobal(getReferenceName(v))) {
+            String name = getReferenceName(v);
+            if (scope.isGlobal(name)) {
               return substV(
                   "(function() {" +
                   "  var x___ = ___.readPub(___OUTERS___, @vName, true) - 1;" +
                   "  return ___.setPub(___OUTERS___, @vName, x___);" +
                   "})()",
                   "vName", new StringLiteral(StringLiteral.toQuotedValue(getReferenceName(v))));
+            } else if (!name.endsWith("__")) {
+              return expandAll(node, scope, mq);
             }
           }
         }
         return NONE;
+      }
+    });
+
+    addRule(new Rule("complexIncrDecr", this) {
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (!(node instanceof AssignOperation)) { return NONE; }
+        AssignOperation op = (AssignOperation) node;
+        Expression v = op.children().get(0);
+        Operation expanded;
+        switch (op.getOperator()) {
+          case POST_INCREMENT:
+            expanded = Operation.create(
+                Operator.SUBTRACTION,
+                Operation.create(
+                    Operator.ASSIGN_SUB, v, new IntegerLiteral(-1)),
+                new IntegerLiteral(1));
+            break;
+          case PRE_INCREMENT:
+            expanded = Operation.create(
+              Operator.ASSIGN_SUB, v, new IntegerLiteral(-1));
+            break;
+          case POST_DECREMENT:
+            expanded = Operation.create(
+                Operator.ADDITION,
+                Operation.create(Operator.ASSIGN_SUB, v, new IntegerLiteral(1)),
+                new IntegerLiteral(1));
+            break;
+          case PRE_DECREMENT:
+            expanded = Operation.create(
+                Operator.ASSIGN_SUB, v, new IntegerLiteral(1));
+            break;
+          default:
+            return NONE;
+        }
+        if (node.getFilePosition() != null) {
+          expanded.setFilePosition(node.getFilePosition());
+        }
+        return expand(expanded, scope, mq);
       }
     });
 

@@ -14,24 +14,57 @@
 
 package com.google.caja.parser.quasiliteral;
 
+import com.google.caja.lexer.InputSource;
+import com.google.caja.lexer.CharProducer;
+import com.google.caja.lexer.JsLexer;
+import com.google.caja.lexer.JsTokenQueue;
+import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
 import com.google.caja.parser.js.Block;
+import com.google.caja.parser.js.Expression;
+import com.google.caja.parser.js.ExpressionStmt;
+import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.Operation;
+import com.google.caja.parser.js.Operator;
+import com.google.caja.parser.js.Parser;
+import com.google.caja.parser.js.Reference;
+import com.google.caja.parser.js.Statement;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
+import com.google.caja.util.RhinoTestBed;
 import com.google.caja.util.TestUtil;
 import com.google.caja.plugin.SyntheticNodes;
-import junit.framework.TestCase;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Collections;
+import junit.framework.AssertionFailedError;
+import junit.framework.TestCase;
 
 /**
  * @author ihab.awad@gmail.com
  */
 public class DefaultCajaRewriterTest extends TestCase {
+  private InputSource is;
+  private MessageContext mc;
+  private MessageQueue mq;
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    is = new InputSource(URI.create("test:///" + getName()));
+    mc = new MessageContext();
+    mc.inputSources = Collections.singleton(is);
+    mq = TestUtil.createTestMessageQueue(mc);
+  }
+  
   /**
    * Welds together a string representing the repeated pattern of expected test output for
    * assigning to an outer variable.
@@ -892,24 +925,25 @@ public class DefaultCajaRewriterTest extends TestCase {
   }
 
   public void testSetReadModifyWriteLocalVar() throws Exception {
-    String[] ops = new String[] {
-        "&=",
-        "/=",
-        "<<=",
-        "%=",
-        "*=",
-        "&=",
-        ">>=",
-        "-=",
-        "+=",
-        ">>>=",
-        "^=",
-    };
-    for (String op : ops) {
+    EnumSet<Operator> ops = EnumSet.of(
+        Operator.ASSIGN_MUL,
+        Operator.ASSIGN_DIV,
+        Operator.ASSIGN_MOD,
+        Operator.ASSIGN_SUM,
+        Operator.ASSIGN_SUB,
+        Operator.ASSIGN_LSH,
+        Operator.ASSIGN_RSH,
+        Operator.ASSIGN_USH,
+        Operator.ASSIGN_AND,
+        Operator.ASSIGN_XOR,
+        Operator.ASSIGN_OR
+        );
+    for (Operator op : ops) {
       checkSucceeds(
-          "function() { var x; x " + op + " y; };",
+          "function() { var x; x " + op.getSymbol() + " y; };",
           "___.primFreeze(___.simpleFunc(function() {" +
-          "  var x; x " + op + " " + weldReadOuters("y") + ";" +
+          "  var x; x = x " + op.getAssignmentDelegate().getSymbol() + " " +
+          weldReadOuters("y") + ";" +
           "}));");
     }
   }
@@ -1608,6 +1642,50 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(readResource("listfriends.js"));
   }
 
+  public void testAssertConsistent() throws Exception {
+    try {
+      // A value that cannot be consistent across invocations.
+      assertConsistent("({})");
+      fail("assertConsistent not working");
+    } catch (AssertionFailedError e) {
+      // Pass
+    }
+  }
+
+  public void testAssignmentDelegates() throws Exception {
+    assertConsistent("var x = 3; x *= 2;");
+    assertConsistent("var x = 1; x += 7;");
+    assertConsistent("var o = { x: 'a' }; o.x += 'b';");
+  }
+
+  public void testPrefixAndPostfixAssigners() throws Exception {
+    assertConsistent(
+        "var x = 2;\n"
+        + "var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
+        + "assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
+        + "arr.join(',')");
+  }
+
+  public void testPrefixAndPostfixAssignersToLocals() throws Exception {
+    assertConsistent(
+        "(function () {\n"
+        + "  var x = 2;\n"
+        + "  var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
+        + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
+        + "  return arr.join(',');\n"
+        + "})()");
+  }
+
+  public void testPrefixAndPostfixAssignersToComplexLValues() throws Exception {
+    assertConsistent(
+        "(function () {\n"
+        + "  var o = { x: 2 };\n"
+        + "  var arr = [--o.x, o.x, o.x--, o.x, ++o.x, o.x, o.x++, o.x];\n"
+        + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
+        + "  return arr.join(',');\n"
+        + "})()");
+  }
+
   private void setSynthetic(ParseTreeNode n) {
     n.getAttributes().set(SyntheticNodes.SYNTHETIC, true);
   }
@@ -1620,8 +1698,7 @@ public class DefaultCajaRewriterTest extends TestCase {
   }
 
   private void checkFails(String input, String error) throws Exception {
-    MessageContext mc = new MessageContext();
-    MessageQueue mq = TestUtil.createTestMessageQueue(mc);
+    mq.getMessages().clear();
     new DefaultCajaRewriter(true).expand(TestUtil.parse(input), mq);
 
     assertFalse(mq.getMessages().isEmpty());
@@ -1640,7 +1717,7 @@ public class DefaultCajaRewriterTest extends TestCase {
       ParseTreeNode inputNode,
       ParseTreeNode expectedResultNode)
       throws Exception {
-    MessageQueue mq = TestUtil.createTestMessageQueue(new MessageContext());
+    mq.getMessages().clear();
     ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
     for (Message m : mq.getMessages()) {
       if (m.getMessageLevel().compareTo(MessageLevel.WARNING) >= 0) {
@@ -1672,6 +1749,87 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   private void checkSucceeds(String input) throws Exception {
     checkSucceeds(TestUtil.parse(input), null);
+  }
+
+  /**
+   * Asserts that the given caja code produces the same value both cajoled and
+   * uncajoled.
+   *
+   * @param caja executed in the context of asserts.js for its value.  The
+   *    value is computed from the last statement in caja.
+   */
+  private void assertConsistent(String caja) 
+      throws IOException, ParseException {
+    assertConsistent(null, caja);
+  }
+  private void assertConsistent(String message, String caja)
+      throws IOException, ParseException {
+    // Make sure the tree assigns the result to the unittestResult___ var.
+    Object uncajoledResult = RhinoTestBed.runJs(
+        null,
+        new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
+        new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
+
+    Statement cajaTree = replaceLastStatementWithEmit(
+        parseJs(caja, is), "unittestResult___");
+    String cajoledJs = TestUtil.render(
+        cajole(parseJsFromResource("../../plugin/asserts.js"), cajaTree));
+
+    Object cajoledResult = RhinoTestBed.runJs(
+        null,
+        new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
+        new RhinoTestBed.Input(
+            "var unittestResult___ = '--NEVER-SET--';\n"
+            + "var testOuters = ___.copy(___.sharedOuters);\n"
+            + "___.getNewModuleHandler().setOuters(testOuters);",
+            getName()),
+        new RhinoTestBed.Input(
+            "___.loadModule(function (___OUTERS___) {" + cajoledJs + "\n});",
+            getName() + "-cajoled"),
+        new RhinoTestBed.Input("unittestResult___", getName()));
+
+    System.err.println("Result: " + cajoledResult + " for " + getName());
+    assertEquals(message, uncajoledResult, cajoledResult);
+  }
+
+  private <T extends ParseTreeNode> T replaceLastStatementWithEmit(
+      T node, String varName) {
+    if (node instanceof ExpressionStmt) {
+      ExpressionStmt es = (ExpressionStmt) node;
+      Expression e = es.getExpression();
+      Operation emitter = SyntheticNodes.s(Operation.create(
+          Operator.ASSIGN,
+          SyntheticNodes.s(new Reference(
+              SyntheticNodes.s(new Identifier(varName)))),
+          e));
+      es.replaceChild(emitter, e);
+    } else {
+      List<? extends ParseTreeNode> children = node.children();
+      if (!children.isEmpty()) {
+        replaceLastStatementWithEmit(
+            children.get(children.size() - 1), varName);
+      }
+    }
+    return node;
+  }
+
+  private ParseTreeNode cajole(Statement... nodes) {
+    return new DefaultCajaRewriter(false).expand(
+        new Block(Arrays.asList(nodes)), mq);
+  }
+
+  private Statement parseJs(String js, InputSource is) throws ParseException {
+    CharProducer cp = CharProducer.Factory.create(new StringReader(js), is);
+    JsTokenQueue tq = new JsTokenQueue(new JsLexer(cp), is);
+    Statement s = new Parser(tq, mq).parse();
+    tq.expectEmpty();
+    return s;
+  }
+
+  private Statement parseJsFromResource(String resource)
+      throws IOException, ParseException {
+    return parseJs(TestUtil.readResource(getClass(), resource),
+                   new InputSource(TestUtil.getResource(getClass(), resource)));
   }
 
   private String readResource(String resource) throws Exception {
