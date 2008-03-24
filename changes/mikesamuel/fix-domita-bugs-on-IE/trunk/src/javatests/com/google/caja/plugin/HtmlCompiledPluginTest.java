@@ -20,7 +20,6 @@ import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
-import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Block;
 import com.google.caja.reporting.EchoingMessageQueue;
 import com.google.caja.reporting.MessageContext;
@@ -348,6 +347,24 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   /**
+   * Tests 'foreach' loops.
+   *
+   * @throws Exception
+   */
+  public void testForeach() throws Exception {
+    execGadget(
+        "<script>var z = 0; for (var k = 0; k < 2; k++) z = k;" +
+        "assertEquals(z, 1);</script>",
+        ""
+        );
+    execGadget(
+        "<script>var z = 0; for (var k = 0; k < 2; k++) { z = k; }" +
+        "assertEquals(z, 1);</script>",
+        ""
+        );
+  }
+
+  /**
    * Empty styles should not cause parse failure.
    * <a href="http://code.google.com/p/google-caja/issues/detail?id=56">bug</a>
    */
@@ -422,7 +439,6 @@ public class HtmlCompiledPluginTest extends TestCase {
     StringReader in = new StringReader(html);
     TokenQueue<HtmlTokenType> tq = DomParser.makeTokenQueue(is, in, false);
     if (tq.isEmpty()) { return null; }
-    return DomParser.parseFragment(
-        tq, OpenElementStack.Factory.createHtml5ElementStack(mq));
+    return new DomParser(tq, false, mq).parseFragment();
   }
 }
