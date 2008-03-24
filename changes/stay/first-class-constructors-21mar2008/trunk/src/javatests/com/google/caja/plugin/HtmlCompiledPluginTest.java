@@ -422,6 +422,10 @@ public class HtmlCompiledPluginTest extends TestCase {
         "var bar = new Bar(2);" +
         "assertEquals(bar.y, 3);" +
         "assertEquals(bar.getX(), 2);" +
+        "(function (constr) {" +
+        "  var baz = new constr(4);" +
+        "  assertEquals(baz.getX(), 4);" +
+        "})(Bar);" +
         "</script>",
         "");
   }
