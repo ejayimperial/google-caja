@@ -410,6 +410,22 @@ public class HtmlCompiledPluginTest extends TestCase {
         );
   }
 
+  public void testCajaDef() throws Exception {
+    execGadget(
+        "<script>" +
+        "function Foo(y) { this.y = y; }" +
+        "function Bar(x) {" +
+        "  Foo.call(this, 3);" +
+        "  this.x_ = x;" +
+        "}" +
+        "caja.def(Bar, Foo, {getX:function () { return this.x_; }});" +
+        "var bar = new Bar(2);" +
+        "assertEquals(bar.y, 3);" +
+        "assertEquals(bar.getX(), 2);" +
+        "</script>",
+        "");
+  }
+
   public void testECMAScript31Scoping() throws Exception {
     execGadget(
         "<script>" +
