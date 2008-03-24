@@ -347,24 +347,6 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   /**
-   * Tests 'foreach' loops.
-   *
-   * @throws Exception
-   */
-  public void testForeach() throws Exception {
-    execGadget(
-        "<script>var z = 0; for (var k = 0; k < 2; k++) z = k;" +
-        "assertEquals(z, 1);</script>",
-        ""
-        );
-    execGadget(
-        "<script>var z = 0; for (var k = 0; k < 2; k++) { z = k; }" +
-        "assertEquals(z, 1);</script>",
-        ""
-        );
-  }
-
-  /**
    * Empty styles should not cause parse failure.
    * <a href="http://code.google.com/p/google-caja/issues/detail?id=56">bug</a>
    */
@@ -428,26 +410,32 @@ public class HtmlCompiledPluginTest extends TestCase {
         );
   }
 
-  public void testECMA31Scoping() throws Exception {
+  public void testECMAScript31Scoping() throws Exception {
     execGadget(
         "<script>" +
+        "var passed = false;" +
         "try{" +
         "  var Bar = Foo;" +
         "  function Foo(){ }" +
         "} catch (e) {" +
         // TODO(stay): Check that e is a ReferenceError.
+        "  passed = true;" +
         "}" +
+        "if (!passed) { fail ('Should have thrown a reference error.'); }" +
         "</script>",
         ""
         );
     execGadget(
         "<script>" +
+        "var passed = false;" +
         "try{ (function(){" +
         "  var Bar = Foo;" +
         "  function Foo(){ }" +
         "})() } catch (e) {" +
         // TODO(stay): Check that e is a ReferenceError.
+        "  passed = true;" +
         "}" +
+        "if (!passed) { fail ('Should have thrown a reference error.'); }" +
         "</script>",
         ""
         );

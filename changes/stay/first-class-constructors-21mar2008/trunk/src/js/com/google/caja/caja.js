@@ -511,7 +511,7 @@ var ___;
     obj.___FROZEN___ = true;
     if (typ === 'function') {
       // Do last to avoid possible infinite recursion.
-      if (obj.prototype) primFreeze(obj.prototype);
+      if (obj.prototype) { primFreeze(obj.prototype); }
     }
     return obj;
   }
@@ -711,12 +711,7 @@ var ___;
     // assign to the other as well.
     constr.make___.prototype = constr.prototype;
     constr.call = function(that, var_args) {
-      // Skip <tt>that</tt> in <tt>arguments[0]</tt>.
-      // It would be nice to use <tt>Array.slice</tt>, but
-      // <tt>arguments</tt> isn't an array.
-      var args = [];
-      for (var i=1; i<arguments.length; ++i) args[i-1] = arguments[i];
-      constr.init___.apply(that, args);
+      constr.init___.apply(that, Array.prototype.slice.call(arguments, 1));
     };
     return constr;
   }
@@ -1281,15 +1276,17 @@ var ___;
     var sup = opt_Sup || Object;
     var members = opt_members || {};
     var statics = opt_statics || {};
-    if ('Super' in statics) {
-      fail('The static name "Super" is reserved ',
-           'for the super-constructor');
-    }
     
     ctor(sub, sup);
     function PseudoSuper() {}
     PseudoSuper.prototype = sup.prototype;
     sub.prototype = new PseudoSuper();
+    if (sub.make___) {
+      // We must preserve this identity, so anywhere that either
+      // <tt>.prototype</tt> property might be assigned to, we must
+      // assign to the other as well.
+      sub.make___.prototype = sub.prototype;
+    }
     sub.prototype.constructor = sub;
     
     setMemberMap(sub, members);

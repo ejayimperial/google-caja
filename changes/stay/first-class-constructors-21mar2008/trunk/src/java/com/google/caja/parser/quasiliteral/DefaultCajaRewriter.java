@@ -1123,36 +1123,57 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("funcNamedSimple", this) {
+    addRule(new Rule("funcNamedSimpleDecl", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // Named simple function declaration
-        boolean declaration = node instanceof FunctionDeclaration;
-        ParseTreeNode constructorNode = declaration? node.children().get(1) : node;
-        if (match("function @f(@ps*) { @bs*; }", constructorNode, bindings)) {
+        if (node instanceof FunctionDeclaration &&
+            match("function @f(@ps*) { @bs*; }", node.children().get(1), bindings)) {
           Scope s2 = Scope.fromFunctionConstructor(
               scope,
-              (FunctionConstructor)constructorNode);
+              (FunctionConstructor)node.children().get(1));
           if (!s2.hasFreeThis()) {
-            ParseTreeNode result = substV(
-                "___.simpleFunc(" +
-                "  function @f(@ps*) {" +
-                "    @fh*;" +
-                "    @bs*;" +
-                "});",
+            return expandDef(
+                    new Reference((Identifier)bindings.get("f")),
+                    substV(
+                        "___.simpleFunc(" +
+                        "  function @f(@ps*) {" +
+                        "    @fh*;" +
+                        "    @bs*;" +
+                        "});",
+                        "f", bindings.get("f"),
+                        "ps", bindings.get("ps"),
+                        "bs", expand(bindings.get("bs"), s2, mq),
+                        "fh", getFunctionHeadDeclarations(this, s2, mq)),
+                    this,
+                    scope,
+                    mq);
+          }
+        }
+        return NONE;
+      }
+    });
+
+    addRule(new Rule("funcNamedSimpleValue", this) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        // Named simple function expression
+        if (match("function @f(@ps*) { @bs*; }", node, bindings)) {
+          Scope s2 = Scope.fromFunctionConstructor(
+              scope,
+              (FunctionConstructor)node);
+          if (!s2.hasFreeThis()) {
+            return substV(
+                "___.primFreeze(" +
+                "  ___.simpleFunc(" +
+                "    function @f(@ps*) {" +
+                "      @fh*;" +
+                "      @bs*;" +
+                "  }));",
                 "f", bindings.get("f"),
                 "ps", bindings.get("ps"),
                 "bs", expand(bindings.get("bs"), s2, mq),
                 "fh", getFunctionHeadDeclarations(this, s2, mq));
-            return declaration ?
-                expandDef(
-                    new Reference((Identifier)bindings.get("f")),
-                    result,
-                    this,
-                    scope,
-                    mq) :
-                substV("___.primFreeze(@result);",
-                    "result", result);
           }
         }
         return NONE;
@@ -1183,42 +1204,35 @@ public class DefaultCajaRewriter extends Rewriter {
         boolean declaration = node instanceof FunctionDeclaration;
         ParseTreeNode constructorNode = declaration ? node.children().get(1) : node;
         if (match("function @f(@ps*) { @b; @bs*; }", constructorNode, bindings)) {
-          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
           ParseTreeNode bNode = bindings.get("b");
+          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
           if (s2.hasFreeThis()) {
             if (bNode instanceof ExpressionStmt) {
               // Rebind bNode to the Expression part of the ExpressionStmt.
               bNode = bNode.children().get(0);
             }
             Map<String, ParseTreeNode> superBindings = new LinkedHashMap<String, ParseTreeNode>();
-            // To subclass, the very first line must be a call to the super constructor.
-            if (match("@super.call(this, @params*);", bNode, superBindings)){
-                Scope paramScope = Scope.fromParseTreeNodeContainer(
-                    s2, 
-                    (ParseTreeNodeContainer)superBindings.get("params"));
-                // The rest of the parameters must not contain "this".
-                if (paramScope.hasFreeThis()) {
-                  mq.addMessage(
-                      RewriterMessageType.PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS,
-                      node.getFilePosition(), 
-                      this, 
-                      bNode);
-                  return node;
-                }
-                // Check that "@super" is bound to a declared function.
-                if (!s2.isDeclaredFunction(((Reference)superBindings.get("super")).getIdentifierName())){
-                  mq.addMessage(
-                      RewriterMessageType.CANNOT_DERIVE_FROM_UNDECLARED_FUNCTION,
-                      node.getFilePosition(), 
-                      this, 
-                      bNode);
-                  return node;
-                }
-                // Expand the parameters, but not the call itself. 
-                bNode = new ExpressionStmt((Expression)substV(
-                    "@super.call(this, @params*);",
-                    "super", expandReferenceToOuters((Reference)superBindings.get("super"), s2, mq),
-                    "params", expand(superBindings.get("params"), s2, mq)));
+            // To subclass, the very first line must be a call to the super constructor,
+            // which must be a reference to a declared function.
+            if (match("@super.call(this, @params*);", bNode, superBindings) &&
+                s2.isDeclaredFunctionReference(superBindings.get("super"))){
+              Scope paramScope = Scope.fromParseTreeNodeContainer(
+                  s2, 
+                  (ParseTreeNodeContainer)superBindings.get("params"));
+              // The rest of the parameters must not contain "this".
+              if (paramScope.hasFreeThis()) {
+                mq.addMessage(
+                    RewriterMessageType.PARAMETERS_TO_SUPER_CONSTRUCTOR_MAY_NOT_CONTAIN_THIS,
+                    node.getFilePosition(), 
+                    this, 
+                    bNode);
+                return node;
+              }
+              // Expand the parameters, but not the call itself. 
+              bNode = new ExpressionStmt((Expression)substV(
+                  "@super.call(this, @params*);",
+                  "super", expandReferenceToOuters((Reference)superBindings.get("super"), s2, mq),
+                  "params", expand(superBindings.get("params"), s2, mq)));
             } else {
               // If it's not a call to a constructor, expand the entire node.
               bNode = expand(bindings.get("b"), s2, mq);
@@ -1247,12 +1261,14 @@ public class DefaultCajaRewriter extends Rewriter {
                 "b", bNode,
                 "bs", expand(bindings.get("bs"), s2, mq));
             return declaration ?
+                // If it's a declaration, assign the result to a variable with the same name.
                 expandDef(
                     new Reference((Identifier)bindings.get("f")),
                     result,
                     this,
                     scope,
                     mq) :
+                // If used in an expression, it's the first use, so we freeze it.
                 substV("___.primFreeze(@result);",
                     "result", result);
           }
