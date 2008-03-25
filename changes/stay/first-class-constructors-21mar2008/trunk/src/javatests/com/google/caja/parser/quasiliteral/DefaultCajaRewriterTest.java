@@ -1622,6 +1622,92 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(readResource("listfriends.js"));
   }
 
+  public void testFuncCtor() throws Exception {
+    checkSucceeds(
+        "function Foo(x) { this.x_ = x; }",
+        "(function () {" +
+        "    var x___ = (function () {" +
+        "        ___.splitCtor(Foo, Foo_init___);" +
+        "        function Foo(var_args) {" +
+        "          return new Foo.make___(arguments);" +
+        "        }" +
+        "        function Foo_init___(x) {" +
+        "          var t___ = this;" +
+        "          (function () {" +
+        "              var x___ = x;" +
+        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Foo;" +
+        "      })();" +
+        "    return ___OUTERS___.Foo_canSet___ ? (___OUTERS___.Foo = x___) : ___.setPub(___OUTERS___, 'Foo', x___);" +
+        "  })();");
+    checkSucceeds(
+        "(function(){ function Foo(x) { this.x_ = x; } })()",
+        "___.asSimpleFunc(___.primFreeze(___.simpleFunc(function () {" +
+        "    var Foo = (function () {" +
+        "        ___.splitCtor(Foo, Foo_init___);" +
+        "        function Foo(var_args) {" +
+        "          return new Foo.make___(arguments);" +
+        "        }" +
+        "        function Foo_init___(x) {" +
+        "          var t___ = this;" +
+        "          (function () {" +
+        "              var x___ = x;" +
+        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Foo;" +
+        "      })();" +
+        "  })))();");
+    checkSucceeds(
+        "function Foo(x) { this.x_ = x; }" +
+        "function Bar(y) {" +
+        "  Foo.call(this,1);" +
+        "  this.y = y;" +
+        "}" +
+        "bar = new Bar(3);",
+        "(function () {" +
+        "    var x___ = (function () {" +
+        "        ___.splitCtor(Foo, Foo_init___);" +
+        "        function Foo(var_args) {" +
+        "          return new Foo.make___(arguments);" +
+        "        }" +
+        "        function Foo_init___(x) {" +
+        "          var t___ = this;" +
+        "          (function () {" +
+        "              var x___ = x;" +
+        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Foo;" +
+        "      })();" +
+        "    return ___OUTERS___.Foo_canSet___ ? (___OUTERS___.Foo = x___) : ___.setPub(___OUTERS___, 'Foo', x___);" +
+        "  })();" +
+        "(function () {" +
+        "    var x___ = (function () {" +
+        "        ___.splitCtor(Bar, Bar_init___);" +
+        "        function Bar(var_args) {" +
+        "          return new Bar.make___(arguments);" +
+        "        }" +
+        "        function Bar_init___(y) {" +
+        "          var t___ = this;" +
+        "          (___OUTERS___.Foo_canRead___ ? ___OUTERS___.Foo : ___.readPub(___OUTERS___, 'Foo', true)).call(this, 1);" +
+        "          (function () {" +
+        "              var x___ = y;" +
+        "              return t___.y_canSet___ ? (t___.y = x___) : ___.setProp(t___, 'y', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Bar;" +
+        "      })();" +
+        "    return ___OUTERS___.Bar_canSet___ ? (___OUTERS___.Bar = x___) : ___.setPub(___OUTERS___, 'Bar', x___);" +
+        "  })();" +
+        "(function () {" +
+        "    var x___ = new (___.asCtor(___OUTERS___.Bar_canRead___ ? ___OUTERS___.Bar : ___.readPub(___OUTERS___, 'Bar', true)))(3);" +
+        "    return ___OUTERS___.bar_canSet___ ? (___OUTERS___.bar = x___) : ___.setPub(___OUTERS___, 'bar', x___);" +
+        "  })();");
+  }
+
   private void setSynthetic(ParseTreeNode n) {
     n.getAttributes().set(SyntheticNodes.SYNTHETIC, true);
   }
