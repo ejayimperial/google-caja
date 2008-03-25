@@ -81,7 +81,8 @@ public class HtmlSanitizerTest extends TestCase {
   }
   public void testUnknownAttribute() throws Exception {
     assertValid(html("<b unknown=\"bogus\">Hello</b>"),
-                  "ERROR: unknown attribute unknown on b");
+                  "<b>Hello</b>",
+                  "WARNING: unknown attribute unknown on b");
   }
   public void testKnownAttribute() throws Exception {
     assertValid(html("<b id=\"bold\">Hello</b>"), "<b id=\"bold\">Hello</b>");
@@ -91,9 +92,9 @@ public class HtmlSanitizerTest extends TestCase {
                   "ERROR: unknown tag bogus");
   }
   public void testUnknownEverything() throws Exception {
-    assertValid(html("<bogus unknown=\"bogus\">Hello</bogus>"),
+    assertInvalid(html("<bogus unknown=\"bogus\">Hello</bogus>"),
                   "ERROR: unknown tag bogus",
-                  "ERROR: unknown attribute unknown on bogus");
+                  "WARNING: unknown attribute unknown on bogus");
   }
   public void testDisallowedElement() throws Exception {
     assertInvalid(html("<script>disallowed</script>"),
@@ -139,7 +140,7 @@ public class HtmlSanitizerTest extends TestCase {
                 "Zoicks", "WARNING: folding element body into parent");
   }
   public void testElementFolding3() throws Exception {
-    assertValid(xml("<html>"
+    assertInvalid(xml("<html>"
                       + "<head>"
                       + "<title>Blah</title>"
                       + "<p>Foo</p>"

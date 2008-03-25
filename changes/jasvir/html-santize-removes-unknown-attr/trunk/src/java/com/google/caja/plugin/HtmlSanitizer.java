@@ -118,11 +118,14 @@ public final class HtmlSanitizer {
       String attrName = attrib.getAttribName();
       HTML.Attribute a = schema.lookupAttribute(tagName, attrName);
       if (null == a ) {
+        boolean savedValid = valid;
+        valid = false;
         mq.getMessages().add(new Message(
             PluginMessageType.UNKNOWN_ATTRIBUTE, MessageLevel.WARNING,
             t.getFilePosition(), MessagePart.Factory.valueOf(attrName),
             MessagePart.Factory.valueOf(tagName)));
-        valid &= removeUnknownAttribute((DomTree.Tag) tag, attrName);
+        valid = removeUnknownAttribute(tag, attrName) & savedValid;
+        break;
       }
       if (!schema.isAttributeAllowed(tagName, attrName)) {
         mq.addMessage(
@@ -246,19 +249,20 @@ public final class HtmlSanitizer {
   }
 
   private boolean removeUnknownAttribute(DomTree.Tag el, String unknownAttr) {
-    boolean valid = true;
     if ( null == el ) {
       return false;
     }
+    MutableParseTreeNode.Mutation mut = ((MutableParseTreeNode)el).createMutation();
     for (DomTree child : el.children()) {
       if (!(child instanceof DomTree.Attrib)) { break; }
       DomTree.Attrib attr = (DomTree.Attrib) child;
       String name = attr.getAttribName();
       if (unknownAttr.equals(name)) {
-        ((MutableParseTreeNode) el).removeChild(attr);
+        mut.removeChild(attr);
       }
     }
-    return valid;
+    mut.execute();
+    return true;
   }
 
   private boolean removeDuplicateAttributes(DomTree.Tag el) {
