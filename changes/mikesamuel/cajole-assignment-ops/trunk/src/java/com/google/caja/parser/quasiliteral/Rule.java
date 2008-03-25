@@ -19,10 +19,10 @@ import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
+import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.Identifier;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.StringLiteral;
-import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
 import static com.google.caja.plugin.SyntheticNodes.s;
@@ -185,15 +185,15 @@ public abstract class Rule implements MessagePart {
     return result;
   }
 
-  protected final ParseTreeNode substV(Object... args) {
-    if (args.length %2 == 0) throw new RuntimeException("Wrong # of args for subst()");
+  protected final ParseTreeNode substV(String pattern, Object... args) {
+    if (args.length %2 != 0) throw new RuntimeException("Wrong # of args for subst()");
     Map<String, ParseTreeNode> bindings = new HashMap<String, ParseTreeNode>();
-    for (int i = 1; i < args.length; ) {
+    for (int i = 0; i < args.length; ) {
       bindings.put(
           (String)args[i++],
           (ParseTreeNode)args[i++]);
     }
-    return subst((String)args[0], bindings);
+    return subst(pattern, bindings);
   }
 
   protected ParseTreeNode getFunctionHeadDeclarations(
@@ -321,22 +321,22 @@ public abstract class Rule implements MessagePart {
           "var @ref = @rhs;",
           "ref", new Identifier("x___"),
           "rhs", value);
-        return new ExpressionStmt((Expression)substV(
-            "(function() {" +
-            "  @pvb;" +
-            "  return ___OUTERS___.@sCanSet ? (___OUTERS___.@s = @pva) : " +
-            "                                 ___.setPub(___OUTERS___, @sName, @pva);" +
-            "})();",
-            "s", symbol,
-            "sCanSet", new Reference(new Identifier(sName + "_canSet___")),
-            "sName", new StringLiteral(StringLiteral.toQuotedValue(sName)),
-            "pva", pva,
-            "pvb", pvb));
+      return new ExpressionStmt((Expression)substV(
+          "(function() {" +
+          "  @pvb;" +
+          "  return ___OUTERS___.@sCanSet ? (___OUTERS___.@s = @pva) : " +
+          "                                 ___.setPub(___OUTERS___, @sName, @pva);" +
+          "})();",
+          "s", symbol,
+          "sCanSet", new Reference(new Identifier(sName + "_canSet___")),
+          "sName", Rewriter.toStringLiteral(symbol),
+          "pva", pva,
+          "pvb", pvb));
     } else {
-        return substV(
-            "var @s = @v",
-            "s", symbol.children().get(0),
-            "v", value);
+      return substV(
+          "var @s = @v",
+          "s", symbol.children().get(0),
+          "v", value);
     }
   }
 
@@ -420,14 +420,14 @@ public abstract class Rule implements MessagePart {
       Scope scope,
       MessageQueue mq) {
     String xName = getReferenceName(ref);
-     if (scope.isGlobal(xName)) {
-        return substV(
-            "___OUTERS___.@xCanRead ? ___OUTERS___.@x : ___.readPub(___OUTERS___, @xName, true);",
-            "x", ref,
-            "xCanRead", new Reference(new Identifier(xName + "_canRead___")),
-            "xName", new StringLiteral(StringLiteral.toQuotedValue(xName)));
+    if (scope.isGlobal(xName)) {
+      return substV(
+          "___OUTERS___.@xCanRead ? ___OUTERS___.@x : ___.readPub(___OUTERS___, @xName, true);",
+          "x", ref,
+          "xCanRead", new Reference(new Identifier(xName + "_canRead___")),
+          "xName", new StringLiteral(StringLiteral.toQuotedValue(xName)));
     } else {
-        return ref;
+      return ref;
     }
   }
 
@@ -451,15 +451,15 @@ public abstract class Rule implements MessagePart {
     return true;
   }
 
-  protected boolean isSynthetic(ParseTreeNode node) {
+  protected static boolean isSynthetic(ParseTreeNode node) {
     return node.getAttributes().is(SyntheticNodes.SYNTHETIC);
   }
 
-  protected String getReferenceName(ParseTreeNode ref) {
+  protected static String getReferenceName(ParseTreeNode ref) {
     return ((Reference)ref).getIdentifierName();
   }
 
-  protected String getIdentifierName(ParseTreeNode id) {
+  protected static String getIdentifierName(ParseTreeNode id) {
     return ((Identifier)id).getValue();
   }
 

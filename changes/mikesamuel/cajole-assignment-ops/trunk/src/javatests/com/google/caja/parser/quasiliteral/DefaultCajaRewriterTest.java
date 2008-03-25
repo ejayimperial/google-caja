@@ -952,7 +952,7 @@ public class DefaultCajaRewriterTest extends TestCase {
     checkSucceeds(
         "x++;",
         "(function() {" +
-        "  var x___ = Number(___.readPub(___OUTERS___, 'x', true));" +
+        "  var x___ = ___.readPub(___OUTERS___, 'x', true) - 0;" +
         "  ___.setPub(___OUTERS___, 'x', x___ + 1);" +
         "  return x___;" +
         "})();");
@@ -1570,7 +1570,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         "for (" + weldSetOuters("k", "0") + "; " +
         "     " + weldReadOuters("k") + " < 3;" +
         "     (function () {" +
-        "       var x___ = Number(___.readPub(___OUTERS___, 'k', true));" +
+        "       var x___ = ___.readPub(___OUTERS___, 'k', true) - 0;" +
         "       ___.setPub(___OUTERS___, 'k', x___ + 1);" +
         "       return x___;" +
         "     })()) {" +
@@ -1653,37 +1653,111 @@ public class DefaultCajaRewriterTest extends TestCase {
   }
 
   public void testAssignmentDelegates() throws Exception {
+    checkFails("x__ *= 2", "Variables cannot end in \"__\"");
+
+    checkSucceeds(
+        "x += 1",
+        "___.setPub(___OUTERS___, 'x',"
+        + "  ___.readPub(___OUTERS___, 'x', true) + 1)");
+    checkSucceeds(
+        "(function (x) { x += 1; })",
+        "(___.primFreeze(___.simpleFunc(function (x) { x = x + 1; })))");
+    checkSucceeds(
+        "myArray().key += 1",
+        "(function () {"
+        + "  var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray") + ")();"
+        + "  return ___.setPub(x0___, 'key', ___.readPub(x0___, 'key') + 1);"
+        + "})()");
+    checkSucceeds(
+        "myArray()[myKey()] += 1",
+        "(function () {"
+        + "  var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray") + ")();"
+        + "  var x1___ = ___.asSimpleFunc(" + weldReadOuters("myKey") + ")();"
+        + "  return ___.setPub(x0___, x1___, ___.readPub(x0___, x1___) + 1);"
+        + "})()");
+    checkSucceeds(  // Local reference need not be assigned to a temp.
+        "(function (myKey) { myArray()[myKey] += 1; })",
+        "___.primFreeze(___.simpleFunc(function (myKey) {"
+        + "  (function () {"
+        + "    var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray")
+        + ")();"
+        + "    return ___.setPub(x0___, myKey, ___.readPub(x0___, myKey) + 1);"
+        + "  })()"
+        + "}))");
+    
     assertConsistent("var x = 3; x *= 2;");
     assertConsistent("var x = 1; x += 7;");
     assertConsistent("var o = { x: 'a' }; o.x += 'b';");
+    // Order of execution important.
+    assertConsistent(
+        "(function () {\n"
+        + "  var arrs = [1, 2];\n"
+        + "  var j = 0;\n"
+        + "  arrs[++j] *= ++j;\n"
+        + "  assertEquals(2, j);\n"
+        + "  assertEquals(1, arrs[0]);\n"
+        + "  assertEquals(4, arrs[1]);\n"
+        + "  return arrs.join();\n"
+        + "})()");
   }
 
   public void testPrefixAndPostfixAssigners() throws Exception {
+    checkFails("x__--;", "Variables cannot end in \"__\"");
+    checkSucceeds(
+         "x--",
+         "(function () {"
+         + "  var x___ = ___.readPub(___OUTERS___, 'x', true) - 0;"
+         + "  ___.setPub(___OUTERS___, 'x', x___ - 1);"
+         + "  return x___;"
+         + "})()");
+    checkSucceeds(
+         "++x",
+         "___.setPub(___OUTERS___, 'x',"
+         + " ___.readPub(___OUTERS___, 'x', true) - -1);");
+    
     assertConsistent(
         "var x = 2;\n"
         + "var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
         + "assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
-        + "arr.join(',')");
+        + "arr.join(',');");
   }
 
   public void testPrefixAndPostfixAssignersToLocals() throws Exception {
+    checkFails("++x__", "Variables cannot end in \"__\"");
+    checkSucceeds(
+         "(function (x, y) { return [x--, --x, y++, ++y]; })",
+         "___.primFreeze(___.simpleFunc("
+         + "  function (x, y) { return [x--, --x, y++, ++y]; }))");
+
     assertConsistent(
         "(function () {\n"
         + "  var x = 2;\n"
         + "  var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
         + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
         + "  return arr.join(',');\n"
-        + "})()");
+        + "})();");
   }
 
   public void testPrefixAndPostfixAssignersToComplexLValues() throws Exception {
+    checkFails("arr[x__]--;", "Variables cannot end in \"__\"");
+    checkFails("arr__[x]--;", "Variables cannot end in \"__\"");
+
+    checkSucceeds(
+        "o.x++",
+        "(function () {"
+        + "  var x0___ = " + weldReadOuters("o") + ";"
+        + "  var x___ = ___.readPub(x0___, 'x') - 0;"
+        + "  ___.setPub(x0___, 'x', x___ + 1);"
+        + "  return x___;"
+        + "})()");
+
     assertConsistent(
         "(function () {\n"
         + "  var o = { x: 2 };\n"
         + "  var arr = [--o.x, o.x, o.x--, o.x, ++o.x, o.x, o.x++, o.x];\n"
         + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
         + "  return arr.join(',');\n"
-        + "})()");
+        + "})();");
   }
 
   private void setSynthetic(ParseTreeNode n) {
@@ -1699,9 +1773,10 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   private void checkFails(String input, String error) throws Exception {
     mq.getMessages().clear();
-    new DefaultCajaRewriter(true).expand(TestUtil.parse(input), mq);
+    ParseTreeNode expanded = new DefaultCajaRewriter(true)
+        .expand(TestUtil.parse(input), mq);
 
-    assertFalse(mq.getMessages().isEmpty());
+    assertFalse(TestUtil.render(expanded), mq.getMessages().isEmpty());
 
     StringBuilder messageText = new StringBuilder();
     for (Message m : mq.getMessages()) {
@@ -1770,10 +1845,18 @@ public class DefaultCajaRewriterTest extends TestCase {
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
 
+    mq.getMessages().clear();
+
     Statement cajaTree = replaceLastStatementWithEmit(
         parseJs(caja, is), "unittestResult___");
     String cajoledJs = TestUtil.render(
         cajole(parseJsFromResource("../../plugin/asserts.js"), cajaTree));
+
+    for (Message msg : mq.getMessages()) {
+      if (MessageLevel.ERROR.compareTo(msg.getMessageLevel()) <= 0) {
+        fail(msg.format(mc));
+      }
+    }
 
     Object cajoledResult = RhinoTestBed.runJs(
         null,
