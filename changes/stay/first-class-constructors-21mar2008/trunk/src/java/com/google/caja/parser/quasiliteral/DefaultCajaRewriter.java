@@ -1134,20 +1134,20 @@ public class DefaultCajaRewriter extends Rewriter {
               (FunctionConstructor)node.children().get(1));
           if (!s2.hasFreeThis()) {
             return expandDef(
-                    new Reference((Identifier)bindings.get("f")),
-                    substV(
-                        "___.simpleFunc(" +
-                        "  function @f(@ps*) {" +
-                        "    @fh*;" +
-                        "    @bs*;" +
-                        "});",
-                        "f", bindings.get("f"),
-                        "ps", bindings.get("ps"),
-                        "bs", expand(bindings.get("bs"), s2, mq),
-                        "fh", getFunctionHeadDeclarations(this, s2, mq)),
-                    this,
-                    scope,
-                    mq);
+                new Reference((Identifier)bindings.get("f")),
+                substV(
+                    "___.simpleFunc(" +
+                    "  function @f(@ps*) {" +
+                    "    @fh*;" +
+                    "    @bs*;" +
+                    "});",
+                    "f", bindings.get("f"),
+                    "ps", bindings.get("ps"),
+                    "bs", expand(bindings.get("bs"), s2, mq),
+                    "fh", getFunctionHeadDeclarations(this, s2, mq)),
+                this,
+                scope,
+                mq);
           }
         }
         return NONE;
@@ -1204,9 +1204,9 @@ public class DefaultCajaRewriter extends Rewriter {
         boolean declaration = node instanceof FunctionDeclaration;
         ParseTreeNode constructorNode = declaration ? node.children().get(1) : node;
         if (match("function @f(@ps*) { @b; @bs*; }", constructorNode, bindings)) {
-          ParseTreeNode bNode = bindings.get("b");
           Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
           if (s2.hasFreeThis()) {
+            ParseTreeNode bNode = bindings.get("b");
             if (bNode instanceof ExpressionStmt) {
               // Rebind bNode to the Expression part of the ExpressionStmt.
               bNode = bNode.children().get(0);

@@ -53,6 +53,8 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
+  // TODO(stay): Move as many of these as possible to DefaultCajaRewriterTest
+  //             using assertConsistent
   public void testEmptyGadget() throws Exception {
     execGadget("", "");
   }

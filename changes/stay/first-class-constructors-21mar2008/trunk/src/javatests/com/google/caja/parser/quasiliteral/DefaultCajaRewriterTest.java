@@ -405,7 +405,6 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  }" +
         "});");
     }
-    //*/
   }
 
   public void testTryCatch() throws Exception {

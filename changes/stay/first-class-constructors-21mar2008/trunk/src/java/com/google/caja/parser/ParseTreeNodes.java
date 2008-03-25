@@ -43,7 +43,9 @@ public class ParseTreeNodes {
    * @param clazz the concrete class of {@code ParseTreeNode} to instantiate.
    * @param value the value for the new node
    *        (see {@link com.google.caja.parser.ParseTreeNode#getValue()}).
-   * @param children the children of the new node
+   * @param children the children of the new node.  The constructor recursively
+   *        traverses the children, replacing all ParseTreeNodeContainers with
+   *        their children.  This flattens containers in containers.
    *        (see {@link com.google.caja.parser.ParseTreeNode#children()})).
    * @return the newly constructed {@code ParseTreeNode}.
    */
