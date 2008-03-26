@@ -104,7 +104,7 @@ src
 [http://code.google.com/p/google-caja/] : The source code repository, bug
 tracker, and wiki.
 
-[http://groups.google.com/google-caja-discuss/] : The public
+[http://groups.google.com/group/google-caja-discuss/] : The public
 discussion list.
 
 [http://www.cajadores.com/ Cajadores.com] periodically generates test
