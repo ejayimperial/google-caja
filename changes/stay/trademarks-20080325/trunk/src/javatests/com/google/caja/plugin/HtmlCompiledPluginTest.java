@@ -53,6 +53,13 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
+  public void testTest() throws Exception {
+    execGadget("<script>" +
+        "if (true) 1;" +
+        "</script>",
+        "");
+  }
+  
   // TODO(stay): Move as many of these as possible to DefaultCajaRewriterTest
   //             using assertConsistent
   public void testEmptyGadget() throws Exception {
@@ -435,29 +442,19 @@ public class HtmlCompiledPluginTest extends TestCase {
   public void testECMAScript31Scoping() throws Exception {
     execGadget(
         "<script>" +
-        "var passed = false;" +
-        "try{" +
-        "  var Bar = Foo;" +
-        "  function Foo(){ }" +
-        "} catch (e) {" +
-        // TODO(stay): Check that e is a ReferenceError.
-        "  passed = true;" +
-        "}" +
-        "if (!passed) { fail ('Should have thrown a reference error.'); }" +
+        "var Bar = Foo;" +
+        "function Foo(){ }" +
+        "if (Bar) { fail('Functions initialized too early.'); }" +
         "</script>",
         ""
         );
     execGadget(
         "<script>" +
-        "var passed = false;" +
-        "try{ (function(){" +
+        "(function(){" +
         "  var Bar = Foo;" +
         "  function Foo(){ }" +
-        "})() } catch (e) {" +
-        // TODO(stay): Check that e is a ReferenceError.
-        "  passed = true;" +
-        "}" +
-        "if (!passed) { fail ('Should have thrown a reference error.'); }" +
+        "  if (Bar) { fail('Functions initialized too early.'); }" +
+        "})()" +
         "</script>",
         ""
         );
@@ -475,13 +472,6 @@ public class HtmlCompiledPluginTest extends TestCase {
         "var Bar = Foo;" +
         "if (!Bar) fail('Unable to construct function.');" +
         "})()</script>",
-        ""
-        );
-    execGadget(
-        "<script>function(){function Point(x, y) {" +
-        "  this.x_ = x;" +
-        "  this.y_ = y;" +
-        "}}</script>",
         ""
         );
   }

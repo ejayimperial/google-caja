@@ -1738,6 +1738,11 @@ var ___;
   // Trademarking
   ////////////////////////////////////////////////////////////////////////
 
+  // A trademark is an unforgeable object that, for convenience, coerces
+  // to a consistent string.
+  // For example,
+  //   { toString: function() { return 'myTrademark'; } }
+
   /**
    * Returns true if the object has a map of trademarks
    * and the given trademark is in the map.
@@ -1745,7 +1750,7 @@ var ___;
   function hasTrademark(trademark, obj) {
     if (!hasOwnProp(obj, "trademarks___")) { return false; }
     var list = obj.trademarks___[String(trademark)];
-    if (!list.length) { return false; }
+    if (!list || !list.length) { return false; }
     for (var i=0; i < list.length; ++i) {
       if (list[i]===trademark) { return true; }
     }
@@ -1758,23 +1763,26 @@ var ___;
    */
   function guard(trademark, obj) {
     enforce (hasTrademark(trademark, obj),
-      "This object does not have the [",
-      String(trademark),
-      "] trademark" );
+        "This object does not have the [",
+        String(trademark),
+        "] trademark" );
   }
 
   /**
-   * Adds the given trademark to the given object's map of trademarks.
-   * If the object is still being constructed, delay the assignment.
-   * Creates the map if it doesn't already exist.
+   * This function adds the given trademark to the given object's map of trademarks.
+   * The map takes strings to trademarks on the object that coerce
+   * to that string; if the map doesn't exist yet, this function creates it.
+   * If the object is still being constructed, it delays the trademarking.
    */
   function audit(trademark, obj) {
+    enforce (typeof trademark === 'object',
+        'The supplied trademark is not an object.'); 
     var map = obj.underConstruction___ ?
         "delayedTrademarks___" : "trademarks___";
     if (!obj[map]) { obj[map] = {}; }
     var name = String(trademark);
-    if (!obj[map][name]) { obj[map][name] = []; }
-    obj[map][name].push(trademark);
+    var objMap = obj[map] || (obj[map] = {});
+    (objMap[name] || (objMap[name] = [])).push(trademark);
   }
 
 
