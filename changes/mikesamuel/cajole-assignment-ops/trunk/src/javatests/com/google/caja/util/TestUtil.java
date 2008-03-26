@@ -211,7 +211,7 @@ public final class TestUtil {
     checkFilePositionInvariants(new AncestorChain<ParseTreeNode>(root));
   }
 
-  public static Block parse(String src) throws IOException, ParseException {
+  public static Block parse(String src) throws ParseException {
     InputSource inputSource
         = new InputSource(URI.create("built-in:///js-test"));
     Parser parser = new Parser(

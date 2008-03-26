@@ -259,6 +259,10 @@ public abstract class Rewriter {
         //   =>
         // var x___ = a;
         // var x0___ = b;
+
+        // If the right is simple then we can assume it does not modify the
+        // left, but otherwise the left has to be put into a temporary so that
+        // it's evaluated before the right can muck with it.
         boolean isRightSimple = (right instanceof Literal
                                  || isLocalReference(right, scope));
 
@@ -295,8 +299,7 @@ public abstract class Rewriter {
         throw new IllegalArgumentException("Not an lvalue : " + operand);
     }
 
-    Expression rvalueCajoled = (Expression)
-        Operation.create(
+    Expression rvalueCajoled = Operation.create(
             Operator.FUNCTION_CALL,
             Operation.create(
                 Operator.MEMBER_ACCESS,
