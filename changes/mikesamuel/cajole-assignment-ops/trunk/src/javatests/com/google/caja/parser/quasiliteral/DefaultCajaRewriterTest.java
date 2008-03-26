@@ -1702,7 +1702,9 @@ public class DefaultCajaRewriterTest extends TestCase {
     assertConsistent("var x = 3; x *= 2;");
     assertConsistent("var x = 1; x += 7;");
     assertConsistent("var o = { x: 'a' }; o.x += 'b';");
-    // Order of execution important.
+  }
+
+  public void testOrderOfExecutionInReadUpdateOps() throws Exception {
     assertConsistent(
         "(function () {\n"
         + "  var arrs = [1, 2];\n"
@@ -1713,9 +1715,21 @@ public class DefaultCajaRewriterTest extends TestCase {
         + "  assertEquals(4, arrs[1]);\n"
         + "  return arrs.join();\n"
         + "})()");
-
     assertConsistent(
         "(function () {\n"
+        + "  var foo = (function () {\n"
+        + "               var k = 0;\n"
+        + "               return function () {\n"
+        + "                 switch (k++) {\n"
+        + "                   case 0: return [10, 20, 30];\n"
+        + "                   case 1: return 1;\n"
+        + "                   case 2: return 2;\n"
+        + "                   default: throw new Error(k);\n"
+        + "                 }\n"
+        + "               };\n"
+        + "             })();\n"
+        + "  foo()[foo()] -= foo();\n"
+        + "})()"
         );
   }
 
