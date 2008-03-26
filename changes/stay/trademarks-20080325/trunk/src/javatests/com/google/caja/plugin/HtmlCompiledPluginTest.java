@@ -53,13 +53,6 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
-  public void testTest() throws Exception {
-    execGadget("<script>" +
-        "if (true) 1;" +
-        "</script>",
-        "");
-  }
-  
   // TODO(stay): Move as many of these as possible to DefaultCajaRewriterTest
   //             using assertConsistent
   public void testEmptyGadget() throws Exception {
@@ -440,11 +433,12 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   public void testECMAScript31Scoping() throws Exception {
+    // Functions at the top level should be visible to forward references.
     execGadget(
         "<script>" +
         "var Bar = Foo;" +
         "function Foo(){ }" +
-        "if (Bar) { fail('Functions initialized too early.'); }" +
+        "if (!Bar) { fail('Forward references don't work.'); }" +
         "</script>",
         ""
         );
@@ -453,27 +447,58 @@ public class HtmlCompiledPluginTest extends TestCase {
         "(function(){" +
         "  var Bar = Foo;" +
         "  function Foo(){ }" +
-        "  if (Bar) { fail('Functions initialized too early.'); }" +
+        "  if (!Bar) { fail('Forward references don't work.'); }" +
         "})()" +
         "</script>",
         ""
         );
+    // Within a block, Bar should be undefined after the assignment, not
+    // throw a reference error.
     execGadget(
         "<script>" +
-        "function Foo(){ }" +
-        "var Bar = Foo;" +
-        "if (!Bar) fail('Unable to construct function.');" +
+        "{" +
+        "  var Bar = Foo;" +
+        "  function Foo(){ }" +
+        "  if (Bar) { fail('Functions initialized too early.'); }" +
+        "}" +
         "</script>",
         ""
         );
+    // Here, the declaration of Foo shouldn't escape the block 
+    // and we should get a reference error.
     execGadget(
-        "<script>(function(){" +
-        "function Foo(){ }" +
-        "var Bar = Foo;" +
-        "if (!Bar) fail('Unable to construct function.');" +
-        "})()</script>",
+        "<script>" +
+        "var passed = false;" +
+        "try{" +
+        "  var Bar = Foo;" +
+        "  { function Foo(){ } }" +
+        "} catch (e) {" +
+        "  passed = true;" +
+        "}" +
+        "if (!passed) fail('Functions initialized too early.');" +
+        "</script>",
         ""
         );
+  }
+  
+  public void testTrademarks() throws Exception {
+    execGadget(
+        "<script>" +
+        "var x = { y:1 };" +
+        "var tm1 = {};" +
+        "var tm2 = {};" +
+        "caja.audit(x, tm1);" +
+        "caja.guard(x, tm1);" +
+        "var passed = false;" +
+        "try{ caja.guard(x, tm2); }" +
+        "catch (e) { passed = true; }" +
+        "if (!passed) fail ('Trademarks are forgeable (tm1 == tm2)');" +
+        "passed = false;" +
+        "try{ caja.audit(x, 'tm'); }" +
+        "catch (e) { passed = true; }" +
+        "if (!passed) fail ('Trademarks are forgeable (strings allowed as trademarks)');" +
+        "</script>",
+        "");
   }
   
   private void execGadget(String gadgetSpec, String tests) throws Exception {
