@@ -131,6 +131,10 @@ public class CssRewriterTest extends TestCase {
     ".test a.test-foo {\n  color: blue\n}");
     runTest("a.c {_color: blue; margin:0;}",
     ".test a.test-c {\n  margin: 0\n}");
+    runTest("a._c {_color: blue; margin:0;}",
+    "");
+    runTest("a#_c {_color: blue; margin:0;}",
+    "");
   }
 
   public void testPseudosWhitelisted() throws Exception {
