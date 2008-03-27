@@ -1809,6 +1809,7 @@ var ___;
     canDeletePub: canDeletePub,   deletePub: deletePub,
     
     // Trademarking
+    hasTrademark: hasTrademark,
     guard: guard,
     audit: audit,
     
