@@ -80,6 +80,14 @@ public abstract class PipelineStageTestCase extends TestCase {
     is = new InputSource(URI.create("test:///" + getName()));
   }
 
+  /**
+   * Asserts that {@link #runPipeline} runs to completion on the given inputJob
+   * and produces the given outputJobs.
+   *
+   * @param inputJob an initial job to seed the pipeline with.
+   * @param outputJobs expected jobs after {@link #runPipeline} has been
+   *     invoked.
+   */
   protected void assertPipeline(JobStub inputJob, JobStub... outputJobs)
       throws Exception {
     Jobs jobs = new Jobs(mc, mq, meta);
@@ -105,8 +113,9 @@ public abstract class PipelineStageTestCase extends TestCase {
 
   protected abstract boolean runPipeline(Jobs jobs) throws Exception;
 
-  protected static JobStub job(String content, String type) {
-    return new JobStub(content, Job.JobType.valueOf(type));
+  /** Create a stub job object. */
+  protected static JobStub job(String content, Job.JobType type) {
+    return new JobStub(content, type);
   }
 
   protected static final class JobStub {

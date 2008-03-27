@@ -128,8 +128,10 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       DomTree.Tag scriptTag, MutableParseTreeNode parent, Jobs jobs) {
     PluginEnvironment env = jobs.getPluginMeta().getPluginEnvironment();
 
-    DomTree.Attrib type = lookupAttribute(scriptTag, "type", false);
-    DomTree.Attrib src = lookupAttribute(scriptTag, "src", false);
+    DomTree.Attrib type = lookupAttribute(
+        scriptTag, "type", DupePolicy.YIELD_FIRST);
+    DomTree.Attrib src = lookupAttribute(
+        scriptTag, "src", DupePolicy.YIELD_FIRST);
     if (type != null && !isJavaScriptContentType(type.getAttribValue())) {
       jobs.getMessageQueue().addMessage(
           PluginMessageType.UNRECOGNIZED_CONTENT_TYPE,
@@ -221,7 +223,8 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
 
     parent.removeChild(styleTag);
 
-    DomTree.Attrib rel = lookupAttribute(styleTag, "rel", true);
+    DomTree.Attrib rel = lookupAttribute(styleTag, "rel",
+        DupePolicy.YIELD_NULL);
     if (rel == null
         || !rel.getAttribValue().trim().equalsIgnoreCase("stylesheet")) {
       // If it's not a stylesheet then ignore it.
@@ -229,8 +232,10 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       return;
     }
 
-    DomTree.Attrib href = lookupAttribute(styleTag, "href", true);
-    DomTree.Attrib media = lookupAttribute(styleTag, "media", true);
+    DomTree.Attrib href = lookupAttribute(
+        styleTag, "href", DupePolicy.YIELD_NULL);
+    DomTree.Attrib media = lookupAttribute(
+        styleTag, "media", DupePolicy.YIELD_FIRST);
 
     if (href == null) {
       jobs.getMessageQueue().addMessage(
@@ -268,7 +273,8 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
   private void extractStyles(
       DomTree.Tag styleTag, CharProducer cssStream, DomTree.Attrib media,
       Jobs jobs) {
-    DomTree.Attrib type = lookupAttribute(styleTag, "type", true);
+    DomTree.Attrib type = lookupAttribute(
+        styleTag, "type", DupePolicy.YIELD_FIRST);
 
     if (type != null && !isCssContentType(type.getAttribValue())) {
       jobs.getMessageQueue().addMessage(
@@ -351,8 +357,10 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
    * </pre>
    */
   private void moveOnLoadHandlerToEndOfBody(DomTree.Tag body) {
-    DomTree.Attrib onload = lookupAttribute(body, "onload", true);
-    DomTree.Attrib language = lookupAttribute(body, "language", false);
+    DomTree.Attrib onload = lookupAttribute(
+        body, "onload", DupePolicy.YIELD_NULL);
+    DomTree.Attrib language = lookupAttribute(
+        body, "language", DupePolicy.YIELD_FIRST);
     if (language != null && !isJavaScriptLanguage(language.getAttribValue())) {
       // If the onload handler is vbscript, let the validator complain.
       return;
@@ -451,18 +459,18 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
 
   /**
    * @param attribName a canonicalized attribute name.
-   * @param nullOnDuplicates true to return null if there are duplicates instead
-   *   of the first matching.
+   * @param onDupe what to do if there are multiple attributes with name
+   *     attribName.
    * @return null if there is no match.
    */
   private static DomTree.Attrib lookupAttribute(
-      DomTree.Tag el, String attribName, boolean nullOnDuplicates) {
+      DomTree.Tag el, String attribName, DupePolicy onDupe) {
     DomTree.Attrib match = null;
     for (DomTree child : el.children()) {
       if (!(child instanceof DomTree.Attrib)) { break; }
       DomTree.Attrib attrib = (DomTree.Attrib) child;
       if (attribName.equals(attrib.getAttribName())) {
-        if (!nullOnDuplicates) { return attrib; }
+        if (onDupe == DupePolicy.YIELD_NULL) { return attrib; }
         if (match == null) {
           match = attrib;
         } else {
@@ -473,6 +481,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     }
     return match;
   }
+  private static enum DupePolicy { YIELD_NULL, YIELD_FIRST, };
 
 
   public static Block parseJs(

@@ -28,41 +28,44 @@ import java.util.ArrayList;
 public final class RewriteHtmlStageTest extends PipelineStageTestCase {
   public void testScriptExtraction() throws Exception {
     assertPipeline(
-        job("foo<script>extracted();</script>baz", "HTML"),
-        job("foo<span></span>baz", "HTML"),
-        job("{\n  extracted();\n}", "JAVASCRIPT")
+        job("foo<script>extracted();</script>baz", Job.JobType.HTML),
+        job("foo<span></span>baz", Job.JobType.HTML),
+        job("{\n  extracted();\n}", Job.JobType.JAVASCRIPT)
         );
 
     assertPipeline(
-        job("foo<script type=text/vbscript>deleted()</script>baz", "HTML"),
-        job("foobaz", "HTML")
+        job("foo<script type=text/vbscript>deleted()</script>baz",
+            Job.JobType.HTML),
+        job("foobaz", Job.JobType.HTML)
         );
 
     assertPipeline(
-        job("foo<script type=text/javascript>extracted();</script>baz", "HTML"),
-        job("foo<span></span>baz", "HTML"),
-        job("{\n  extracted();\n}", "JAVASCRIPT")
+        job("foo<script type=text/javascript>extracted();</script>baz",
+            Job.JobType.HTML),
+        job("foo<span></span>baz", Job.JobType.HTML),
+        job("{\n  extracted();\n}", Job.JobType.JAVASCRIPT)
         );
   }
 
   public void testStyleExtraction() throws Exception {
     assertPipeline(
-        job("Foo<style>p { color: blue }</style><p>Bar", "HTML"),
-        job("Foo<p>Bar</p>", "HTML"),
+        job("Foo<style>p { color: blue }</style><p>Bar", Job.JobType.HTML),
+        job("Foo<p>Bar</p>", Job.JobType.HTML),
         job("p {\n  color: blue\n}", "CSS"));
 
     assertPipeline(
         job("Foo<link rel=stylesheet href=content:p+%7Bcolor%3A+blue%7D><p>Bar",
-            "HTML"),
-        job("Foo<p>Bar</p>", "HTML"),
+            Job.JobType.HTML),
+        job("Foo<p>Bar</p>", Job.JobType.HTML),
         job("p {\n  color: blue\n}", "CSS"));
   }
 
   public void testOnLoadHandlers() throws Exception {
     assertPipeline(
-        job("<body onload=init();>Foo</body>", "HTML"),
-        job("<html><head></head><body>Foo<span></span></body></html>", "HTML"),
-        job("{\n  init();\n}", "JAVASCRIPT"));
+        job("<body onload=init();>Foo</body>", Job.JobType.HTML),
+        job("<html><head></head><body>Foo<span></span></body></html>",
+            Job.JobType.HTML),
+        job("{\n  init();\n}", Job.JobType.JAVASCRIPT));
   }
 
   @Override
