@@ -51,13 +51,13 @@ public final class RewriteHtmlStageTest extends PipelineStageTestCase {
     assertPipeline(
         job("Foo<style>p { color: blue }</style><p>Bar", Job.JobType.HTML),
         job("Foo<p>Bar</p>", Job.JobType.HTML),
-        job("p {\n  color: blue\n}", "CSS"));
+        job("p {\n  color: blue\n}", Job.JobType.CSS));
 
     assertPipeline(
         job("Foo<link rel=stylesheet href=content:p+%7Bcolor%3A+blue%7D><p>Bar",
             Job.JobType.HTML),
         job("Foo<p>Bar</p>", Job.JobType.HTML),
-        job("p {\n  color: blue\n}", "CSS"));
+        job("p {\n  color: blue\n}", Job.JobType.CSS));
   }
 
   public void testOnLoadHandlers() throws Exception {
