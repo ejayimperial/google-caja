@@ -293,8 +293,7 @@ public class HtmlCompiledPluginTest extends TestCase {
    * @throws Exception
    */
   public void testGlobalScopePrototypeInvisible() throws Exception {
-    // TODO(ihab.awad): Disabled for now, but see
-    // http://code.google.com/p/google-caja/issues/detail?id=78
+    // TODO(ihab.awad): Disabled for now, but see issue145
     if (false) {
     execGadget(
         "<script>var x = 1; x = this.prototype; x = 2;</script>",
