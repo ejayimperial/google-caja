@@ -511,21 +511,6 @@ public abstract class Rule implements MessagePart {
   }
 
   /**
-   * Given a lhs that has no side effect when evaluated as an lvalue, produce
-   * a ReadAssignOperands without using temporaries.
-   */
-  private ReadAssignOperands sideEffectlessReadAssignOperand(
-      final Expression lhs) {
-    assert lhs.isLeftHandSide();
-    return new ReadAssignOperands(Collections.<Declaration>emptyList(), lhs) {
-        @Override
-        public Expression makeAssignment(Expression rvalue) {
-          return Operation.create(Operator.ASSIGN, lhs, rvalue);
-        }
-      };
-  }
-
-  /**
    * Split the target of a read/set operation into an lvalue, an rvalue, and
    * an ordered list of temporary variables needed to ensure proper order
    * of execution.
@@ -563,7 +548,22 @@ public abstract class Rule implements MessagePart {
     throw new IllegalArgumentException("Not an lvalue : " + operand);
   }
 
-  ReadAssignOperands sideEffectingReadAssignOperand(
+  /**
+   * Given a lhs that has no side effect when evaluated as an lvalue, produce
+   * a ReadAssignOperands without using temporaries.
+   */
+  private ReadAssignOperands sideEffectlessReadAssignOperand(
+      final Expression lhs) {
+    assert lhs.isLeftHandSide();
+    return new ReadAssignOperands(Collections.<Declaration>emptyList(), lhs) {
+        @Override
+        public Expression makeAssignment(Expression rvalue) {
+          return Operation.create(Operator.ASSIGN, lhs, rvalue);
+        }
+      };
+  }
+
+  private ReadAssignOperands sideEffectingReadAssignOperand(
       Expression uncajoledObject, Expression uncajoledKey,
       Scope scope, MessageQueue mq) {
     final Reference object;  // The object that contains the field to assign.
