@@ -834,8 +834,7 @@ public class DefaultCajaRewriter extends Rewriter {
 
     addRule(new Rule("setIncrDecr", this) {
       @Override
-      public ParseTreeNode fire(
-          ParseTreeNode node, Scope scope, MessageQueue mq) {
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (!(node instanceof AssignOperation)) { return NONE; }
         AssignOperation op = (AssignOperation) node;
         Expression v = op.children().get(0);
@@ -872,10 +871,10 @@ public class DefaultCajaRewriter extends Rewriter {
                   substV("@rvalue - -1", "rvalue", ops.getRValue()));
             } else {
               return substV(
-                  "(function () {"
-                  + "  @tmp*;"
-                  + "  return @assign;"
-                  + "})()",
+                  "(function () {" +
+                  "  @tmp*;" +
+                  "  return @assign;" +
+                  "})()",
                   "tmp", ops.getTemporariesAsContainer(),
                   "assign", ops.makeAssignment((Expression) 
                       substV("@rvalue - -1", "rvalue", ops.getRValue())));
@@ -885,12 +884,12 @@ public class DefaultCajaRewriter extends Rewriter {
               return substV("@v--", "v", ops.getRValue());
             } else {
               return substV(
-                  "(function () {"
-                  + "  @tmp*;"
-                  + "  var x___ = @rvalue - 0;"  // Coerce to a number.
-                  + "  @assign;"  // Assign value.
-                  + "  return x___;"
-                  + "})()",
+                  "(function () {" +
+                  "  @tmp*;" +
+                  "  var x___ = @rvalue - 0;" +  // Coerce to a number.
+                  "  @assign;" +  // Assign value.
+                  "  return x___;" +
+                  "})()",
                   "tmp", ops.getTemporariesAsContainer(),
                   "rvalue", ops.getRValue(),
                   "assign", new ExpressionStmt(
@@ -904,10 +903,10 @@ public class DefaultCajaRewriter extends Rewriter {
                   substV("@rvalue - 1", "rvalue", ops.getRValue()));
             } else {
               return substV(
-                  "(function () {"
-                  + "  @tmp*;"
-                  + "  return @assign;"
-                  + "})()",
+                  "(function () {" +
+                  "  @tmp*;" +
+                  "  return @assign;" +
+                  "})()",
                   "tmp", ops.getTemporariesAsContainer(),
                   "assign", ops.makeAssignment((Expression) 
                       substV("@rvalue - 1", "rvalue", ops.getRValue())));

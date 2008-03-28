@@ -976,6 +976,45 @@ public class DefaultCajaRewriterTest extends TestCase {
   }
 
   public void testSetReadModifyWriteLocalVar() throws Exception {
+    checkFails("x__ *= 2", "Variables cannot end in \"__\"");
+
+    checkSucceeds(
+        "x += 1",
+        "___.setPub(___OUTERS___, 'x',"
+        + "  ___.readPub(___OUTERS___, 'x', true) + 1)");
+    checkSucceeds(
+        "(function (x) { x += 1; })",
+        "(___.primFreeze(___.simpleFunc(function (x) { x = x + 1; })))");
+    checkSucceeds(
+        "myArray().key += 1",
+        "(function () {"
+        + "  var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray") + ")();"
+        + "  return ___.setPub(x0___, 'key',"
+        + "                    ___.readPub(x0___, 'key', false) + 1);"
+        + "})()");
+    checkSucceeds(
+        "myArray()[myKey()] += 1",
+        "(function () {"
+        + "  var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray") + ")();"
+        + "  var x1___ = ___.asSimpleFunc(" + weldReadOuters("myKey") + ")();"
+        + "  return ___.setPub(x0___, x1___,"
+        + "                    ___.readPub(x0___, x1___, false) + 1);"
+        + "})()");
+    checkSucceeds(  // Local reference need not be assigned to a temp.
+        "(function (myKey) { myArray()[myKey] += 1; })",
+        "___.primFreeze(___.simpleFunc(function (myKey) {"
+        + "  (function () {"
+        + "    var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray")
+        + ")();"
+        + "    return ___.setPub(x0___, myKey,"
+        + "                      ___.readPub(x0___, myKey, false) + 1);"
+        + "  })()"
+        + "}))");
+    
+    assertConsistent("var x = 3; x *= 2;");
+    assertConsistent("var x = 1; x += 7;");
+    assertConsistent("var o = { x: 'a' }; o.x += 'b';");
+
     EnumSet<Operator> ops = EnumSet.of(
         Operator.ASSIGN_MUL,
         Operator.ASSIGN_DIV,
@@ -999,7 +1038,9 @@ public class DefaultCajaRewriterTest extends TestCase {
     }
   }
 
-  public void testSetPostIncrGlobal() throws Exception {
+  public void testSetIncrDecr() throws Exception {
+    checkFails("x__--;", "Variables cannot end in \"__\"");
+
     checkSucceeds(
         "x++;",
         "(function() {" +
@@ -1007,6 +1048,96 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  ___.setPub(___OUTERS___, 'x', x___ + 1);" +
         "  return x___;" +
         "})();");
+    checkSucceeds(
+         "x--",
+         "(function () {"
+         + "  var x___ = ___.readPub(___OUTERS___, 'x', true) - 0;"
+         + "  ___.setPub(___OUTERS___, 'x', x___ - 1);"
+         + "  return x___;"
+         + "})()");
+    checkSucceeds(
+         "++x",
+         "___.setPub(___OUTERS___, 'x',"
+         + " ___.readPub(___OUTERS___, 'x', true) - -1);");
+    
+    assertConsistent(
+        "var x = 2;\n"
+        + "var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
+        + "assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
+        + "arr.join(',');");
+  }
+
+  public void testSetIncrDecrOnLocals() throws Exception {
+    checkFails("++x__", "Variables cannot end in \"__\"");
+    checkSucceeds(
+         "(function (x, y) { return [x--, --x, y++, ++y]; })",
+         "___.primFreeze(___.simpleFunc("
+         + "  function (x, y) { return [x--, --x, y++, ++y]; }))");
+
+    assertConsistent(
+        "(function () {\n"
+        + "  var x = 2;\n"
+        + "  var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
+        + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
+        + "  return arr.join(',');\n"
+        + "})();");
+  }
+
+  public void testSetIncrDecrOfComplexLValues() throws Exception {
+    checkFails("arr[x__]--;", "Variables cannot end in \"__\"");
+    checkFails("arr__[x]--;", "Variables cannot end in \"__\"");
+
+    checkSucceeds(
+        "o.x++",
+        "(function () {"
+        + "  var x0___ = " + weldReadOuters("o") + ";"
+        + "  var x___ = ___.readPub(x0___, 'x', false) - 0;"
+        + "  ___.setPub(x0___, 'x', x___ + 1);"
+        + "  return x___;"
+        + "})()");
+
+    assertConsistent(
+        "(function () {\n"
+        + "  var o = { x: 2 };\n"
+        + "  var arr = [--o.x, o.x, o.x--, o.x, ++o.x, o.x, o.x++, o.x];\n"
+        + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
+        + "  return arr.join(',');\n"
+        + "})();");
+  }
+
+  public void testSetIncrDecrOrderOfAssignment() throws Exception {
+    assertConsistent(
+        "(function () {\n"
+        + "  var arrs = [1, 2];\n"
+        + "  var j = 0;\n"
+        + "  arrs[++j] *= ++j;\n"
+        + "  assertEquals(2, j);\n"
+        + "  assertEquals(1, arrs[0]);\n"
+        + "  assertEquals(4, arrs[1]);\n"
+        + "  return arrs.join();\n"
+        + "})()");
+    assertConsistent(
+        "(function () {\n"
+        + "  var foo = (function () {\n"
+        + "               var k = 0;\n"
+        + "               return function () {\n"
+        + "                 switch (k++) {\n"
+        + "                   case 0: return [10, 20, 30];\n"
+        + "                   case 1: return 1;\n"
+        + "                   case 2: return 2;\n"
+        + "                   default: throw new Error(k);\n"
+        + "                 }\n"
+        + "               };\n"
+        + "             })();\n"
+        + "  foo()[foo()] -= foo();\n"
+        + "})()"
+        );
+  }
+
+  public void testNewCalllessCtor() throws Exception {
+    checkSucceeds(
+        "(new Date);",
+        "new (___.asCtor(" + weldReadOuters("Date") + "))()");
   }
 
   public void testNewCtor() throws Exception {
@@ -1392,6 +1523,92 @@ public class DefaultCajaRewriterTest extends TestCase {
         "Anonymous function references \"this\"");
   }
 
+  public void testFuncCtor() throws Exception {
+    checkSucceeds(
+        "function Foo(x) { this.x_ = x; }",
+        "(function () {" +
+        "    var x___ = (function () {" +
+        "        ___.splitCtor(Foo, Foo_init___);" +
+        "        function Foo(var_args) {" +
+        "          return new Foo.make___(arguments);" +
+        "        }" +
+        "        function Foo_init___(x) {" +
+        "          var t___ = this;" +
+        "          (function () {" +
+        "              var x___ = x;" +
+        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Foo;" +
+        "      })();" +
+        "    return ___OUTERS___.Foo_canSet___ ? (___OUTERS___.Foo = x___) : ___.setPub(___OUTERS___, 'Foo', x___);" +
+        "  })();");
+    checkSucceeds(
+        "(function(){ function Foo(x) { this.x_ = x; } })()",
+        "___.asSimpleFunc(___.primFreeze(___.simpleFunc(function () {" +
+        "    var Foo = (function () {" +
+        "        ___.splitCtor(Foo, Foo_init___);" +
+        "        function Foo(var_args) {" +
+        "          return new Foo.make___(arguments);" +
+        "        }" +
+        "        function Foo_init___(x) {" +
+        "          var t___ = this;" +
+        "          (function () {" +
+        "              var x___ = x;" +
+        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Foo;" +
+        "      })();" +
+        "  })))();");
+    checkSucceeds(
+        "function Foo(x) { this.x_ = x; }" +
+        "function Bar(y) {" +
+        "  Foo.call(this,1);" +
+        "  this.y = y;" +
+        "}" +
+        "bar = new Bar(3);",
+        "(function () {" +
+        "    var x___ = (function () {" +
+        "        ___.splitCtor(Foo, Foo_init___);" +
+        "        function Foo(var_args) {" +
+        "          return new Foo.make___(arguments);" +
+        "        }" +
+        "        function Foo_init___(x) {" +
+        "          var t___ = this;" +
+        "          (function () {" +
+        "              var x___ = x;" +
+        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Foo;" +
+        "      })();" +
+        "    return ___OUTERS___.Foo_canSet___ ? (___OUTERS___.Foo = x___) : ___.setPub(___OUTERS___, 'Foo', x___);" +
+        "  })();" +
+        "(function () {" +
+        "    var x___ = (function () {" +
+        "        ___.splitCtor(Bar, Bar_init___);" +
+        "        function Bar(var_args) {" +
+        "          return new Bar.make___(arguments);" +
+        "        }" +
+        "        function Bar_init___(y) {" +
+        "          var t___ = this;" +
+        "          (___OUTERS___.Foo_canRead___ ? ___OUTERS___.Foo : ___.readPub(___OUTERS___, 'Foo', true)).call(this, 1);" +
+        "          (function () {" +
+        "              var x___ = y;" +
+        "              return t___.y_canSet___ ? (t___.y = x___) : ___.setProp(t___, 'y', x___);" +
+        "            })();" +
+        "        }" +
+        "        return Bar;" +
+        "      })();" +
+        "    return ___OUTERS___.Bar_canSet___ ? (___OUTERS___.Bar = x___) : ___.setPub(___OUTERS___, 'Bar', x___);" +
+        "  })();" +
+        "(function () {" +
+        "    var x___ = new (___.asCtor(___OUTERS___.Bar_canRead___ ? ___OUTERS___.Bar : ___.readPub(___OUTERS___, 'Bar', true)))(3);" +
+        "    return ___OUTERS___.bar_canSet___ ? (___OUTERS___.bar = x___) : ___.setPub(___OUTERS___, 'bar', x___);" +
+        "  })();");
+  }
+
   public void testMapEmpty() throws Exception {
     checkSucceeds(
         "f = {};",
@@ -1666,220 +1883,8 @@ public class DefaultCajaRewriterTest extends TestCase {
     }
   }
 
-  public void testAssignmentDelegates() throws Exception {
-    checkFails("x__ *= 2", "Variables cannot end in \"__\"");
-
-    checkSucceeds(
-        "x += 1",
-        "___.setPub(___OUTERS___, 'x',"
-        + "  ___.readPub(___OUTERS___, 'x', true) + 1)");
-    checkSucceeds(
-        "(function (x) { x += 1; })",
-        "(___.primFreeze(___.simpleFunc(function (x) { x = x + 1; })))");
-    checkSucceeds(
-        "myArray().key += 1",
-        "(function () {"
-        + "  var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray") + ")();"
-        + "  return ___.setPub(x0___, 'key', ___.readPub(x0___, 'key') + 1);"
-        + "})()");
-    checkSucceeds(
-        "myArray()[myKey()] += 1",
-        "(function () {"
-        + "  var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray") + ")();"
-        + "  var x1___ = ___.asSimpleFunc(" + weldReadOuters("myKey") + ")();"
-        + "  return ___.setPub(x0___, x1___, ___.readPub(x0___, x1___) + 1);"
-        + "})()");
-    checkSucceeds(  // Local reference need not be assigned to a temp.
-        "(function (myKey) { myArray()[myKey] += 1; })",
-        "___.primFreeze(___.simpleFunc(function (myKey) {"
-        + "  (function () {"
-        + "    var x0___ = ___.asSimpleFunc(" + weldReadOuters("myArray")
-        + ")();"
-        + "    return ___.setPub(x0___, myKey, ___.readPub(x0___, myKey) + 1);"
-        + "  })()"
-        + "}))");
-    
-    assertConsistent("var x = 3; x *= 2;");
-    assertConsistent("var x = 1; x += 7;");
-    assertConsistent("var o = { x: 'a' }; o.x += 'b';");
-  }
-
-  public void testOrderOfExecutionInReadUpdateOps() throws Exception {
-    assertConsistent(
-        "(function () {\n"
-        + "  var arrs = [1, 2];\n"
-        + "  var j = 0;\n"
-        + "  arrs[++j] *= ++j;\n"
-        + "  assertEquals(2, j);\n"
-        + "  assertEquals(1, arrs[0]);\n"
-        + "  assertEquals(4, arrs[1]);\n"
-        + "  return arrs.join();\n"
-        + "})()");
-    assertConsistent(
-        "(function () {\n"
-        + "  var foo = (function () {\n"
-        + "               var k = 0;\n"
-        + "               return function () {\n"
-        + "                 switch (k++) {\n"
-        + "                   case 0: return [10, 20, 30];\n"
-        + "                   case 1: return 1;\n"
-        + "                   case 2: return 2;\n"
-        + "                   default: throw new Error(k);\n"
-        + "                 }\n"
-        + "               };\n"
-        + "             })();\n"
-        + "  foo()[foo()] -= foo();\n"
-        + "})()"
-        );
-  }
-
-  public void testPrefixAndPostfixAssigners() throws Exception {
-    checkFails("x__--;", "Variables cannot end in \"__\"");
-    checkSucceeds(
-         "x--",
-         "(function () {"
-         + "  var x___ = ___.readPub(___OUTERS___, 'x', true) - 0;"
-         + "  ___.setPub(___OUTERS___, 'x', x___ - 1);"
-         + "  return x___;"
-         + "})()");
-    checkSucceeds(
-         "++x",
-         "___.setPub(___OUTERS___, 'x',"
-         + " ___.readPub(___OUTERS___, 'x', true) - -1);");
-    
-    assertConsistent(
-        "var x = 2;\n"
-        + "var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
-        + "assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
-        + "arr.join(',');");
-  }
-
-  public void testPrefixAndPostfixAssignersToLocals() throws Exception {
-    checkFails("++x__", "Variables cannot end in \"__\"");
-    checkSucceeds(
-         "(function (x, y) { return [x--, --x, y++, ++y]; })",
-         "___.primFreeze(___.simpleFunc("
-         + "  function (x, y) { return [x--, --x, y++, ++y]; }))");
-
-    assertConsistent(
-        "(function () {\n"
-        + "  var x = 2;\n"
-        + "  var arr = [--x, x, x--, x, ++x, x, x++, x];\n"
-        + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
-        + "  return arr.join(',');\n"
-        + "})();");
-  }
-
-  public void testPrefixAndPostfixAssignersToComplexLValues() throws Exception {
-    checkFails("arr[x__]--;", "Variables cannot end in \"__\"");
-    checkFails("arr__[x]--;", "Variables cannot end in \"__\"");
-
-    checkSucceeds(
-        "o.x++",
-        "(function () {"
-        + "  var x0___ = " + weldReadOuters("o") + ";"
-        + "  var x___ = ___.readPub(x0___, 'x') - 0;"
-        + "  ___.setPub(x0___, 'x', x___ + 1);"
-        + "  return x___;"
-        + "})()");
-
-    assertConsistent(
-        "(function () {\n"
-        + "  var o = { x: 2 };\n"
-        + "  var arr = [--o.x, o.x, o.x--, o.x, ++o.x, o.x, o.x++, o.x];\n"
-        + "  assertEquals('1,1,1,0,1,1,1,2', arr.join(','));\n"
-        + "  return arr.join(',');\n"
-        + "})();");
-  }
-
-  public void testFuncCtor() throws Exception {
-    checkSucceeds(
-        "function Foo(x) { this.x_ = x; }",
-        "(function () {" +
-        "    var x___ = (function () {" +
-        "        ___.splitCtor(Foo, Foo_init___);" +
-        "        function Foo(var_args) {" +
-        "          return new Foo.make___(arguments);" +
-        "        }" +
-        "        function Foo_init___(x) {" +
-        "          var t___ = this;" +
-        "          (function () {" +
-        "              var x___ = x;" +
-        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
-        "            })();" +
-        "        }" +
-        "        return Foo;" +
-        "      })();" +
-        "    return ___OUTERS___.Foo_canSet___ ? (___OUTERS___.Foo = x___) : ___.setPub(___OUTERS___, 'Foo', x___);" +
-        "  })();");
-    checkSucceeds(
-        "(function(){ function Foo(x) { this.x_ = x; } })()",
-        "___.asSimpleFunc(___.primFreeze(___.simpleFunc(function () {" +
-        "    var Foo = (function () {" +
-        "        ___.splitCtor(Foo, Foo_init___);" +
-        "        function Foo(var_args) {" +
-        "          return new Foo.make___(arguments);" +
-        "        }" +
-        "        function Foo_init___(x) {" +
-        "          var t___ = this;" +
-        "          (function () {" +
-        "              var x___ = x;" +
-        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
-        "            })();" +
-        "        }" +
-        "        return Foo;" +
-        "      })();" +
-        "  })))();");
-    checkSucceeds(
-        "function Foo(x) { this.x_ = x; }" +
-        "function Bar(y) {" +
-        "  Foo.call(this,1);" +
-        "  this.y = y;" +
-        "}" +
-        "bar = new Bar(3);",
-        "(function () {" +
-        "    var x___ = (function () {" +
-        "        ___.splitCtor(Foo, Foo_init___);" +
-        "        function Foo(var_args) {" +
-        "          return new Foo.make___(arguments);" +
-        "        }" +
-        "        function Foo_init___(x) {" +
-        "          var t___ = this;" +
-        "          (function () {" +
-        "              var x___ = x;" +
-        "              return t___.x__canSet___ ? (t___.x_ = x___) : ___.setProp(t___, 'x_', x___);" +
-        "            })();" +
-        "        }" +
-        "        return Foo;" +
-        "      })();" +
-        "    return ___OUTERS___.Foo_canSet___ ? (___OUTERS___.Foo = x___) : ___.setPub(___OUTERS___, 'Foo', x___);" +
-        "  })();" +
-        "(function () {" +
-        "    var x___ = (function () {" +
-        "        ___.splitCtor(Bar, Bar_init___);" +
-        "        function Bar(var_args) {" +
-        "          return new Bar.make___(arguments);" +
-        "        }" +
-        "        function Bar_init___(y) {" +
-        "          var t___ = this;" +
-        "          (___OUTERS___.Foo_canRead___ ? ___OUTERS___.Foo : ___.readPub(___OUTERS___, 'Foo', true)).call(this, 1);" +
-        "          (function () {" +
-        "              var x___ = y;" +
-        "              return t___.y_canSet___ ? (t___.y = x___) : ___.setProp(t___, 'y', x___);" +
-        "            })();" +
-        "        }" +
-        "        return Bar;" +
-        "      })();" +
-        "    return ___OUTERS___.Bar_canSet___ ? (___OUTERS___.Bar = x___) : ___.setPub(___OUTERS___, 'Bar', x___);" +
-        "  })();" +
-        "(function () {" +
-        "    var x___ = new (___.asCtor(___OUTERS___.Bar_canRead___ ? ___OUTERS___.Bar : ___.readPub(___OUTERS___, 'Bar', true)))(3);" +
-        "    return ___OUTERS___.bar_canSet___ ? (___OUTERS___.bar = x___) : ___.setPub(___OUTERS___, 'bar', x___);" +
-        "  })();");
-  }
-
   private void setSynthetic(ParseTreeNode n) {
-    n.getAttributes().set(SyntheticNodes.SYNTHETIC, true);
+    SyntheticNodes.s(n);
   }
 
   private void setTreeSynthetic(ParseTreeNode n) {

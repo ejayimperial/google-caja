@@ -510,6 +510,20 @@ public abstract class Rule implements MessagePart {
     return rewriter.getPatternNode(patternText);
   }
 
+  /**
+   * Given a lhs that has no side effect when evaluated as an lvalue, produce
+   * a ReadAssignOperands without using temporaries.
+   */
+  private ReadAssignOperands sideEffectlessReadAssignOperand(
+      final Expression lhs) {
+    assert lhs.isLeftHandSide();
+    return new ReadAssignOperands(Collections.<Declaration>emptyList(), lhs) {
+        @Override
+        public Expression makeAssignment(Expression rvalue) {
+          return Operation.create(Operator.ASSIGN, lhs, rvalue);
+        }
+      };
+  }
 
   /**
    * Split the target of a read/set operation into an lvalue, an rvalue, and
@@ -523,130 +537,95 @@ public abstract class Rule implements MessagePart {
   ReadAssignOperands deconstructReadAssignOperand(
       Expression operand, Scope scope, MessageQueue mq) {
     if (isLocalReference(operand, scope)) {
-      final Expression expanded = (Expression)
-          rewriter.expand(operand, scope, mq);
-      if (!expanded.isLeftHandSide()) {
-        throw new IllegalStateException(expanded.toString());
-      }
-      if (expanded == Rule.NONE) { return null; }
-      return new ReadAssignOperands(
-          Collections.<Declaration>emptyList(), expanded) {
-          @Override
-          public Expression makeAssignment(Expression rvalue) {
-            return Operation.create(Operator.ASSIGN, expanded, rvalue);
-          }
-        };
+      return sideEffectlessReadAssignOperand(
+          (Expression) rewriter.expand(operand, scope, mq));
     }
 
-    final boolean isProp;  // Is a property (as opposed to a public) reference
-    final boolean isGlobal;  // Is a reference to a member of ___OUTERS___
-    Expression left, right;
-    Operator operator;
     if (operand instanceof Reference) {
       rewriter.expand(operand, scope, mq);
-      left = s(new Reference(s(new Identifier("___OUTERS___"))));
-      ((Reference) left).setFilePosition(
-          FilePosition.startOf(operand.getFilePosition()));
-      right = operand;
-      operator = Operator.MEMBER_ACCESS;
-      isProp = false;
-      isGlobal = true;  // Since left is OUTERS.
-    } else if (operand instanceof Operation) {
+      Reference outers = s(new Reference(s(new Identifier("___OUTERS___"))));
+      outers.setFilePosition(FilePosition.startOf(operand.getFilePosition()));
+      return sideEffectingReadAssignOperand(
+          outers, toStringLiteral(operand), scope, mq);
+    } else if(operand instanceof Operation) {
       Operation op = (Operation) operand;
-      operator = op.getOperator();
-
-      Expression uncajoledObject = op.children().get(0);
-      Expression uncajoledKey = op.children().get(1);
-      isProp = uncajoledObject instanceof Reference
-          && Keyword.THIS.toString().equals(getReferenceName(uncajoledObject));
-
-      ParseTreeNode lExp = rewriter.expand(uncajoledObject, scope, mq);
-      if (lExp == Rule.NONE) { return null; }
-      ParseTreeNode rExp = rewriter.expand(uncajoledKey, scope, mq);
-      if (lExp == Rule.NONE) { return null; }
-
-      left = (Expression) lExp;
-      right = operator == Operator.MEMBER_ACCESS
-          ? uncajoledKey  // Since the rhs of . is treated as a string literal.
-          : (Expression) rExp;
-      isGlobal = false;
-    } else {
-      throw new IllegalArgumentException("Not an lvalue : " + operand);
+      switch (op.getOperator()) {
+        case SQUARE_BRACKET:
+          return sideEffectingReadAssignOperand(
+              op.children().get(0), op.children().get(1),
+              scope, mq);
+        case MEMBER_ACCESS:
+          return sideEffectingReadAssignOperand(
+              op.children().get(0), toStringLiteral(op.children().get(1)),
+              scope, mq);
+      }
     }
+    throw new IllegalArgumentException("Not an lvalue : " + operand);
+  }
 
+  ReadAssignOperands sideEffectingReadAssignOperand(
+      Expression uncajoledObject, Expression uncajoledKey,
+      Scope scope, MessageQueue mq) {
     final Reference object;  // The object that contains the field to assign.
     final Expression key;  // Identifies the field to assign.
     List<Declaration> temporaries = new ArrayList<Declaration>();
 
-    switch (operator) {
-      case SQUARE_BRACKET:
-        // a[b] += 2
-        //   =>
-        // var x___ = a;
-        // var x0___ = b;
+    // Cajole the operands
+    Expression left = (Expression) rewriter.expand(uncajoledObject, scope, mq);
+    Expression right = (Expression) rewriter.expand(uncajoledKey, scope, mq);
 
-        // If the right is simple then we can assume it does not modify the
-        // left, but otherwise the left has to be put into a temporary so that
-        // it's evaluated before the right can muck with it.
-        boolean isRightSimple = (right instanceof Literal
-                                 || isLocalReference(right, scope));
+    // a[b] += 2
+    //   =>
+    // var x___ = a;
+    // var x0___ = b;
 
-        if (isLocalReference(left, scope) && isRightSimple) {
-          object = (Reference) left;
-        } else {
-          Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
-          temporaries.add(s(new Declaration(tmpVar, left)));
-          object = s(new Reference(tmpVar));
-        }
+    // If the right is simple then we can assume it does not modify the
+    // left, but otherwise the left has to be put into a temporary so that
+    // it's evaluated before the right can muck with it.
+    boolean isKeySimple = (right instanceof Literal
+                           || isLocalReference(right, scope));
 
-        if (isRightSimple) {
-          key = right;
-        } else {
-          Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
-          temporaries.add(s(new Declaration(tmpVar, right)));
-          key = s(new Reference(tmpVar));
-        }
-        break;
-      case MEMBER_ACCESS:
-        if (isLocalReference(left, scope) || isOutersReference(left)) {
-          // ___OUTERS___ is not treated as a local reference, but it is a
-          // formal, so do not assign to a temporary.
-          object = (Reference) left;
-        } else {
-          Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
-          temporaries.add(s(new Declaration(tmpVar, left)));
-          object = s(new Reference(tmpVar));
-        }
-
-        key = toStringLiteral(right);
-        break;
-      default:
-        throw new IllegalArgumentException("Not an lvalue : " + operand);
+    // If the left is simple and the right does not need a temporary variable
+    // then don't introduce one.
+    if (isKeySimple && (isLocalReference(left, scope)
+                        || isOutersReference(left))) {
+      object = (Reference) left;
+    } else {
+      Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
+      temporaries.add(s(new Declaration(tmpVar, left)));
+      object = s(new Reference(tmpVar));
     }
 
-    Expression rvalueCajoled = Operation.create(
-            Operator.FUNCTION_CALL,
-            Operation.create(
-                Operator.MEMBER_ACCESS,
-                new Reference(new Identifier("___")),
-                new Reference(new Identifier(isProp ? "readProp" : "readPub"))),
-            object,
-            key);
-    // Make sure exception thrown if global variable not defined.
-    if (isGlobal) { rvalueCajoled.appendChild(new BooleanLiteral(true)); }
+    // Don't bother to generate a temporary for a simple value like 'foo'
+    if (isKeySimple) {
+      key = right;
+    } else {
+      Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
+      temporaries.add(s(new Declaration(tmpVar, right)));
+      key = s(new Reference(tmpVar));
+    }
+
+    // Is a property (as opposed to a public) reference.
+    final boolean isProp = uncajoledObject instanceof Reference
+        && Keyword.THIS.toString().equals(getReferenceName(uncajoledObject));
+
+    Expression rvalueCajoled = (Expression) substV(
+        "___.@flavorOfRead(@object, @key, @isGlobal)",
+        "flavorOfRead", newReference(isProp ? "readProp" : "readPub"),
+        "object", object,
+        "key", key,
+        // Make sure exception thrown if global variable not defined.
+        "isGlobal", new BooleanLiteral(isOutersReference(object)));
 
     return new ReadAssignOperands(temporaries, rvalueCajoled) {
         @Override
         public Expression makeAssignment(Expression rvalue) {
-          return Operation.create(
-              Operator.FUNCTION_CALL,
-              Operation.create(
-                  Operator.MEMBER_ACCESS,
-                  new Reference(new Identifier("___")),
-                  new Reference(new Identifier(isProp ? "setProp" : "setPub"))),
-              object,
-              key,
-              rvalue);
+          return (Expression) substV(
+              "___.@flavorOfSet(@object, @key, @rvalue)",
+              "flavorOfSet", newReference(isProp ? "setProp" : "setPub"),
+              "object", object,
+              "key", key,
+              "rvalue", rvalue);
         }
       };
   }
@@ -662,9 +641,7 @@ public abstract class Rule implements MessagePart {
         && !scope.isGlobal(((Reference) e).getIdentifierName());
   }
 
-  /**
-   * True iff e is a reference to the global object.
-   */
+  /** True iff e is a reference to the global object. */
   private static boolean isOutersReference(Expression e) {
     if (!(e instanceof Reference)) { return false; }
     return "___OUTERS___".equals(((Reference) e).getIdentifierName());
