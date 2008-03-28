@@ -111,7 +111,8 @@ public class DefaultCajaRewriterTest extends TestCase {
   public void testForeach() throws Exception {
     checkSucceeds(
         "1; for (var k in x) { k; }",
-        // TOOD(ihab.awad): review welds        
+        // TOOD(ihab.awad): review welds and move away
+        // from putting temporaries in ___OUTERS___.
         "1; {" +
         "  ___OUTERS___.x0___ = " + weldReadOuters("x") + ";" +
         "  ___OUTERS___.x1___ = undefined;" +
