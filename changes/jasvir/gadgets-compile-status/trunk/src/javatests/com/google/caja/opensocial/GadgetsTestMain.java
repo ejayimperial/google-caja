@@ -18,11 +18,14 @@ import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.plugin.Config;
 import com.google.caja.reporting.BuildInfo;
+import com.google.caja.reporting.HtmlSnippetProducer;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
+import com.google.caja.reporting.MessageType;
+import com.google.caja.reporting.MessageTypeInt;
 import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.reporting.SnippetProducer;
 
@@ -146,7 +149,7 @@ public class GadgetsTestMain {
     return result.toString();
   }
   
-  private void testGadget ( URI gadget, JSONArray testResults ) 
+  private void testGadget ( URI gadget, JSONArray testResults, int[] errorCount ) 
       throws IOException, URISyntaxException, UriCallbackException {
     
     String[] argv = {
@@ -170,11 +173,12 @@ public class GadgetsTestMain {
     gadgetElement.put("url", gadget.toString());
     gadgetElement.put("title", "TODO");
     MessageLevel worstErrorLevel = MessageLevel.LOG;
+    MessageType worstErrorType = null;
     testResults.add(gadgetElement);
     
     JSONArray messages = new JSONArray();
     gadgetElement.put("messages", messages);
-  
+    
     Writer w = new BufferedWriter(new FileWriter(config.getOutputBase()));
     
     try {
@@ -187,22 +191,28 @@ public class GadgetsTestMain {
         } catch (GadgetRewriteException e) {
           addMessageNode(messages,"Compiler threw uncaught exception",
               MessageLevel.FATAL_ERROR.toString(),
+              MessageType.INTERNAL_ERROR.toString(),
               getExceptionTrace(e));
+          worstErrorType = MessageType.INTERNAL_ERROR;
           worstErrorLevel = MessageLevel.FATAL_ERROR;
-          gadgetElement.put("worstErrorLevel", worstErrorLevel.toString());
+          errorCount[MessageType.INTERNAL_ERROR.ordinal()] ++;
         } catch (RuntimeException e) {
           addMessageNode(messages,"Compiler threw uncaught runtime exception",
               MessageLevel.FATAL_ERROR.toString(),
+              MessageType.INTERNAL_ERROR.toString(),
               getExceptionTrace(e));
+          worstErrorType = MessageType.INTERNAL_ERROR;
           worstErrorLevel = MessageLevel.FATAL_ERROR;
-          gadgetElement.put("worstErrorLevel", worstErrorLevel.toString());
+          errorCount[MessageType.INTERNAL_ERROR.ordinal()] ++;
         }  finally {
-          SnippetProducer sp = new SnippetProducer(originalSources, mc);
+          SnippetProducer sp = new HtmlSnippetProducer(originalSources, mc);
           for (Message msg : mq.getMessages()) {
+            MessageType type = (MessageType)msg.getMessageType();
             addMessageNode(messages, msg, mc, sp );
+            errorCount[type.ordinal()]++;
             if ( msg.getMessageLevel().compareTo(worstErrorLevel) > 0 ) {
+              worstErrorType = (MessageType)msg.getMessageType();
               worstErrorLevel = msg.getMessageLevel();
-              gadgetElement.put("worstErrorLevel", worstErrorLevel.toString());
             } 
           }
           r.close();
@@ -210,14 +220,26 @@ public class GadgetsTestMain {
       }
     } catch ( RuntimeException e ) {
       addMessageNode(messages,"Compiler threw uncaught runtime exception",
-          MessageLevel.FATAL_ERROR.toString(),
-          getExceptionTrace(e));
-      gadgetElement.put("worstErrorLevel", MessageLevel.FATAL_ERROR.toString());
+          MessageLevel.FATAL_ERROR.toString(), 
+          MessageType.INTERNAL_ERROR.toString(), getExceptionTrace(e));
+      worstErrorType = MessageType.INTERNAL_ERROR;
+      worstErrorLevel = MessageLevel.FATAL_ERROR;
     }
     finally {
+      addWorstErrorNode(gadgetElement, worstErrorLevel, worstErrorType);
       w.close();
     }    
-    
+  }
+  
+  
+  private void addSummaryResults ( JSONArray summary, int[] errorCount ) {
+    for ( int i=0; i < errorCount.length; i++ ) {
+      JSONObject entry = new JSONObject();
+      entry.put("type", MessageType.values()[i].toString());
+      entry.put("value", "" + errorCount[i]);
+      entry.put("errorLevel", MessageType.values()[i].getLevel().toString());
+      summary.add(entry);
+    }
   }
   
   private int run(String[] argv)
@@ -229,15 +251,19 @@ public class GadgetsTestMain {
 
     JSONArray testResults = new JSONArray ();
     String timestamp = (new Date()).toString();
+    int[] errorCount = new int [ MessageType.values().length ];
     resultDoc.put("buildInfo", JSONObject.escape(BuildInfo.getInstance().getBuildInfo()));
     resultDoc.put("timestamp", JSONObject.escape(timestamp));
     System.out.print(timestamp);
     resultDoc.put("gadgets", testResults);
 
+    JSONArray summary = new JSONArray();
+    resultDoc.put("summary", summary);
+    
     try {
       for (URI gadgetUri : gadgetList) {
         try {
-          testGadget(gadgetUri, testResults);
+          testGadget(gadgetUri, testResults, errorCount);
         } catch ( RuntimeException e ) {
           e.printStackTrace();
         }
@@ -245,6 +271,7 @@ public class GadgetsTestMain {
     } catch ( IOException e ) {
       e.printStackTrace();
     } finally {
+      addSummaryResults(summary,errorCount);
       writeResults(jsonOutput);
       try {
         jsonOutput.close();
@@ -256,16 +283,30 @@ public class GadgetsTestMain {
   }
 
   private void addMessageNode ( JSONArray messages, String position,
-                                String level, String text ) {
+                                String level, String type, String text ) {
     
     JSONObject message = new JSONObject();
 
     message.put("position", position);
     message.put("level", level);
+    message.put("type", type);
     message.put("text", text);
     
     messages.add(message);
     
+  }
+
+  private void addWorstErrorNode (JSONObject gadget, MessageLevel mLevel,
+                                  MessageType mType) {
+    JSONObject error = new JSONObject();
+    String levelOrdinal = mLevel == null ? "UNKNOWN" : ""+mLevel.ordinal();
+    String level = mLevel == null ? "UNKNOWN" : mLevel.toString();
+    String type = mType == null ? "UNKNOWN" : mType.toString();
+    
+    error.put("type", type);
+    error.put("level", level);
+    error.put("levelOrdinal", levelOrdinal);
+    gadget.put("worstError", error);
   }
   
   private void addMessageNode ( JSONArray messages, Message msg, MessageContext mc,
@@ -274,6 +315,8 @@ public class GadgetsTestMain {
     MessageLevel messageLevel = msg.getMessageLevel();
     MessagePart topMessage = msg.getMessageParts().get(0);
     StringBuffer position = new StringBuffer();
+    String snippet = null;   
+    String type = msg.getMessageType().toString();
     
     if ( topMessage instanceof FilePosition ) {
       FilePosition filePosition = (FilePosition) topMessage;
@@ -286,8 +329,9 @@ public class GadgetsTestMain {
       position = new StringBuffer( "Unknown");
     }
 
-    String snippet = msg.format(mc);   
-    addMessageNode(messages, position.toString(), messageLevel.name(), snippet);
+    snippet = sp.getSnippet(msg);
+    
+    addMessageNode(messages, msg.format(mc), messageLevel.name(), type, snippet);
     
   }
   
