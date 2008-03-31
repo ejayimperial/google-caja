@@ -290,6 +290,19 @@ public class Scope {
    * In this scope or some enclosing scope, is a given name
    * defined as a declared function?
    *
+   * @param node an identifier.
+   * @return whether 'name' is defined as a declared function within this
+   *   scope. If 'name' is not defined, return false.
+   */
+  public boolean isDeclaredFunctionReference(ParseTreeNode node) {
+    return node instanceof Reference &&
+        isDeclaredFunction(((Reference)node).getIdentifierName());
+  }
+
+  /**
+   * In this scope or some enclosing scope, is a given name
+   * defined as a declared function?
+   *
    * @param name an identifier.
    * @return whether 'name' is defined as a declared function within this
    *   scope. If 'name' is not defined, return false.

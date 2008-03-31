@@ -12,19 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.caja.plugin;
+package com.google.caja.parser.html;
 
-import com.google.caja.util.RhinoTestBed;
-import java.io.StringReader;
-import junit.framework.TestCase;
+import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.RenderContext;
 
 /**
- * JUnit wrapper for html-sanitizer JSUnit unittests.
- *
+ * Can switch rendering of a DomTree between XML and HTML mode.
  * @author mikesamuel@gmail.com
  */
-public final class JsHtmlSanitizerTest extends TestCase {
-  public void testHtmlSanitizer() throws Exception {
-    RhinoTestBed.runJsUnittestFromHtml(getClass(), "html-sanitizer-test.html");
+public class MarkupRenderContext extends RenderContext {
+  private final boolean asXml;
+
+  public MarkupRenderContext(MessageContext msgContext, Appendable out,
+                             boolean asXml) {
+    super(msgContext, out);
+    this.asXml = asXml;
   }
+
+  public boolean asXml() { return asXml; }
 }

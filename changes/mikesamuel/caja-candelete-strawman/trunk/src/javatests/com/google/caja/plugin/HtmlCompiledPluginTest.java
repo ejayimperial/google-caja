@@ -53,6 +53,8 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
+  // TODO(stay): Move as many of these as possible to DefaultCajaRewriterTest
+  //             using assertConsistent
   public void testEmptyGadget() throws Exception {
     execGadget("", "");
   }
@@ -291,8 +293,7 @@ public class HtmlCompiledPluginTest extends TestCase {
    * @throws Exception
    */
   public void testGlobalScopePrototypeInvisible() throws Exception {
-    // TODO(ihab.awad): Disabled for now, but see
-    // http://code.google.com/p/google-caja/issues/detail?id=78
+    // TODO(ihab.awad): Disabled for now, but see issue145
     if (false) {
     execGadget(
         "<script>var x = 1; x = this.prototype; x = 2;</script>",
@@ -347,24 +348,6 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   /**
-   * Tests 'foreach' loops.
-   *
-   * @throws Exception
-   */
-  public void testForeach() throws Exception {
-    execGadget(
-        "<script>var z = 0; for (var k = 0; k < 2; k++) z = k;" +
-        "assertEquals(z, 1);</script>",
-        ""
-        );
-    execGadget(
-        "<script>var z = 0; for (var k = 0; k < 2; k++) { z = k; }" +
-        "assertEquals(z, 1);</script>",
-        ""
-        );
-  }
-
-  /**
    * Empty styles should not cause parse failure.
    * <a href="http://code.google.com/p/google-caja/issues/detail?id=56">bug</a>
    */
@@ -385,6 +368,140 @@ public class HtmlCompiledPluginTest extends TestCase {
         );
   }
 
+  /**
+   * Try to construct some class instances.
+   */
+  public void testFuncCtor() throws Exception {
+    execGadget(
+        "<script>" +
+        "function Foo(x){ this.x = x; }" +
+        "var foo = new Foo(2);" +
+        "if (!foo) fail('Failed to construct a global object.')" +
+        "assertEquals(foo.x, 2);" +
+        "</script>",
+        ""
+        );
+    execGadget(
+        "<script>(function(){" +
+        "function Foo(x){ this.x = x; }" +
+        "var foo = new Foo(2);" +
+        "if (!foo) fail('Failed to construct a local object.')" +
+        "assertEquals(foo.x, 2);" +
+        "})()</script>",
+        ""
+        );
+    execGadget(
+        "<script>" +
+        "function Foo(x){ this.x = x; }" +
+        "function Bar(y){ Foo.call(this,5); this.y = y; }" +
+        "var bar = new Bar(2);" +
+        "if (!bar) fail('Failed to construct a derived object.')" +
+        "assertEquals(bar.x, 5);" +
+        "assertEquals(bar.y, 2);" +
+        "</script>",
+        ""
+        );
+    execGadget(
+        "<script>" +
+        "function Foo(){ }" +
+        "var foo = new Foo();" +
+        "if (!foo) fail('Failed to use a simple named function as a constructor.')" +
+        "</script>",
+        ""
+        );
+  }
+
+  public void testCajaDef() throws Exception {
+    execGadget(
+        "<script>" +
+        "function Foo(y) { this.y = y; }" +
+        "function Bar(x) {" +
+        "  Foo.call(this, 3);" +
+        "  this.x_ = x;" +
+        "}" +
+        "caja.def(Bar, Foo, {getX:function () { return this.x_; }});" +
+        "var bar = new Bar(2);" +
+        "assertEquals(bar.y, 3);" +
+        "assertEquals(bar.getX(), 2);" +
+        "(function (constr) {" +
+        "  var baz = new constr(4);" +
+        "  assertEquals(baz.getX(), 4);" +
+        "})(Bar);" +
+        "</script>",
+        "");
+  }
+
+  public void testECMAScript31Scoping() throws Exception {
+    // TODO(stay): Once they decide on scoping & initialization rules, test them here.
+  }
+  
+  public void testForIn() throws Exception {
+    execGadget(
+        "<script>" +
+        "function Foo() {" +
+        "  this.x_ = 1;" +
+        "  this.y = 2;" +
+        "  this.z = 3;" +
+        "}" +
+        "var obj = new Foo();" +
+        "var y = {};" +
+        "var result = [];" +
+        "for (y.k in obj) {" +
+        "  result.push(y.k);" +
+        "}" +
+        "</script>",
+        "assertEquals(" +
+        "    ___.getNewModuleHandler().getOuters().result.toSource()," +
+        "    (['y', 'z']).toSource());");
+    execGadget(
+        "<script>" +
+        "function test(obj) {" +
+        "  var y = {};" +
+        "  var result = [];" +
+        "  for (y.k in obj) {" +
+        "    result.push(y.k);" +
+        "  }" +
+        "  return result;" +
+        "}" +
+        "</script>",
+        "assertEquals(" +
+        "    ___.getNewModuleHandler().getOuters().test({x_:1, y:2, z:3}).sort().toSource()," +
+        "    (['y', 'z']).toSource());");
+    // TODO(metaweta): Put this test back in when issue142 is fixed.
+    if (false) {
+      execGadget(
+          "<script>" +
+          "function Foo() {" +
+          "  this.x_ = 1;" +
+          "  this.y = 2;" +
+          "}" +
+          "caja.def(Foo, Object, {" +
+          "  test: function () {" +
+          "    var y = {};" +
+          "    var result = [];" +
+          "    for (y.k in this) {" +
+          "      result.push(y.k);" +
+          "    }" +
+          "    return result;" +
+          "  }});" +
+          "var obj = new Foo();" +
+          "</script>",
+          "assertEquals(" +
+          "    ___.getNewModuleHandler().getOuters().obj.test().sort().toSource()," +
+          "    (['test', 'x', 'y']).toSource());");
+    }
+  }
+    
+  public void testInstanceMethod() throws Exception {
+    // TODO(metaweta): Put this test back in when issue143 is fixed.
+    if (false) {
+      execGadget(
+          "<script>" +
+          "function Foo() { this.f = function(){ return this; }}" +
+          "</script>", "");
+    }
+  }
+  
   private void execGadget(String gadgetSpec, String tests) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = new EchoingMessageQueue(
