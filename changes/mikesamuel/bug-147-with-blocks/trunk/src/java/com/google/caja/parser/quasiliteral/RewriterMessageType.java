@@ -99,7 +99,7 @@ public enum RewriterMessageType implements MessageTypeInt {
       MessageLevel.FATAL_ERROR),
 
   WITH_BLOCKS_NOT_ALLOWED(
-      "%s: `with` blocks are not allowed",
+      "%s: \"with\" blocks are not allowed",
       MessageLevel.ERROR),
   ;
 

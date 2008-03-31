@@ -14,10 +14,10 @@
 
 package com.google.caja.parser.js;
 
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.reporting.RenderContext;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -56,10 +56,12 @@ public final class WithStmt extends AbstractStatement<ParseTreeNode>
   @Override
   public Object getValue() { return null; }
 
-  public void render(RenderContext rc) throws IOException {
-    rc.out.append("with (");
+  public void render(RenderContext rc) {
+    TokenConsumer out = rc.getOut();
+    out.consume("with");
+    out.consume("(");
     getScopeObject().render(rc);
-    rc.out.append(")");
-    getBody().renderBlock(rc, true, false, false);
+    out.consume(")");
+    getBody().renderBlock(rc, false);
   }
 }

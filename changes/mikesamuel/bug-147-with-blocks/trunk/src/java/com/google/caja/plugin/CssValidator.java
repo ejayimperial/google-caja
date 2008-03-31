@@ -16,11 +16,13 @@ package com.google.caja.plugin;
 
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lang.html.HtmlSchema;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.css.CssPropertySignature;
 import com.google.caja.parser.css.CssTree;
+import com.google.caja.render.CssPrettyPrinter;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
@@ -30,7 +32,6 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.SyntheticAttributeKey;
 import com.google.caja.util.SyntheticAttributes;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -205,7 +206,8 @@ public final class CssValidator {
       int exprIdx = null != best ? best.exprIdx : 0;
 
       StringBuilder buf = new StringBuilder();
-      RenderContext rc = new RenderContext(new MessageContext(), buf);
+      TokenConsumer tc = new CssPrettyPrinter(buf, null);
+      RenderContext rc = new RenderContext(new MessageContext(), tc);
       boolean needsSpace = false;
       int k = 0;
       for (CssTree child : expr.children()) {
@@ -213,17 +215,12 @@ public final class CssValidator {
           buf.append(' ');
         }
         int len = buf.length();
-        try {
-          if (k++ == exprIdx) {
-            buf.append(" ==>");
-            child.render(rc);
-            buf.append("<== ");
-          } else {
-            child.render(rc);
-          }
-        } catch (IOException ex) {
-          throw (AssertionError) new AssertionError(
-              "IOException thrown writing to StringBuilder").initCause(ex);
+        if (k++ == exprIdx) {
+          buf.append(" ==>");
+          child.render(rc);
+          buf.append("<== ");
+        } else {
+          child.render(rc);
         }
         needsSpace = (len < buf.length());
       }
@@ -402,6 +399,15 @@ final class SignatureResolver {
     return passed;
   }
 
+  /**
+   * Makes sure that a candidate is on the passed list -- all succeeding rules
+   * will add the candidate except an optional rule that is satisfied because
+   * it successfully went through zero repetitions.
+   *
+   * @param passed modified in place.
+   * @return true if candidate is a complete solution to signature -- uses all
+   *    terms.
+   */
   private boolean checkEnd(
       Candidate candidate, CssPropertySignature sig, List<Candidate> passed) {
     if (candidate.exprIdx == expr.children().size()) {
@@ -511,7 +517,10 @@ final class SignatureResolver {
           // Special handling for || groups
           List<Candidate> passedSet  = new ArrayList<Candidate>();
           for (Candidate setCandidate : toApply) {
-            if (setCandidate.exprIdx == expr.children().size()) { continue; }
+            if (setCandidate.exprIdx == expr.children().size()) {
+              passed.add(setCandidate);
+              continue;
+            }
 
             skipBlank(setCandidate);
 

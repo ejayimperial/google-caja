@@ -139,9 +139,9 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   public void testWith() throws Exception {
     checkFails("with (dreams || ambiguousScoping) anything.isPossible();",
-               "`with` blocks are not allowed");
+               "\"with\" blocks are not allowed");
     checkFails("with (dreams || ambiguousScoping) { anything.isPossible(); }",
-               "`with` blocks are not allowed");
+               "\"with\" blocks are not allowed");
   }
 
   public void testForeach() throws Exception {
