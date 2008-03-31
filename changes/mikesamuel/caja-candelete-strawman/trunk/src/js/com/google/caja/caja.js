@@ -1188,7 +1188,7 @@ var ___;
   function deleteProp(obj, name) {
     name = String(name);
     if (canDeleteProp(obj, name)) {
-      // See doDelete for reasons why we don't cache deletability.
+      // See deleteFieldEntirely for reasons why we don't cache deletability.
       deleteFieldEntirely(obj, name);
     } else {
       return obj.handleDelete___(name);
