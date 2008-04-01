@@ -1110,8 +1110,8 @@ var ___;
       fail('not callable %o %s', obj, name);
     }
   }
-  
-  /** 
+
+  /**
    * Can a method of a Caja constructed object directly assign to
    * this property of its object?
    * <p>
@@ -1123,7 +1123,7 @@ var ___;
     if (canSet(that, name)) { return true; }
     return !isFrozen(that);
   }
-  
+
   /**
    * A Caja method tries to assign to this property of its object.
    */
