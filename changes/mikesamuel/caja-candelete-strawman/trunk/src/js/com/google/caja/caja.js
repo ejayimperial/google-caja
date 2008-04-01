@@ -1115,7 +1115,7 @@ var ___;
    * Can a method of a Caja constructed object directly assign to
    * this property of its object?
    * <p>
-   * Iff this object isn't frozen.
+   * Iff this object is not frozen.
    */
   function canSetProp(that, name) {
     name = String(name);
