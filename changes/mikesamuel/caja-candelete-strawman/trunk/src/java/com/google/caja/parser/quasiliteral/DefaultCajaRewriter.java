@@ -41,6 +41,7 @@ import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.ReturnStmt;
 import com.google.caja.parser.js.SimpleOperation;
 import com.google.caja.parser.js.SpecialOperation;
+import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.SwitchStmt;
 import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.parser.js.TryStmt;
@@ -93,8 +94,26 @@ public class DefaultCajaRewriter extends Rewriter {
     ////////////////////////////////////////////////////////////////////////
 
     addRule(new Rule("with", this) {
+      @Override
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        // Our parser does not recognize "with" at all.
+        // `with` violates the assumptions that Scope makes and makes it very
+        // hard to write a Scope that works.
+
+        // http://yuiblog.com/blog/2006/04/11/with-statement-considered-harmful/
+        // briefly touches on why `with` is bad for programmers and more-so
+        // for reviewers -- matching of references with declarations can only
+        // be done at runtime.
+
+        // All other secure JS subsets that I know of (ADSafe Jacaranda & FBJS)
+        // also disallow `with`.
+
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("with (@scope) @body;", node, bindings)) {
+          mq.addMessage(
+              RewriterMessageType.WITH_BLOCKS_NOT_ALLOWED,
+              node.getFilePosition());
+          return node;
+        }
         return NONE;
       }
     });
@@ -378,7 +397,12 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this.@p", node, bindings) && scope.isGlobal()) {
-          return expandReferenceToOuters(bindings.get("p"), scope, mq);
+          String xName = getReferenceName(bindings.get("p"));
+          return substV(
+              "___OUTERS___.@xCanRead ? ___OUTERS___.@x : ___.readPub(___OUTERS___, @xName);",
+              "x", bindings.get("p"),
+              "xCanRead", new Reference(new Identifier(xName + "_canRead___")),
+              "xName", new StringLiteral(StringLiteral.toQuotedValue(xName)));
         }
         return NONE;
       }
@@ -579,21 +603,26 @@ public class DefaultCajaRewriter extends Rewriter {
         // Currently, since we have no such test, the translated expression will
         // safely evaluate to <tt>undefined</tt>, but this behavior is not within
         // a fail-stop subset of JavaScript.
-        if (match("@fname.prototype.@p = @m;", node, bindings)) {
-          String fname = getReferenceName(bindings.get("fname"));
-          if (scope.isDeclaredFunction(fname)) {
-            Reference p = (Reference) bindings.get("p");
-            String propertyName = getReferenceName(p);
-            if (!"constructor".equals(propertyName)) {
-              return substV(
-                  "(function() {" +
-                  "  var x___ = @m;" +
-                  "  return ___.setMember(@fname, @rp, x___);" +
-                  "})();",
-                  "fname", bindings.get("fname"),
-                  "m", expandMember(bindings.get("fname"), bindings.get("m"), this, scope, mq),
-                  "rp", toStringLiteral(p));
+        if (match("@clazz.prototype.@p = @m;", node, bindings)) {
+          ParseTreeNode clazz = bindings.get("clazz");
+          if (clazz instanceof Reference) {
+            String className = getReferenceName(clazz);
+            if (scope.isDeclaredFunction(className)) {
+              Reference p = (Reference) bindings.get("p");
+              if (!"constructor".equals(getReferenceName(p))) {
+                // Make sure @p and @clazz are mentionable.
+                expand(p, scope, mq);
+                expand(clazz, scope, mq);
+                return substV(
+                    "___.setMember(@clazz, @rp, @m);",
+                    "clazz", expandReferenceToOuters(clazz, scope, mq),  // Don't expand so we don't freeze.
+                    "m", expandMember(clazz, bindings.get("m"), this, scope, mq),
+                    "rp", toStringLiteral(p));
+              }
             }
+          } else {
+            // TODO(mikesamuel): make constructors first class for the purpose
+            // of defining members.
           }
         }
         return NONE;
@@ -977,6 +1006,63 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    ////////////////////////////////////////////////////////////////////////
+    // delete - property deletion
+    ////////////////////////////////////////////////////////////////////////
+
+    addRule(new Rule("deleteProp", this) {
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings
+            = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("delete this[@k]", node, bindings)) {
+          return substV(
+              "___.deleteProp(t___, @k)",
+              "k", bindings.get("k")
+              );
+        } else if (match("delete this.@k", node, bindings)) {
+          Reference k = (Reference) bindings.get("k");
+          if (getReferenceName(k).endsWith("__")) {
+            mq.addMessage(
+                RewriterMessageType.VARIABLES_CANNOT_END_IN_DOUBLE_UNDERSCORE,
+                k.getFilePosition(), this, k);
+          }
+          return substV(
+              "___.deleteProp(t___, @ks)",
+              "ks", toStringLiteral(k)              
+              );
+        }
+        return NONE;
+      }
+    });
+
+    addRule(new Rule("deletePub", this) {
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings
+            = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("delete @o[@k]", node, bindings)) {
+          return substV(
+              "___.deletePub(@o, @k)",
+              "o", bindings.get("o"),
+              "k", bindings.get("k"));
+        } else if (match("delete @o.@k", node, bindings)) {
+          Reference k = (Reference) bindings.get("k");
+          String kName = getReferenceName(k);
+          if (kName.endsWith("__")) {
+            mq.addMessage(
+                RewriterMessageType.VARIABLES_CANNOT_END_IN_DOUBLE_UNDERSCORE,
+                k.getFilePosition(), this, k);
+          }
+          return substV(
+              "___.deletePub(@o, @ks)",
+              "o", bindings.get("o"),
+              "ks", toStringLiteral(k));
+        }
+        return NONE;
+      }
+    });
+    
     ////////////////////////////////////////////////////////////////////////
     // call - function calls
     ////////////////////////////////////////////////////////////////////////
@@ -1489,6 +1575,19 @@ public class DefaultCajaRewriter extends Rewriter {
               "f", expand(bindings.get("f"), scope, mq));
         }
         return NONE;
+      }
+    });
+
+    addRule(new Rule("otherSpecialOp", this) {
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (!(node instanceof SpecialOperation)) { return NONE; }
+        switch (((SpecialOperation) node).getOperator()) {
+          case COMMA: case VOID:
+            return expandAll(node, scope, mq);
+          default:
+            return NONE;
+        }
       }
     });
 

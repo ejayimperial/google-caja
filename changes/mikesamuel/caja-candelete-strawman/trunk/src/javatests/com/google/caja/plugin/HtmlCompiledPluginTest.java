@@ -21,6 +21,7 @@ import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
+import com.google.caja.render.JsPrettyPrinter;
 import com.google.caja.reporting.EchoingMessageQueue;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
@@ -498,8 +499,35 @@ public class HtmlCompiledPluginTest extends TestCase {
       execGadget(
           "<script>" +
           "function Foo() { this.f = function(){ return this; }}" +
-          "</script>", "");
+          "</script>",
+          "");
     }
+  }
+  
+  public void testGlobalThis() throws Exception {
+    execGadget(
+        "<script>" +
+        "var y = this.foo;" +
+        "assertEquals(y, undefined);" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "var passed = false;" +
+        "try {" +
+        "  var y = foo;" +
+        "} catch (e) { passed = true; }" +
+        "if (!passed) fail('Should have thrown a ReferenceError.');" +
+        "</script>",
+        "");
+  }
+  
+  public void testStaticMembers() throws Exception {
+    execGadget("<script>" +
+        "function Foo(){}" +
+        "Foo.prototype.x = 1;" +
+        "</script>",
+        "");
   }
   
   private void execGadget(String gadgetSpec, String tests) throws Exception {
@@ -520,7 +548,8 @@ public class HtmlCompiledPluginTest extends TestCase {
     } else {
       Block jsTree = compiler.getJavascript();
       StringBuilder js = new StringBuilder();
-      RenderContext rc = new RenderContext(mc, js, false);
+      JsPrettyPrinter pp = new JsPrettyPrinter(js, null);
+      RenderContext rc = new RenderContext(mc, false, pp);
       jsTree.render(rc);
       System.out.println("Compiled gadget: " + js);
 

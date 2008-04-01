@@ -1171,19 +1171,21 @@ var ___;
       return obj.handleSet___(name, val);
     }
   }
-  
+ 
   /**
    * Can a Caja constructed object delete the named property?
    */
   function canDeleteProp(obj, name) {
     name = String(name);
-    if (endsWith(name, '__') || isFrozen(obj)) { return false; }
-    return true;
+    if (isFrozen(obj)) { return false; }
+    if (endsWith(name, '__')) { return false; }
+    if (isJSONContainer(obj)) { return true; }
+    return !!obj[name + '_canDelete__'];
   }
 
   /**
    * A Caja constructed object attempts to delete one of its own
-   * properties. 
+   * properties.
    */
   function deleteProp(obj, name) {
     name = String(name);
@@ -1194,21 +1196,16 @@ var ___;
       return obj.handleDelete___(name);
     }
   }
-  
+
   /**
    * Can a client of obj delete the named property?
    */
   function canDeletePub(obj, name) {
     name = String(name);
-    if (endsWith(name, '_')
-        && (endsWith(name, '__')  // Never deletable.
-            || !(obj[name + '_canDelete___']  // Respect ___.allowDelete.
-                 || isJSONContainer(obj)))  // JSON containers aren't private.
-        ) {
-      return false;
-    }
     if (isFrozen(obj)) { return false; }
-    return true;
+    if (endsWith(name, '__')) { return false; }
+    if (isJSONContainer(obj)) { return true; }
+    return false;
   }
 
   /**
