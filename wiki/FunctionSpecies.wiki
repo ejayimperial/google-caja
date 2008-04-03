@@ -12,7 +12,7 @@ function ClassName(a, b) {
 }
 }}}
 
-*Methods* are functions attached to a particular class that can manipulate the protected interface of instances of that class via {{{this}}}.  Any unnamed function that mentions {{{this}}} is a method.
+*Methods* are functions attached to a particular class that can manipulate the {{{protected}}} interface of instances of that class via {{{this}}}.  Any unnamed function that mentions {{{this}}} is a method.
 {{{
 caja.def(ClassName, SuperClass, {
   setB: function (b) { this.b_ = b; },
@@ -20,7 +20,18 @@ caja.def(ClassName, SuperClass, {
 });
 }}}
 
-*Simple* functions don't have access to any object's {{{private}}} interface, but can do anything else.  Any function that doesn't mention {{{this}}} is simple.
+*Simple* functions don't have access to any object's {{{protected}}} interface, but can do anything else.  Any function that doesn't mention {{{this}}} is simple.
 {{{
 function foo(x, y) { return x + y; }
 }}}
+
+
+== Calling Functions ==
+
+A function can be declared any of the ways above, but calling is more flexible.
+
+. . . Functions defined as can be . . .
+||        ||          || *Ctor* || *Method* || *Simple* ||
+|| called || *Ctor*   || `YES`  ||  `???`   ||  `YES`   ||
+|| . as . || *Method* ||  `NO`  ||  `YES`   ||  `YES`   ||
+||        || *Simple* ||  `NO`  ||   `NO`   ||  `YES`   ||
