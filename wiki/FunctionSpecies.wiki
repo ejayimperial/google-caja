@@ -1,0 +1,26 @@
+#summary defining and calling functions in Caja
+
+= Species of Functions =
+
+Caja distinguishes different kinds of functions since different functions can do different things.
+
+*Constructors* are used to create new objects, and act as both class and factory.  Constructors can chain to their superclass, and manipulate the created objects {{{protected}}} interface.  Any named function that mentions {{{this}}} is a constructor.
+{{{
+function ClassName(a, b) {
+  BaseClass.call(this, a);
+  this.b_ = b;  // define a private field
+}
+}}}
+
+*Methods* are functions attached to a particular class that can manipulate the protected interface of instances of that class via {{{this}}}.  Any unnamed function that mentions {{{this}}} is a method.
+{{{
+caja.def(ClassName, SuperClass, {
+  setB: function (b) { this.b_ = b; },
+  getB: function () { return this.b_; }
+});
+}}}
+
+*Simple* functions don't have access to any object's {{{private}}} interface, but can do anything else.  Any function that doesn't mention {{{this}}} is simple.
+{{{
+function foo(x, y) { return x + y; }
+}}}
