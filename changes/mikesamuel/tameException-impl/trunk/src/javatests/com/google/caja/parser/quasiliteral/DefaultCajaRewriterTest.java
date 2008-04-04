@@ -476,7 +476,6 @@ public class DefaultCajaRewriterTest extends TestCase {
         "} catch (ex) {" +
         "  assertEquals('string', typeof ex);" +
         "  assertEquals('hiya', ex);" +
-        "  assertTrue(!('y' in ex));" +
         "  handled = true;" +
         "}" +
         "assertTrue(handled);");
@@ -2119,7 +2118,7 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   private Object runCajoled(String cajoledJs) throws IOException {
     return RhinoTestBed.runJs(
-        null,
+        "/tmp/" + getName(),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(
             // Initialize the output field to something containing a unique
