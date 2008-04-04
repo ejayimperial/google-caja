@@ -4,7 +4,7 @@
 
 Caja distinguishes different kinds of functions since different functions can do different things.
 
-*Constructors* are used to create new objects, and act as both class and factory.  Constructors can chain to their superclass, and manipulate the created objects {{{protected}}} interface.  Any named function that mentions {{{this}}} is a constructor.
+*Constructors* are used to create new objects, and act as both class and factory.  Constructors can chain to their superclass, and manipulate the created objects {{{protected}}} interface via {{{this}}}.  Any named function that mentions {{{this}}} is a constructor.
 {{{
 function ClassName(a, b) {
   BaseClass.call(this, a);
@@ -32,6 +32,6 @@ A function can be declared any of the ways above, but calling is more flexible.
 
 . . . Functions defined as can be . . .
 ||        ||          || *Ctor* || *Method* || *Simple* ||
-|| called || *Ctor*   || `YES`  ||  `???`   ||  `YES`   ||
+|| called || *Ctor*   || `YES`  ||   `NO`   ||  `YES`   ||
 || . as . || *Method* ||  `NO`  ||  `YES`   ||  `YES`   ||
 ||        || *Simple* ||  `NO`  ||   `NO`   ||  `YES`   ||
