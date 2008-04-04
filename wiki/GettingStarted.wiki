@@ -8,7 +8,7 @@
 Assumes basic familiarity with Java including how to manage a CLASSPATH and how to run a java app from the command line or from within an IDE like [http://www.eclipse.org/downloads/ Eclipse].  If you are not familiar with java, see [http://java.sun.com/docs/books/tutorial/essential/environment/paths.html PATH and CLASSPATH], [http://java.sun.com/docs/books/tutorial/essential/environment/cmdLineArgs.html the command line].
 
 Caja requires
-  * [http://java.sun.com/javase/downloads/index.jsp JDK] 5 or 6
+  * [http://java.sun.com/javase/downloads/index.jsp JDK] 6
   * The [http://subversion.tigris.org/project_packages.html subversion] version manager
   * The [http://ant.apache.org/manual/install.html Apache Ant] build system unless you build using Eclipse.
   * The [http://sourceforge.net/project/showfiles.php?group_id=15278&package_id=12472 JUnit] testing framework.  Just drop {{{junit.jar}}} in the {{{$ANT_HOME/lib}}} directory you set up for Ant.
