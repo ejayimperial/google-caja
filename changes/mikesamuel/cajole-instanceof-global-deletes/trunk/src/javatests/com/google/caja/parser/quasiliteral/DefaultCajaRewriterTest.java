@@ -1153,28 +1153,71 @@ public class DefaultCajaRewriterTest extends TestCase {
   }
 
   public void testDeleteProp() throws Exception {
-    checkFails("delete this.foo___", "Variables cannot end in \"__\"");
-    if (false) {  // TODO(mikesamuel): Enable this when classes work.
-      assertConsistent(
-          // Set up a class that can delete one of its members.
-          "function P() { this.x_ = 0; this.y_ = 1; }" +
-          "P.prototype = {" +
-          "  toString : function () {" +
-          "    var s = '(';" +
-          "    for (var k in this) { s += k + ':' + this[k] + ', '; }" +
-          "    return s + ')';" +
-          "  }," +
-          "  mangle: function () {" +
-          "    delete this.x_;" +            // Deleteable
-          "    delete this.z_;" +            // Not present.
-          "  }" +
-          "};" +
-          "var p = new P();" +
-          "var history = [p.toString()];" +  // Record state before deletion.
-          "p.mangle();" +                    // Delete
-          "history.push(p.toString());" +  // Record state after deletion.
-          "history.toString()");
-    }
+    checkFails("delete this.foo___", "Properties cannot end in \"__\"");
+    checkSucceeds(
+        "delete this[foo()]",
+        "___.deleteProp(" +
+        "    ___OUTERS___, ___.asSimpleFunc(" + weldReadOuters("foo") + ")())");
+    checkSucceeds("delete this.foo_", "___.deleteProp(___OUTERS___, 'foo_')");
+    checkSucceeds("function Ctor() { D.call(this); delete this.foo_; }",
+                  "(function () {" +
+                  "  var x___ = (function () {" +
+                  "    ___.splitCtor(Ctor, Ctor_init___);" +
+                  "    function Ctor(var_args) {" +
+                  "      return new Ctor.make___(arguments);" +
+                  "    }" +
+                  "    function Ctor_init___() {" +
+                  "      var t___ = this;" +
+                  "      (function () {" +
+                  "        var x___ = ___OUTERS___.D_canRead___" +
+                  "            ? ___OUTERS___.D" +
+                  "            : ___.readPub(___OUTERS___, 'D', true);" +
+                  "        var x0___ = t___;" +
+                  "        return x___.call_canCall___" +
+                  "            ? x___.call(x0___)" +
+                  "            : ___.callPub(x___, 'call', [x0___]);" +
+                  "      })();" +
+                  // The important bit.  t___ used locally.
+                  "      ___.deleteProp(t___, 'foo_');" +
+                  "    }" +
+                  "    return Ctor;" +
+                  "  })();" +
+                  "  return ___OUTERS___.Ctor_canSet___" +
+                  "      ? (___OUTERS___.Ctor = x___)" +
+                  "      : ___.setPub(___OUTERS___, 'Ctor', x___);" +
+                  "})()");
+    assertConsistent(
+        // Set up a class that can delete one of its members.
+        "function P() { this; }" +
+        "caja.def(P, Object, {" +
+        "  toString : function () {" +
+        "    var pairs = [];" +
+        "    for (var k in this) {" +
+        "      if (typeof this[k] !== 'function') {" +
+        "        pairs.push(k + ':' + this[k]);" +
+        "      }" +
+        "    }" +
+        "    pairs.sort();" +
+        "    return '(' + pairs.join(', ') + ')';" +
+        "  }," +
+        "  mangle: function () {" +
+        "    delete this.x_;" +            // Deleteable
+        "    try {" +
+        "      delete this.z_;" +          // Not present.
+        "    } catch (ex) {" +
+        "      ;" +
+        "    }" +
+        "  }, " +
+        "  setX: function (x) { this.x_ = x; }," +
+        "  setY: function (y) { this.y_ = y; }" +
+        "});" +
+        "var p = new P();" +
+        "p.setX(0);" +
+        "p.setY(1);" +
+        "var hist = [p.toString()];" +     // Record state before deletion.
+        "p.mangle();" +                    // Delete
+        "hist.push(p.toString());" +       // Record state after deletion.
+        "hist.toString()");
     assertConsistent(
         "var foo = 0;" +
         "var preContained = 'foo' in this ? 'prev-in' : 'prev-not-in';" +
@@ -1187,6 +1230,14 @@ public class DefaultCajaRewriterTest extends TestCase {
 
   public void testDeletePub() throws Exception {
     checkFails("delete x.foo___", "Variables cannot end in \"__\"");
+    checkSucceeds(
+        "delete foo()[bar()]",
+        "___.deletePub(___.asSimpleFunc(" + weldReadOuters("foo") + ")()," +
+        "              ___.asSimpleFunc(" + weldReadOuters("bar") + ")())");
+    checkSucceeds(
+        "delete foo().bar",
+        "___.deletePub(___.asSimpleFunc(" + weldReadOuters("foo") + ")()," +
+        "              'bar')");
     assertConsistent(
         "(function() {" +
         "  var o = { x: 3, y: 4 };" +    // A JSON object.
@@ -1197,6 +1248,12 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  history.push(ptStr(o));" +    // Record state after deletion.
         "  return history.toString();" +
         "})()");
+    assertConsistent(
+        "var alert = 'a';" +
+        "var o = { a: 1 };" +
+        "delete o[alert];" +
+        "assertEquals(undefined, o.a);" +
+        "o.a");
   }
 
   public void testDeleteFails() throws Exception {
@@ -1666,14 +1723,26 @@ public class DefaultCajaRewriterTest extends TestCase {
         weldReadOuters("x") + " instanceof ___.primFreeze(" + weldReadOuters("Object") + ");");
 
     assertConsistent("({}) instanceof Object");
+    assertConsistent("(new Date) instanceof Date");
+    assertConsistent("({}) instanceof Date");
     assertConsistent("function foo() {}; (new foo) instanceof foo");
     assertConsistent("function foo() {}; !(({}) instanceof foo)");
   }
 
   public void testOtherTypeof() throws Exception {
-    checkSucceeds(
-        "typeof x;",
-        "typeof " + weldReadOuters("x") + ";");
+    checkSucceeds("typeof x;", "typeof ___.readPub(___OUTERS___, 'x');");
+    checkFails("typeof ___", "Variables cannot end in \"__\"");
+    assertConsistent("typeof noSuchGlobal");
+    assertConsistent("typeof 's'");
+    assertConsistent("typeof 4");
+    assertConsistent("typeof null");
+    assertConsistent("typeof (void 0)");
+    assertConsistent("typeof []");
+    assertConsistent("typeof {}");
+    assertConsistent("typeof /./");
+    assertConsistent("typeof (function () {})");
+    assertConsistent("typeof { x: 4.0 }.x");
+    assertConsistent("typeof { 2: NaN }[1 + 1]");
   }
 
   public void testOtherSpecialOp() throws Exception {
@@ -1997,6 +2066,14 @@ public class DefaultCajaRewriterTest extends TestCase {
     // Make sure the tree assigns the result to the unittestResult___ var.
     Object uncajoledResult = RhinoTestBed.runJs(
         null,
+        new RhinoTestBed.Input(
+            "var caja = { def: function (clazz, sup, props, statics) {"
+            + "  function t() {}"
+            + "  sup && (t.prototype = sup.prototype, clazz.prototype = new t);"
+            + "  for (var k in props) { clazz.prototype[k] = props[k]; }"
+            + "  for (var k in (statics || {})) { clazz[k] = statics[k]; }"
+            + "} };",
+            "caja-stub"),
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
 

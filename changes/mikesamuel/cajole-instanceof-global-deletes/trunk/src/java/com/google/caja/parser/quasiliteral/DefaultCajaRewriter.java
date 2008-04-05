@@ -984,7 +984,8 @@ public class DefaultCajaRewriter extends Rewriter {
 
     addRule(new Rule("deleteProp", this) {
       @Override
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings
             = new LinkedHashMap<String, ParseTreeNode>();
         if (match("delete this[@k]", node, bindings)) {
@@ -997,7 +998,11 @@ public class DefaultCajaRewriter extends Rewriter {
         } else if (match("delete this.@k", node, bindings)) {
           ParseTreeNode thisNode = node.children().get(0).children().get(0);
           Reference k = (Reference) bindings.get("k");
-          expand(k, scope, mq);
+          if (k.getIdentifierName().endsWith("__")) {
+            mq.addMessage(
+                RewriterMessageType.PROPERTIES_CANNOT_END_IN_DOUBLE_UNDERSCORE,
+                node.getFilePosition(), this, node);
+          }
           return substV(
               "___.deleteProp(@this, @ks)",
               "this", expand(thisNode, scope, mq),
@@ -1010,7 +1015,8 @@ public class DefaultCajaRewriter extends Rewriter {
 
     addRule(new Rule("deletePub", this) {
       @Override
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings
             = new LinkedHashMap<String, ParseTreeNode>();
         if (match("delete @o[@k]", node, bindings)) {
@@ -1173,7 +1179,8 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("caja.def(@fname, @base, @mm, @ss?)", node, bindings) &&
             scope.isFunction(getReferenceName(bindings.get("fname"))) &&
-            scope.isFunction(getReferenceName(bindings.get("base")))) {
+            (bindings.get("base") instanceof UndefinedLiteral ||
+             scope.isFunction(getReferenceName(bindings.get("base"))))) {
           if (!checkMapExpression(bindings.get("mm"), this, scope, mq)) {
             return node;
           }
@@ -1565,12 +1572,23 @@ public class DefaultCajaRewriter extends Rewriter {
     });
 
     addRule(new Rule("otherTypeof", this) {
+      @Override
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("typeof @f", node, bindings)) {
-          return substV(
-              "typeof @f",
-              "f", expand(bindings.get("f"), scope, mq));
+          ParseTreeNode f = bindings.get("f");
+          if (f instanceof Reference && scope.isGlobal(getReferenceName(f))) {
+            // Lookup of an undefined&undeclared global for typing purposes
+            // should not fail with an exception.
+            expand(f, scope, mq);
+            return substV(
+                "typeof ___.readPub(___OUTERS___, @fname)",
+                "fname", toStringLiteral(f));
+          } else {
+            return substV(
+                "typeof @f",
+                "f", expand(f, scope, mq));
+          }
         }
         return NONE;
       }

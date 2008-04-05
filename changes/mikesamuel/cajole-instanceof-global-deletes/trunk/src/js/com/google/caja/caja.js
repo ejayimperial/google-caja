@@ -611,7 +611,6 @@ var ___;
     if (isFrozen(obj)) {
       fail("Can't delete .", name, ' on frozen (', obj, ')');
     }
-    fail('TODO(erights): allowDelete() not yet implemented');
     obj[name + '_canDelete___'] = true;
   }
   
@@ -1132,8 +1131,10 @@ var ___;
     name = String(name);
     if (canSetProp(that, name)) {
       allowSet(that, name);  // grant
-      that[name] = val;
-      return val;
+      if (!hasOwnProp(that, name)) {
+        allowDelete(that, name);
+      }
+      return that[name] = val;
     } else {
       return that.handleSet___(name, val);
     }
@@ -1181,7 +1182,7 @@ var ___;
     if (isFrozen(obj)) { return false; }
     if (endsWith(name, '__')) { return false; }
     if (isJSONContainer(obj)) { return true; }
-    return !!obj[name + '_canDelete__'];
+    return !!obj[name + '_canDelete___'];
   }
 
   /**
@@ -1238,6 +1239,7 @@ var ___;
     delete obj[name + '_canEnum___'];
     delete obj[name + '_canCall___'];
     delete obj[name + '_canSet___'];
+    delete obj[name + '_canDelete___'];
     return (delete obj[name]) || (fail('not deleted: ', name), false);
   }
 
