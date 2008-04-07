@@ -101,6 +101,14 @@ public enum RewriterMessageType implements MessageTypeInt {
   WITH_BLOCKS_NOT_ALLOWED(
       "%s: \"with\" blocks are not allowed",
       MessageLevel.ERROR),
+
+  UNATTACHED_METHOD_AMBIGUITY(
+      "%s: \"this\" in an unattached method only exposes public fields",
+      MessageLevel.CRITICAL_WARNING),
+
+  NOT_DELETABLE(
+      "%s: invalid operand to delete",
+      MessageLevel.ERROR),
   ;
 
   private final String formatString;
