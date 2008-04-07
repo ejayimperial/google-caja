@@ -1376,7 +1376,17 @@ public class DefaultCajaRewriter extends Rewriter {
           Scope s2 = Scope.fromFunctionConstructor(
               scope, (FunctionConstructor) node);
           if (!s2.hasFreeThis()) { return NONE; }
-
+          // If we're in a constructor, attach the method.
+          if (scope.isFromConstructor()) {
+            return substV(
+                "___.attach(t___, (function(){" +
+                "  var x___ = function(@formals*) { @body*; };" +
+                "  x___.___METHOD_OF___ = t___.constructor;" +
+                "  return x___;" +
+                "})())", 
+                "formals", bindings.get("formals"),
+                "body", expand(bindings.get("body"), s2, mq));
+          }
           checkFormals(bindings.get("formals"), mq);
           // An unattached method is one where this is only used to access the
           // public API.
@@ -1426,29 +1436,18 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("funcBadMethod", this) {
+    addRule(new Rule("funcMethod", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("function(@ps*) { @bs*; }", node, bindings)) {
           Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
           if (s2.hasFreeThis()) {
-            if (scope.isFromConstructor()) {
-              return substV(
-                  "___.attach(t___, (function(){" +
-                  "  var x___ = function(@ps*) { @bs; };" +
-                  "  x___.___METHOD_OF___ = t___.constructor;" +
-                  "  return x___;" +
-                  "})())", 
-                  "ps", bindings.get("ps"),
-                  "bs", expand(bindings.get("bs"), s2, mq));
-            } else {
-              mq.addMessage(
-                  RewriterMessageType.ANONYMOUS_FUNCTION_REFERENCES_THIS,
-                  node.getFilePosition(), 
-                  this, 
-                  node);
-              return node;
-            }
+            mq.addMessage(
+                RewriterMessageType.ANONYMOUS_FUNCTION_REFERENCES_THIS,
+                node.getFilePosition(), 
+                this, 
+                node);
+            return node;
           }
         }
         return NONE;
