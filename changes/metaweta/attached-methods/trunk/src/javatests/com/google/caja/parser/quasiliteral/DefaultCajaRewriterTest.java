@@ -1932,7 +1932,7 @@ public class DefaultCajaRewriterTest extends TestCase {
     }
   }
 
-  public void testSomething() throws Exception {
+  public void testAttachedMethod() throws Exception {
     assertConsistent(
         "function Foo(){" +
         "  this.f = function (){this.x_ = 1;};" +
