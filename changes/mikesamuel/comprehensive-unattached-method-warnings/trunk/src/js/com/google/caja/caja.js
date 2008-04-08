@@ -752,7 +752,7 @@ var ___;
    *   with the method. Currently, this is used only to generate
    *   friendlier error messages.
    */
-  function exophoric(fun, opt_name) {
+  function exophora(fun, opt_name) {
     enforceType(fun, 'function', opt_name);
     if (isCtor(fun)) {
       fail("constructors can't be exophoric: ", fun);
@@ -1920,7 +1920,7 @@ var ___;
     asCtor: asCtor,
     splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
-    exophoric: exophoric,
+    exophora: exophora,
     isExophoric: isExophoric,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
     setMember: setMember,
