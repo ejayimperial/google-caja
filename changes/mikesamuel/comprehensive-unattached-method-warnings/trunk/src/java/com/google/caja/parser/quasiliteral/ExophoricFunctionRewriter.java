@@ -30,17 +30,17 @@ import com.google.caja.reporting.MessageQueue;
 import static com.google.caja.plugin.SyntheticNodes.s;
 
 /**
- * Rewrite all references to "this" in an unattached method to
+ * Rewrite all references to "this" in an exophoric function to
  * {@link ReservedNames#LOCAL_THIS} so that the rewriter will use the public
  * accessors (e.g., {@code ___.readPub}) instead of the method accessors
  * (e.g., {@code ___.readProp}).
  *
  * @author mikesamuel@gmail.com
  */
-final class UnattachedMethodRewriter implements Visitor {
+final class ExophoricFunctionRewriter implements Visitor {
   private final MessageQueue mq;
 
-  UnattachedMethodRewriter(MessageQueue mq) {
+  ExophoricFunctionRewriter(MessageQueue mq) {
     this.mq = mq;
   }
 
@@ -56,7 +56,7 @@ final class UnattachedMethodRewriter implements Visitor {
     // If used in a context where this would be ambiguous, warn.
     if (mightAccessPrivateApi(ac)) {
       mq.addMessage(
-          RewriterMessageType.UNATTACHED_METHOD_AMBIGUITY,
+          RewriterMessageType.EXOPHORIC_FUNCTION_AMBIGUITY,
           ac.node.getFilePosition());
     }
     // Make a synthetic reference, so the reference will survive
