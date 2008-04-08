@@ -30,10 +30,13 @@ import com.google.caja.reporting.MessageQueue;
 import static com.google.caja.plugin.SyntheticNodes.s;
 
 /**
- * Rewrite all references to "this" in an exophoric function to
- * {@link ReservedNames#LOCAL_THIS} so that the rewriter will use the public
- * accessors (e.g., {@code ___.readPub}) instead of the method accessors
- * (e.g., {@code ___.readProp}).
+ * An exophoric function is one where {@code this} is only used to access the 
+ * public API, so that it can safely be applied to any object.
+ * We cajole an exophoric function by converting all {@code this} references
+ * in the body to {@code t___} and then cajole the body.
+ * Attempts to use private APIs, as in {@code this.foo_} fail statically during
+ * cajoling, and in public accesses, the cajoler will end up using
+ * {@code ___.readPub} instead of {@code ___.readProp}.
  *
  * @author mikesamuel@gmail.com
  */
@@ -44,6 +47,12 @@ final class ExophoricFunctionRewriter implements Visitor {
     this.mq = mq;
   }
 
+  /**
+   * Rewrite all references to "this" in an exophoric function to
+   * {@link ReservedNames#LOCAL_THIS} so that the rewriter will use the public
+   * accessors (e.g., {@code ___.readPub}) instead of the method accessors
+   * (e.g., {@code ___.readProp}).
+   */
   public boolean visit(AncestorChain<?> ac) {
     // Do not descend into closures since their "this" is different.
     if (ac.node instanceof FunctionConstructor) { return false; }
@@ -68,6 +77,11 @@ final class ExophoricFunctionRewriter implements Visitor {
     return true;
   }
 
+  /**
+   * True if rewriting ac might cause different behavior than if this were
+   * a method.
+   * @param ac a chain whose node is a reference to {@code this}.
+   */
   private static boolean mightAccessPrivateApi(AncestorChain<?> ac) {
     if (ac.parent == null) { return false; }
     // for (var k in this)...

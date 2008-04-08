@@ -1367,7 +1367,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("funcUnattachedMethod", this) {
+    addRule(new Rule("funcExophoricFunction", this) {
       @Override
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, final MessageQueue mq) {
@@ -1378,16 +1378,10 @@ public class DefaultCajaRewriter extends Rewriter {
           if (!s2.hasFreeThis()) { return NONE; }
 
           checkFormals(bindings.get("formals"), mq);
-          // An unattached method is one where this is only used to access the
-          // public API.
-          // We cajole an unattached method by converting all `this` references
-          // in the body to `t___` and then cajole the body.
-          // Attempts to use private APIs, as in (this.foo_) fail statically,
-          // and elsewhere, we will use (___.readPub) instead of (___.readProp).
           ParseTreeNode rewrittenBody = bindings.get("body").clone();
-          rewrittenBody.acceptPreOrder(new UnattachedMethodRewriter(mq), null);
+          rewrittenBody.acceptPreOrder(new ExophoricFunctionRewriter(mq), null);
           return substV(
-              "___.unattachedMethod(" +
+              "___.exophora(" +
               "    function (@formals*) { var @localThis = this; @body*; })",
               "formals", bindings.get("formals"),
               "localThis", s(new Identifier(ReservedNames.LOCAL_THIS)),
