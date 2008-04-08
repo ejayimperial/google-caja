@@ -6,7 +6,7 @@
 == Background ==
 
 EcmaScript Objects are collections of named properties.  {{{o.foo}}}
-specifies the {{{fooo}}} property of the object referenced by {{{o}}}.
+specifies the {{{foo}}} property of the object referenced by {{{o}}}.
 Some properties can be read and set, some can only be read, and some
 don't show up when enumerated via a {{{for (... in ...)}}} loops.
 
