@@ -1,4 +1,4 @@
-#summary How caja.js protectes access to properties
+#summary How caja.js protects access to properties
 #labels Phase-Design
 
 = Object properties and access =
