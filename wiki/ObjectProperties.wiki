@@ -74,8 +74,8 @@ can access its private API.
 
 Private properties are not enumerable except via the private API.
 
-The private API is accessed via {{{this}}}, so {{{for (var k in
-this)}}} will enumerate over both public and private properties, but
+The private API is accessed via {{{this}}}, so {{{for (var k in this)}}}
+will enumerate over both public and private properties, but
 {{{for (var k in o)}}} will not include private properties.  Caja
 does not allow that functions that reference {{{this}}} to be called
 cross-class.
