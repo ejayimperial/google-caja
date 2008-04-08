@@ -1,4 +1,5 @@
 #summary defining and calling functions in Caja
+#labels Phase-Design
 
 = Species of Functions =
 
@@ -20,6 +21,11 @@ caja.def(ClassName, SuperClass, {
 });
 }}}
 
+*x04a* reference {{{this}}} like methods but never use the public API.  They need not be attached to a particular instance.   Any unnamed function that mentions {{{this}}}, but does not reference the protected API is [http://en.wikipedia.org/wiki/Exophora exophoric].
+{{{
+node.addListener('onclick', function () { handleClickEvent(this.id); });
+}}}
+
 *Simple* functions don't have access to any object's {{{protected}}} interface, but can do anything else.  Any function that doesn't mention {{{this}}} is simple.
 {{{
 function foo(x, y) { return x + y; }
@@ -31,7 +37,8 @@ function foo(x, y) { return x + y; }
 A function can be declared any of the ways above, but calling is more flexible.
 
 . . . Functions defined as can be . . .
-||        ||          || *Ctor* || *Method* || *Simple* ||
-|| called || *Ctor*   || `YES`  ||   `NO`   ||  `YES`   ||
-|| . as . || *Method* ||  `NO`  ||  `YES`   ||  `YES`   ||
-||        || *Simple* ||  `NO`  ||   `NO`   ||  `YES`   ||
+||        ||          || *Ctor* || *Method* || *x04a* || *Simple* ||
+||        || *Ctor*   || `YES`  ||   `NO`   ||  `NO`  ||  `YES`   ||
+|| called || *Method* ||  `NO`  ||  `YES`   || `YES`  ||  `YES`   ||
+|| . as . || *x04a*   ||  `NO`  ||   `NO`   || `YES`  ||  `YES`   ||
+||        || *Simple* ||  `NO`  ||   `NO`   ||  `NO`  ||  `YES`   ||
