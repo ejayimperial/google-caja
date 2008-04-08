@@ -21,7 +21,7 @@ caja.def(ClassName, SuperClass, {
 });
 }}}
 
-*Exophoric Functions* (*xo4a*) reference {{{this}}} like methods but never use the protected API.  Their this does not need to be bound to an instance of a paritcular class.   Any unnamed function that mentions {{{this}}}, but does not reference the protected API is [http://en.wikipedia.org/wiki/Exophora exophoric].
+*Exophoric Functions* (*xo4a*) reference {{{this}}} like methods but never use the protected API.  Their this does not need to be bound to an instance of a particular class.   Any unnamed function that mentions {{{this}}}, but does not reference the protected API is [http://en.wikipedia.org/wiki/Exophora exophoric].
 {{{
 node.addListener('click', function () { handleClickEvent(this.id); });
 }}}
