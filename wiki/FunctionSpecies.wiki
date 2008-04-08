@@ -21,7 +21,7 @@ caja.def(ClassName, SuperClass, {
 });
 }}}
 
-*Exophoric Functions* (*x04a*) reference {{{this}}} like methods but never use the protected API.  They need not be attached to a particular instance.   Any unnamed function that mentions {{{this}}}, but does not reference the protected API is [http://en.wikipedia.org/wiki/Exophora exophoric].
+*Exophoric Functions* (*xo4a*) reference {{{this}}} like methods but never use the protected API.  Their this does not need to be bound to an instance of a paritcular class.   Any unnamed function that mentions {{{this}}}, but does not reference the protected API is [http://en.wikipedia.org/wiki/Exophora exophoric].
 {{{
 node.addListener('click', function () { handleClickEvent(this.id); });
 }}}
@@ -37,8 +37,8 @@ function foo(x, y) { return x + y; }
 A function can be declared any of the ways above, but calling is more flexible.
 
 . . . Functions defined as can be . . .
-||        ||          || *Ctor* || *Method* || *x04a* || *Simple* ||
+||        ||          || *Ctor* || *Method* || *xo4a* || *Simple* ||
 ||        || *Ctor*   || `YES`  ||   `NO`   ||  `NO`  ||  `YES`   ||
 || called || *Method* ||  `NO`  ||  `YES`   || `YES`  ||  `YES`   ||
-|| . as . || *x04a*   ||  `NO`  ||   `NO`   || `YES`  ||  `YES`   ||
+|| . as . || *xo4a*   ||  `NO`  ||   `NO`   || `YES`  ||  `YES`   ||
 ||        || *Simple* ||  `NO`  ||   `NO`   ||  `NO`  ||  `YES`   ||
