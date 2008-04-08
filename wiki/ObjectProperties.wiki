@@ -11,16 +11,13 @@ Some properties can be read and set, some can only be read, and some
 don't show up when enumerated via a {{{for (... in ...)}}} loops.
 
 EcmaScript 262 defines "property attributes" in section 8.6.1.  
-    *8.6.1* Property Attributes
+    8.6.1 Property Attributes
     A property can have zero or more attributes from the following set:
 
-    || *Attribute* || *Description* ||
-    || ReadOnly || The property is a read-only property. Attempts by ECMAScript code to write to the property will be ignored. (Note, however, that in some cases the value of a
-property with the ReadOnly attribute may change over time because of actions
-taken by the host environment; therefore \u201cReadOnly\u201d does not mean \u201cconstant
-and unchanging\u201d!) ||
-    || DontEnum || The property is not to be enumerated by a for-in enumeration (section 12.6.4). ||
-    || DontDelete || Attempts to delete the property will be ignored. See the description of the delete operator in section 11.4.1. ||
+|| *Attribute* || *Description* ||
+|| ReadOnly || The property is a read-only property. Attempts by ECMAScript code to write to the property will be ignored. (Note, however, that in some cases the value of a property with the ReadOnly attribute may change over time because of actions taken by the host environment; therefore "ReadOnly" does not mean "cconstant and unchanging"!) ||
+|| DontEnum || The property is not to be enumerated by a for-in enumeration (section 12.6.4). ||
+|| DontDelete || Attempts to delete the property will be ignored. See the description of the delete operator in section 11.4.1. ||
 
 ES262 defines no way for user code to manipulate these attributes, but
 Caja whitelists access to object properties, and so some properites
@@ -42,12 +39,12 @@ the time the function is called using the special
 In addition to the ReadOnly, DontEnum, DontDelete, caja adds the
 CanCall attribute.  We also make the attribute names positive since we whitelist
 
-    || *Attribute* || *Description* ||
-    || CanCall || Can the property be called? ||
-    || CanDelete || Can the property be deleted?  This attribute is presumed to be allowed by anyone who can create the property in the first place, since deletion is the dual of creation. CanDelete == !DontDelete ||
-    || CanEnum || Makes the property show up in {{{for (... in ...)}}} loops.  CanEnum == !DontEnum ||
-    || CanRead || Makes the property visible. ||
-    || CanSet || Makes the property editable.  CanSet == !ReadOnly ||
+|| *Attribute* || *Description* ||
+|| CanCall || Can the property be called? ||
+|| CanDelete || Can the property be deleted?  This attribute is presumed to be allowed by anyone who can create the property in the first place, since deletion is the dual of creation. CanDelete == !DontDelete ||
+|| CanEnum || Makes the property show up in {{{for (... in ...)}}} loops.  CanEnum == !DontEnum ||
+|| CanRead || Makes the property visible. ||
+|| CanSet || Makes the property editable.  CanSet == !ReadOnly ||
 
 CanDelete implies CanSet.  CanSet implies CanEnum.  CanEnum implies CanRead.
 
