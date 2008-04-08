@@ -41,10 +41,10 @@ CanCall attribute.  We also make the attribute names positive since we whitelist
 
 || *Attribute* || *Description* ||
 || CanCall || Can the property be called? ||
-|| CanDelete || Can the property be deleted?  This attribute is presumed to be allowed by anyone who can create the property in the first place, since deletion is the dual of creation. CanDelete == !DontDelete ||
-|| CanEnum || Makes the property show up in {{{for (... in ...)}}} loops.  CanEnum == !DontEnum ||
+|| CanDelete || Can the property be deleted?  This attribute is presumed to be allowed by anyone who can create the property in the first place, since deletion is the dual of creation. CanDelete == !(DontDelete) ||
+|| CanEnum || Makes the property show up in {{{for (... in ...)}}} loops.  CanEnum == !(DontEnum) ||
 || CanRead || Makes the property visible. ||
-|| CanSet || Makes the property editable.  CanSet == !ReadOnly ||
+|| CanSet || Makes the property editable.  CanSet == !(ReadOnly) ||
 
 CanDelete implies CanSet.  CanSet implies CanEnum.  CanEnum implies CanRead.
 
