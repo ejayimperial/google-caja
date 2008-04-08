@@ -23,7 +23,7 @@ caja.def(ClassName, SuperClass, {
 
 *Exophoric Functions* (*x04a*) reference {{{this}}} like methods but never use the public API.  They need not be attached to a particular instance.   Any unnamed function that mentions {{{this}}}, but does not reference the protected API is [http://en.wikipedia.org/wiki/Exophora exophoric].
 {{{
-node.addListener('onclick', function () { handleClickEvent(this.id); });
+node.addListener('click', function () { handleClickEvent(this.id); });
 }}}
 
 *Simple* functions don't have access to any object's {{{protected}}} interface, but can do anything else.  Any function that doesn't mention {{{this}}} is simple.
