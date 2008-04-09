@@ -32,7 +32,7 @@ node.addListener('click', caja.xo4a(function(that) { handleClickEvent(that.id); 
 }}}
 acts like
 {{{
-node.addListener('click', function() { handleClickEvent(this.id); }));
+node.addListener('click', function() { handleClickEvent(this.id); });
 }}}
 does in uncajoled !JavaScript. The first form will work both cajoled and uncajoled. As a temporary hack, the second form will currently work cajoled as well, but will shortly need to be rewritten as the first form.
 
