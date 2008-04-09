@@ -26,9 +26,9 @@ caja.def(ClassName, SuperClass, {
 function foo(x, y) { return x + y; }
 }}}
 
-*[http://en.wikipedia.org/wiki/Exophora Exophoric] Functions* are _NOT IMPLEMENTED YET_, but will be created by calling {{{caja.xo4a}}} on a simple function. When an exophoric function is called as a method, the {{{this}}} argument is bound to the simple function's first parameter, and the actual arguments are bound to the remaining parameters.
+*[http://en.wikipedia.org/wiki/Exophora Exophoric] Functions* are _NOT IMPLEMENTED YET_, but will be created by calling {{{caja.xo4a}}} on a simple function. When an exophoric function is called as a method, the object the method is called on will bound to the simple function's first parameter, and the actual arguments are bound to the remaining parameters. To emphasize the _this-like_ nature of this first parameter variable, its conventional name is {{{self}}}.
 {{{
-node.addListener('click', caja.xo4a(function(that) { handleClickEvent(that.id); }));
+node.addListener('click', caja.xo4a(function(self) { handleClickEvent(self.id); }));
 }}}
 acts like
 {{{
