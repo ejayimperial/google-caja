@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+ <ModulePrefs title="foo">
+   <Require feature="opensocial-0.7"/>
+ </ModulePrefs>
+ <Content type="html">
+ <![CDATA[
+ <style type="text/css">
+body{background-color:transparent;}
+</style>
+<div id="main"></div>
+
+<script type="text/javascript">
+//define global vars here
+var OS;
+var API_URL = 'http://apps.playlist.com/myspace_video'; //production server
+var CONTENT_DIV = document.getElementById('main');
+var OWNER, VIEWER;
+
+/**
+ * Initializes the app
+ */
+function init() {
+	OS = opensocial.Container.get();
+	var dataReqObj = OS.newDataRequest();
+	var VIEWERReq = OS.newFetchPersonRequest(opensocial.DataRequest.PersonId.VIEWER);
+	var ownerReq = OS.newFetchPersonRequest(opensocial.DataRequest.PersonId.OWNER);
+	dataReqObj.add(VIEWERReq);
+	dataReqObj.add(ownerReq);
+	dataReqObj.send(loadProfilePage);
+}
+/**
+ * Fills in the app window with the response from our server
+ */
+function loadProfilePage(dataResponse) {
+	//set the global user-related vars
+	var ownerId, viewerId;
+	OWNER = dataResponse.get(opensocial.DataRequest.PersonId.OWNER).getData();
+	ownerId = OWNER.getField('id');
+	
+	try { //put in try/catch in case the view is anonymous
+		VIEWER = dataResponse.get(opensocial.DataRequest.PersonId.VIEWER).getData();
+		viewerId = VIEWER.getField('id');
+	} catch (e) {
+		VIEWER = false;
+		viewerId = 0;
+	}
+
+
+	gadgets.io.makeRequest(API_URL + '/profile', function (content) {
+		CONTENT_DIV.innerHTML = content.text;
+		try {
+			document.getElementById('owner_name').innerHTML = OWNER.getField('name');
+		} catch (e) {}
+	},build_request_params());
+}
+/**
+ * Send the user to the canvas search page
+ */
+function search_tracks(form) {
+	var formdata = form_to_array(form);
+	navigateTo('canvas',formdata);
+}
+//-------------------------------LIB FUNCTIONS----------------------------------------
+/**
+ * Gathers all the form elements in a form and generates an array
+ * of name=>value pairs
+ */
+function form_to_array(form) {
+	var arr = {};
+	var els = form.getElementsByTagName('*');
+
+	var el, i, len; 
+	for(i=0,len=els.length;i<len;i++) {
+		el = els[i];
+		if(el.name) {
+			if(el.tagName == 'INPUT') {
+				if(el.type == 'radio') {
+					if(el.checked && !arr[arr.name]) {
+						arr[el.name] = el.value || '';
+					}
+				} else if(el.type == 'checkbox') {
+					if(el.checked) {
+						arr[el.name] = el.value || 'on';
+					}
+				} else if(el.value) {
+					arr[el.name] = el.value || '';
+				}
+			} else {
+				arr[el.name] = el.value || '';
+			}
+		}
+	}
+	return arr;
+}
+/**
+ * Wrapper for opensocial.requestNavigateTo()
+ * @param string surfaceName (profile.left, profile.right,canvas)
+ * @param object params
+ */
+function navigateTo(surfaceName,params) {
+	var surfaces = gadgets.views.getSupportedViews();
+	var surfaceRef = surfaces[surfaceName];
+	if(typeof(surfaceRef) != 'object') {
+		throw 'Invalid surface type "' + surfaceName + '"';
+	}
+	gadgets.views.requestNavigateTo(surfaceRef, params);
+}
+/**
+ * Generates a standardized params list for a makeRequest() call
+ */
+function build_request_params(method) {
+	method = (typeof(method) == 'string' && method.toLowerCase() == 'post' ? gadgets.io.MethodType.POST : gadgets.io.MethodType.GET); //default to GET
+	var param = {};
+	param[gadgets.io.RequestParameters.METHOD] = method;
+	param[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.HTML;
+	param[gadgets.io.RequestParameters.AUTHORIZATION] = gadgets.io.AuthorizationType.SIGNED;
+	return param;
+}
+function print_r(theObj,html,indent){
+		html = html ? true : false;
+		indent = indent || '  ';
+		var ulo = html ? '<ul>' : ' {';
+		var ulc = html ? '</ul>' : '\n' + indent +'}';
+		var lio = html ? '<li>' : '\n'+indent;
+		var lic = html ? '</li>' : '';
+		var ret = '';
+
+		if(typeof(theObj) == 'array' || typeof(theObj) == 'object') {
+				ret += ulo;
+				for(var p in theObj){
+						if(typeof(theObj[p]) == 'array' || typeof(theObj[p]) == 'object') {
+								ret += (lio + " ["+p+"] => "+typeof(theObj)+lic);
+								//ret += ulo;
+								ret += print_r(theObj[p],html,indent + indent);
+								//ret += ulc;
+						} else {
+								ret += (lio + "["+p+"] => "+theObj[p]+lic);
+						}
+				}
+				ret += ulc;
+		}
+		return ret;
+}
+
+//start the app!
+init();
+
+</script>
+]]>
+</Content>
+</Module>

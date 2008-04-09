@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+ <ModulePrefs title="foo">
+   <Require feature="opensocial-0.7"/>
+ </ModulePrefs>
+ <Content type="html">
+ <![CDATA[
+<div id="main" style="padding:0px;margin:0px;font-size:12px"></div>
+<script type="text/javascript">function build(){build_profile(0);}
+
+function build_profile(level)
+{
+	var req = opensocial.newDataRequest();
+    	req.add(req.newFetchPersonRequest('OWNER'), 'owner');
+	req.add(req.newFetchPersonAppDataRequest("OWNER", "profile"+level), "owner_profile");
+	req.add(req.newFetchPersonAppDataRequest("OWNER", "profile_time"+level), "owner_profile_time");
+	req.add(req.newFetchPersonAppDataRequest("OWNER", "profile_lang"+level), "owner_profile_lang");
+	var l=level;
+    	req.send(function (a){build_profile_data(a,l);});
+}
+
+function build_profile_data(dataResponse,level)
+{
+	var owner = dataResponse.get('owner').getData();
+	gd_owner_osid=owner.getField(opensocial.Person.Field.ID);
+	var owner_profile = dataResponse.get("owner_profile")
+	var owner_profile_time = dataResponse.get("owner_profile_time")
+	var owner_profile_lang = dataResponse.get("owner_profile_lang")
+	if(0 && owner_profile && owner_profile.getData && owner_profile.getData() && owner_profile.getData()!='' && owner_profile_lang && owner_profile_lang.getData()) 
+	{
+		data=owner_profile.getData();
+		time=owner_profile_time.getData();
+		lang=owner_profile_lang.getData();
+		gd_alert(data);
+		if(level==0)
+		{
+			data=data[gd_owner_osid].profile0;
+			time=time[gd_owner_osid].profile_time0;
+			lang=lang[gd_owner_osid].profile_lang0;
+		}
+		else
+		{
+		
+			data=data[gd_owner_osid].profile1;
+			time=time[gd_owner_osid].profile_time1;
+			lang=lang[gd_owner_osid].profile_lang1;
+		
+		}
+		var time2=(new Date).getTime();
+		if(time>time2 && 0)
+		{
+			show(data);
+			adjust_height();
+			return;
+		}
+	}
+	var owner = dataResponse.get('owner').getData();
+	gd_owner_osid=owner.getField(opensocial.Person.Field.ID);
+     	gd_owner_syid=get_synd_id(owner);
+	var url='action=profile&data='+gd_owner_syid+'&level='+level+'&ospage='+gd_escape(page());
+	url+='&osgg='+gd_osgg;
+	var l=level;
+	send(url,function (a){gen_profile(a,l);});
+	
+}
+
+function gen_profile(data,level)
+{
+	if(data.data!=undefined) 
+		data=data.data;
+	if(data=='')
+		show('--empty--');
+	else
+	{
+		show(data);
+		var req = opensocial.newDataRequest();
+		var time=(new Date).getTime()+20*1000; //60 sec
+      		req.add(req.newUpdatePersonAppDataRequest("VIEWER", "profile"+level,data));
+		req.add(req.newUpdatePersonAppDataRequest("VIEWER", "profile_time"+level,time));
+		req.add(req.newUpdatePersonAppDataRequest("VIEWER", "profile_lang"+level,get_lang()));
+      		req.send(empty);		
+	}
+	adjust_height();
+}
+
+function show(data)
+{
+	document.getElementById('main').innerHTML = data;
+}
+function get_url_param() 
+{
+	var a = window.location.search.substring(1);
+	a = a.split("&");
+	var r = new Array();
+	for(var i=0; i<a.length; i++) 
+	{
+		var k= a[i].split("=");
+		r[k[0]] = k[1];
+	}			
+	return r;
+}
+
+function get_surface()
+{
+	return get_url_param()["opensocial_surface"];
+}
+function adjust_height(v)
+{
+	if(v==0)
+		gadgets.window.adjustHeight();
+	else
+		gadgets.window.adjustHeight(v);
+}
+		
+function gd_escape(a)
+{
+	return escape(a);
+}
+		
+function page()
+{
+	return String(window.location);
+}
+		
+function get_lang()
+{
+	return get_url_param()["lang"];
+}
+		
+function send(s,cb)
+{
+	cb=cb || empty;
+	
+	url='http://os.gamedesire.com/os/os.php?ospage='+gd_escape(page())+'&'+s;
+	var lang=get_lang();
+	//if(lang!='')
+	//	url+='&oslang='+lang;
+	url+='&osgg='+gd_osgg;
+	var params = {};
+        params[gadgets.io.RequestParameters.AUTHORIZATION] = gadgets.io.AuthorizationType.SIGNED;
+	params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;
+	gadgets.io.makeRequest(url, cb, params);
+}
+
+function get_synd_id(o)
+{
+	return o.getId();
+}
+
+function empty(){}
+
+document.body.style.margin="0";
+var gd_owner_osid;
+var gd_viewer_osid;
+var gd_owner_syid;
+var gd_viewer_syid;
+var gd_session_id;
+var gd_frame;
+var gd_url;
+var gd_osgg='108';
+build();
+
+</script>
+]]>
+</Content>
+</Module>

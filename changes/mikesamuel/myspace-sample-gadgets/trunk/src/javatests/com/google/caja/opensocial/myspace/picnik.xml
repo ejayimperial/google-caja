@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+ <ModulePrefs title="foo">
+   <Require feature="opensocial-0.7"/>
+ </ModulePrefs>
+ <Content type="html">
+ <![CDATA[
+<style type="text/css">
+	* { margin: 0; padding: 0; overflow-x: hidden; overflow-y: hidden;}
+	#picnik {
+		margin:0;
+		padding:0;
+		height: 500px;
+		background-position:center top;
+		background-repeat: no-repeat;
+		text-align: center;
+		font-family: 'Trebuchet MS', Arial, sans;
+		}
+	#picnik #main { 
+		height: 427px; 
+		}
+	#picnik a {
+		text-decoration: none;
+		color: #005580;
+		}
+	#picnik a:hover { color: #618430; }
+	#picnik h1 {
+		margin: 0 auto;
+		padding-top: 5px;
+		width: 250px;
+		border-top: 1px solid #fff;
+		font-size: 18px;
+		}
+	#picnik h1 a { color: #002a40; }
+	#picnik h2 {
+		padding: 10px 0 0 0;
+		margin: 0;
+		font-size: 16px;
+		color: #005580;
+		}
+	#picnik h2 a { color: #002a40; }
+	#picnik h3 {
+		margin: 0;
+		font-size: 14px;
+		}
+	#picnik h3 a { color: #005580; }
+	
+	#picnik .slide2grid {
+		text-align:center;
+		background-color: #fff;
+		border: 1px solid #ccc;
+		}
+	#picnik .slide3grid {
+		text-align:center;
+		background-color: #fff;
+		border: 1px solid #ccc;
+		}
+	#picnik .slideSingle {
+		text-align:center;
+		background-color: #fff;
+		border: 1px solid #ccc;
+		}
+	#picnik .thumb {
+		border: none;
+		}
+	#picnik .photoOptions {
+		margin: 0 0 0 15px;
+		text-align: left;
+	}
+	#picnik .editLink {
+		color: #002a40;
+		font-weight: bold;
+		font-size: 18px;
+		}
+	#picnik small {
+		color: #005580;
+		font-size: 13px;
+		}
+		
+	#picnik .blank {
+		background:none;
+		border:none;
+		}
+		
+	#editpopup {
+		position: absolute;
+		background-color: #fff;
+		top: 100px;
+		left: 100px;
+		width: 150px;
+		border: solid 3px #000000;
+		padding: 3px;
+		visibility: hidden;
+		z-index: 3;
+		}
+		
+	#picnik .prevnext {
+		color: #ccc;
+		font-size: 14px;
+		font-weight: bold;
+	}
+		
+	</style>
+	
+	
+	<div id="divOutput"></div>
+	
+	<div id="editpopup"  onmouseout="rollOffImage();" onblur="rollOffImage();" >
+	<a href=""  onclick="launchEditor();return false" target="_blank" class="menulink">
+	Edit with Picnik!</a><br><br>
+	<a href="" onclick="launchMySpacePic();return false" target="_blank" class="menulink">
+	View in MySpace</a><br><br>
+	</div>
+	
+	
+	<script type="text/javascript">
+	var friends;
+	var person;
+	var personId;
+	var aSize;
+	var nSizeIndex =0;
+	var aSizes = new Array( {width:290, background:'http://www.picnik.com/graphics/modbg_440x500.jpg'},
+							 {width:300, background:'http://www.picnik.com/graphics/modbg_440x500.jpg'},
+							 {width:430, background:'http://www.picnik.com/graphics/modbg_440x500.jpg'});
+	
+	function commonFooter()
+	{
+		return '<h1><a href="" onClick="launchEditor();return false">Edit your photos in Picnik!</a></h1><h3><a href="http://www.myspace.com/getpicnik" target="_top">Add this app! It ís FREE and AWESOME.</a></h3>';
+	
+	}
+	
+	
+	//------------
+	// Albums
+	
+	function albumListBody(album, nIndex)
+	{
+		var htmlOut = "";
+		
+		var strStyle = 'style="width:' + oAlbums.anGridWidth[nSizeIndex] + 'px;height:' + oAlbums.anGridWidth[nSizeIndex] +'px"';
+		if (album == null) 
+		{
+			var strURI = strURI = "http://www.picnik.com/graphics/tempdot.gif";
+			htmlOut = "<td class=\"slide2grid blank\" " + strStyle + "></td>";
+		} else {
+			var strURI = album.getField(MyOpenSpace.Album.Field.DEFAULT_IMAGE);
+			var nAlbumId = album.getField(MyOpenSpace.Album.Field.ALBUM_ID);
+			var strTitle = album.getField(MyOpenSpace.Album.Field.TITLE);
+					
+			var nX = oAlbums.anCellWidth[nSizeIndex];				
+			var strDim = " width = " + nX;
+	
+			htmlOut = "<td class=\"slide2grid\" " + strStyle + "><a href=\"\" onClick=\"clickAlbum(" + nAlbumId + ", '" + strTitle + "');return false\">";
+			htmlOut += '<img style="visibility:hidden" src="' + strURI + '"' + strDim + ' onload="sizeImage(this, '+nX+');" class="thumb" title="' + strTitle + '"/></a></td>';
+		}
+		return htmlOut;
+	}
+	
+	
+	function clickAlbum(nAlbumId, strTitle)
+	{
+		strAlbumTitle = strTitle;
+		//UNDONE -- fix to show photos from album conce support for this is in
+		// in the mean time, show all photos for each album
+		
+	    //Create our DataRequest object
+	    var drPhotos = opensocial.newDataRequest();
+	
+	    //Set up an empty params object so we can use it for functions that require params.        
+	    var opt_params = {};
+		opt_params[MyOpenSpace.DataRequest.PhotoRequestFields.ALBUM_ID] = nAlbumId;
+		
+	    //Request Photos        
+	    var photoReq = drPhotos.newFetchPhotosRequest(opensocial.DataRequest.PersonId.OWNER,opt_params);
+	    drPhotos.add(photoReq,'Photos');
+	    drPhotos.send(responsePhotos);            
+	}
+	
+	//Response callback...
+	function responsePhotos(data)
+	{
+		if (data.hadError()) {
+			alert('error getting photo list\n' + data.get(opensocial.DataRequest.PersonId.OWNER).getErrorCode() + ':' + data.get(opensocial.DataRequest.PersonId.OWNER).getErrorMessage());
+			return false;
+		}
+	    oPhotos.aItems = data.get('Photos').getData().asArray();
+		oPhotos.nPage = 0;
+		showPicList(oPhotos);
+		return false;
+	}
+	
+	
+	function albumHeader()
+	{	
+		return "<h2>My Photo Albums</h2>"
+	}
+	var strAlbumTitle = "";
+	var oAlbums = {};
+	oAlbums.anRows = new Array(2,2,2);
+	oAlbums.anCols = new Array(2,2,3);
+	oAlbums.anGridWidth = new Array(125,125,145);
+	oAlbums.anCellWidth = new Array (111,111,121);
+	oAlbums.funcBody = albumListBody;
+	oAlbums.funcNav = buildListNav;
+	oAlbums.funcHeader = albumHeader;
+	oAlbums.funcFooter = commonFooter;
+	oAlbums.aItems = null;
+	oAlbums.nPage = 0;
+	oAlbums.oUp = null;
+	//------------
+	// Photos
+	function photosListBody(photo, nIndex)
+	{
+		var htmlOut = "";
+		var strURI;
+		var strStyle = 'style="width:' + oPhotos.anGridWidth[nSizeIndex] + 'px;height:' + oPhotos.anGridWidth[nSizeIndex] +'px"';
+		if (photo == null) {
+			strURI = "http://www.picnik.com/graphics/tempdot.gif";
+			htmlOut = '<td class="slide3grid blank" ' + strStyle + '></td>';
+		} else {
+			strURI = photo.getField(MyOpenSpace.Photo.Field.IMAGE_URI);
+			strCaption = photo.getField(MyOpenSpace.Photo.Field.CAPTION);
+		
+			var nX = oPhotos.anCellWidth[nSizeIndex];				
+			var strDim = " width=" + nX + "px";
+			htmlOut = '<td class="slide3grid" ' + strStyle + '><a href="" onClick="clickPhotos(' + nIndex + ');return false">';
+			htmlOut += '<img style="visibility:hidden" src="' + strURI + '"' + strDim + ' onload="sizeImage(this, '+nX+');" class="thumb" title="'+strCaption+'"/></a></td>';
+		}
+		return htmlOut;	
+	}
+	
+	function clickPhotos(nPhotoIndex)
+	{
+	    oPhoto.aItems = new Array(oPhotos.aItems[nPhotoIndex]);
+		oPhotos.nSelected = nPhotoIndex;
+		showPicList(oPhoto);
+	}
+	
+	function photosHeader()
+	{
+		return '<h2><a href="" onClick="showPicList(oAlbums);return false">Album</a> > ' + strAlbumTitle + ' </h2>';
+	}
+	
+	var oPhotos = {};
+	oPhotos.anRows = new Array(2,3,3);
+	oPhotos.anCols = new Array(2,3,4);
+	oPhotos.anGridWidth = new Array (125,80,90);
+	oPhotos.anCellWidth = new Array(111,70,80);
+	oPhotos.funcBody = photosListBody;
+	oPhotos.funcHeader = photosHeader;
+	oPhotos.funcFooter = commonFooter;
+	oPhotos.funcNav = buildListNav;
+	oPhotos.aItems = null;
+	oPhotos.nPage = 0;
+	oPhotos.oUp = oAlbums;
+	oPhotos.nSelected = 0;
+	
+	var oCurList = null;
+	
+	
+	//---------------------------
+	// photo
+	
+	function photoListBody(photo, nIndex)
+	{
+		var htmlOut = "";
+		var strURI;
+		var strStyle = 'style="width:' + oPhoto.anGridWidth[nSizeIndex] + 'px;height:' + oPhoto.anGridWidth[nSizeIndex] +'px"';
+		if (photo == null) {
+			strURI = "http://www.picnik.com/graphics/tempdot.gif";
+			htmlOut = '<td class="slide3grid" ' + strStyle + '></td>';
+		} else {
+			strURI = photo.getField(MyOpenSpace.Photo.Field.IMAGE_URI);
+			strCaption = photo.getField(MyOpenSpace.Photo.Field.CAPTION);
+			
+			var nX = oPhoto.anCellWidth[nSizeIndex];				
+			var strDim = " width = \"" + nX + "px\"";
+	
+	
+			//htmlOut = '<td class="slideSingle" ' + strStyle + '><a onClick=launchEditor()>';
+			//htmlOut += '<img src="' + strURI + '"' + strDim + ' onload="sizeImage(this, '+nX+');" class="thumb" ';
+			htmlOut += ' title="'+strCaption+'"/></a></td>'; 
+			htmlOut = '<td class="slideSingle" ' + strStyle + '><a href="" onClick="launchEditor();return false">';
+			htmlOut += '<img style="visibility:hidden" src="' + strURI + '" onload="sizeImage(this, '+nX+');" class="thumb" title="'+strCaption+'"/></a></td>';
+
+		}
+		return htmlOut;	
+	}
+	
+	
+	function menus(whichMenu,whatState){
+	
+		if (document.getElementById)
+			{document.getElementById(whichMenu).style.visibility = whatState; }
+		else {document[whichMenu].visibility = whatState;}
+	}
+	
+	function toggleMenu(strMenu)
+	{
+		var strState = "";	
+		if (document.getElementById)
+			{strState = document.getElementById(strMenu).style.visibility;}
+		else 
+			{strState = document[strMenu].visibility;}
+		
+		if (strState == "hidden")
+			{strState = "visible";}
+		else
+			{strState = "hidden";}
+			
+		menus(strMenu, strState);
+	}
+	
+	
+	function rollOnImage()
+	{
+		menus('editpopup','visible');
+	}
+	
+	function rollOffImage()
+	{
+		menus('editpopup','hidden');
+	}
+	
+	
+	function photoHeader()
+	{
+		return '<h2><a href="" onClick="showPicList(oPhotos); return false">&lt Back</a></h2>';
+	}
+	
+	function photoNav(nPage, nPos, nItems, nItemsPerPage)
+	{
+		nItems = oPhotos.aItems.size();
+		nPos = parseInt(oPhotos.nSelected);
+	
+		if (nItems <= 1)
+		{
+			return " ";
+		}
+		
+		
+		//<p class="prevnext">« Prev | <a href="#PAGE1#">Next »</a></p>
+	
+		var htmlOut = '<p class="prevnext"> ';
+		if (nPos > 0)
+		{
+			var j = nPos - 1;
+			htmlOut += "<a href=\"\" onClick=\"clickPhotos(" + j + ");return false;\">« Prev | </a>"; 
+		}  else  {
+			htmlOut += "« Prev | ";
+		}
+	
+		nPos++;
+		if (nPos < nItems)
+		{
+			htmlOut += "<a href=\"\" onClick=\"clickPhotos(" + nPos + "); return false;\">Next »</a>";
+		} else 	{
+			htmlOut += "Next »";
+		}
+	
+		htmlOut += "</p>";
+		return htmlOut;
+	}
+	
+	
+	var oPhoto = {};
+	oPhoto.anRows = new Array (1,1,1);
+	oPhoto.anCols = new Array (1,1,1);
+	oPhoto.anCellWidth = new Array (240,250,280);
+	oPhoto.anGridWidth = new Array (260,270,300);
+	oPhoto.funcBody = photoListBody;
+	oPhoto.funcHeader = photoHeader;
+	oPhoto.funcFooter = commonFooter;
+	oPhoto.funcNav = photoNav;
+	oPhoto.aItems = null;
+	oPhoto.nPage = 0;
+	oPhoto.oUp = oPhotos;
+	
+	//---------------
+	// list
+	
+	function buildListNav(nPage, nPos, nItems, nItemsPerPage)
+	{
+		nPage = parseInt(nPage);
+		nPos = parseInt(nPos);
+		nItems = parseInt(nItems);
+		nItemsPerPage = parseInt(nItemsPerPage);
+		
+		if (nItems <= nItemsPerPage)
+		{
+			return " ";
+		}
+		var htmlOut = '<p class="prevnext">';
+		if (nPage == 0) 
+		{
+			htmlOut += "« Prev | ";
+		}
+		else
+		{
+			var j = nPage - 1;
+			htmlOut += "<a href=\"\" onClick=\"nextPage(" + j + ");return false\">« Prev | </a>"; 
+		}
+		if (nItems <= nPos)
+		{
+			htmlOut += "Next »";
+		}
+		else
+		{
+			nPage++;
+			htmlOut += "<a href=\"\" onClick=\"nextPage(" + nPage + ");return false\">Next »</a>";
+		}
+		htmlOut += "</p>";
+		return htmlOut;
+	}
+	
+	function nextPage(nPage)
+	{
+		oCurList.nPage = nPage;
+		showPicList();
+		return false;
+	}
+	
+	function showPicList(oList)
+	{
+		if (oList == null) 
+		{ 
+			oList = oCurList;
+		} else {
+			oCurList = oList;
+		}
+		
+		//alert(DumpObjectStr(oList));
+		
+		var nRows = oList.anRows[nSizeIndex];
+		var nCols = oList.anCols[nSizeIndex];
+		var nCurItem = oList.nPage * nRows * nCols;
+		var htmlOut = '<div id="picnik" style="background-image:url('+aSizes[nSizeIndex].background +');width=' + aSizes[nSizeIndex].width + 'px;"><div id="main">';
+		htmlOut += oList.funcHeader();
+		htmlOut += '<table style="margin:0 auto;" border="0" cellpadding="0" cellspacing="10" align="center">';
+		var nItems = oList.aItems.size();
+		for (nRow = 0; nRow < nRows; nRow++) {
+			htmlOut += '<tr>';
+			for (nCol = 0; nCol < nCols; nCol++) {
+				var oItem = null;
+				if (nCurItem < nItems) 
+				{
+					oItem  = oList.aItems[nCurItem];
+				}
+				htmlOut += oList.funcBody(oItem, nCurItem);
+				nCurItem++;
+			} 
+			htmlOut += "</tr>";
+		}
+		htmlOut +="</table>";
+		htmlOut += oList.funcNav(oList.nPage, nCurItem, nItems, nRows * nCols);
+		htmlOut += oList.funcFooter();
+		htmlOut += '</div><a href="http://www.picnik.com/" target="_top"><img src="http://www.picnik.com/graphics/picniklogo.jpg" width="120" height="43" border="0" alt="Picnik.com"/></a></div>';
+	
+		//alert(htmlOut);
+		document.getElementById("divOutput").innerHTML = htmlOut;
+		return true;
+	}
+	
+	//--------------------------------------
+	
+	//Response callback...
+	function response(data)
+	{
+	    oAlbums.aItems = data.get('Albums').getData().asArray();
+	    //friends = data.get('BasicFriends').getData().asArray();
+	    //person = data.get('SmallPerson').getData();
+		showPicList(oAlbums);
+		return false;
+	}
+	
+	function calcSizeIndex()
+	{
+		aSize = getViewportSize();
+		var x = aSize[0];
+		for (var i = 0; i < aSizes.length-1; i++)
+		{
+			if (x < aSizes[i+1].width) {break;}
+		}
+		
+		nSizeIndex = i;
+	 }
+	
+	//-------------------------------------
+	
+	function init()
+	{
+	    //Set the owner id so we don't have to use it later
+	    personId = opensocial.DataRequest.PersonId.OWNER;
+	    
+	    //Create our DataRequest object
+	    var dr = opensocial.newDataRequest();
+	
+	    //Set up an empty params object so we can use it for functions that require params.        
+	    var opt_params = {};
+	
+		calcSizeIndex();
+	   //Request Albums
+	
+	    var albumReq = 
+	        dr.newFetchAlbumsRequest(personId,opt_params);
+	
+	    //Request Person data
+	    var personReq = 
+	        dr.newFetchPersonRequest(personId);
+	    //Request Friends
+	
+	    var friendReq = 
+	        dr.newFetchPeopleRequest(opensocial.DataRequest.Group.OWNER_FRIENDS);
+	  
+	    //Add all the requests to the DataRequest
+	    dr.add(albumReq,'Albums');
+	    //dr.add(personReq,'SmallPerson');
+	    //dr.add(friendReq,'BasicFriends');
+	    dr.send(response);            
+	}
+	
+	function getViewportSize() {
+		var size = [0, 0];
+		if (typeof window.innerWidth != 'undefined') {
+			size = [ window.innerWidth, window.innerHeight ];
+		} else if (typeof document.documentElement != 'undefined' &&
+				typeof document.documentElement.clientWidth != 'undefined' &&
+				document.documentElement.clientWidth != 0) {
+			size = [ document.documentElement.clientWidth, document.documentElement.clientHeight ];
+		} else {
+			size = [ document.getElementsByTagName('body')[0].clientWidth,
+					document.getElementsByTagName('body')[0].clientHeight ];
+		}
+		return size;
+	}
+	
+	function sizeImage(imgThumb, nSize)
+	{
+		if (imgThumb.height > imgThumb.width)
+		{
+			imgThumb.width = parseInt(imgThumb.width * nSize / imgThumb.height); 
+			imgThumb.height = nSize;
+		} else {
+			imgThumb.width = nSize;
+			imgThumb.height = parseInt(imgThumb.height * nSize / imgThumb.width); 
+		}
+		imgThumb.style.visibility = "visible";		
+	}
+	
+	
+	function launchEditor()
+	{
+		var params = {};
+		if (typeof(oPhotos.aItems) != 'undefined' && oPhotos.aItems != null)
+		{
+			var p  = oPhotos.aItems[oPhotos.nSelected];
+			if (typeof(p) != 'undefined' && p != null)
+			{
+				params['imageUrl'] = p.getField(MyOpenSpace.Photo.Field.IMAGE_URI);
+				params['imageId'] = p.getField(MyOpenSpace.Photo.Field.PHOTO_ID);
+			}
+		}
+		
+		var srfCanvas;
+	    var env = opensocial.getEnvironment();
+	    var surfaces = env.getSupportedSurfaces();
+	    srfCanvas = surfaces.canvas;
+	    if (typeof(srfCanvas) == 'undefined' || srfCanvas == null)
+		{
+			alert('no canvas!');
+	        return;
+		}
+		opensocial.requestNavigateTo(srfCanvas, params); 
+	}
+	
+	function launchMySpacePic()
+	{
+		var params = {};
+		if (typeof(oPhotos.aItems) != 'undefined' && oPhotos.aItems != null)
+		{
+			var p  = oPhotos.aItems[oPhotos.nSelected];
+			if (typeof(p) != 'undefined' && p != null)
+			{
+				var url = p.getField(MyOpenSpace.Photo.Field.IMAGE_URI);
+				// nav to url
+				window.open('http://www.picnik.com');
+			}
+		}
+	}
+	
+	function DumpObject(ob) {
+	// var strOutput = "" + ob + "<br>";
+	var strOutput = "";
+	var i = 0;
+	for (var strField in ob) {
+	strOutput += strField + ": " + ob[strField] + ((i++ & 3) ? ", " : ",<br>");
+	}
+	document.getElementById("divOutput").innerHTML += strOutput;
+	}
+	
+	function DumpObjectStr(ob) {
+	// var strOutput = "" + ob + "<br>";
+	var strOutput = "";
+	var i = 0;
+	for (var strField in ob) {
+	strOutput += strField + ": " + ob[strField] + ((i++ & 3) ? ", " : ",<br>");
+	}
+	return strOutput;
+	}
+	
+	init();
+	
+	</script>
+]]>
+</Content>
+</Module>
+	

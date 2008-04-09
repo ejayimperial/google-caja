@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+ <ModulePrefs title="foo">
+   <Require feature="opensocial-0.7"/>
+ </ModulePrefs>
+ <Content type="html">
+ <![CDATA[
+<script type="text/javascript">
+
+   var ajaxServer = "www.honestybox.com";
+
+</script>
+<style type="text/css">
+#hb{font-family:arial,helvetica,verdana; font-size:12px; background-color:white; padding:5px 5px;}
+h1{font-size:14px;font-weight:bold;}
+h2{font-size:13px;font-weight:bold;}
+h3{font-size:12px;font-weight:bold;}
+.visible{display: block;}
+.invisible{display: none;}
+.error{border:1px solid red; background: #fcc;}
+textarea.message{width:100%; height:120px; font-size:12px; font-family:arial; font-size:11px;}
+#status{margin-top:5px; border:1px solid #999; overflow:scroll; width:100%; height:100px; font-size:10px;}
+</style>
+
+<div id="hb">
+   <div id="login" class="invisible">
+<h1>I want to know the truth!</h1>
+<p><a href="http://myspace.com/honestybox" title="Add HB Now!" target="_parent">Add the Honesty Box application</a> to find out what people really think of you.</p>
+<p><b>To send me an anonymous message, you have to be logged into MySpace and <a href="http://myspace.com/honestybox" target="_parent">install the application</a></b>
+<a href="http://www.myspace.com/honestybox" title="Learn more about Honesty Box" target="_parent"><img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" border="0" alt="Honesty Box" style="float:right; padding:5px;" /></a>
+<br /><br /><br /><br />
+   </div>
+   <div id="add_app" class="invisible">
+<h1>I want to know the truth!</h1>
+<p><a href="http://myspace.com/honestybox" title="Add HB Now!" target="_parent">Add the Honesty Box application</a> to find out what people really think of you.</p>
+<p><b>To send me an anonymous message, you have to <a href="http://myspace.com/honestybox" target="_parent">add the app first</a></b>
+<a href="http://www.myspace.com/honestybox" title="Learn more about Honesty Box" target="_parent"><img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" border="0" alt="Honesty Box" style="float:right; padding:5px;" /></a>
+<p>PS: if you already added the app and are getting this message, <a href="http://forum.myspace.com/index.cfm?fuseaction=messageboard.viewCategory&type=friendForum&friendID=349748743" target="_parent">let us know</a></p>
+   </div>
+
+   <div id="write" class="invisible">
+      <h1 style="display:inline;">Write <span id="ownerName">...</span> a Message</h1><span id="whatIsThis" class="visible"> <a href="#no_anchor" onclick="render('about');" title="Find out more about Honesty Box">what is this?</a></span>
+      <p>I want to know "<span id="ownerQuestion">what do you really think of me?</span>"<span id="changeQuestion" class="invisible"><a href="#no_anchor" onClick="navigate('canvas',{});">Change</a></span></p>
+      <form action="" id="new_message_form" name="new_message_form">
+         <textarea name="message" class="message"></textarea><br />
+      <img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" alt="Honesty Box" border="0" style="float:right; padding: 5px 5px;" />
+         <input type="button" name="button_send" value="Submit Anonymously" onClick="new_message(this);" />
+      </form>
+      <br clear="all" />
+   </div>
+
+   <div id="about" class="invisible">
+      <h1 style="display:inline;">What is Honesty Box?</h1> <a href="#no_anchor" onclick="render('write');" title="Write that message">back</a>
+      <p><img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" alt="Honesty Box" border="0" /></p>
+      <p>Honesty Box lets your friends send you anonymous questions and allows you to reply to them.<p>
+      <p>Facebook and Bebo users have been enjoying this for a long time! Now MySpace users can use it to!</p>
+      <p>You can get your own <b>Honesty Box</b> and start getting the messages you may already have waiting!</p>
+   </div>
+
+   <div id="error" class="invisible error">
+<h1>I want to know the truth!</h1>
+<p><b>To send me an anonymous message, you have to <a href="http://myspace.com/honestybox" target="_parent">add the app first</a></b>
+<a href="http://www.myspace.com/honestybox" title="Learn more about Honesty Box" target="_parent"><img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" border="0" alt="Honesty Box" style="float:right; padding:5px;" /></a>
+<p>PS: if you already added the app and are getting this message, <a href="http://forum.myspace.com/index.cfm?fuseaction=messageboard.viewCategory&type=friendForum&friendID=349748743" target="_parent">let us know</a></p>
+<br /><br /><br /><br />
+   </div>
+
+   <div id="loading" class="visible"><h1>Loading...</h1>
+<a href="http://www.myspace.com/honestybox" title="Learn more about Honesty Box" target="_parent"><img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" border="0" alt="Honesty Box" style="float:right; padding:5px;" /></a>
+      <p>This might take a minute if this profile has a lot of applications installed...</p>
+   </div>
+
+   <div id="messagesent" class="invisible">
+      <h1 style="display:inline;">Message Sent!</h1> <a href="#no_anchor" onclick="render('write');" title="Write another message.">Write another?</a>
+      <p><a href="#no_anchor" onclick="navigate('canvas',{});">Go to your inbox <span id="viewer_unread_count"></span></a></p>
+      <p><a href="#no_anchor" onclick="navigate('canvas',writeView);">Send messages to other friends</a></p>
+      <img src="http://img.honestybox.com/logo/hb_logo_99x45.png" width="99" height="45" alt="Honesty Box" border="0" style="float:right; padding: 5px 5px;" />
+      <br clear="all" />
+      <br clear="all" />
+   </div>
+
+   <div id="status" class="invisible"><p><a href="#no_anchor" onClick="unrender('status'); debugStatus=false;">close status display</a></p></div>
+
+</div>
+
+<script type="text/javascript">
+
+
+String.prototype.to_rfc3986 = function (){
+	var tmp = encodeURIComponent(this);
+	tmp = tmp.replace('!','%21');
+	tmp = tmp.replace('*','%2A');
+	tmp = tmp.replace('(','%28');
+	tmp = tmp.replace(')','%29');
+	tmp = tmp.replace("'",'%27');
+	return tmp;
+}
+
+
+var views = new Array("write","about","messagesent","login","add_app");
+var ownerName = null;
+var ownerId = null;
+var viewerId = null;
+var debugStatus = false;
+var msgid = 0;
+var msie = false;
+var classAttributeName = "class";
+var writeView = {};
+writeView.view = 'write';
+
+function loadUserData(){
+   var dataRequest = opensocial.newDataRequest();
+   var ownerRequest = dataRequest.newFetchPersonRequest(opensocial.DataRequest.PersonId.OWNER);
+   var viewerRequest = dataRequest.newFetchPersonRequest(opensocial.DataRequest.PersonId.VIEWER);
+   dataRequest.add(ownerRequest);
+   dataRequest.add(viewerRequest);
+   dataRequest.send(loadUserData_Callback);
+}
+
+function loadUserData_Callback(dataResponse){
+   if(!dataResponse.hadError()){
+      var ownerData = dataResponse.get(opensocial.DataRequest.PersonId.OWNER).getData();
+      ownerName = ownerData.getField(opensocial.Person.Field.NAME);
+      ownerId = ownerData.getField(opensocial.Person.Field.ID);
+      var viewer = dataResponse.get(opensocial.DataRequest.PersonId.VIEWER);
+      if(viewer != null){
+         var viewerData = dataResponse.get(opensocial.DataRequest.PersonId.VIEWER).getData();
+         viewerId = viewerData.getField(opensocial.Person.Field.ID);
+      } else {
+         render("login");
+         return;
+      }
+      if(ownerId == viewerId){
+         document.getElementById('changeQuestion').setAttribute(classAttributeName,"visible");
+         unrender('whatIsThis');
+      }
+      unrender('loading');
+      render("write");
+   } else {
+   		var dataRequest = opensocial.newDataRequest();
+   		var ownerRequest = dataRequest.newFetchPersonRequest(opensocial.DataRequest.PersonId.OWNER);
+   		dataRequest.add(ownerRequest, 'owner');
+		dataRequest.send(loadOwnerData_Callback);
+   }
+}
+
+function loadOwnerData_Callback(dataResponse){
+	renderStatus('Checking if we can query the owner');
+	if(!dataResponse.hadError()){
+		unrender('loading');
+		render('add_app');
+	} else {
+		unrender('loading');
+		render('login');
+	}
+}
+
+function navigate(surfaceName, params){
+   var surfaces = gadgets.views.getSupportedViews();
+   var surfaceRef = surfaces[surfaceName];
+   gadgets.views.requestNavigateTo(surfaceRef, params);
+}
+
+function render(view){
+   // just turn on these items, without adjusting others
+   if(view == "status"
+      || view == "error"
+      ){
+      document.getElementById(view).setAttribute(classAttributeName,"visible");
+      return;
+   }
+
+   // make adjustments to other views
+   for(var i=0; i<views.length; i++){
+     if(view == views[i]){
+        document.getElementById(views[i]).setAttribute(classAttributeName,"visible");
+     } else {
+        document.getElementById(views[i]).setAttribute(classAttributeName,"invisible");
+     }
+   }
+   if(view == "write"){ init_write(); }
+}
+
+function unrender(view){
+   document.getElementById(view).setAttribute(classAttributeName,"invisible");
+}
+
+function renderStatus(msg){
+   if(debugStatus){
+      render("status");
+      var el = document.getElementById("status");
+      el.innerHTML = "<b>Status:</b> " + msg + "<br />" + el.innerHTML;
+   }
+}
+
+function renderError(msg){
+   renderStatus('renderError invoked');
+   render("error");
+   var el = document.getElementById("error");
+   el.innerHTML += "<b>Error:</b> " + msg + "<br />";
+}
+
+
+function ajaxRequest(method, callback_func, params){
+   // add some default values to the request
+   renderStatus('Preparing the request for owner ' + ownerId);
+   // params['surface'] = opensocial.Surface.getName();
+   var queryString = "method=" + method;
+   for (k in params) {
+      queryString += "&" + k + "=" + params[k].to_rfc3986();
+   }
+
+   // set the datasource location
+   var url = "http://" + ajaxServer + "/opensocial/ms_ajax.php";
+
+   // set the opensocial params to sign the request and fetch JSON object
+   renderStatus("Setting opensocial call parameters");
+   var osParams = {};
+   osParams[gadgets.io.RequestParameters.METHOD] = gadgets.io.MethodType.POST;
+   osParams[gadgets.io.RequestParameters.POST_DATA] = queryString;
+   osParams[gadgets.io.RequestParameters.AUTHORIZATION] = gadgets.io.AuthorizationType.SIGNED;
+   renderStatus("Making call to " + url);
+
+   gadgets.io.makeRequest(url, makeRequest_callback, osParams);
+
+   function makeRequest_callback(data){
+      renderStatus("Handling ajax response with typeof: " + typeof(data.data));
+      var json = gadgets.json.parse(data.data);
+      if(!json){
+         renderError("Error talking to server: " + json.ErrorMessage);
+      }
+      callback_func(json);
+   }
+}
+
+
+function init(){
+   renderStatus('Init invoked');
+   if(navigator.appName=="Microsoft Internet Explorer"){
+      msie = true;
+      classAttributeName = "className";
+      renderStatus('User agent appears to be IE');
+   }
+   render("loading");
+   loadUserData();
+}
+
+init();
+
+function init_write(){
+   renderStatus("init_write invoked");
+   ajaxRequest("write",init_write_callback,{});
+}
+
+function init_write_callback(data){
+   renderStatus("set username, colors etc here");
+   var name = document.getElementById("ownerName");
+   name.innerHTML = ownerName;
+   var question = document.getElementById("ownerQuestion");
+   if(typeof(data.personalization.status) != "undefined"){
+      if(data.personalization.status.length > 0){
+         question.innerHTML = data.personalization.status;
+      }
+   }
+}
+
+function new_message(fe){
+   render("loading");
+   fe.disabled = true;
+   fe.form.message.disabled = true;
+   var params = {}
+   params['comment'] = fe.form.message.value;
+   ajaxRequest('message_new',new_message_callback,params);
+}
+
+function new_message_callback(json){
+   var el = document.getElementById('viewer_unread_count');
+   el.innerHTML = "<b>(" + json.unread_messages + " Unread Messages)</b>";
+   render("messagesent");
+   var frm = document.getElementById('new_message_form');
+   frm.message.disabled = false;
+   frm.message.value = "";
+   frm.button_send.disabled = false;
+}
+
+</script>
+]]>
+</Content>
+</Module>
