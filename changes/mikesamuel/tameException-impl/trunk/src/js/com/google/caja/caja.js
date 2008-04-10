@@ -611,7 +611,6 @@ var ___;
     if (isFrozen(obj)) {
       fail("Can't delete .", name, ' on frozen (', obj, ')');
     }
-    fail('TODO(erights): allowDelete() not yet implemented');
     obj[name + '_canDelete___'] = true;
   }
   
@@ -622,6 +621,9 @@ var ___;
   function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
   function isMethod(meth)    { return '___METHOD_OF___' in meth; }
   function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
+  function isUnattachedMethod(meth) {
+    return meth.___METHOD_OF___ === null || isSimpleFunc(meth);
+  }
 
   /**
    * Mark <tt>constr</tt> as a constructor.
@@ -726,9 +728,9 @@ var ___;
   /** 
    * Mark meth as a method of instances of constr. 
    * <p>
-   * opt_name, if provided, should be the message name associated
-   * with the method. Currently, this is used only to generate
-   * friendlier error messages.
+   * @param opt_name if provided, should be the message name associated
+   *   with the method. Currently, this is used only to generate
+   *   friendlier error messages.
    */
   function method(constr, meth, opt_name) {
     enforceType(meth, 'function', opt_name);
@@ -741,7 +743,27 @@ var ___;
     meth.___METHOD_OF___ = asCtorOnly(constr);
     return primFreeze(meth);
   }
-  
+
+  /** 
+   * Mark meth as an unattached method -- a method not attached to any
+   * particular class, so not allowed access to private fields.
+   * <p>
+   * @param opt_name if provided, should be the message name associated
+   *   with the method. Currently, this is used only to generate
+   *   friendlier error messages.
+   */
+  function unattachedMethod(meth, opt_name) {
+    enforceType(meth, 'function', opt_name);
+    if (isCtor(meth)) {
+      fail("constructors can't be methods: ", meth);
+    }
+    if (isSimpleFunc(meth)) {
+      fail("Simple functions can't be methods: ", meth);
+    }
+    meth.___METHOD_OF___ = null;
+    return primFreeze(meth);
+  }
+
   /** 
    * Mark fun as a simple function.
    * <p>
@@ -1092,7 +1114,7 @@ var ___;
     if (canCall(obj, name)) { return true; }
     if (!canReadPub(obj, name)) { return false; }
     var func = obj[name];
-    if (!isSimpleFunc(func)) { return false; }
+    if (!isUnattachedMethod(func)) { return false; }
     allowCall(obj, name);  // memoize
     return true;
   }
@@ -1132,8 +1154,10 @@ var ___;
     name = String(name);
     if (canSetProp(that, name)) {
       allowSet(that, name);  // grant
-      that[name] = val;
-      return val;
+      if (!hasOwnProp(that, name)) {
+        allowDelete(that, name);
+      }
+      return that[name] = val;
     } else {
       return that.handleSet___(name, val);
     }
@@ -1160,7 +1184,7 @@ var ___;
     if (canSet(obj, name)) { return true; }
     return !isFrozen(obj) && isJSONContainer(obj);
   }
-  
+
   /** A client of obj attempts to assign to one of its properties. */
   function setPub(obj, name, val) {
     name = String(name);
@@ -1172,7 +1196,7 @@ var ___;
       return obj.handleSet___(name, val);
     }
   }
- 
+
   /**
    * Can a Caja constructed object delete the named property?
    */
@@ -1181,7 +1205,7 @@ var ___;
     if (isFrozen(obj)) { return false; }
     if (endsWith(name, '__')) { return false; }
     if (isJSONContainer(obj)) { return true; }
-    return !!obj[name + '_canDelete__'];
+    return !!obj[name + '_canDelete___'];
   }
 
   /**
@@ -1192,7 +1216,7 @@ var ___;
     name = String(name);
     if (canDeleteProp(obj, name)) {
       // See deleteFieldEntirely for reasons why we don't cache deletability.
-      deleteFieldEntirely(obj, name);
+      return deleteFieldEntirely(obj, name);
     } else {
       return obj.handleDelete___(name);
     }
@@ -1217,7 +1241,7 @@ var ___;
     name = String(name);
     if (canDeletePub(obj, name)) {
       // See deleteFieldEntirely for reasons why we don't cache deletability.
-      deleteFieldEntirely(obj, name);
+      return deleteFieldEntirely(obj, name);
     } else {
       return obj.handleDelete___(name);
     }
@@ -1238,6 +1262,7 @@ var ___;
     delete obj[name + '_canEnum___'];
     delete obj[name + '_canCall___'];
     delete obj[name + '_canSet___'];
+    delete obj[name + '_canDelete___'];
     return (delete obj[name]) || (fail('not deleted: ', name), false);
   }
 
@@ -1954,6 +1979,8 @@ var ___;
     asCtor: asCtor,
     splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
+    unattachedMethod: unattachedMethod,
+    isUnattachedMethod: isUnattachedMethod,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
     setMember: setMember,
     setMemberMap: setMemberMap,
