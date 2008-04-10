@@ -129,6 +129,9 @@ public class Scope {
   private boolean fromConstructor = false;
   public void setFromConstructor(boolean flag) { this.fromConstructor = flag; }
   public boolean isFromConstructor() { return this.fromConstructor; }
+  private boolean fromMethod = false;
+  public void setFromMethod(boolean flag) { this.fromMethod = flag; }
+  public boolean isFromMethod() { return this.fromMethod; }
   private int tempVariableCounter = 0;
   private final Map<String, Pair<LocalType, FilePosition>> locals
       = new HashMap<String, Pair<LocalType, FilePosition>>();

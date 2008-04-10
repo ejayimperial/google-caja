@@ -50,6 +50,10 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Globals cannot end in \"_\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
+  LABELS_CANNOT_END_IN_DOUBLE_UNDERSCORE(
+      "%s: Labels cannot end in \"__\": %s",
+      MessageLevel.ERROR),
+
   PUBLIC_PROPERTIES_CANNOT_END_IN_UNDERSCORE(
       "%s: Public properties cannot end in \"_\": %s, %s",
       MessageLevel.FATAL_ERROR),
@@ -101,7 +105,6 @@ public enum RewriterMessageType implements MessageTypeInt {
   WITH_BLOCKS_NOT_ALLOWED(
       "%s: \"with\" blocks are not allowed",
       MessageLevel.ERROR),
-
   UNATTACHED_METHOD_AMBIGUITY(
       "%s: \"this\" in an unattached method only exposes public fields",
       MessageLevel.CRITICAL_WARNING),

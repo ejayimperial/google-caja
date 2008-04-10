@@ -33,6 +33,7 @@ import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.LabeledStmtWrapper;
 import com.google.caja.parser.js.Literal;
 import com.google.caja.parser.js.Loop;
 import com.google.caja.parser.js.MultiDeclaration;
@@ -54,6 +55,7 @@ import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
 import static com.google.caja.plugin.SyntheticNodes.s;
 import com.google.caja.util.Pair;
+import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 
 import java.util.LinkedHashMap;
@@ -618,7 +620,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 return substV(
                     "___.setMember(@clazz, @rp, @m);",
                     "clazz", expandReferenceToOuters(clazz, scope, mq),  // Don't expand so we don't freeze.
-                    "m", expandMember(clazz, bindings.get("m"), this, scope, mq),
+                    "m", expandMember(bindings.get("m"), this, scope, mq),
                     "rp", toStringLiteral(p));
               }
             }
@@ -1196,7 +1198,7 @@ public class DefaultCajaRewriter extends Rewriter {
               "caja.def(@fname, @base, @mm, @ss?)",
               "fname", expandReferenceToOuters(bindings.get("fname"), scope, mq),
               "base", expandReferenceToOuters(bindings.get("base"), scope, mq),
-              "mm", expandMemberMap(bindings.get("fname"), bindings.get("mm"), this, scope, mq),
+              "mm", expandMemberMap(bindings.get("mm"), this, scope, mq),
               "ss", ss);
         }
         return NONE;
@@ -1367,7 +1369,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("funcUnattachedMethod", this) {
+    addRule(new Rule("funcMethod", this) {
       @Override
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, final MessageQueue mq) {
@@ -1376,14 +1378,11 @@ public class DefaultCajaRewriter extends Rewriter {
           Scope s2 = Scope.fromFunctionConstructor(
               scope, (FunctionConstructor) node);
           if (!s2.hasFreeThis()) { return NONE; }
-          // If we're in a constructor, attach the method.
-          if (scope.isFromConstructor()) {
+          s2.setFromMethod(true);
+          // If we're in a constructor or a method, attach the method.
+          if (scope.isFromConstructor() || scope.isFromMethod()) {
             return substV(
-                "___.attach(t___, (function(){" +
-                "  var x___ = function(@formals*) { @body*; };" +
-                "  x___.___METHOD_OF___ = t___.constructor;" +
-                "  return x___;" +
-                "})())", 
+                "___.attach(t___, function(@formals*) { @body*; })", 
                 "formals", bindings.get("formals"),
                 "body", expand(bindings.get("body"), s2, mq));
           }
@@ -1436,7 +1435,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
-    addRule(new Rule("funcMethod", this) {
+    addRule(new Rule("funcBadMethod", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("function(@ps*) { @bs*; }", node, bindings)) {
@@ -1583,46 +1582,61 @@ public class DefaultCajaRewriter extends Rewriter {
     // TODO(ihab.awad): The 'multiDeclaration' implementation is hard
     // to follow or maintain. Refactor asap.
     addRule(new Rule("multiDeclaration", this) {
+      @Override
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof MultiDeclaration) {
-          boolean isDeclaration = false;
-          List<ParseTreeNode> results = new ArrayList<ParseTreeNode>();
+          boolean allDeclarations = true;
+          List<ParseTreeNode> expanded = new ArrayList<ParseTreeNode>();
 
+          // Expand each declaration individually, and keep track of whether
+          // the result is a declaration or whether we can just run the
+          // initializers separately.
           for (ParseTreeNode child : node.children()) {
             ParseTreeNode result = expand(child, scope, mq);
-            if (result.getClass() == Expression.class) {
-              results.add(result);
-            } else if (result.getClass() == ExpressionStmt.class) {
-              results.add(result.children().get(0));
-            } else if (result.getClass() == Declaration.class) {
-              results.add(result);
-              isDeclaration = true;
-            } else {
-              throw new RuntimeException("Unexpected result class: " + result.getClass());
+            if (result instanceof ExpressionStmt) {
+              result = result.children().get(0);
+            } else if (!(result instanceof Expression
+                         || result instanceof Declaration)) {
+              throw new RuntimeException(
+                  "Unexpected result class: " + result.getClass());
             }
+            expanded.add(result);
+            allDeclarations &= result instanceof Declaration;
           }
 
-          if (!isDeclaration) {
-            ParseTreeNode output = results.get(0);
-            for (int i = 1; i < results.size(); i++) {
-              List<ParseTreeNode> children = Arrays.asList(new ParseTreeNode[] {
-                  output,
-                  results.get(i),
-              });
-              output = ParseTreeNodes.newNodeInstance(
-                  SpecialOperation.class,
-                  Operator.COMMA,
-                  children);
+          // If they're not all declarations, then split the initializers out
+          // so that we can run them in order.
+          if (!allDeclarations) {
+            List<Declaration> declarations = new ArrayList<Declaration>();
+            List<Expression> initializers = new ArrayList<Expression>();
+            for (ParseTreeNode n : expanded) {
+              if (n instanceof Declaration) {
+                Declaration decl = (Declaration) n;
+                Expression init = decl.getInitializer();
+                if (init != null) {
+                  initializers.add(init);
+                  decl.removeChild(init);
+                }
+                declarations.add(decl);
+              } else {
+                initializers.add((Expression) n);
+              }
             }
-            return ParseTreeNodes.newNodeInstance(
-                ExpressionStmt.class,
-                null,
-                Arrays.asList(new ParseTreeNode[] { output }));
+            Expression[] initOperands = initializers.toArray(new Expression[0]);
+            Expression init = (initOperands.length > 1
+                               ? Operation.create(Operator.COMMA, initOperands)
+                               : initOperands[0]);
+            if (declarations.isEmpty()) {
+              return new ExpressionStmt(init);
+            } else {
+              return substV(
+                  "{ @decl; @init; }",
+                  "decl", new MultiDeclaration(declarations),
+                  "init", new ExpressionStmt(init));
+            }
           } else {
             return ParseTreeNodes.newNodeInstance(
-                MultiDeclaration.class,
-                null,
-                results);
+                MultiDeclaration.class, null, expanded);
           }
         }
         return NONE;
@@ -1680,6 +1694,27 @@ public class DefaultCajaRewriter extends Rewriter {
           default:
             return NONE;
         }
+      }
+    });
+
+    addRule(new Rule("labeledStatement", this) {
+      @Override
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof LabeledStmtWrapper) {
+          LabeledStmtWrapper lsw = (LabeledStmtWrapper) node;
+          if (lsw.getLabel().endsWith("__")) {
+            mq.addMessage(
+                RewriterMessageType.LABELS_CANNOT_END_IN_DOUBLE_UNDERSCORE,
+                node.getFilePosition(),
+                MessagePart.Factory.valueOf(lsw.getLabel()));
+          }
+          LabeledStmtWrapper expanded = new LabeledStmtWrapper(
+              lsw.getLabel(), (Statement) expand(lsw.getBody(), scope, mq));
+          expanded.setFilePosition(lsw.getFilePosition());
+          return expanded;
+        }
+        return NONE;
       }
     });
 

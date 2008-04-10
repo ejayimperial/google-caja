@@ -112,7 +112,7 @@ var ___;
    * Note: JavaScript has no macros, so even in the "does nothing"
    * case, remember that the arguments are still evaluated. 
    */
-  var myLogFunc_ = function(str, opt_stop) {};
+  var myLogFunc_ = function(str, opt_stop) { console.log(str); };
 
   /**
    * Gets the currently registered logging function.
@@ -619,10 +619,16 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
 
   function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
-  function isMethod(meth)    { return '___METHOD_OF___' in meth; }
+  function isMethod(meth)    { 
+    return (meth === null) ? 
+        false : 
+        (typeof meth === 'object') ? 
+            !!meth.___METHOD___ : 
+            false; 
+  }
   function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
   function isUnattachedMethod(meth) {
-    return meth.___METHOD_OF___ === null || isSimpleFunc(meth);
+    return meth.___METHOD___ === null || isSimpleFunc(meth);
   }
 
   /**
@@ -747,7 +753,7 @@ var ___;
       }
       return meth.apply(that, arguments);
     }
-    var result = method(meth.___METHOD_OF___, result, meth.___NAME___);
+    var result = method(result, meth.___NAME___);
     result.___ATTACHMENT___ = that;
     result.___ORIGINAL___ = meth;
     return result;
@@ -760,7 +766,7 @@ var ___;
    *   with the method. Currently, this is used only to generate
    *   friendlier error messages.
    */
-  function method(constr, meth, opt_name) {
+  function method(meth, opt_name) {
     enforceType(meth, 'function', opt_name);
     if (isCtor(meth)) {
       fail("constructors can't be methods: ", meth);
@@ -768,7 +774,7 @@ var ___;
     if (isSimpleFunc(meth)) {
       fail("Simple functions can't be methods: ", meth);
     }
-    meth.___METHOD_OF___ = asCtorOnly(constr);
+    meth.___METHOD___ = true;
     return primFreeze(meth);
   }
 
@@ -788,7 +794,7 @@ var ___;
     if (isSimpleFunc(meth)) {
       fail("Simple functions can't be methods: ", meth);
     }
-    meth.___METHOD_OF___ = null;
+    meth.___METHOD___ = null;
     return primFreeze(meth);
   }
 
@@ -904,7 +910,7 @@ var ___;
     if (!canSetProp(proto, name)) {
       fail('not settable: ', name);
     }
-    if (member.___METHOD_OF___ === constr) {
+    if (member.___METHOD___) {
       allowCall(proto, name);  // grant
       allowEnum(proto, name); // grant
     } else if (isSimpleFunc(member)) {
@@ -944,8 +950,17 @@ var ___;
    */
   function readProp(that, name) {
     name = String(name);
-    if (canReadProp(that, name)) { return that[name]; }
-    return that.handleRead___(name, false);
+    var result;
+    if (canReadProp(that, name)) { 
+      result = that[name];
+    } else {
+      result = that.handleRead___(name, false);
+    }
+    if (isMethod(result)) {
+      return ___.attach(that, result);
+    } else {
+      return result;
+    }
   }
   
   /** 
@@ -978,8 +993,14 @@ var ___;
    */
   function readPub(obj, name, opt_shouldThrow) {
     name = String(name);
-    if (canReadPub(obj, name)) { return obj[name]; }
-    return obj.handleRead___(name, opt_shouldThrow);
+    var result;
+    if (canReadPub(obj, name)) { result = obj[name]; }
+    else { result = obj.handleRead___(name, opt_shouldThrow); }
+    if (isMethod(result)) {
+      return ___.attach(obj, result);
+    } else {
+      return result;
+    }
   }
   
   /**
@@ -1449,7 +1470,7 @@ var ___;
    * on instances of constr.
    */
   function allowMethod(constr, name) {
-    method(constr, constr.prototype[name], name);
+    method(constr.prototype[name], name);
     allowCall(constr.prototype, name);
   }
   
