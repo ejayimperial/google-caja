@@ -16,24 +16,32 @@ of code which needs to be rewritten and .
 
 == Static Restrictions ==
 
-The following rules prohibit particular javascript constructions:
-
-  * WithRule
-  * VarBadSuffixRule
-  * VarBadSuffixDeclarationRule
+Internal properties restrictions:
   * VarBadGlobalSuffixRule
   * ReadBadInternalRule
-  * SetBadThisRule
-  * SetBadSuffixRule
   * SetBadInternalRule
+  * CallBadInternalRule
+  * MapBadKeySuffixRule
+
+Global environment restrictions:
+  * SetBadThisRule
+
+Stylistic restrictions:
+  * WithRule
+
+Implementation specific restrictions:
+  * VarBadSuffixRule
+  * VarBadSuffixDeclarationRule
+  * ReadBadSuffixRule
   * SetBadInitializeRule
   * SetBadDeclareRule
+  * SetBadSuffixRule
   * CallBadSuffixRule
+
+Other:
   * CallCajaDef2BadRule
   * CallCajaDef3PlusBadRule
-  * CallBadInternalRule
   * FuncBadMethodRule
-  * MapBadKeySuffixRule
 
 == Dynamic Restrictions ==
 
