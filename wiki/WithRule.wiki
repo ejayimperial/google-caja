@@ -1,0 +1,15 @@
+#summary The "with" command in JavaScript is prohibited.
+#labels Phase-Design
+
+= Effect =
+
+Any program containing the with command is rejected by Caja.
+
+= Reason =
+
+With statements make it very difficult to tell statically which
+objects get accessed or modified by any statement in the with body.
+
+= Attacks Addressed =
+
+CommonJavaScriptErrors
