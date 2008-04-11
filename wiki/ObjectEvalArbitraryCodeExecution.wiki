@@ -1,4 +1,6 @@
+#summary eval reachable from any Object
 #labels Attack-Vector
+
 =Object.eval allows execution of unsanitized code on Firefox.=
 
 ==Effect==
@@ -16,7 +18,7 @@ Any object is accessible, and the eval property is accessible.
 
 
 ==Versions==
-Firefox
+Firefox <= 2.0.0.12.  Fixed in https://bugzilla.mozilla.org/show_bug.cgi?id=382509
 
 
 ==Example==
