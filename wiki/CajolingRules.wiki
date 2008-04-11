@@ -1,5 +1,5 @@
+#summary Program transformations that turn javascript into Caja
 #labels Phase-Design
- #summary Program transformations that turn javascript into Caja
 
 = Background =
 
@@ -14,7 +14,7 @@ rewrite the remaining program with additional runtime checks.
 Cajoling rules are specified using QuasiLiterals to identify a snippet
 of code which needs to be rewritten and .
 
-== Prohibited Constructions ==
+== Statically Forbidden ==
 
 The following rules prohibit particular javascript constructions:
 
@@ -22,14 +22,21 @@ The following rules prohibit particular javascript constructions:
   * VarBadSuffixRule
   * VarBadSuffixDeclarationRule
   * VarBadGlobalSuffixRule
+  * ReadBadInternalRule
+  * SetBadThisRule
+  * SetBadSuffixRule
+  * SetBadInternalRule
+  * SetBadInitializeRule
+  * SetBadDeclareRule
+  * CallBadSuffixRule
+  * CallCajaDef2BadRule
+  * CallCajaDef3PlusBadRule
+  * CallBadInternalRule
+  * FuncBadMethodRule
+  * MapBadKeySuffixRule
 
-== Rewritten Constructions ==
+== Rewritten with runtime checks ==
 
-  * VarGlobalRule
-
-== Unclassified Rules ==
-
-  * Synthetic0Rule
   * ForeachRule
   * TryCatchRule
   * TryCatchFinallyRule
@@ -39,27 +46,20 @@ The following rules prohibit particular javascript constructions:
   * VarFuncFreezeRule
   * VarGlobalRule
   * VarDefaultRule
-  * ReadBadSuffixRule
   * ReadGlobalViaThisRule
   * ReadInternalRule
-  * ReadBadInternalRule
   * ReadIndexGlobalRule
   * ReadIndexInternalRule
   * ReadIndexPublicRule
   * SetGlobalRule
-  * SetBadThisRule
-  * SetBadSuffixRule
   * SetGlobalViaThisRule
   * SetInternalRule
   * SetMemberRule
-  * SetBadInternalRule
   * SetStaticRule
   * SetPublicRule
   * SetIndexInternalRule
   * SetIndexPublicRule
-  * SetBadInitializeRule
   * SetInitializeRule
-  * SetBadDeclareRule
   * SetDeclareRule
   * SetVarRule
   * SetReadModifyWriteLocalVarRule
@@ -70,14 +70,10 @@ The following rules prohibit particular javascript constructions:
   * DeletePubRule
   * DeleteGlobalRule
   * DeleteNonLvalueRule
-  * CallBadSuffixRule
   * CallGlobalViaThisRule
   * CallInternalRule
-  * CallBadInternalRule
   * CallCajaDef2Rule
-  * CallCajaDef2BadRule
   * CallCajaDef3PlusRule
-  * CallCajaDef3PlusBadRule
   * CallPublicRule
   * CallIndexInternalRule
   * CallIndexPublicRule
@@ -86,14 +82,15 @@ The following rules prohibit particular javascript constructions:
   * FuncNamedSimpleDeclRule
   * FuncNamedSimpleValueRule
   * FuncUnattachedMethodRule
-  * FuncBadMethodRule
   * FuncCtorRule
   * MapEmptyRule
-  * MapBadKeySuffixRule
   * MapNonEmptyRule
   * MultiDeclarationRule
   * OtherInstanceofRule
   * OtherTypeofRule
   * OtherSpecialOpRule
   * LabeledStatementRule
+
+== Required for correctness   ==
+  * Synthetic0Rule
   * RecurseRule
