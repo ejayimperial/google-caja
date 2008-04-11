@@ -14,7 +14,7 @@ rewrite the remaining program with additional runtime checks.
 Cajoling rules are specified using QuasiLiterals to identify a snippet
 of code which needs to be rewritten and .
 
-== Statically Forbidden ==
+== Static Restrictions ==
 
 The following rules prohibit particular javascript constructions:
 
@@ -35,7 +35,7 @@ The following rules prohibit particular javascript constructions:
   * FuncBadMethodRule
   * MapBadKeySuffixRule
 
-== Rewritten with runtime checks ==
+== Dynamic Restrictions ==
 
   * ForeachRule
   * TryCatchRule
