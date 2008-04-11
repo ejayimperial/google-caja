@@ -18,82 +18,82 @@ of code which needs to be rewritten and .
 
 The following rules prohibit particular javascript constructions:
 
-WithRule
-VarBadSuffixRule
-VarBadSuffixDeclarationRule
-VarBadGlobalSuffixRule
+* WithRule
+* VarBadSuffixRule
+* VarBadSuffixDeclarationRule
+* VarBadGlobalSuffixRule
 
 == Rewritten Constructions ==
 
-VarGlobalRule
+* VarGlobalRule
 
 == Unclassified Rules ==
 
-Synthetic0Rule
-ForeachRule
-TryCatchRule
-TryCatchFinallyRule
-TryFinallyRule
-VarArgsRule
-VarThisRule
-VarFuncFreezeRule
-VarGlobalRule
-VarDefaultRule
-ReadBadSuffixRule
-ReadGlobalViaThisRule
-ReadInternalRule
-ReadBadInternalRule
-ReadIndexGlobalRule
-ReadIndexInternalRule
-ReadIndexPublicRule
-SetGlobalRule
-SetBadThisRule
-SetBadSuffixRule
-SetGlobalViaThisRule
-SetInternalRule
-SetMemberRule
-SetBadInternalRule
-SetStaticRule
-SetPublicRule
-SetIndexInternalRule
-SetIndexPublicRule
-SetBadInitializeRule
-SetInitializeRule
-SetBadDeclareRule
-SetDeclareRule
-SetVarRule
-SetReadModifyWriteLocalVarRule
-SetIncrDecrRule
-NewCalllessCtorRule
-NewCtorRule
-DeletePropRule
-DeletePubRule
-DeleteGlobalRule
-DeleteNonLvalueRule
-CallBadSuffixRule
-CallGlobalViaThisRule
-CallInternalRule
-CallBadInternalRule
-CallCajaDef2Rule
-CallCajaDef2BadRule
-CallCajaDef3PlusRule
-CallCajaDef3PlusBadRule
-CallPublicRule
-CallIndexInternalRule
-CallIndexPublicRule
-CallFuncRule
-FuncAnonSimpleRule
-FuncNamedSimpleDeclRule
-FuncNamedSimpleValueRule
-FuncUnattachedMethodRule
-FuncBadMethodRule
-FuncCtorRule
-MapEmptyRule
-MapBadKeySuffixRule
-MapNonEmptyRule
-MultiDeclarationRule
-OtherInstanceofRule
-OtherTypeofRule
-OtherSpecialOpRule
-LabeledStatementRule
-RecurseRule
+* Synthetic0Rule
+* ForeachRule
+* TryCatchRule
+* TryCatchFinallyRule
+* TryFinallyRule
+* VarArgsRule
+* VarThisRule
+* VarFuncFreezeRule
+* VarGlobalRule
+* VarDefaultRule
+* ReadBadSuffixRule
+* ReadGlobalViaThisRule
+* ReadInternalRule
+* ReadBadInternalRule
+* ReadIndexGlobalRule
+* ReadIndexInternalRule
+* ReadIndexPublicRule
+* SetGlobalRule
+* SetBadThisRule
+* SetBadSuffixRule
+* SetGlobalViaThisRule
+* SetInternalRule
+* SetMemberRule
+* SetBadInternalRule
+* SetStaticRule
+* SetPublicRule
+* SetIndexInternalRule
+* SetIndexPublicRule
+* SetBadInitializeRule
+* SetInitializeRule
+* SetBadDeclareRule
+* SetDeclareRule
+* SetVarRule
+* SetReadModifyWriteLocalVarRule
+* SetIncrDecrRule
+* NewCalllessCtorRule
+* NewCtorRule
+* DeletePropRule
+* DeletePubRule
+* DeleteGlobalRule
+* DeleteNonLvalueRule
+* CallBadSuffixRule
+* CallGlobalViaThisRule
+* CallInternalRule
+* CallBadInternalRule
+* CallCajaDef2Rule
+* CallCajaDef2BadRule
+* CallCajaDef3PlusRule
+* CallCajaDef3PlusBadRule
+* CallPublicRule
+* CallIndexInternalRule
+* CallIndexPublicRule
+* CallFuncRule
+* FuncAnonSimpleRule
+* FuncNamedSimpleDeclRule
+* FuncNamedSimpleValueRule
+* FuncUnattachedMethodRule
+* FuncBadMethodRule
+* FuncCtorRule
+* MapEmptyRule
+* MapBadKeySuffixRule
+* MapNonEmptyRule
+* MultiDeclarationRule
+* OtherInstanceofRule
+* OtherTypeofRule
+* OtherSpecialOpRule
+* LabeledStatementRule
+* RecurseRule
