@@ -45,6 +45,18 @@ Other:
 
 == Dynamic Restrictions ==
 
+Frozen Prototypes:
+
+Well-formed inheritence:
+
+Shape change:
+
+Non-reflective constructors:
+
+Attached methods:
+
+Other:
+
   * ForeachRule
   * TryCatchRule
   * TryCatchFinallyRule
