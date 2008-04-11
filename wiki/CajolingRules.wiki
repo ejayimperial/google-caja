@@ -1,0 +1,99 @@
+#summary Program transformations that turn javascript into Caja
+#labels Phase-Design
+
+= Background =
+
+Caja is a syntactic and semantic subset of JavaScript but the dynamic
+nature of JavaScript prevents us from statically recognizing all
+prohibited code.  Instead we perform two types of transformations --
+we statically recognize and reject non-Caja input when we can and we
+rewrite the remaining program with additional runtime checks.
+
+= Transformations =
+
+Cajoling rules are specified using QuasiLiterals to identify a snippet
+of code which needs to be rewritten and .
+
+== Prohibited Constructions ==
+
+The following rules prohibit particular javascript constructions:
+
+WithRule
+VarBadSuffixRule
+VarBadSuffixDeclarationRule
+VarBadGlobalSuffixRule
+
+== Rewritten Constructions ==
+
+VarGlobalRule
+
+== Unclassified Rules ==
+
+Synthetic0Rule
+ForeachRule
+TryCatchRule
+TryCatchFinallyRule
+TryFinallyRule
+VarArgsRule
+VarThisRule
+VarFuncFreezeRule
+VarGlobalRule
+VarDefaultRule
+ReadBadSuffixRule
+ReadGlobalViaThisRule
+ReadInternalRule
+ReadBadInternalRule
+ReadIndexGlobalRule
+ReadIndexInternalRule
+ReadIndexPublicRule
+SetGlobalRule
+SetBadThisRule
+SetBadSuffixRule
+SetGlobalViaThisRule
+SetInternalRule
+SetMemberRule
+SetBadInternalRule
+SetStaticRule
+SetPublicRule
+SetIndexInternalRule
+SetIndexPublicRule
+SetBadInitializeRule
+SetInitializeRule
+SetBadDeclareRule
+SetDeclareRule
+SetVarRule
+SetReadModifyWriteLocalVarRule
+SetIncrDecrRule
+NewCalllessCtorRule
+NewCtorRule
+DeletePropRule
+DeletePubRule
+DeleteGlobalRule
+DeleteNonLvalueRule
+CallBadSuffixRule
+CallGlobalViaThisRule
+CallInternalRule
+CallBadInternalRule
+CallCajaDef2Rule
+CallCajaDef2BadRule
+CallCajaDef3PlusRule
+CallCajaDef3PlusBadRule
+CallPublicRule
+CallIndexInternalRule
+CallIndexPublicRule
+CallFuncRule
+FuncAnonSimpleRule
+FuncNamedSimpleDeclRule
+FuncNamedSimpleValueRule
+FuncUnattachedMethodRule
+FuncBadMethodRule
+FuncCtorRule
+MapEmptyRule
+MapBadKeySuffixRule
+MapNonEmptyRule
+MultiDeclarationRule
+OtherInstanceofRule
+OtherTypeofRule
+OtherSpecialOpRule
+LabeledStatementRule
+RecurseRule
