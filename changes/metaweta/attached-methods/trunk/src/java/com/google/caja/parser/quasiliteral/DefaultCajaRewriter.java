@@ -1370,6 +1370,13 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    /**
+     * Rewrites an 
+     * - anonymous function 
+     * - mentioning this 
+     * - whose parent scope is a constructor or method
+     * into an attached method.
+     */
     addRule(new Rule("funcMethod", this) {
       @Override
       public ParseTreeNode fire(
@@ -1392,6 +1399,13 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     });
 
+    /**
+     * Rewrites an 
+     * - anonymous function
+     * - mentioning this
+     * - whose parent scope is NOT a constructor or method (see previous case)
+     * into an exophoric function.
+     */
     addRule(new Rule("funcXo4a", this) {
       @Override
       public ParseTreeNode fire(
