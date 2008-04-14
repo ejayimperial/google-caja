@@ -98,6 +98,37 @@ public class DefaultCajaRewriterTest extends TestCase {
         "    ___.readPub(___OUTERS___, '" + varName + "'" + (flag ? ", true" : "") + "))";
   }
 
+  public void testAttachedMethod() throws Exception {
+    // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
+    // to check cases where calling the attached method should fail.
+    assertConsistent(
+        "function Foo(){" +
+        "  this.f = function (){this.x_ = 1;};" +
+        "  this.getX = function (){return this.x_;};" +
+        "}" +
+        "foo = new Foo();" +
+        "foo.f();" +
+        "foo.getX();");
+    assertConsistent(
+        "function Foo(){}" +
+        "Foo.prototype.setX = function(x) { this.x_ = x; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();" 
+        );
+    assertConsistent(
+        "function Foo(){ this.gogo(); }" +
+        "Foo.prototype.gogo = function() { this.setX = function(x) { this.x_ = x; }; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();" 
+        );
+  }
+
   ////////////////////////////////////////////////////////////////////////
   // Handling of synthetic nodes
   ////////////////////////////////////////////////////////////////////////
@@ -1598,47 +1629,46 @@ public class DefaultCajaRewriterTest extends TestCase {
             "}))"));
   }
 
-  public void testExophoricFunction() throws Exception {
+  public void testFuncExophoricFunction() throws Exception {
     checkSucceeds(
-        "function (x) { this.x = x; };",
+        "function (x) { return this.x; };",
         "___.xo4a(" +
         "    function (x) {" +
         "       var t___ = this;" +
-        "       (function () {" +
-        "          var x___ = t___;" +
-        "          var x0___ = " + weldReadOuters("x") + ";" +
-        "          return x___.x_canSet___" +
-        "              ? (x___.x = x0___) : ___.setPub(x___, 'x', x0___);" +
-        "        })();" +
+        "       return (function () {" +
+        "         var x___ = t___;" +
+        "         return x___.x_canRead___ ? x___.x : ___.readPub(x___, 'x');" +
+        "       })();" +
         "     })"
         );
     checkFails(
         "function (k) { return this[k]; }",
         "\"this\" in an exophoric function exposes only public fields");
+    checkFails(
+        "function () { delete this.k; }",
+        "\"this\" in an exophoric function only exposes public fields");
+    checkFails(
+        "function () { x in this; }",
+        "\"this\" in an exophoric function only exposes public fields");
+    checkFails(
+        "function () { 'foo_' in this; }",
+        "\"this\" in an exophoric function only exposes public fields");
+    checkSucceeds(
+        "function () { 'foo' in this; }",
+        "___.exophora(" +
+        "    function () {" +
+        "      var t___ = this;" +
+        "      'foo' in t___;" +
+        "    })");
+    checkFails(
+        "function () { for (var k in this); }",
+        "\"this\" in an exophoric function only exposes public fields");
+    checkFails(
+        "function (y) { this.x = y; }",
+        "\"this\" in an exophoric function only exposes public fields");
+
     assertConsistent(
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7()");
-  }
-
-  public void testAttachedMethod() throws Exception {
-    // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
-    // to check cases where calling the attached method should fail.
-    assertConsistent(
-        "function Foo(){" +
-        "  this.f = function (){this.x_ = 1;};" +
-        "  this.getX = function (){return this.x_;};" +
-        "}" +
-        "foo = new Foo();" +
-        "foo.f();" +
-        "foo.getX();");
-    assertConsistent(
-        "function Foo(){}" +
-        "Foo.prototype.setX = function(x) { this.x_ = x; };" +
-        "Foo.prototype.getX = function() { return this.x_; };" +
-        "Foo.prototype.y = 1;" +
-        "foo=new Foo;" +
-        "foo.setX(5);" +
-        "''+foo.y+foo.getX();" 
-        );
   }
 
   public void testFuncBadMethod() throws Exception {

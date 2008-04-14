@@ -17,8 +17,6 @@ package com.google.caja.parser.quasiliteral;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
 import com.google.caja.parser.AbstractParseTreeNode;
-import com.google.caja.parser.AncestorChain;
-import com.google.caja.parser.Visitor;
 import com.google.caja.parser.js.AssignOperation;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.BreakStmt;
@@ -601,7 +599,6 @@ public class DefaultCajaRewriter extends Rewriter {
     addRule(new Rule("setMember", this) {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-
         // BUG TODO(erights,ihab): We must only recognize (and thus allow) this
         // expression when it is evaluated for effects only, not for value.
         // Currently, since we have no such test, the translated expression will
@@ -617,6 +614,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 // Make sure @p and @clazz are mentionable.
                 expand(p, scope, mq);
                 expand(clazz, scope, mq);
+                // TODO(metaweta): create a new scope for use in expanding m; set the flag on that.
                 scope.setFromMethod(true);
                 return substV(
                     "___.setMember(@clazz, @rp, @m);",
@@ -1387,6 +1385,7 @@ public class DefaultCajaRewriter extends Rewriter {
               scope, (FunctionConstructor) node);
           if (!s2.hasFreeThis()) { return NONE; }
           // If we're in a constructor or a method, attach the method.
+          // TODO(metaweta): walk up the scope chain until you hit a function constructor
           if (scope.isFromConstructor() || scope.isFromMethod()) {
             s2.setFromMethod(true);
             return substV(
@@ -1423,36 +1422,7 @@ public class DefaultCajaRewriter extends Rewriter {
           // Attempts to use private APIs, as in (this.foo_) fail statically,
           // and elsewhere, we will use (___.readPub) instead of (___.readProp).
           ParseTreeNode rewrittenBody = bindings.get("body").clone();
-          rewrittenBody.acceptPreOrder(new Visitor() {
-                public boolean visit(AncestorChain<?> ac) {
-                  if (ac.node instanceof FunctionConstructor) { return false; }
-                  if (!(ac.node instanceof Reference)) { return true; }
-                  Reference ref = ac.cast(Reference.class).node;
-                  if (!ReservedNames.THIS.equals(ref.getIdentifierName())) {
-                    return true;
-                  }
-                  // If used in a context where this would be ambiguous, warn.
-                  if (ac.parent != null
-                      && ac.parent.node instanceof Operation) {
-                    switch (((Operation) ac.parent.node).getOperator()) {
-                      case SQUARE_BRACKET:
-                      case DELETE:
-                        mq.addMessage(
-                            RewriterMessageType.EXOPHORIC_FUNCTION_AMBIGUITY,
-                            ac.parent.node.getFilePosition());
-                        break;
-                    }
-                  }
-                  // Make a synethetic reference, so the reference will survive
-                  // cajoling but will not trigger the readProp/readPub
-                  // difference.
-                  Identifier syntheticLocalThis = s(
-                      new Identifier(ReservedNames.LOCAL_THIS));
-                  syntheticLocalThis.setFilePosition(ref.getFilePosition());
-                  s(ref).replaceChild(syntheticLocalThis, ref.getIdentifier());
-                  return true;
-                }
-              }, null);
+          rewrittenBody.acceptPreOrder(new ExophoricFunctionRewriter(mq), null);
           return substV(
               "___.xo4a(" +
               "    function (@formals*) { var @localThis = this; @body*; })",

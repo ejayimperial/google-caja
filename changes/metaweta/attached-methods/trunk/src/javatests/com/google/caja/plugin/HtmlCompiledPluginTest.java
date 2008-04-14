@@ -529,7 +529,8 @@ public class HtmlCompiledPluginTest extends TestCase {
         "}" +
         "</script>",
         "");
-    execGadget("<script>" +
+    execGadget(
+        "<script>" +
         "function Foo() {}" +
         "Foo.prototype.setX = function (x) { this.x_ = x; };" +
         "foo = new Foo;" +

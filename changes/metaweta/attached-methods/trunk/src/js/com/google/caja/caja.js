@@ -794,8 +794,8 @@ var ___;
     if (isCtor(meth)) {
       fail("Constructors can't be methods: ", meth);
     }
-    if (isSimpleFunc(meth)) {
-      fail("Simple functions can't be methods: ", meth);
+    if (isSimpleFunc(fun)) {
+      fail("Simple functions can't be exophoric: ", fun);
     }
     if (isXo4aFunc(meth)) {
       fail("Internal: exophoric functions can't be methods: ", meth);
