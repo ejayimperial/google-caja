@@ -46,6 +46,7 @@ import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Parser;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
+import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.plugin.stages.RewriteHtmlStage;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
@@ -532,8 +533,7 @@ public class HtmlCompiler {
                                   s(new Identifier("event"))))),
                         handler)))));
 
-        StringBuilder handlerFnNameLit
-            = StringLiteral.toQuotedValue(handlerFnName);
+        String handlerFnNameLit = StringLiteral.toQuotedValue(handlerFnName);
 
         Operation dispatcher = s(Operation.create(
             Operator.ADDITION,
