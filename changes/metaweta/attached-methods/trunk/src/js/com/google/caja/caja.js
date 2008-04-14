@@ -112,7 +112,7 @@ var ___;
    * Note: JavaScript has no macros, so even in the "does nothing"
    * case, remember that the arguments are still evaluated. 
    */
-  var myLogFunc_ = function(str, opt_stop) { console.log(str); };
+  var myLogFunc_ = function(str, opt_stop) {};
 
   /**
    * Gets the currently registered logging function.
@@ -248,7 +248,7 @@ var ___;
      * 
      */
     handleCall: function(obj, name, args) {
-      fail('Not callable: (', obj.toSource(), ').', name);
+      fail('Not callable: (', obj, ').', name);
     },
 
     /**
@@ -771,6 +771,11 @@ var ___;
     return result;
   }
 
+  /**
+   * Marks an anonymous function as exophoric:
+   * the function mentions <tt>this</tt>,
+   * but only accesses the public interface.
+   */
   function xo4a(func, opt_name) {
     enforceType(func, 'function', opt_name);
     func.___XO4A___ = true;
