@@ -248,7 +248,7 @@ var ___;
      * 
      */
     handleCall: function(obj, name, args) {
-      fail('Not callable: (', obj, ').', name);
+      fail('Not callable: (', obj.toSource(), ').', name);
     },
 
     /**
@@ -584,6 +584,11 @@ var ___;
     obj[name + '_canEnum___'] = true;
   }
   
+  /** allowEnum for members*/
+  function allowEnumOnly(obj, name) { 
+    obj[name + '_canEnum___'] = true;
+  }
+  
   /** 
    * Simple functions should callable and readable, but methods
    * should only be callable.
@@ -622,13 +627,17 @@ var ___;
   function isMethod(meth)    { 
     return (meth === null) ? 
         false : 
-        (typeof meth === 'object') ? 
+        (typeof meth === 'function') ? 
             !!meth.___METHOD___ : 
             false; 
   }
   function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
-  function isUnattachedMethod(meth) {
-    return meth.___METHOD___ === null || isSimpleFunc(meth);
+  function isXo4aFunc(func) {
+    return (func === null) ?
+        false :
+        (typeof func === 'function') ?
+            (!!func.___XO4A___ || isSimpleFunc(func)) :
+            false;
   }
 
   /**
@@ -739,9 +748,12 @@ var ___;
       enforceType(that, 'object');
     }
     if (that === null) {
-      fail('Internal: may not attach null: ', meth);
+      fail('Internal: may not attach to null: ', meth);
     }
     if (!isMethod(meth)) {
+      fail('Internal: attach should not see non-methods: ', meth);
+    }
+    if (meth.___ATTACHMENT___ === that) {
       return meth;
     }
     if (meth.___ATTACHMENT___ !== undefined) {
@@ -749,7 +761,7 @@ var ___;
     }
     function result(var_args) {
       if (this !== that) {
-        fail('Method ', meth, ' is already attached: ', this);
+        fail('Method ', meth, ' is already attached.');
       }
       return meth.apply(that, arguments);
     }
@@ -759,8 +771,14 @@ var ___;
     return result;
   }
 
+  function xo4a(func, opt_name) {
+    enforceType(func, 'function', opt_name);
+    func.___XO4A___ = true;
+    return func;
+  }
+
   /** 
-   * Mark meth as a method of instances of constr. 
+   * Mark meth as a method.
    * <p>
    * @param opt_name if provided, should be the message name associated
    *   with the method. Currently, this is used only to generate
@@ -769,32 +787,15 @@ var ___;
   function method(meth, opt_name) {
     enforceType(meth, 'function', opt_name);
     if (isCtor(meth)) {
-      fail("constructors can't be methods: ", meth);
+      fail("Constructors can't be methods: ", meth);
     }
     if (isSimpleFunc(meth)) {
       fail("Simple functions can't be methods: ", meth);
+    }
+    if (isXo4aFunc(meth)) {
+      fail("Internal: exophoric functions can't be methods: ", meth);
     }
     meth.___METHOD___ = true;
-    return primFreeze(meth);
-  }
-
-  /** 
-   * Mark meth as an unattached method -- a method not attached to any
-   * particular class, so not allowed access to private fields.
-   * <p>
-   * @param opt_name if provided, should be the message name associated
-   *   with the method. Currently, this is used only to generate
-   *   friendlier error messages.
-   */
-  function unattachedMethod(meth, opt_name) {
-    enforceType(meth, 'function', opt_name);
-    if (isCtor(meth)) {
-      fail("constructors can't be methods: ", meth);
-    }
-    if (isSimpleFunc(meth)) {
-      fail("Simple functions can't be methods: ", meth);
-    }
-    meth.___METHOD___ = null;
     return primFreeze(meth);
   }
 
@@ -910,9 +911,9 @@ var ___;
     if (!canSetProp(proto, name)) {
       fail('not settable: ', name);
     }
-    if (member.___METHOD___) {
+    if (isMethod(member) || isXo4aFunc(member)) {
       allowCall(proto, name);  // grant
-      allowEnum(proto, name); // grant
+      allowEnumOnly(proto, name); // grant
     } else if (isSimpleFunc(member)) {
       allowCall(proto, name);  // grant
       allowSet(proto, name);  // grant
@@ -950,16 +951,12 @@ var ___;
    */
   function readProp(that, name) {
     name = String(name);
-    var result;
     if (canReadProp(that, name)) { 
-      result = that[name];
+      return that[name];
+    } else if (canCall(that, name)) {
+      return ___.attach(that, that[name]);
     } else {
-      result = that.handleRead___(name, false);
-    }
-    if (isMethod(result)) {
-      return ___.attach(that, result);
-    } else {
-      return result;
+      return that.handleRead___(name, false);
     }
   }
   
@@ -993,13 +990,11 @@ var ___;
    */
   function readPub(obj, name, opt_shouldThrow) {
     name = String(name);
-    var result;
-    if (canReadPub(obj, name)) { result = obj[name]; }
-    else { result = obj.handleRead___(name, opt_shouldThrow); }
-    if (isMethod(result)) {
-      return ___.attach(obj, result);
-    } else {
-      return result;
+    if (canReadPub(obj, name)) { return obj[name]; }
+    else if (canCall(obj, name)) {
+      return ___.attach(obj, obj[name]); 
+    } else { 
+      return obj.handleRead___(name, opt_shouldThrow);
     }
   }
   
@@ -1163,7 +1158,7 @@ var ___;
     if (canCall(obj, name)) { return true; }
     if (!canReadPub(obj, name)) { return false; }
     var func = obj[name];
-    if (!isUnattachedMethod(func) && !isMethod(func)) { return false; }
+    if (!isXo4aFunc(func) && !isMethod(func)) { return false; }
     allowCall(obj, name);  // memoize
     return true;
   }
@@ -1965,13 +1960,13 @@ var ___;
     isCtor: isCtor,
     isMethod: isMethod,
     isSimpleFunc: isSimpleFunc,
+    isXo4aFunc: isXo4aFunc,
     ctor: ctor,                   asCtorOnly: asCtorOnly,
     asCtor: asCtor,
     splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
-    unattachedMethod: unattachedMethod,
-    isUnattachedMethod: isUnattachedMethod,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
+    xo4a: xo4a,
     setMember: setMember,
     setMemberMap: setMemberMap,
     attach: attach,

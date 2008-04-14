@@ -773,8 +773,6 @@ public class DefaultCajaRewriterTest extends TestCase {
         "  var foo = ___.simpleFunc(function foo() {});" +
         "  ___.setMember(" +
         "      foo, 'p', ___.method(" +
-        // TODO(mikesamuel): Should not reevaluate foo if it is a global.
-        "          foo," +
         "          function(a, b) {" +
         "            var t___ = this;" +
         "            t___;" +
@@ -1386,7 +1384,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         weldSetOuters("WigglyPoint", "___.simpleFunc(function WigglyPoint() {})") + ";" +
         "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ", {" +
         "    m0: " + weldReadOuters("x") + "," +
-        "    m1: ___.method(" + weldReadOuters("WigglyPoint") + ", function() {" +
+        "    m1: ___.method(function() {" +
         "      var t___ = this;" +
         "      (function() {" +
         "        var x___ = 3;" +
@@ -1406,7 +1404,7 @@ public class DefaultCajaRewriterTest extends TestCase {
         weldSetOuters("WigglyPoint", "___.simpleFunc(function WigglyPoint() {})") + ";" +
         "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ", {" +
         "    m0: " + weldReadOuters("x") + "," +
-        "    m1: ___.method(" + weldReadOuters("WigglyPoint") + ", function() {" +
+        "    m1: ___.method(function() {" +
         "      var t___ = this;" +
         "      (function() {" +
         "        var x___ = 3;" +
@@ -1600,10 +1598,10 @@ public class DefaultCajaRewriterTest extends TestCase {
             "}))"));
   }
 
-  public void testUnattachedMethod() throws Exception {
+  public void testExophoricFunction() throws Exception {
     checkSucceeds(
         "function (x) { this.x = x; };",
-        "___.unattachedMethod(" +
+        "___.xo4a(" +
         "    function (x) {" +
         "       var t___ = this;" +
         "       (function () {" +
@@ -1616,9 +1614,31 @@ public class DefaultCajaRewriterTest extends TestCase {
         );
     checkFails(
         "function (k) { return this[k]; }",
-        "\"this\" in an unattached method only exposes public fields");
+        "\"this\" in an exophoric function exposes only public fields");
     assertConsistent(
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7()");
+  }
+
+  public void testAttachedMethod() throws Exception {
+    // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
+    // to check cases where calling the attached method should fail.
+    assertConsistent(
+        "function Foo(){" +
+        "  this.f = function (){this.x_ = 1;};" +
+        "  this.getX = function (){return this.x_;};" +
+        "}" +
+        "foo = new Foo();" +
+        "foo.f();" +
+        "foo.getX();");
+    assertConsistent(
+        "function Foo(){}" +
+        "Foo.prototype.setX = function(x) { this.x_ = x; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();" 
+        );
   }
 
   public void testFuncBadMethod() throws Exception {
@@ -2033,19 +2053,6 @@ public class DefaultCajaRewriterTest extends TestCase {
       // Pass
     }
   }
-
-  public void testAttachedMethod() throws Exception {
-    assertConsistent(
-        "function Foo(){" +
-        "  this.f = function (){this.x_ = 1;};" +
-        "  this.getX = function (){return this.x_;};" +
-        "}" +
-        "foo = new Foo();" +
-        "foo.f();" +
-        "foo.getX();");
-    // TODO(metaweta): add tests asserting failure of attempts
-    // to call foo.f as a simple function or as a method of another object.
-   }
 
   private void setSynthetic(ParseTreeNode n) {
     SyntheticNodes.s(n);

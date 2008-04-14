@@ -617,6 +617,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 // Make sure @p and @clazz are mentionable.
                 expand(p, scope, mq);
                 expand(clazz, scope, mq);
+                scope.setFromMethod(true);
                 return substV(
                     "___.setMember(@clazz, @rp, @m);",
                     "clazz", expandReferenceToOuters(clazz, scope, mq),  // Don't expand so we don't freeze.
@@ -1382,14 +1383,14 @@ public class DefaultCajaRewriter extends Rewriter {
           // If we're in a constructor or a method, attach the method.
           if (scope.isFromConstructor() || scope.isFromMethod()) {
             return substV(
-                "___.attach(t___, function(@formals*) { @body*; })", 
+                "___.attach(t___, ___.method(function(@formals*) { @body*; }))", 
                 "formals", bindings.get("formals"),
                 "body", expand(bindings.get("body"), s2, mq));
           }
           checkFormals(bindings.get("formals"), mq);
-          // An unattached method is one where this is only used to access the
+          // An exophoric function is one where this is only used to access the
           // public API.
-          // We cajole an unattached method by converting all `this` references
+          // We cajole an exophoric function by converting all `this` references
           // in the body to `t___` and then cajole the body.
           // Attempts to use private APIs, as in (this.foo_) fail statically,
           // and elsewhere, we will use (___.readPub) instead of (___.readProp).
@@ -1409,7 +1410,7 @@ public class DefaultCajaRewriter extends Rewriter {
                       case SQUARE_BRACKET:
                       case DELETE:
                         mq.addMessage(
-                            RewriterMessageType.UNATTACHED_METHOD_AMBIGUITY,
+                            RewriterMessageType.EXOPHORIC_FUNCTION_AMBIGUITY,
                             ac.parent.node.getFilePosition());
                         break;
                     }
@@ -1425,29 +1426,11 @@ public class DefaultCajaRewriter extends Rewriter {
                 }
               }, null);
           return substV(
-              "___.unattachedMethod(" +
+              "___.xo4a(" +
               "    function (@formals*) { var @localThis = this; @body*; })",
               "formals", bindings.get("formals"),
               "localThis", s(new Identifier(ReservedNames.LOCAL_THIS)),
               "body", expand(rewrittenBody, scope, mq));
-        }
-        return NONE;
-      }
-    });
-
-    addRule(new Rule("funcBadMethod", this) {
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (match("function(@ps*) { @bs*; }", node, bindings)) {
-          Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)node);
-          if (s2.hasFreeThis()) {
-            mq.addMessage(
-                RewriterMessageType.ANONYMOUS_FUNCTION_REFERENCES_THIS,
-                node.getFilePosition(), 
-                this, 
-                node);
-            return node;
-          }
         }
         return NONE;
       }
