@@ -1379,14 +1379,28 @@ public class DefaultCajaRewriter extends Rewriter {
           Scope s2 = Scope.fromFunctionConstructor(
               scope, (FunctionConstructor) node);
           if (!s2.hasFreeThis()) { return NONE; }
-          s2.setFromMethod(true);
           // If we're in a constructor or a method, attach the method.
           if (scope.isFromConstructor() || scope.isFromMethod()) {
+            s2.setFromMethod(true);
             return substV(
                 "___.attach(t___, ___.method(function(@formals*) { @body*; }))", 
                 "formals", bindings.get("formals"),
                 "body", expand(bindings.get("body"), s2, mq));
           }
+        }
+        return NONE;
+      }
+    });
+
+    addRule(new Rule("funcXo4a", this) {
+      @Override
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, final MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (match("(function (@formals*) { @body*; })", node, bindings)) {
+          Scope s2 = Scope.fromFunctionConstructor(
+              scope, (FunctionConstructor) node);
+          if (!s2.hasFreeThis()) { return NONE; }
           checkFormals(bindings.get("formals"), mq);
           // An exophoric function is one where this is only used to access the
           // public API.
