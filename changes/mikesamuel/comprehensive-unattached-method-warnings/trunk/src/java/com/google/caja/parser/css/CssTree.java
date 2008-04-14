@@ -58,7 +58,7 @@ public abstract class CssTree extends AbstractParseTreeNode<CssTree> {
     }
     return sb.toString();
   }
-  
+
   public final TokenConsumer makeRenderer(
       Appendable out, Callback<IOException> exHandler) {
     return new CssPrettyPrinter(out, exHandler);
@@ -322,7 +322,9 @@ public abstract class CssTree extends AbstractParseTreeNode<CssTree> {
     @Override
     public String getValue() { return ident; }
 
-    public String getPropertyName() { return ident; }
+    public String getPropertyName() {
+      return ident;
+    }
 
     public void render(RenderContext r) {
       r.getOut().mark(getFilePosition());

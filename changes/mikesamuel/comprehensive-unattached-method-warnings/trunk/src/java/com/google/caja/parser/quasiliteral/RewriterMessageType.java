@@ -105,7 +105,6 @@ public enum RewriterMessageType implements MessageTypeInt {
   WITH_BLOCKS_NOT_ALLOWED(
       "%s: \"with\" blocks are not allowed",
       MessageLevel.ERROR),
-
   EXOPHORIC_FUNCTION_AMBIGUITY(
       "%s: \"this\" in an exophoric function only exposes public fields",
       MessageLevel.CRITICAL_WARNING),
