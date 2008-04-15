@@ -33,6 +33,7 @@ import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
+import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.Parser;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
@@ -85,12 +86,12 @@ public abstract class CajaTestCase extends TestCase {
     return js(cp, false);
   }
 
+  protected Expression jsExpr(CharProducer cp) throws ParseException {
+    return jsExpr(cp, false);
+  }
+
   protected Block js(CharProducer cp, boolean quasi) throws ParseException {
-    return js(cp, new Criterion<Token<JsTokenType>>() {
-      public boolean accept(Token<JsTokenType> t) {
-        return t.type != JsTokenType.COMMENT;
-      }
-    }, quasi);
+    return js(cp, noJsComments(), quasi);
   }
 
   protected Block js(
@@ -102,6 +103,23 @@ public abstract class CajaTestCase extends TestCase {
     Block b = p.parse();
     tq.expectEmpty();
     return b;
+  }
+
+  protected Expression jsExpr(CharProducer cp, boolean quasi) throws ParseException {
+    JsLexer lexer = new JsLexer(cp);
+    JsTokenQueue tq = new JsTokenQueue(lexer, sourceOf(cp), noJsComments());
+    Parser p = new Parser(tq, mq, quasi);
+    Expression e = p.parseExpression(true);
+    tq.expectEmpty();
+    return e;
+  }
+
+  private static Criterion<Token<JsTokenType>> noJsComments() {
+    return new Criterion<Token<JsTokenType>>() {
+          public boolean accept(Token<JsTokenType> t) {
+            return t.type != JsTokenType.COMMENT;
+          }
+        };
   }
 
   protected Block quasi(CharProducer cp) throws ParseException {
