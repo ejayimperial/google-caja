@@ -1050,9 +1050,9 @@ public final class GxpCompiler {
       void apply(HTML.Attribute typeInfo, DomTree.Attrib t, GxpCompiler gxpc,
                  List<String> tgtChain, Block b) {
         new IdentifierWriter(
-            t.getAttribValueNode().getFilePosition(), gxpc.mq, true,
-            tgtChain, b)
-            .write(t.getAttribValue());
+            t.getAttribValueNode().getFilePosition(), gxpc.mq, true)
+            .toJavascript(t.getAttribValue(),
+                          new IdentifierWriter.AttribValueEmitter(tgtChain, b));
       }
 
       @Override
@@ -1066,11 +1066,10 @@ public final class GxpCompiler {
       void apply(HTML.Attribute typeInfo, DomTree.Attrib t, GxpCompiler gxpc,
                  List<String> tgtChain, Block b) {
         new IdentifierWriter(
-            t.getAttribValueNode().getFilePosition(), gxpc.mq, false,
-            tgtChain, b)
-            .write(t.getAttribValue());
+            t.getAttribValueNode().getFilePosition(), gxpc.mq, false)
+            .toJavascript(t.getAttribValue(),
+                          new IdentifierWriter.AttribValueEmitter(tgtChain, b));
       }
-
       @Override
       String runtimeFunction(String tagName, String attribName, DomTree t,
                              GxpCompiler gxpc) {
@@ -1194,4 +1193,3 @@ public final class GxpCompiler {
         throws BadContentException;
   }
 }
-

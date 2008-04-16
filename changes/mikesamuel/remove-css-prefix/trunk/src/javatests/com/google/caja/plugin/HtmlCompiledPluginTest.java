@@ -365,7 +365,7 @@ public class HtmlCompiledPluginTest extends TestCase {
 
         "assertEquals('<a onclick=\"return plugin_dispatchEvent___(" +
         "this, event || window.event, 0, \\'c_1___\\')\">hi</a>'," +
-        " outers.emitHtml___.htmlBuf_.join(''))"
+        " document.getElementById('test-test').innerHTML)"
         );
   }
 
@@ -560,17 +560,18 @@ public class HtmlCompiledPluginTest extends TestCase {
           // Initialize the DOM
           new RhinoTestBed.Input(
               // Document not defined until window.location set.
-              new StringReader("location = '" + htmlStubUrl + "';\n"),
+              "location = '" + htmlStubUrl + "';\n",
               "dom"),
           // Make the assertTrue, etc. functions available to javascript
           new RhinoTestBed.Input(getClass(), "asserts.js"),
           // Plugin Framework
           new RhinoTestBed.Input(getClass(), "../caja.js"),
+          new RhinoTestBed.Input(getClass(), "html-emitter.js"),
           new RhinoTestBed.Input(getClass(), "container.js"),
           // The gadget
-          new RhinoTestBed.Input(new StringReader(js.toString()), "gadget"),
+          new RhinoTestBed.Input(js.toString(), "gadget"),
           // The tests
-          new RhinoTestBed.Input(new StringReader(tests), "tests"),
+          new RhinoTestBed.Input(tests, "tests"),
         };
       RhinoTestBed.runJs(null, inputs);
     }
