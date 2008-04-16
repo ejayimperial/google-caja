@@ -2076,7 +2076,6 @@ public class DefaultCajaRewriterTest extends TestCase {
       messageText.append("\n");
     }
     assertTrue(
-        
         "Messages do not contain \"" + error + "\": " + messageText.toString(),
         messageText.toString().contains(error));
   }
