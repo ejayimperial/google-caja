@@ -2080,14 +2080,21 @@ public class DefaultCajaRewriterTest extends TestCase {
         messageText.toString().contains(error));
   }
 
+  private void checkSucceeds(ParseTreeNode inputNode, 
+                             ParseTreeNode expectedResultNode)
+      throws Exception {
+    checkSucceeds(inputNode,expectedResultNode,MessageLevel.WARNING);
+  }
+  
   private void checkSucceeds(
       ParseTreeNode inputNode,
-      ParseTreeNode expectedResultNode)
+      ParseTreeNode expectedResultNode,
+      MessageLevel highest)
       throws Exception {
     mq.getMessages().clear();
     ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
     for (Message m : mq.getMessages()) {
-      if (m.getMessageLevel().compareTo(MessageLevel.WARNING) >= 0) {
+      if (m.getMessageLevel().compareTo(highest) >= 0) {
         fail(m.toString());
       }
     }
