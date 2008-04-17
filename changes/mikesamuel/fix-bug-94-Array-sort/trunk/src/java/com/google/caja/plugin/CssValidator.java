@@ -16,13 +16,16 @@ package com.google.caja.plugin;
 
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lang.html.HtmlSchema;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.css.CssPropertySignature;
 import com.google.caja.parser.css.CssTree;
+import com.google.caja.render.CssPrettyPrinter;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageTypeInt;
@@ -30,7 +33,6 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.SyntheticAttributeKey;
 import com.google.caja.util.SyntheticAttributes;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -71,6 +73,7 @@ public final class CssValidator {
   private final CssSchema cssSchema;
   private final HtmlSchema htmlSchema;
   private final MessageQueue mq;
+  private MessageLevel invalidNodeMessageLevel = MessageLevel.ERROR;
 
   public CssValidator(
       CssSchema cssSchema, HtmlSchema htmlSchema, MessageQueue mq) {
@@ -82,7 +85,24 @@ public final class CssValidator {
     this.mq = mq;
   }
 
-  /** True iff the given css tree is valid according to the CSS Schema. */
+  /**
+   * Specifies the level of messages issued when nodes are marked
+   * {@link #INVALID}.
+   * If you are dealing with noisy CSS and later remove invalid nodes, then
+   * this can be set to {@link MessageLevel#WARNING}.
+   * @return this
+   */
+  public CssValidator withInvalidNodeMessageLevel(MessageLevel messageLevel) {
+    this.invalidNodeMessageLevel = messageLevel;
+    return this;
+  }
+
+  /**
+   * True iff the given css tree is valid according to the CSS Schema.
+   * If invalid, parts with problems will be marked {@link #INVALID}.
+   * Clients may ignore the return value so long as nodes so marked are removed
+   * from the parse tree.
+   */
   public boolean validateCss(AncestorChain<? extends CssTree> css) {
     if (css.node instanceof CssTree.Declaration) {
       return validateDeclaration((CssTree.Declaration) css.node);
@@ -115,10 +135,11 @@ public final class CssValidator {
         prop.getPropertyName());
     if (null == pinfo) {
       mq.addMessage(
-          PluginMessageType.UNKNOWN_CSS_PROPERTY, prop.getFilePosition(),
+          PluginMessageType.UNKNOWN_CSS_PROPERTY, invalidNodeMessageLevel,
+          prop.getFilePosition(),
           MessagePart.Factory.valueOf(prop.getPropertyName()));
       decl.getAttributes().set(INVALID, Boolean.TRUE);
-      return false;
+      return true;
     }
     // Apply the signature
     if (!applySignature(pinfo.name, decl.getExpr(), pinfo.sig)) {
@@ -126,6 +147,7 @@ public final class CssValidator {
       decl.getAttributes().set(INVALID, Boolean.TRUE);
       return false;
     }
+
     return true;
   }
 
@@ -145,11 +167,13 @@ public final class CssValidator {
           || "body".equals(tagName)) {
         return true;
       }
-      mq.addMessage(PluginMessageType.UNSAFE_TAG, sel.getFilePosition(),
-                    MessagePart.Factory.valueOf(tagName));
+      mq.addMessage(
+          PluginMessageType.UNSAFE_TAG, invalidNodeMessageLevel,
+          sel.getFilePosition(), MessagePart.Factory.valueOf(tagName));
     } else {
       mq.addMessage(
-          PluginMessageType.UNKNOWN_TAG, sel.getFilePosition(),
+          PluginMessageType.UNKNOWN_TAG, invalidNodeMessageLevel,
+          sel.getFilePosition(),
           MessagePart.Factory.valueOf(sel.getElementName()));
     }
     sel.getAttributes().set(INVALID, Boolean.TRUE);
@@ -165,8 +189,8 @@ public final class CssValidator {
       return true;
     } else {
       mq.addMessage(
-          PluginMessageType.UNKNOWN_ATTRIBUTE, attr.getFilePosition(),
-          MessagePart.Factory.valueOf(attr.getIdent()),
+          PluginMessageType.UNKNOWN_ATTRIBUTE, invalidNodeMessageLevel,
+          attr.getFilePosition(), MessagePart.Factory.valueOf(attr.getIdent()),
           MessagePart.Factory.valueOf("{css selector}"));
       attr.getAttributes().set(INVALID, Boolean.TRUE);
       return false;
@@ -205,7 +229,8 @@ public final class CssValidator {
       int exprIdx = null != best ? best.exprIdx : 0;
 
       StringBuilder buf = new StringBuilder();
-      RenderContext rc = new RenderContext(new MessageContext(), buf);
+      TokenConsumer tc = new CssPrettyPrinter(buf, null);
+      RenderContext rc = new RenderContext(new MessageContext(), tc);
       boolean needsSpace = false;
       int k = 0;
       for (CssTree child : expr.children()) {
@@ -213,17 +238,12 @@ public final class CssValidator {
           buf.append(' ');
         }
         int len = buf.length();
-        try {
-          if (k++ == exprIdx) {
-            buf.append(" ==>");
-            child.render(rc);
-            buf.append("<== ");
-          } else {
-            child.render(rc);
-          }
-        } catch (IOException ex) {
-          throw (AssertionError) new AssertionError(
-              "IOException thrown writing to StringBuilder").initCause(ex);
+        if (k++ == exprIdx) {
+          buf.append(" ==>");
+          child.render(rc);
+          buf.append("<== ");
+        } else {
+          child.render(rc);
         }
         needsSpace = (len < buf.length());
       }
@@ -402,6 +422,15 @@ final class SignatureResolver {
     return passed;
   }
 
+  /**
+   * Makes sure that a candidate is on the passed list -- all succeeding rules
+   * will add the candidate except an optional rule that is satisfied because
+   * it successfully went through zero repetitions.
+   *
+   * @param passed modified in place.
+   * @return true if candidate is a complete solution to signature -- uses all
+   *    terms.
+   */
   private boolean checkEnd(
       Candidate candidate, CssPropertySignature sig, List<Candidate> passed) {
     if (candidate.exprIdx == expr.children().size()) {
@@ -475,10 +504,16 @@ final class SignatureResolver {
       CssPropertySignature.RepeatedSignature rsig,
       Candidate candidate, String propertyName, List<Candidate> passed) {
 
-    // The maximum branching factor for a repetition.  This is the
-    // greatest number of contiguous ambiguous elements we might encounter
-    // as in { font: inherit inherit inherit inherit }
-    final int MAX_BRANCHING_FACTOR = 4;
+    /**
+     * The maximum branching factor for a repetition.  This is the
+     * greatest number of contiguous ambiguous elements we might encounter
+     * as in <code>{ font: inherit inherit inherit inherit }</code>.
+     * <p>
+     * TODO(mikesamuel): this is currently 5 instead of 4 because it also limits
+     * the number of font names that can appear in a comma separated list.
+     * Rework our backtracking so we can handle long font lists.
+     */
+    final int MAX_BRANCHING_FACTOR = 5;
 
     List<Candidate> toApply = Collections.singletonList(candidate);
     int k = 0;
@@ -511,7 +546,10 @@ final class SignatureResolver {
           // Special handling for || groups
           List<Candidate> passedSet  = new ArrayList<Candidate>();
           for (Candidate setCandidate : toApply) {
-            if (setCandidate.exprIdx == expr.children().size()) { continue; }
+            if (setCandidate.exprIdx == expr.children().size()) {
+              passed.add(setCandidate);
+              continue;
+            }
 
             skipBlank(setCandidate);
 
@@ -535,13 +573,21 @@ final class SignatureResolver {
       CssTree.Term term =
         (CssTree.Term) expr.children().get(candidate.exprIdx);
       CssTree.CssExprAtom atom = term.getExprAtom();
-      if (null == term.getOperator()
-          && (atom instanceof CssTree.IdentLiteral
-              || atom instanceof CssTree.QuantityLiteral)
-          && literal.value.equals(atom.getValue())) {
-        candidate.match(term, CssPropertyPartType.IDENT, propertyName);
-        ++candidate.exprIdx;
-        passed.add(candidate);
+      if (null == term.getOperator()) {
+        boolean match;
+        if (atom instanceof CssTree.IdentLiteral) {
+          match = literal.value.equalsIgnoreCase(
+              ((CssTree.IdentLiteral) atom).getValue());
+        } else if (atom instanceof CssTree.QuantityLiteral) {
+          match = literal.value.equals(atom.getValue());
+        } else {
+          match = false;
+        }
+        if (match) {
+          candidate.match(term, CssPropertyPartType.IDENT, propertyName);
+          ++candidate.exprIdx;
+          passed.add(candidate);
+        }
       }
     } else {  // A punctuation mark
       CssTree.Operation op =
@@ -629,9 +675,14 @@ final class SignatureResolver {
    * per the spec.
    */
   private static final String REAL_NUMBER_RE = "(?:\\d+(?:\\.\\d+)?|\\.\\d+)";
-  /** According to http://www.w3.org/TR/CSS21/syndata.html#length-units */
+  /**
+   * According to http://www.w3.org/TR/CSS21/syndata.html#length-units.
+   * Units are frequently left off length values, in which case all existing
+   * browsers assume pixels, so the units below are treated as optional even
+   * though, strictly, units can only be omitted from the value 0.
+   */
   private static final Pattern LENGTH_RE = Pattern.compile(
-      "^(?:" + REAL_NUMBER_RE + "(?:in|cm|mm|pt|pc|em|ex|px)|0+)$",
+      "^(?:" + REAL_NUMBER_RE + "(?:in|cm|mm|pt|pc|em|ex|px)?)$",
       Pattern.CASE_INSENSITIVE);
   /** http://www.w3.org/TR/REC-CSS2/syndata.html#value-def-number */
   private static final Pattern NUMBER_RE = Pattern.compile(
@@ -641,9 +692,6 @@ final class SignatureResolver {
   /** http://www.w3.org/TR/CSS21/syndata.html#percentage-units */
   private static final Pattern PERCENTAGE_RE = Pattern.compile(
       "^" + REAL_NUMBER_RE + "%$");
-  /** http://www.w3.org/TR/CSS21/fonts.html#value-def-family-name */
-  private static final Pattern FAMILY_NAME_RE = Pattern.compile(
-      "^\\s*(?:[\\w\\-]+(?:\\s+[\\w\\-]+)*)\\s*$", Pattern.CASE_INSENSITIVE);
   /** http://www.w3.org/TR/CSS21/aural.html#value-def-specific-voice */
   private static final Pattern SPECIFIC_VOICE_RE = Pattern.compile(
       "^\\s*(?:[\\w\\-]+(?:\\s+[\\w\\-]+)*)\\s*$", Pattern.CASE_INSENSITIVE);
@@ -753,19 +801,16 @@ final class SignatureResolver {
       }
       candidate.match(term, CssPropertyPartType.PERCENTAGE, propertyName);
       ++candidate.exprIdx;
-    } else if ("family-name".equals(symbolName)) {
+    } else if ("unreserved-word".equals(symbolName)) {
       if (null != term.getOperator()) { return false; }
       String name;
       if (atom instanceof CssTree.IdentLiteral) {
         name = ((CssTree.IdentLiteral) atom).getValue();
         if (cssSchema.isKeyword(name)) { return false; }
-      } else if (atom instanceof CssTree.StringLiteral) {
-        name = ((CssTree.StringLiteral) atom).getValue();
       } else {
         return false;
       }
-      if (!FAMILY_NAME_RE.matcher(name).matches()) { return false; }
-      candidate.match(term, CssPropertyPartType.FAMILY_NAME, propertyName);
+      candidate.match(term, CssPropertyPartType.LOOSE_WORD, propertyName);
       ++candidate.exprIdx;
     } else if ("hex-color".equals(symbolName)) {
       if (atom instanceof CssTree.HashLiteral) {

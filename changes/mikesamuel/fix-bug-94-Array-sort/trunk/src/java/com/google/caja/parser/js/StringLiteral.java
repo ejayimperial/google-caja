@@ -15,9 +15,9 @@
 package com.google.caja.parser.js;
 
 import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.lexer.escaping.Escaping;
 import com.google.caja.reporting.RenderContext;
-import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,11 +50,15 @@ public final class StringLiteral extends Literal {
   }
 
   @Override
-  public void render(RenderContext rc) throws IOException {
-    if (rc.paranoid) {
-      rc.out.append('\'');
-      Escaping.escapeJsString(getUnquotedValue(), true, true, rc.out);
-      rc.out.append('\'');
+  public void render(RenderContext rc) {
+    if (rc.isParanoid()) {
+      TokenConsumer out = rc.getOut();
+      out.mark(getFilePosition());
+      StringBuilder sb = new StringBuilder();
+      sb.append('\'');
+      Escaping.escapeJsString(getUnquotedValue(), true, true, sb);
+      sb.append('\'');
+      out.consume(sb.toString());
     } else {
       super.render(rc);
     }
@@ -98,8 +102,10 @@ public final class StringLiteral extends Literal {
 
   // TODO(msamuel): move unescaping to Escaping.java -- nobody will look there
   private static final Pattern UNESCAPE_PATTERN = Pattern.compile(
-      "\\\\(?:u([0-9A-Fa-f]{4})|([0-3][0-7]{0,2}|[4-7][0-7]?)|([^u0-7]))"
-      );
+      "\\\\(?:u([0-9A-Fa-f]{4})"
+      + "|([0-3][0-7]{0,2}|[4-7][0-7]?)"
+      + "|(?:x([0-9A-Fa-f]{2}))"
+      + "|([^u0-7]))");
   public static String unescapeJsString(CharSequence s) {
     Matcher m = UNESCAPE_PATTERN.matcher(s);
     if (!m.find()) { return s.toString(); }
@@ -112,8 +118,10 @@ public final class StringLiteral extends Literal {
         repl = (char) Integer.parseInt(g, 16);
       } else if (null != (g = m.group(2))) {  // octal escape
         repl = (char) Integer.parseInt(g, 8);
+      } else if (null != (g = m.group(3))) {  // hex escape
+        repl = (char) Integer.parseInt(g, 16);
       } else {
-        char ch = s.charAt(m.start(3));
+        char ch = s.charAt(m.start(4));
         switch (ch) {
           case 'b': repl = '\b'; break;
           case 'r': repl = '\r'; break;

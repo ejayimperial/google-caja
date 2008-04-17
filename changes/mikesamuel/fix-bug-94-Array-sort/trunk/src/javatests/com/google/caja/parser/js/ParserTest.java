@@ -16,12 +16,14 @@ package com.google.caja.parser.js;
 
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.Keyword;
+import com.google.caja.lexer.TokenConsumer;
+import com.google.caja.render.JsPrettyPrinter;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
-import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
+import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.MoreAsserts;
 import com.google.caja.util.TestUtil;
 
@@ -31,32 +33,13 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import junit.framework.TestCase;
-
 /**
  *
  * @author mikesamuel@gmail.com
  */
-public class ParserTest extends TestCase {
+public class ParserTest extends CajaTestCase {
   // TODO(mikesamuel): better comment each of the test input files.
   // What is each one supposed to test.
-
-  private MessageContext mc;
-  private MessageQueue mq;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    mc = new MessageContext();
-    mq = TestUtil.createTestMessageQueue(mc);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
-    mc = null;
-    mq = null;
-  }
 
   public void testParser() throws Exception {
     runParseTest("parsertest1.js", "parsergolden1.txt",
@@ -81,7 +64,6 @@ public class ParserTest extends TestCase {
   public void testParser2() throws Exception {
     runParseTest("parsertest2.js", "parsergolden2.txt");
 
-    // Check warnings on message queue.
     Iterator<Message> msgs = mq.getMessages().iterator();
     assertTrue(msgs.hasNext());
     Message m1 = msgs.next();
@@ -147,15 +129,17 @@ public class ParserTest extends TestCase {
   private void runRenderTest(
       String testFile, String goldenFile, boolean paranoid)
       throws Exception {
-    Statement parseTree = TestUtil.parseTree(getClass(), testFile, mq);
+    Statement parseTree = js(fromResource(testFile));
     TestUtil.checkFilePositionInvariants(parseTree);
 
-    RenderContext rc = new RenderContext(mc, new StringBuilder(), paranoid);
+    StringBuilder sb = new StringBuilder();
+    TokenConsumer tc = new JsPrettyPrinter(sb, null);
+    RenderContext rc = new RenderContext(mc, paranoid, tc);
     parseTree.render(rc);
-    rc.newLine();
+    sb.append('\n');
 
     String golden = TestUtil.readResource(getClass(), goldenFile);
-    String actual = rc.out.toString();
+    String actual = sb.toString();
     assertEquals(actual, golden, actual);
   }
 
@@ -170,7 +154,7 @@ public class ParserTest extends TestCase {
   private void runParseTest(
       String testFile, String goldenFile, String ... errors)
       throws Exception {
-    Statement parseTree = TestUtil.parseTree(getClass(), testFile, mq);
+    Statement parseTree = js(fromResource(testFile));
     TestUtil.checkFilePositionInvariants(parseTree);
 
     StringBuilder output = new StringBuilder();
@@ -180,11 +164,11 @@ public class ParserTest extends TestCase {
     String golden = TestUtil.readResource(getClass(), goldenFile);
     assertEquals(golden, output.toString());
 
-    // Clone the parse tree, and check that it, too, matches.
+    // clone the parse tree, and check that it, too, matches
     Statement cloneParseTree = (Statement)parseTree.clone();
     StringBuilder cloneOutput = new StringBuilder();
     cloneParseTree.format(mc, cloneOutput);
-    assertEquals(golden, cloneOutput.toString());    
+    assertEquals(golden, cloneOutput.toString());
 
     List<String> actualErrors = new ArrayList<String>();
     for (Message m : mq.getMessages()) {

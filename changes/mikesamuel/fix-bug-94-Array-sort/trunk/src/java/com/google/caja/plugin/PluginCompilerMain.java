@@ -26,6 +26,7 @@ import com.google.caja.lexer.JsLexer;
 import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.lexer.TokenQueue;
 import com.google.caja.lexer.TokenQueue.Mark;
 import com.google.caja.parser.AncestorChain;
@@ -43,6 +44,7 @@ import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.reporting.SimpleMessageQueue;
+import com.google.caja.util.Callback;
 import com.google.caja.util.Criterion;
 
 import java.io.File;
@@ -58,7 +60,6 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -264,18 +265,25 @@ public final class PluginCompilerMain {
   /** Write the given parse tree to the given file. */
   private void writeFile(File f, ParseTreeNode output) {
     if (output == null) { return; }
+    Callback<IOException> ioHandler = new Callback<IOException>() {
+      public void handle(IOException ex) {
+        mq.addMessage(
+            MessageType.IO_ERROR, MessagePart.Factory.valueOf(ex.toString()));
+      }
+    };
     try {
       Writer out = new OutputStreamWriter(new FileOutputStream(f), "UTF-8");
       try {
-        RenderContext rc = new RenderContext(mc, out, true);
+        TokenConsumer tc = output.makeRenderer(out, ioHandler);
+        RenderContext rc = new RenderContext(mc, true, tc);
         output.render(rc);
-        rc.newLine();
+        tc.noMoreTokens();
+        out.append('\n');
       } finally {
         out.close();
       }
     } catch (IOException ex) {
-      mq.addMessage(MessageType.IO_ERROR,
-                    MessagePart.Factory.valueOf(ex.toString()));
+      ioHandler.handle(ex);
     }
   }
 

@@ -27,7 +27,6 @@ import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
-import com.google.caja.parser.html.OpenElementStack;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.ExpressionStmt;
@@ -84,7 +83,7 @@ public final class CompileGxpsStage implements Pipeline.Stage<Jobs> {
       switch (job.getType()) {
         case JAVASCRIPT:
           GxpCompileDirectiveReplacer r = new GxpCompileDirectiveReplacer(mq);
-          job.getRoot().node.acceptPreOrder(r, job.getRoot().parent);
+          job.getRoot().cast(ParseTreeNode.class).node.acceptPreOrder(r, job.getRoot().parent);
           gxpJobs.addAll(r.getDoms());
           break;
         case GXP:

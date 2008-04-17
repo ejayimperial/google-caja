@@ -16,49 +16,22 @@ package com.google.caja.plugin;
 
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lang.html.HtmlSchema;
-import com.google.caja.lexer.CharProducer;
-import com.google.caja.lexer.CssLexer;
-import com.google.caja.lexer.CssTokenType;
-import com.google.caja.lexer.InputSource;
-import com.google.caja.lexer.Token;
-import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.css.CssParser;
 import com.google.caja.parser.css.CssTree;
-import com.google.caja.reporting.EchoingMessageQueue;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.SimpleMessageQueue;
-import com.google.caja.util.Criterion;
+import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.SyntheticAttributeKey;
-
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.net.URI;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 
-import junit.framework.TestCase;
-
 /**
  * @author mikesamuel@gmail.com (Mike Samuel)
  */
-public final class CssValidatorTest extends TestCase {
-  private MessageQueue mq;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    if (null == mq) {
-      mq = new EchoingMessageQueue(
-          new PrintWriter(new OutputStreamWriter(System.err)),
-          new MessageContext(), false);
-    }
-  }
-
+public final class CssValidatorTest extends CajaTestCase {
   public void testValidateColor() throws Exception {
     runTest("a { color: blue }",
             "StyleSheet\n"
@@ -72,6 +45,18 @@ public final class CssValidatorTest extends TestCase {
             + "        Term ; cssPropertyPartType=IDENT"
                         + " ; cssPropertyPart=color::color\n"
             + "          IdentLiteral : blue");
+    runTest("a { COLOR: Blue }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : a\n"
+            + "    Declaration\n"
+            + "      Property : COLOR\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=color::color\n"
+            + "          IdentLiteral : Blue");
     runTest("a { color: #00f }",
             "StyleSheet\n"
             + "  RuleSet\n"
@@ -202,13 +187,13 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size\n"
             + "          QuantityLiteral : 12pt\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
     warns("p, dl { font: -12pt Arial; }");
     fails("p, dl { font: -12pt url(Arial); }");
-    fails("p, dl { font: 12 Arial; }");
     fails("p, dl { font: twelve Arial; }");
     runTest("p, dl { font: 150% Arial; }",
             "StyleSheet\n"
@@ -226,11 +211,11 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size\n"
             + "          QuantityLiteral : 150%\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
-    fails("p, dl { font: 150 Arial; }");
     fails("p, dl { font: 150Arial; }");
     fails("p, dl { font: 150/Arial; }");
     runTest("p, dl { font: medium Arial; }",
@@ -249,8 +234,9 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size::absolute-size\n"
             + "          IdentLiteral : medium\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
     fails("p, dl { font: medium; }");
@@ -280,15 +266,16 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size\n"
             + "          QuantityLiteral : 150%\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
     fails("p, dl { font: italic bolderer 150% Arial; }");
     fails("p, dl { font: italix bolder 150% Arial; }");
 
     // font-size also matches by previous terms
-    runTest("p, dl { font: inherit Arial; }",  // special
+    runTest("p, dl { font: inherit \"Arial\"; }",  // special
             "StyleSheet\n"
             + "  RuleSet\n"
             + "    Selector\n"
@@ -304,9 +291,9 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size\n"
             + "          IdentLiteral : inherit\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
-            + "          IdentLiteral : Arial\n"
+            + "        Term ; cssPropertyPartType=STRING"
+                        + " ; cssPropertyPart=font-family::family-name\n"
+            + "          StringLiteral : Arial\n"
             + "    Declaration");
     fails("p, dl { font: inherit; }");
 
@@ -331,12 +318,12 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size\n"
             + "          QuantityLiteral : 150%\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
     fails("p, dl { font: 800; }");
-    fails("p, dl { font: 800 Arial; }");
 
     // variant weight family
     runTest("p, dl { font: normal 800 150% Arial; }",
@@ -363,11 +350,11 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=font-size\n"
             + "          QuantityLiteral : 150%\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
-    fails("p, dl { font: normal 800 Arial; }");
     fails("p, dl { font: abnormal 150% Arial; }");
 
     // with line-height following /
@@ -399,8 +386,9 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=line-height\n"
             + "          QuantityLiteral : 175%\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
     fails("p, dl { font: abnormal 150%/175% Arial; }");
@@ -433,8 +421,9 @@ public final class CssValidatorTest extends TestCase {
                         + " ; cssPropertyPart=line-height\n"
             + "          QuantityLiteral : 17.5\n"
             + "        Operation : NONE\n"
-            + "        Term ; cssPropertyPartType=FAMILY_NAME"
-                        + " ; cssPropertyPart=font-family\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
             + "          IdentLiteral : Arial\n"
             + "    Declaration");
     warns("p, dl { font: normal 800 150%/-175% Arial; }");
@@ -462,8 +451,9 @@ public final class CssValidatorTest extends TestCase {
                       + " ; cssPropertyPart=font-size\n" +
             "          IdentLiteral : inherit\n" +
             "        Operation : NONE\n" +
-            "        Term ; cssPropertyPartType=FAMILY_NAME"
-                      + " ; cssPropertyPart=font-family\n" +
+            "        Term ; cssPropertyPartType=LOOSE_WORD"
+                      + " ; cssPropertyPart=font-family::family-name"
+                                         + "::loose-quotable-words\n" +
             "          IdentLiteral : Arial\n" +
             "    Declaration");
   }
@@ -677,6 +667,165 @@ public final class CssValidatorTest extends TestCase {
             + "        Term ; cssPropertyPartType=URI"
                         + " ; cssPropertyPart=background-image\n"
             + "          StringLiteral : /images/smiley-face.jpg");
+    runTest("p { background:#F7F7F7 url(/images/foo.gif) no-repeat scroll"
+            + " left top; }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=COLOR"
+                        + " ; cssPropertyPart=background-color::color\n"
+            + "          HashLiteral : #F7F7F7\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=URI"
+                        + " ; cssPropertyPart=background-image\n"
+            + "          UriLiteral : /images/foo.gif\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-repeat\n"
+            + "          IdentLiteral : no-repeat\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-attachment\n"
+            + "          IdentLiteral : scroll\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : left\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : top\n"
+            + "    Declaration\n"
+            );
+    runTest("p { background:#FFEBE8 none repeat scroll 0% }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=COLOR"
+                        + " ; cssPropertyPart=background-color::color\n"
+            + "          HashLiteral : #FFEBE8\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-image\n"
+            + "          IdentLiteral : none\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-repeat\n"
+            + "          IdentLiteral : repeat\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-attachment\n"
+            + "          IdentLiteral : scroll\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=PERCENTAGE"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          QuantityLiteral : 0%\n"
+            );
+    runTest("p { background: transparent url(/foo.gif) no-repeat top right }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-color\n"
+            + "          IdentLiteral : transparent\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=URI"
+                        + " ; cssPropertyPart=background-image\n"
+            + "          UriLiteral : /foo.gif\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-repeat\n"
+            + "          IdentLiteral : no-repeat\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : top\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : right\n"
+            );
+  }
+
+  public void testBackgroundPosition() throws Exception {
+    // TODO(mikesamuel): We could break the position rule into multiple
+    // subrules so that the part for "right" becomes background-position::x-pos,
+    // and the part for "top" becomes background-position::y-pos.
+    runTest("p { background-position: right top }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background-position\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : right\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : top\n"
+            );
+    runTest("p { background-position: top center }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background-position\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : top\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : center\n"
+            );
+    runTest("p { background-position: center }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background-position\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : center\n"
+            );
+    runTest("p { background-position: bottom }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : background-position\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=background-position\n"
+            + "          IdentLiteral : bottom\n"
+            );
   }
 
   public void testPositionSubstitution() throws Exception {
@@ -736,51 +885,200 @@ public final class CssValidatorTest extends TestCase {
             + "          Substitution : ${imageName + '.png'}");
   }
 
-  private CssTree parseCss(String css) throws Exception {
-    InputSource is = new InputSource(new URI("test://" + getClass().getName()));
-    CharProducer cp = CharProducer.Factory.create(new StringReader(css), is);
-    try {
-      CssLexer lexer = new CssLexer(cp, true);
-      TokenQueue<CssTokenType> tq = new TokenQueue<CssTokenType>(
-          lexer, cp.getCurrentPosition().source(),
-          new Criterion<Token<CssTokenType>>() {
-            public boolean accept(Token<CssTokenType> t) {
-              return CssTokenType.SPACE != t.type
-                  && CssTokenType.COMMENT != t.type;
-            }
-          });
-      CssParser p = new CssParser(tq);
-      CssTree t = p.parseStyleSheet();
-      tq.expectEmpty();
-      return t;
-    } finally {
-      cp.close();
-    }
+  public void testFontFamily() throws Exception {
+    runTest("a { font: 12pt Times New Roman, Times, 'Times Old Roman', serif }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : a\n"
+            + "    Declaration\n"
+            + "      Property : font\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=font-size\n"
+            + "          QuantityLiteral : 12pt\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Times\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : New\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Roman\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Times\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=STRING"
+                        + " ; cssPropertyPart=font-family::family-name\n"
+            + "          StringLiteral : Times Old Roman\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=font-family::generic-family\n"
+            + "          IdentLiteral : serif\n"
+            );
+    runTest("p { font-family: Georgia, \"Times New Roman\", Times, serif }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : font-family\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Georgia\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=STRING"
+                        + " ; cssPropertyPart=font-family::family-name\n"
+            + "          StringLiteral : Times New Roman\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Times\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=font-family::generic-family\n"
+            + "          IdentLiteral : serif\n"
+            );
+    runTest("p { font-family: Times New Roman }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : font-family\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Times\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : New\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Roman\n"
+            );
+    runTest("p { font-family: Heisi  Minco W3, serif }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : font-family\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Heisi\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : Minco\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LOOSE_WORD"
+                        + " ; cssPropertyPart=font-family::family-name"
+                                           + "::loose-quotable-words\n"
+            + "          IdentLiteral : W3\n"
+            + "        Operation : COMMA\n"
+            + "        Term ; cssPropertyPartType=IDENT"
+                        + " ; cssPropertyPart=font-family::generic-family\n"
+            + "          IdentLiteral : serif\n"
+            );
+  }
+
+  public void testUnitlessLengths() throws Exception {
+    runTest("p { padding: 4 10 0 10 }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : padding\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=padding::padding-width\n"
+            + "          QuantityLiteral : 4\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=padding::padding-width\n"
+            + "          QuantityLiteral : 10\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=padding::padding-width\n"
+            + "          QuantityLiteral : 0\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=padding::padding-width\n"
+            + "          QuantityLiteral : 10\n"
+            );
+    runTest("p { border: .125in 6 }",
+            "StyleSheet\n"
+            + "  RuleSet\n"
+            + "    Selector\n"
+            + "      SimpleSelector\n"
+            + "        IdentLiteral : p\n"
+            + "    Declaration\n"
+            + "      Property : border\n"
+            + "      Expr\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=border::border-width\n"
+            + "          QuantityLiteral : .125in\n"
+            + "        Operation : NONE\n"
+            + "        Term ; cssPropertyPartType=LENGTH"
+                        + " ; cssPropertyPart=border::border-width\n"
+            + "          QuantityLiteral : 6\n"
+            );
   }
 
   private void fails(String css) throws Exception {
-    CssTree t = parseCss(css);
+    CssTree t = css(fromString(css), true);
     CssValidator v = makeCssValidator(mq);
     assertTrue(css, !v.validateCss(ac(t)));
   }
 
   private void warns(String css) throws Exception {
-    CssTree t = parseCss(css);
     MessageQueue smq = new SimpleMessageQueue();
+    CssTree t = css(fromString(css), true);
     CssValidator v = makeCssValidator(smq);
     boolean valid = v.validateCss(ac(t));
     mq.getMessages().addAll(smq.getMessages());
     assertTrue(css, valid);
-    assertTrue(css, !smq.getMessages().isEmpty());
+    assertTrue(css, !mq.getMessages().isEmpty());
   }
 
   private void runTest(String css, String golden) throws Exception {
     MessageContext mc = new MessageContext();
-    CssTree cssTree = parseCss(css);
+    CssTree cssTree = css(fromString(css), true);
     MessageQueue smq = new SimpleMessageQueue();
     CssValidator v = makeCssValidator(smq);
     boolean valid = v.validateCss(ac(cssTree));
     mq.getMessages().addAll(smq.getMessages());
+    if (!valid) {
+      System.err.println(cssTree.toStringDeep());
+    }
     assertTrue(css, valid);
 
     mc.relevantKeys = new LinkedHashSet<SyntheticAttributeKey<?>>(

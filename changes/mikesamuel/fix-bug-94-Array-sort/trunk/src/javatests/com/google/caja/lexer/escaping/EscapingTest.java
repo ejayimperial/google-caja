@@ -73,7 +73,7 @@ public class EscapingTest extends TestCase {
     assertStringsEqual(
         (// all ctrl chars escaped
          "\\000\\001\\002\\003\\004\\005\\006\\007"
-         + "\\b\\t\\n\\v\\f\\r\\016\\017"
+         + "\\b\\t\\n\\013\\f\\r\\016\\017"
          + "\\020\\021\\022\\023\\024\\025\\026\\027"
          + "\\030\\031\\032\\033\\034\\035\\036\\037"
          + " !\\\"#$%&\\'()*+,-./"
@@ -115,7 +115,7 @@ public class EscapingTest extends TestCase {
     Escaping.escapeJsString(CHARS, true, true, sb);
     assertStringsEqual(
         ("\\000\\001\\002\\003\\004\\005\\006\\007"
-         + "\\b\\t\\n\\v\\f\\r\\016\\017"
+         + "\\b\\t\\n\\013\\f\\r\\016\\017"
          + "\\020\\021\\022\\023\\024\\025\\026\\027"
          + "\\030\\031\\032\\033\\034\\035\\036\\037"
          + " !\\\"#$%&\\'()*+,-./"
@@ -159,7 +159,7 @@ public class EscapingTest extends TestCase {
     assertStringsEqual(
         (// all ctrl chars escaped
          "\\000\\001\\002\\003\\004\\005\\006\\007"
-         + "\\b\\t\\n\\v\\f\\r\\016\\017"
+         + "\\b\\t\\n\\013\\f\\r\\016\\017"
          + "\\020\\021\\022\\023\\024\\025\\026\\027"
          + "\\030\\031\\032\\033\\034\\035\\036\\037"
          + " !\"#\\$%&'\\(\\)\\*\\+,-\\.\\/"
@@ -185,6 +185,40 @@ public class EscapingTest extends TestCase {
         "\\074Foo+\\076 \\u2028 \\\\Ba*r \\r Baz\\+\\+", sb.toString());
   }
 
+  public void testRegexNormalizationBalancesCharGroups() throws Exception {
+    // Make sure that the normalized regex always has balanced [...] blocks
+    // since / in those are not considered as closing the token.
+    {
+      StringBuilder sb = new StringBuilder();
+      Escaping.normalizeRegex("[", false, true, sb);
+      assertStringsEqual("\\[", sb.toString());
+    }
+
+    {
+      StringBuilder sb = new StringBuilder();
+      Escaping.normalizeRegex("[a-z][foo", false, true, sb);
+      assertStringsEqual("[a-z]\\[foo", sb.toString());
+    }
+
+    {
+      StringBuilder sb = new StringBuilder();
+      Escaping.normalizeRegex("[a-z][[foo]", false, true, sb);
+      assertStringsEqual("[a-z][\\[foo]", sb.toString());
+    }
+
+    {
+      StringBuilder sb = new StringBuilder();
+      Escaping.normalizeRegex("[a-z][[foo", false, true, sb);
+      assertStringsEqual("[a-z]\\[\\[foo", sb.toString());
+    }
+
+    {
+      StringBuilder sb = new StringBuilder();
+      Escaping.normalizeRegex("[a-z][[foo[", false, true, sb);
+      assertStringsEqual("[a-z]\\[\\[foo\\[", sb.toString());
+    }
+  }
+  
   public void testEscapeXml() throws Exception {
     StringBuilder sb = new StringBuilder();
     Escaping.escapeXml(CHARS, false, sb);

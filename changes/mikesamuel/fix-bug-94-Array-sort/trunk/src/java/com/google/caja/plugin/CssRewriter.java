@@ -16,19 +16,21 @@ package com.google.caja.plugin;
 
 import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.FilePosition;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.MutableParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.css.CssTree;
+import com.google.caja.render.CssPrettyPrinter;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
+import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
 import static com.google.caja.plugin.SyntheticNodes.s;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -48,6 +50,7 @@ import java.util.regex.Pattern;
 public final class CssRewriter {
   private final PluginMeta meta;
   private final MessageQueue mq;
+  private MessageLevel invalidNodeMessageLevel = MessageLevel.ERROR;
 
   public CssRewriter(PluginMeta meta, MessageQueue mq) {
     assert null != mq;
@@ -57,15 +60,31 @@ public final class CssRewriter {
   }
 
   /**
+   * Specifies the level of messages issued when nodes are marked
+   * {@link CssValidator#INVALID}.
+   * If you are dealing with noisy CSS and later remove invalid nodes, then
+   * this can be set to {@link MessageLevel#WARNING}.
+   * @return this
+   */
+  public CssRewriter withInvalidNodeMessageLevel(MessageLevel messageLevel) {
+    this.invalidNodeMessageLevel = messageLevel;
+    return this;
+  }
+
+  /**
    * Rewrite the given CSS tree to be safer and shorter.
    *
+   * If the tree could not be made safe, then there will be
+   * {@link MessageLevel#ERROR error}s on the {@link MessageQueue} passed
+   * to the constructor.
+   *
    * @param t non null.  modified in place.
-   * @return true if the resulting tree is safe.
    */
-  public boolean rewrite(AncestorChain<? extends CssTree> t) {
-    boolean valid = true;
+  public void rewrite(AncestorChain<? extends CssTree> t) {
+    quoteLooseWords(t);
+    fixUnitlessLengths(t);
     // Once at the beginning, and again at the end.
-    valid &= removeUnsafeConstructs(t);
+    removeUnsafeConstructs(t);
     removeEmptyDeclarations(t);
     // After we remove declarations, we may have some rulesets without any
     // declarations which is technically illegal, so we remove rulesets without
@@ -73,13 +92,145 @@ public final class CssRewriter {
     removeEmptyRuleSets(t);
     if (null != meta.namespacePrefix) { namespaceIdents(t); }
     // Do this again to make sure no earlier changes introduce unsafe constructs
-    valid &= removeUnsafeConstructs(t);
+    removeUnsafeConstructs(t);
 
     translateUrls(t);
-
-    return valid;
   }
 
+  /**
+   * Turn a run of unquoted identifiers into a single string, where the property
+   * description says "Names containing space *should* be quoted", but does not
+   * require it.
+   * <p>
+   * This is important for font {@code family-name}s where
+   * {@code font: Times New Roman} should be written as
+   * {@code font: "Times New Roman"} to avoid any possible ambiguity between
+   * the individual terms and special values such as {@code serif}.
+   *
+   * @see CssPropertyPartType#LOOSE_WORD
+   */
+  private void quoteLooseWords(AncestorChain<? extends CssTree> t) {
+    if (t.node instanceof CssTree.Expr) {
+      combineLooseWords(t.cast(CssTree.Expr.class).node);
+    }
+    for (CssTree child : t.node.children()) {
+      quoteLooseWords(new AncestorChain<CssTree>(t, child));
+    }
+  }
+
+  private void combineLooseWords(CssTree.Expr e) {
+    for (int i = 0, n = e.getNTerms(); i < n; ++i) {
+      CssTree.Term t = e.getNthTerm(i);
+      if (!isLooseWord(t)) { continue; }
+
+      String propertyPart = t.getAttributes().get(
+          CssValidator.CSS_PROPERTY_PART);
+      StringBuilder sb = new StringBuilder();
+      sb.append(t.getExprAtom().getValue());
+
+      // Compile a mutation that removes all the extraneous terms and that
+      // replaces t with a string literal.
+      MutableParseTreeNode.Mutation mut = e.createMutation();
+
+      // Compute end, the term index after the last of the run of loose terms
+      // for t's property part.
+      int start = i;
+      int end = i + 1;
+      while (end < n) {
+        CssTree.Operation op = e.getNthOperation(end - 1);
+        CssTree.Term t2 = e.getNthTerm(end);
+        if (!(CssTree.Operator.NONE == op.getOperator() && isLooseWord(t2)
+              && propertyPart.equals(
+                     t2.getAttributes().get(CssValidator.CSS_PROPERTY_PART)))) {
+          break;
+        }
+        mut.removeChild(op);
+        mut.removeChild(t2);
+        sb.append(' ').append(e.getNthTerm(end).getExprAtom().getValue());
+        ++end;
+      }
+
+      // Create a string literal to replace all the terms [start:end-1].
+      // Make sure it has the same synthetic attributes and file position.
+      String text = sb.toString();
+      FilePosition pos = FilePosition.span(
+          t.getFilePosition(), e.getNthTerm(end - 1).getFilePosition());
+      CssTree.StringLiteral quotedWords = new CssTree.StringLiteral(pos, text);
+      CssTree.Term quotedTerm = new CssTree.Term(pos, null, quotedWords);
+      quotedTerm.getAttributes().putAll(t.getAttributes());
+      quotedTerm.getAttributes().set(CssValidator.CSS_PROPERTY_PART_TYPE,
+                                     CssPropertyPartType.STRING);
+
+      mut.replaceChild(quotedTerm, t);
+      mut.execute();
+
+      // If we made a substantive change, combining multiple terms into one,
+      // then issue a line message.  We don't need to issue a warning on all
+      // changes, since we only reach this code if we passed validation.
+      if (end - start > 1) {
+        mq.addMessage(PluginMessageType.QUOTED_CSS_VALUE,
+                      pos, MessagePart.Factory.valueOf(text));
+      }
+
+      n = e.getNTerms();
+    }
+  }
+
+  /** @see CssPropertyPartType#LOOSE_WORD */
+  private static boolean isLooseWord(CssTree.Term t) {
+    return t.getOperator() == null
+        && t.getExprAtom() instanceof CssTree.IdentLiteral
+        && (t.getAttributes().get(CssValidator.CSS_PROPERTY_PART_TYPE)
+            == CssPropertyPartType.LOOSE_WORD);
+  }
+
+  /**
+   * <a href="http://www.w3.org/TR/CSS21/syndata.html#length-units">Lengths</a>
+   * require units unless the value is zero.  All browsers assume px if the
+   * suffix is missing.
+   */
+  private void fixUnitlessLengths(AncestorChain<? extends CssTree> t) {
+    t.node.acceptPreOrder(new Visitor() {
+        public boolean visit(AncestorChain<?> ancestors) {
+          if (!(ancestors.node instanceof CssTree.Term)) {
+            return true;
+          }
+          CssTree.Term term = (CssTree.Term) ancestors.node;
+          if (!(CssPropertyPartType.LENGTH == term.getAttributes().get(
+                    CssValidator.CSS_PROPERTY_PART_TYPE)
+                && term.getExprAtom() instanceof CssTree.QuantityLiteral)) {
+            return true;
+          }
+          CssTree.QuantityLiteral quantity = (CssTree.QuantityLiteral)
+              term.getExprAtom();
+          String value = quantity.getValue();
+          if (!isZeroOrHasUnits(value)) {
+            // Missing units. 
+            CssTree.QuantityLiteral withUnits = new CssTree.QuantityLiteral(
+                quantity.getFilePosition(), value + "px");
+            withUnits.getAttributes().putAll(quantity.getAttributes());
+            term.replaceChild(withUnits, quantity);
+            mq.addMessage(PluginMessageType.ASSUMING_PIXELS_FOR_LENGTH,
+                          quantity.getFilePosition(),
+                          MessagePart.Factory.valueOf(value));
+          }
+          return false;
+        }
+      }, t.parent);
+  }
+  private static boolean isZeroOrHasUnits(String value) {
+    int len = value.length();
+    char ch = value.charAt(len - 1);
+    if (ch == '.' || ('0' <= ch && ch <= '9')) {  // Missing units
+      for (int i = len; --i >= 0;) {
+        ch = value.charAt(i);
+        if ('1' <= ch && ch <= '9') { return false; }
+      }
+    }
+    return true;
+  }
+
+  /** Get rid of rules like <code>p { }</code>. */
   private void removeEmptyDeclarations(AncestorChain<? extends CssTree> t) {
     t.node.acceptPreOrder(new Visitor() {
         public boolean visit(AncestorChain<?> ancestors) {
@@ -201,8 +352,7 @@ public final class CssRewriter {
       new HashSet<String>(Arrays.asList(
           "link", "visited", "hover", "active", "first-child", "first-letter"
           ));
-  boolean removeUnsafeConstructs(AncestorChain<? extends CssTree> t) {
-    final Switch rewrote = new Switch();
+  void removeUnsafeConstructs(AncestorChain<? extends CssTree> t) {
 
     // 1) Check that all classes, ids, property names, etc. are valid
     //    css identifiers.
@@ -223,7 +373,6 @@ public final class CssRewriter {
                 // Will be deleted by a later pass after all messages have been
                 // generated
                 node.getAttributes().set(CssValidator.INVALID, Boolean.TRUE);
-                rewrote.set();
                 return false;
               }
             }
@@ -235,7 +384,6 @@ public final class CssRewriter {
                             MessagePart.Factory.valueOf(p.getPropertyName()));
               declarationFor(ancestors).getAttributes().set(
                   CssValidator.INVALID, Boolean.TRUE);
-              rewrote.set();
               return false;
             }
           }
@@ -252,11 +400,10 @@ public final class CssRewriter {
             if ("content".equalsIgnoreCase(
                 ((CssTree.Property) node).getPropertyName())) {
               mq.addMessage(PluginMessageType.UNSAFE_CSS_PROPERTY,
-                            node.getFilePosition(),
+                            invalidNodeMessageLevel, node.getFilePosition(),
                             MessagePart.Factory.valueOf("content"));
               declarationFor(ancestors).getAttributes().set(
                   CssValidator.INVALID, Boolean.TRUE);
-              rewrote.set();
             }
           } else if (node instanceof CssTree.Pseudo) {
             boolean remove = false;
@@ -265,23 +412,17 @@ public final class CssRewriter {
               if (!ALLOWED_PSEUDO_SELECTORS.contains(
                   ((CssTree.IdentLiteral) child).getValue().toLowerCase())) {
                 mq.addMessage(PluginMessageType.UNSAFE_CSS_PSEUDO_SELECTOR,
-                              node.getFilePosition(),
+                              invalidNodeMessageLevel, node.getFilePosition(),
                               node);
-                rewrote.set();
                 remove = true;
               }
             } else {
               StringBuilder rendered = new StringBuilder();
-              try {
-                node.render(new RenderContext(new MessageContext(), rendered));
-              } catch (IOException ex) {
-                throw (AssertionError) new AssertionError(
-                    "IOException writing to StringBuilder").initCause(ex);
-              }
+              TokenConsumer tc = new CssPrettyPrinter(rendered, null);
+              node.render(new RenderContext(new MessageContext(), tc));
               mq.addMessage(PluginMessageType.UNSAFE_CSS_PSEUDO_SELECTOR,
-                            node.getFilePosition(),
+                            invalidNodeMessageLevel, node.getFilePosition(),
                             MessagePart.Factory.valueOf(rendered.toString()));
-              rewrote.set();
               remove = true;
             }
             if (remove) {
@@ -299,18 +440,14 @@ public final class CssRewriter {
         public boolean visit(AncestorChain<?> ancestors) {
           ParseTreeNode node = ancestors.node;
           if (node instanceof CssTree.Property) {
-            if (Boolean.TRUE.equals(node.getAttributes().get(
-                                        CssValidator.INVALID))) {
+            if (node.getAttributes().is(CssValidator.INVALID)) {
               declarationFor(ancestors).getAttributes().set(
                   CssValidator.INVALID, Boolean.TRUE);
-              rewrote.set();
             }
           } else if (node instanceof CssTree.Attrib) {
-            if (Boolean.TRUE.equals(node.getAttributes().get(
-                                        CssValidator.INVALID))) {
+            if (node.getAttributes().is(CssValidator.INVALID)) {
               simpleSelectorFor(ancestors).getAttributes().set(
                   CssValidator.INVALID, Boolean.TRUE);
-              rewrote.set();
             }
           } else if (node instanceof CssTree.Term
                      && (CssPropertyPartType.URI ==
@@ -340,14 +477,12 @@ public final class CssRewriter {
                     PluginMessageType.DISALLOWED_URI,
                     node.getFilePosition(),
                     MessagePart.Factory.valueOf(uriStr));
-                rewrote.set();
                 remove = true;
               }
             } catch (URISyntaxException ex) {
               removeMsg = new Message(
                   PluginMessageType.DISALLOWED_URI,
                   node.getFilePosition(), MessagePart.Factory.valueOf(uriStr));
-              rewrote.set();
               remove = true;
             }
 
@@ -396,8 +531,6 @@ public final class CssRewriter {
           return true;
         }
       }, t.parent);
-
-    return !rewrote.get();
   }
 
   private void translateUrls(AncestorChain<? extends CssTree> t) {
@@ -465,8 +598,8 @@ public final class CssRewriter {
     return null;
   }
 
-  private static final Pattern SAFE_SELECTOR_PART =
-    Pattern.compile("^[#!\\.]?[a-zA-Z][_a-zA-Z0-9\\-]*$");
+  private static final Pattern SAFE_SELECTOR_PART
+      = Pattern.compile("^[#!\\.]?[a-zA-Z][_a-zA-Z0-9\\-]*$");
   /**
    * Restrict selectors to ascii characters until we can test browser handling
    * of escape sequences.
@@ -474,20 +607,22 @@ public final class CssRewriter {
   private static boolean isSafeSelectorPart(String s) {
     return SAFE_SELECTOR_PART.matcher(s).matches();
   }
-  private static final Pattern SAFE_CSS_IDENTIFIER =
-    Pattern.compile("^[a-zA-Z][_a-zA-Z0-9\\-]*$");
+  // Does not allow leading underscores.  From "The Underscore Hack" at
+  // http://www.wellstyled.com/css-underscore-hack.html:
+  // Let's start with three simple facts \u2014 as Petr Pisar found out.
+
+  // 1. The underscore ("_") is allowed in CSS identifiers by the CSS2.1
+  //    Specification
+  // 2. Browsers have to ignore unknown CSS properties
+  // 3. MSIE 5+ for Windows ignores the "_" at the beginning of any CSS property
+  //    name
+  private static final Pattern SAFE_CSS_IDENTIFIER
+      = Pattern.compile("^[a-zA-Z\\-][_a-zA-Z0-9\\-]*$");
   /**
    * Restrict identifiers to ascii characters until we can test browser handling
    * of escape sequences.
    */
   private static boolean isSafeCssIdentifier(String s) {
     return SAFE_CSS_IDENTIFIER.matcher(s).matches();
-  }
-
-  private static final class Switch {
-    private boolean on;
-
-    public boolean get() { return on; }
-    public void set() { this.on = true; }
   }
 }

@@ -14,10 +14,10 @@
 
 package com.google.caja.parser.js;
 
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.reporting.RenderContext;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -35,7 +35,8 @@ public final class LabeledStmtWrapper extends LabeledStatement {
   // LabeledStatement.
   private Statement body;
 
-  public LabeledStmtWrapper(String value, List<? extends ParseTreeNode> children) {
+  public LabeledStmtWrapper(
+      String value, List<? extends ParseTreeNode> children) {
     this(value, (Statement)children.get(0));
   }
 
@@ -44,17 +45,21 @@ public final class LabeledStmtWrapper extends LabeledStatement {
     appendChild(body);
   }
 
+  public Statement getBody() { return body; }
+
   @Override
   protected void childrenChanged() {
     super.childrenChanged();
     this.body = (Statement) children().get(0);
   }
 
-  public void render(RenderContext rc) throws IOException {
+  public void render(RenderContext rc) {
+    TokenConsumer out = rc.getOut();
+    out.mark(getFilePosition());
     String label = getLabel();
     if (null != label && !"".equals(label)) {
-      rc.out.append(label);
-      rc.out.append(": ");
+      out.consume(label);
+      out.consume(":");
     }
     body.render(rc);
   }

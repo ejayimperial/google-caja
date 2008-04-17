@@ -21,6 +21,7 @@ import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
+import com.google.caja.render.JsPrettyPrinter;
 import com.google.caja.reporting.EchoingMessageQueue;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
@@ -293,8 +294,7 @@ public class HtmlCompiledPluginTest extends TestCase {
    * @throws Exception
    */
   public void testGlobalScopePrototypeInvisible() throws Exception {
-    // TODO(ihab.awad): Disabled for now, but see
-    // http://code.google.com/p/google-caja/issues/detail?id=78
+    // TODO(ihab.awad): Disabled for now, but see issue145
     if (false) {
     execGadget(
         "<script>var x = 1; x = this.prototype; x = 2;</script>",
@@ -365,7 +365,7 @@ public class HtmlCompiledPluginTest extends TestCase {
 
         "assertEquals('<a onclick=\"return plugin_dispatchEvent___(" +
         "this, event || window.event, 0, \\'c_1___\\')\">hi</a>'," +
-        " outers.emitHtml___.htmlBuf_.join(''))"
+        " document.getElementById('test-test').innerHTML)"
         );
   }
 
@@ -433,74 +433,100 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   public void testECMAScript31Scoping() throws Exception {
-    // Functions at the top level should be visible to forward references.
-    execGadget(
-        "<script>" +
-        "var Bar = Foo;" +
-        "function Foo(){ }" +
-        "if (!Bar) { fail('Forward references don't work.'); }" +
-        "</script>",
-        ""
-        );
-    execGadget(
-        "<script>" +
-        "(function(){" +
-        "  var Bar = Foo;" +
-        "  function Foo(){ }" +
-        "  if (!Bar) { fail('Forward references don't work.'); }" +
-        "})()" +
-        "</script>",
-        ""
-        );
-    // Within a block, Bar should be undefined after the assignment, not
-    // throw a reference error.
-    execGadget(
-        "<script>" +
-        "{" +
-        "  var Bar = Foo;" +
-        "  function Foo(){ }" +
-        "  if (Bar) { fail('Functions initialized too early.'); }" +
-        "}" +
-        "</script>",
-        ""
-        );
-    // Here, the declaration of Foo shouldn't escape the block 
-    // and we should get a reference error.
-    execGadget(
-        "<script>" +
-        "var passed = false;" +
-        "try{" +
-        "  var Bar = Foo;" +
-        "  { function Foo(){ } }" +
-        "} catch (e) {" +
-        "  passed = true;" +
-        "}" +
-        "if (!passed) fail('Functions initialized too early.');" +
-        "</script>",
-        ""
-        );
+    // TODO(stay): Once they decide on scoping & initialization rules, test them here.
   }
-  
-  public void testTrademarks() throws Exception {
+
+  public void testForIn() throws Exception {
     execGadget(
         "<script>" +
-        "var x = { y:1 };" +
-        "var tm1 = {};" +
-        "var tm2 = {};" +
-        "caja.audit(x, tm1);" +
-        "caja.guard(x, tm1);" +
+        "function Foo() {" +
+        "  this.x_ = 1;" +
+        "  this.y = 2;" +
+        "  this.z = 3;" +
+        "}" +
+        "var obj = new Foo();" +
+        "var y = {};" +
+        "var result = [];" +
+        "for (y.k in obj) {" +
+        "  result.push(y.k);" +
+        "}" +
+        "</script>",
+        "assertEquals(" +
+        "    ___.getNewModuleHandler().getOuters().result.toSource()," +
+        "    (['y', 'z']).toSource());");
+    execGadget(
+        "<script>" +
+        "function test(obj) {" +
+        "  var y = {};" +
+        "  var result = [];" +
+        "  for (y.k in obj) {" +
+        "    result.push(y.k);" +
+        "  }" +
+        "  return result;" +
+        "}" +
+        "</script>",
+        "assertEquals(" +
+        "    ___.getNewModuleHandler().getOuters().test({x_:1, y:2, z:3}).sort().toSource()," +
+        "    (['y', 'z']).toSource());");
+    execGadget(
+        "<script>" +
+        "function Foo() {" +
+        "  this.x_ = 1;" +
+        "  this.y = 2;" +
+        "}" +
+        "caja.def(Foo, Object, {" +
+        "  test: function () {" +
+        "    var y = {};" +
+        "    var result = [];" +
+        "    for (y.k in this) {" +
+        "      result.push(y.k);" +
+        "    }" +
+        "    return result;" +
+        "  }});" +
+        "var obj = new Foo();" +
+        "</script>",
+        "assertEquals(" +
+        "    ___.getNewModuleHandler().getOuters().obj.test().sort().toSource()," +
+        "    (['test', 'x_', 'y']).toSource());");
+  }
+
+  public void testInstanceMethod() throws Exception {
+    // TODO(metaweta): Put this test back in when issue143 is fixed.
+    if (false) {
+      execGadget(
+          "<script>" +
+          "function Foo() { this.f = function(){ return this; }}" +
+          "</script>",
+          "");
+    }
+  }
+
+  public void testGlobalThis() throws Exception {
+    execGadget(
+        "<script>" +
+        "var y = this.foo;" +
+        "assertEquals(y, undefined);" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
         "var passed = false;" +
-        "try{ caja.guard(x, tm2); }" +
-        "catch (e) { passed = true; }" +
-        "if (!passed) fail ('Trademarks are forgeable (tm1 == tm2)');" +
-        "passed = false;" +
-        "try{ caja.audit(x, 'tm'); }" +
-        "catch (e) { passed = true; }" +
-        "if (!passed) fail ('Trademarks are forgeable (strings allowed as trademarks)');" +
+        "try {" +
+        "  var y = foo;" +
+        "} catch (e) { passed = true; }" +
+        "if (!passed) fail('Should have thrown a ReferenceError.');" +
         "</script>",
         "");
   }
-  
+
+  public void testStaticMembers() throws Exception {
+    execGadget("<script>" +
+        "function Foo(){}" +
+        "Foo.prototype.x = 1;" +
+        "</script>",
+        "");
+  }
+
   private void execGadget(String gadgetSpec, String tests) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = new EchoingMessageQueue(
@@ -519,7 +545,8 @@ public class HtmlCompiledPluginTest extends TestCase {
     } else {
       Block jsTree = compiler.getJavascript();
       StringBuilder js = new StringBuilder();
-      RenderContext rc = new RenderContext(mc, js, false);
+      JsPrettyPrinter pp = new JsPrettyPrinter(js, null);
+      RenderContext rc = new RenderContext(mc, false, pp);
       jsTree.render(rc);
       System.out.println("Compiled gadget: " + js);
 
@@ -534,17 +561,18 @@ public class HtmlCompiledPluginTest extends TestCase {
           // Initialize the DOM
           new RhinoTestBed.Input(
               // Document not defined until window.location set.
-              new StringReader("location = '" + htmlStubUrl + "';\n"),
+              "location = '" + htmlStubUrl + "';\n",
               "dom"),
           // Make the assertTrue, etc. functions available to javascript
           new RhinoTestBed.Input(getClass(), "asserts.js"),
           // Plugin Framework
           new RhinoTestBed.Input(getClass(), "../caja.js"),
+          new RhinoTestBed.Input(getClass(), "html-emitter.js"),
           new RhinoTestBed.Input(getClass(), "container.js"),
           // The gadget
-          new RhinoTestBed.Input(new StringReader(js.toString()), "gadget"),
+          new RhinoTestBed.Input(js.toString(), "gadget"),
           // The tests
-          new RhinoTestBed.Input(new StringReader(tests), "tests"),
+          new RhinoTestBed.Input(tests, "tests"),
         };
       RhinoTestBed.runJs(null, inputs);
     }

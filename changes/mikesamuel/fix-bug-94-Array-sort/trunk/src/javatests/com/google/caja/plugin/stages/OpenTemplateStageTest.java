@@ -16,6 +16,7 @@ package com.google.caja.plugin.stages;
 
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lang.html.HtmlSchema;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.js.Block;
@@ -26,36 +27,31 @@ import com.google.caja.parser.js.Operator;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
 import com.google.caja.plugin.PluginMeta;
-import com.google.caja.reporting.MessageContext;
-import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
-import com.google.caja.reporting.SimpleMessageQueue;
+import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.Pipeline;
-import com.google.caja.util.TestUtil;
-
-import junit.framework.TestCase;
 
 /**
  * @author mikesamuel@gmail.com
  */
-public final class OpenTemplateStageTest extends TestCase {
+public final class OpenTemplateStageTest extends CajaTestCase {
   public void testSimpleRewrite1() throws Exception {
     assertRewritten(
-        "new StringInterpolation(['foo ', bar, ' baz'])",
+        "new StringInterpolation([ 'foo ', bar, ' baz' ])",
         "eval(Template('foo $bar baz'))",
         true);
   }
 
   public void testSimpleRewrite2() throws Exception {
     assertRewritten(
-        "new StringInterpolation(['foo', bar, 'baz'])",
+        "new StringInterpolation([ 'foo', bar, 'baz' ])",
         "eval(Template('foo${bar}baz'))",
         true);
   }
 
   public void testExpressionSubstitution() throws Exception {
     assertRewritten(
-        "new StringInterpolation(['foo', bar() * 3, 'baz'])",
+        "new StringInterpolation([ 'foo', bar() * 3, 'baz' ])",
         "eval(Template('foo${bar() * 3}baz'))",
         true);
   }
@@ -114,8 +110,7 @@ public final class OpenTemplateStageTest extends TestCase {
   private void assertRewritten(
       String golden, String input, final boolean passes)
       throws Exception {
-    MessageContext mc = new MessageContext();
-    MessageQueue mq = new SimpleMessageQueue();
+    mq.getMessages().clear();
 
     CssSchema cssSchema = CssSchema.getDefaultCss21Schema(mq);
     HtmlSchema htmlSchema = HtmlSchema.getDefault(mq);
@@ -132,7 +127,7 @@ public final class OpenTemplateStageTest extends TestCase {
     pipeline.getStages().add(new CompileCssTemplatesStage(cssSchema));
     pipeline.getStages().add(new ConsolidateCodeStage());
 
-    ParseTreeNode node = TestUtil.parse(input);
+    ParseTreeNode node = js(fromString(input));
     PluginMeta meta = new PluginMeta("pre-");
     Jobs jobs = new Jobs(mc, mq, meta);
     jobs.getJobs().add(new Job(new AncestorChain<ParseTreeNode>(node)));
@@ -143,13 +138,15 @@ public final class OpenTemplateStageTest extends TestCase {
         passes, jobs.hasNoErrors());
     assertEquals("" + jobs.getJobs(), 1, jobs.getJobs().size());
 
+    ParseTreeNode bare = stripBoilerPlate(
+        jobs.getJobs().get(0).getRoot().cast(ParseTreeNode.class).node);
     StringBuilder out = new StringBuilder();
-    stripBoilerPlate((ParseTreeNode)jobs.getJobs().get(0).getRoot().node)
-        .render(new RenderContext(mc, out));
+    TokenConsumer tc = bare.makeRenderer(out, null);
+    bare.render(new RenderContext(mc, tc));
 
     assertEquals(golden, out.toString());
   }
-  
+
   private static ParseTreeNode stripBoilerPlate(ParseTreeNode node) {
     if (!(node instanceof Block && node.children().size() == 1)) {
       return node;

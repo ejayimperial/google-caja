@@ -17,49 +17,21 @@ package com.google.caja.plugin;
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.CharProducer;
-import com.google.caja.lexer.CssLexer;
-import com.google.caja.lexer.CssTokenType;
 import com.google.caja.lexer.ExternalReference;
-import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.ParseException;
-import com.google.caja.lexer.Token;
-import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
-import com.google.caja.parser.css.CssParser;
 import com.google.caja.parser.css.CssTree;
-import com.google.caja.reporting.EchoingMessageQueue;
-import com.google.caja.reporting.MessageContext;
-import com.google.caja.reporting.MessageQueue;
-import com.google.caja.reporting.RenderContext;
-import com.google.caja.util.Criterion;
+import com.google.caja.util.CajaTestCase;
 
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.Collections;
-
-import junit.framework.TestCase;
 
 /**
  *
  * @author mikesamuel@gmail.com
  */
-public class CssRewriterTest extends TestCase {
-  private MessageQueue mq;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    if (null == mq) {
-      mq = new EchoingMessageQueue(
-          new PrintWriter(new OutputStreamWriter(System.err)),
-          new MessageContext(), false);
-    }
-  }
-
+public class CssRewriterTest extends CajaTestCase {
   public void testUnknownTagsRemoved() throws Exception {
     runTest("bogus { display: none }", "");
     runTest("a, bogus, i { display: none }",
@@ -107,6 +79,12 @@ public class CssRewriterTest extends TestCase {
     runTest("a:attr(href) { color: blue }", "");
     runTest("a:attr(href) { color: blue } b { font-weight: bolder }",
             ".test b {\n  font-weight: bolder\n}");
+  }
+
+  public void testFontNamesQuoted() throws Exception {
+    runTest("a { font:12pt Times  New Roman, Times,\"Times Old Roman\",serif }",
+            ".test a {\n  font: 12pt 'Times New Roman', 'Times',"
+            + " 'Times Old Roman', serif\n}");
   }
 
   public void testNamespacing() throws Exception {
@@ -179,7 +157,14 @@ public class CssRewriterTest extends TestCase {
    * <a href="http://code.google.com/p/google-caja/issues/detail?id=57">bug</a>
    */
   public void testWildcardSelectors() throws Exception {
-    runTest("div * { margin: 0; }", ".test div  * {\n  margin: 0\n}", false);
+    runTest("div * { margin: 0; }", ".test div * {\n  margin: 0\n}", false);
+  }
+
+  public void testUnitlessLengths() throws Exception {
+    runTest("div { padding: 10 0 5.0 4 }",
+            ".test div {\n  padding: 10px 0 5.0px 4px\n}", false);
+    runTest("div { margin: -5 5; z-index: 2 }",
+            ".test div {\n  margin: -5px 5px;\n  z-index: 2\n}", false);
   }
 
   private void runTest(String css, String golden) throws Exception {
@@ -188,10 +173,11 @@ public class CssRewriterTest extends TestCase {
 
   private void runTest(String css, String golden, boolean allowSubstitutions)
       throws Exception {
-    MessageContext mc = new MessageContext();
+    mq.getMessages().clear();
     mc.relevantKeys = Collections.singleton(CssValidator.INVALID);
 
-    CssTree t = parseCss(css, allowSubstitutions);
+    CssTree t = css(fromString(css), allowSubstitutions);
+
     String msg;
     {
       StringBuilder msgBuf = new StringBuilder();
@@ -199,6 +185,9 @@ public class CssRewriterTest extends TestCase {
       msg = msgBuf.toString();
     }
 
+    new CssValidator(CssSchema.getDefaultCss21Schema(mq),
+                     HtmlSchema.getDefault(mq), mq)
+        .validateCss(new AncestorChain<CssTree>(t));
     new CssRewriter(
         new PluginMeta(
             "test",
@@ -238,35 +227,8 @@ public class CssRewriterTest extends TestCase {
       msg += "\n  ->\n" + msgBuf.toString();
     }
 
-    StringBuilder actual = new StringBuilder();
-    t.render(new RenderContext(new MessageContext(), actual));
+    String actual = render(t);
     System.err.println("\n\nactual=[[" + actual + "]]");
-    assertEquals(msg, golden, actual.toString());
-  }
-
-  private CssTree parseCss(String css, boolean allowSubstitutions)
-      throws Exception {
-    InputSource is = new InputSource(new URI("test://" + getClass().getName()));
-    CharProducer cp = CharProducer.Factory.create(new StringReader(css), is);
-    try {
-      CssLexer lexer = new CssLexer(cp, allowSubstitutions);
-      TokenQueue<CssTokenType> tq = new TokenQueue<CssTokenType>(
-          lexer, cp.getCurrentPosition().source(),
-          new Criterion<Token<CssTokenType>>() {
-            public boolean accept(Token<CssTokenType> t) {
-              return CssTokenType.SPACE != t.type
-                  && CssTokenType.COMMENT != t.type;
-            }
-          });
-      CssParser p = new CssParser(tq);
-      CssTree t = p.parseStyleSheet();
-      new CssValidator(CssSchema.getDefaultCss21Schema(mq),
-                       HtmlSchema.getDefault(mq), mq)
-          .validateCss(new AncestorChain<CssTree>(t));
-      tq.expectEmpty();
-      return t;
-    } finally {
-      cp.close();
-    }
+    assertEquals(msg, golden, actual);
   }
 }

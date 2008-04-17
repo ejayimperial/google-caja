@@ -180,6 +180,10 @@ public class JsLexer implements TokenStream<JsTokenType> {
       case '\u2003': case '\u2004': case '\u2005': case '\u2006':
       case '\u2007': case '\u2008': case '\u2009': case '\u200A':
       case '\u200B': case '\u3000':
+
+      // Treat the Byte Order Marker as whitespace as discussed at
+      // http://code.google.com/p/google-caja/issues/detail?id=148
+      case '\uFEFF':
         return true;
       default:
         return false;
@@ -188,7 +192,7 @@ public class JsLexer implements TokenStream<JsTokenType> {
 
   public static boolean isJsLineSeparator(char ch) {
     switch (ch) {
-      case '\r': case '\n': case '\u0085': case '\u2028': case '\u2029':
+      case '\r': case '\n': case '\u2028': case '\u2029':
         return true;
       default:
         return false;

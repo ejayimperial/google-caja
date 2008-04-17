@@ -14,9 +14,9 @@
 
 package com.google.caja.parser.js;
 
+import com.google.caja.lexer.FilePosition;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.reporting.RenderContext;
-
-import java.io.IOException;
 
 import java.util.Arrays;
 
@@ -34,7 +34,20 @@ public abstract class Operation extends AbstractExpression<Expression> {
     createMutation().appendChildren(Arrays.asList(params)).execute();
   }
 
-  static public Operation create(Operator op, Expression... params) {
+  @Override
+  protected void childrenChanged() {
+    super.childrenChanged();
+    int nChildren = children().size();
+    if (nChildren < minArity(op)) {
+      throw new IllegalArgumentException(
+          "Too few of children " + nChildren + " for operator " + op);
+    } else if (nChildren > maxArity(op)) {
+      throw new IllegalArgumentException(
+          "Too many children " + nChildren + " for operator " + op);
+    }
+  }
+
+  public static Operation create(Operator op, Expression... params) {
     switch (op) {
       case ASSIGN: // =
       case ASSIGN_AND: // &=
@@ -52,7 +65,7 @@ public abstract class Operation extends AbstractExpression<Expression> {
       case POST_INCREMENT: // x++
       case PRE_DECREMENT:  // --x
       case PRE_INCREMENT:  // ++x
-      { 
+      {
         return new AssignOperation(op, params);
       }
       case LOGICAL_AND: // &&
@@ -122,18 +135,18 @@ public abstract class Operation extends AbstractExpression<Expression> {
     }
   }
 
-  public void render(RenderContext rc) throws IOException {
+  public void render(RenderContext rc) {
+    TokenConsumer out = rc.getOut();
+    out.mark(getFilePosition());
     switch (op.getType()) {
       case PREFIX:
-        rc.out.append(op.getSymbol());
-        if (Character.isLetterOrDigit(op.getSymbol().charAt(0))) {
-          rc.out.append(' ');
-        }
+        out.consume(op.getSymbol());
         renderParam(0, rc);
         break;
       case POSTFIX:
         renderParam(0, rc);
-        rc.out.append(op.getSymbol());
+        out.mark(FilePosition.endOfOrNull(getFilePosition()));
+        out.consume(op.getSymbol());
         break;
       case INFIX:
         renderParam(0, rc);
@@ -143,27 +156,24 @@ public abstract class Operation extends AbstractExpression<Expression> {
             // If they are not present, then rendered javascript might include
             // the strings ]]> or </script> which would prevent it from being
             // safely embedded in HTML or XML.
-            rc.out.append(" ")
-                .append(op.getSymbol())
-                .append(" ");
+            out.consume(" ");
+            out.consume(op.getSymbol());
+            out.consume(" ");
             break;
           case MEMBER_ACCESS:
-            rc.out.append(op.getSymbol());
-            break;
           case COMMA:
-            rc.out.append(op.getSymbol()).append(" ");
+            out.consume(op.getSymbol());
             break;
         }
         renderParam(1, rc);
         break;
       case BRACKET:
         renderParam(0, rc);
-        rc.out.append(op.getOpeningSymbol());
+        out.consume(op.getOpeningSymbol());
         boolean seen = false;
-        rc.indent += 2;
         for (Expression e : children().subList(1, children().size())) {
           if (seen) {
-            rc.out.append(", ");
+            out.consume(",");
           } else {
             seen = true;
           }
@@ -171,42 +181,44 @@ public abstract class Operation extends AbstractExpression<Expression> {
           if (!parenthesize(Operator.COMMA, false, e)) {
             e.render(rc);
           } else {
-            rc.out.append("(");
-            rc.indent += 2;
+            out.consume("(");
             e.render(rc);
-            rc.indent -= 2;
-            rc.out.append(")");
+            out.mark(FilePosition.endOfOrNull(e.getFilePosition()));
+            out.consume(")");
           }
         }
-        rc.indent -= 2;
-        rc.out.append(op.getClosingSymbol());
+        out.mark(FilePosition.endOfOrNull(getFilePosition()));
+        out.consume(op.getClosingSymbol());
         break;
       case TERNARY:
         renderParam(0, rc);
-        rc.out.append(" ").append(op.getOpeningSymbol()).append(" ");
+        out.consume(op.getOpeningSymbol());
+        out.consume(" ");
         renderParam(1, rc);
-        rc.out.append(" ").append(op.getClosingSymbol()).append(" ");
+        out.consume(op.getClosingSymbol());
+        out.consume(" ");
         renderParam(2, rc);
         break;
     }
   }
 
-  private void renderParam(int i, RenderContext rc) throws IOException {
+  private void renderParam(int i, RenderContext rc) {
+    TokenConsumer out = rc.getOut();
     Expression e = children().get(i);
+    out.mark(e.getFilePosition());
     if (!parenthesize(op, 0 == i, e)) {
       e.render(rc);
     } else {
-      rc.out.append("(");
-      rc.indent += 2;
+      out.consume("(");
       e.render(rc);
-      rc.indent -= 2;
-      rc.out.append(")");
+      out.mark(FilePosition.endOfOrNull(getFilePosition()));
+      out.consume(")");
     }
   }
 
   private static boolean parenthesize(
       Operator op, boolean firstOp, Expression child) {
-    // Parenthesize blocklike expressions
+    // Parenthesize block-like expressions
     if (child instanceof FunctionConstructor
         || child instanceof ObjectConstructor) {
       // Parenthesize constructors if they're the first op.
@@ -233,8 +245,18 @@ public abstract class Operation extends AbstractExpression<Expression> {
 
     if (!(child instanceof Operation)) { return false; }
 
-    // Parenthesize based on associativity and precedence
     Operator childOp = ((Operation) child).getOperator();
+
+    if (firstOp && childOp == Operator.FUNCTION_CALL
+        && op == Operator.MEMBER_ACCESS) {
+      // Don't parenthesize foo().bar since the LHS of the function call must
+      // already be parenthesized if it were ambiguous since function call binds
+      // less tightly than member access, and the actuals are already
+      // parenthesized since the function call operator is "()".
+      return false;
+    }
+
+    // Parenthesize based on associativity and precedence
     int delta = op.getPrecedence() - childOp.getPrecedence();
     if (delta < 0) {
       // e.g. this is * and child is +
@@ -248,10 +270,20 @@ public abstract class Operation extends AbstractExpression<Expression> {
       // -(-a) is right associative so it is parenthesized
 
       // ?: is right associative, so in a ? b : c, a would be parenthesized were
-      // it a trinary op
+      // it a ternary op.
       return (childOp.getAssociativity() == Associativity.LEFT) != firstOp;
     } else {
       return false;
     }
+  }
+
+  private static int minArity(Operator op) {
+    if (op == Operator.FUNCTION_CALL) { return 1; }
+    return op.getType().getArity();
+  }
+
+  private static int maxArity(Operator op) {
+    if (op == Operator.FUNCTION_CALL) { return Integer.MAX_VALUE; }
+    return op.getType().getArity();
   }
 }

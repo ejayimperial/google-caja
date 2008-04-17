@@ -50,6 +50,10 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Globals cannot end in \"_\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
+  LABELS_CANNOT_END_IN_DOUBLE_UNDERSCORE(
+      "%s: Labels cannot end in \"__\": %s",
+      MessageLevel.ERROR),
+
   PUBLIC_PROPERTIES_CANNOT_END_IN_UNDERSCORE(
       "%s: Public properties cannot end in \"_\": %s, %s",
       MessageLevel.FATAL_ERROR),
@@ -82,10 +86,6 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Member key may not end in \"__\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
-  CONSTRUCTORS_ARE_NOT_FIRST_CLASS(
-      "%s: Constructors are not first class: %s, %s",
-      MessageLevel.FATAL_ERROR),
-
   CAJA_DEF_ON_NON_CTOR(
       "%s: caja.def called with non-constructor: %s, %s",
       MessageLevel.FATAL_ERROR),
@@ -101,6 +101,17 @@ public enum RewriterMessageType implements MessageTypeInt {
   CANNOT_ASSIGN_TO_THIS(
       "%s: Cannot assign to \"this\": %s, %s",
       MessageLevel.FATAL_ERROR),
+
+  WITH_BLOCKS_NOT_ALLOWED(
+      "%s: \"with\" blocks are not allowed",
+      MessageLevel.ERROR),
+  EXOPHORIC_FUNCTION_AMBIGUITY(
+      "%s: \"this\" in an exophoric function only exposes public fields",
+      MessageLevel.CRITICAL_WARNING),
+
+  NOT_DELETABLE(
+      "%s: invalid operand to delete",
+      MessageLevel.ERROR),
   ;
 
   private final String formatString;
