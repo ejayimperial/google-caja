@@ -44,6 +44,9 @@ public class CssCompilerTest extends CajaTestCase {
     assertCompiledCss(
         "body.ie6 p {color:blue}",
         "[ 'body.ie6 .', ' p {\\n  color: blue\\n}' ]");
+    assertCompiledCss(
+        "body.ie6#zoicks p {color:blue}",
+        "[ 'body.ie6#zoicks-', ' .', ' p {\\n  color: blue\\n}' ]");
     assertCompiledCss(  // Body markers cannot apply to the body directly.
         "body.ie6 {color:blue}",
         "[ '.', ' body.ie6 {\\n  color: blue\\n}' ]");

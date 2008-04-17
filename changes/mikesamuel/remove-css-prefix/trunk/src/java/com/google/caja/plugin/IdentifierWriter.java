@@ -31,9 +31,12 @@ import java.util.List;
  * Makes sure individual values do not end in double underscore, and if suffix
  * is true, adds the gadget's id suffix.
  *
+ * <p>{@code <p id="foo">}  =>  {@code <p id="foo-suffix__">}  where suffix
+ * is determined at runtime via {@code ___OUTERS___.getIdClass()}.
+ *
  * @author mikesamuel@gmail.com
  */
-class IdentifierWriter {
+final class IdentifierWriter {
   private final FilePosition pos;
   private final MessageQueue mq;
   private final boolean suffix;
@@ -44,11 +47,49 @@ class IdentifierWriter {
     this.suffix = suffix;
   }
 
+  /**
+   * Invoked with each chunk of a CLASS, ID, or NAME attribute value to compose
+   * an expression that will generate that value.
+   */
   interface Emitter {
+    /** @param s a plain text chunk of an attribute value. */
     void emit(String s);
+    /**
+     * @param e an expression that will return a string that can be safely
+     *   treated as either plain text or HTML.
+     */
     void emit(Expression e);
   }
 
+  /**
+   * @param nmTokens a CLASS, ID, or NAME attribute value as plain text.
+   * @param out will be invoked with expressions and string chunks that can be
+   *   concatenated to get the rewritten attribute value.
+   */
+  void toJavascript(String nmTokens, Emitter out) {
+    boolean wasSpace = true;
+    boolean first = true;
+    int pos = 0;
+    for (int i = 0, n = nmTokens.length(); i < n; ++i) {
+      char ch = nmTokens.charAt(i);
+      boolean space = Character.isWhitespace(ch);
+      if (space != wasSpace) {
+        if (!wasSpace) {
+          first = emitName(first, nmTokens.substring(pos, i), out);
+        }
+        pos = i;
+        wasSpace = space;
+      }
+    }
+    if (!wasSpace) {
+      first = emitName(first, nmTokens.substring(pos), out);
+    }
+  }
+
+  /**
+   * Produces a javascript expression that can be passed to
+   * {@code Element.setAttributeValue}.
+   */
   static final class ConcatenationEmitter implements Emitter {
     private final List<Expression> parts = new ArrayList<Expression>();
 
@@ -73,6 +114,10 @@ class IdentifierWriter {
     }
   }
 
+  /**
+   * Appends the attribute value to a block that already contains code to
+   * produce a larger chunk of HTML preceeding the attribute value.
+   */
   static final class AttribValueEmitter implements Emitter {
     private final List<String> tgtChain;
     private final Block out;
@@ -88,26 +133,6 @@ class IdentifierWriter {
     }
   }
 
-  void toJavascript(String nmTokens, Emitter out) {
-    boolean wasSpace = true;
-    boolean first = true;
-    int pos = 0;
-    for (int i = 0, n = nmTokens.length(); i < n; ++i) {
-      char ch = nmTokens.charAt(i);
-      boolean space = Character.isWhitespace(ch);
-      if (space != wasSpace) {
-        if (!wasSpace) {
-          first = emitName(first, nmTokens.substring(pos, i), out);
-        }
-        pos = i;
-        wasSpace = space;
-      }
-    }
-    if (!wasSpace) {
-      first = emitName(first, nmTokens.substring(pos), out);
-    }
-  }
-
   private boolean emitName(boolean first, String ident, Emitter out) {
     if (ident.endsWith("__")) {
       mq.addMessage(
@@ -118,7 +143,8 @@ class IdentifierWriter {
     out.emit((first ? "" : " ") + ident + (suffix ? "-" : ""));
     if (suffix) {
       out.emit(TreeConstruction.call(
-          TreeConstruction.memberAccess("___OUTERS___", "getIdClass___")));
+          TreeConstruction.memberAccess(
+              ReservedNames.OUTERS, "getIdClass___")));
     }
     return false;
   }

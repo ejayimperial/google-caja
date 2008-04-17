@@ -19,7 +19,6 @@ import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.js.Block;
 import com.google.caja.plugin.stages.CheckForErrorsStage;
 import com.google.caja.plugin.stages.CompileCssStage;

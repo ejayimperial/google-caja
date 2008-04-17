@@ -85,7 +85,7 @@ public final class CssRewriter {
     fixUnitlessLengths(t);
     // Once at the beginning, and again at the end.
     removeUnsafeConstructs(t);
-    removeEmptyDeclarations(t);
+    removeEmptyDeclarationsAndSelectors(t);
     // After we remove declarations, we may have some rulesets without any
     // declarations which is technically illegal, so we remove rulesets without
     // declarations.
@@ -232,19 +232,33 @@ public final class CssRewriter {
   }
 
   /** Get rid of rules like <code>p { }</code>. */
-  private void removeEmptyDeclarations(AncestorChain<? extends CssTree> t) {
+  private void removeEmptyDeclarationsAndSelectors(
+      AncestorChain<? extends CssTree> t) {
     t.node.acceptPreOrder(new Visitor() {
         public boolean visit(AncestorChain<?> ancestors) {
           ParseTreeNode node = ancestors.node;
-          if (!(node instanceof CssTree.Declaration)) { return true; }
-          CssTree.Declaration decl = (CssTree.Declaration) node;
-          if (null == decl.getProperty()) {
-            ParseTreeNode parent = ancestors.getParentNode();
-            if (parent instanceof MutableParseTreeNode) {
-              ((MutableParseTreeNode) parent).removeChild(decl);
+          if (node instanceof CssTree.Declaration) {
+            CssTree.Declaration decl = (CssTree.Declaration) node;
+            if (null == decl.getProperty()) {
+              ParseTreeNode parent = ancestors.getParentNode();
+              if (parent instanceof MutableParseTreeNode) {
+                ((MutableParseTreeNode) parent).removeChild(decl);
+              }
             }
+            return false;
+          } else if (node instanceof CssTree.Selector) {
+            CssTree.Selector sel = (CssTree.Selector) node;
+            if (sel.children().isEmpty()
+                || !(sel.children().get(0) instanceof CssTree.SimpleSelector)) {
+              // Remove from parent
+              ParseTreeNode parent = ancestors.getParentNode();
+              if (parent instanceof MutableParseTreeNode) {
+                ((MutableParseTreeNode) parent).removeChild(sel);
+              }
+            }
+            return false;
           }
-          return false;
+          return true;
         }
       }, t.parent);
   }

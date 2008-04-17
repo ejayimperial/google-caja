@@ -37,7 +37,6 @@ import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.FormalParam;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.Identifier;
 import com.google.caja.parser.js.Operation;
@@ -46,6 +45,7 @@ import com.google.caja.parser.js.Parser;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
+import com.google.caja.parser.quasiliteral.QuasiBuilder;
 import com.google.caja.plugin.stages.RewriteHtmlStage;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
@@ -519,19 +519,13 @@ public class HtmlCompiler {
         String handlerFnName = htmlc.syntheticId();
         htmlc.eventHandlers.put(
             handlerFnName,
-            s(new Declaration(
-                  s(new Identifier(handlerFnName)),
-                  TreeConstruction.call(
-                      TreeConstruction.memberAccess("___", "simpleFunc"),
-                      s(new FunctionConstructor(
-                            new Identifier(null),
-                            Arrays.asList(
-                                s(new FormalParam(
-                                      s(new Identifier(
-                                            ReservedNames.THIS_NODE)))),
-                                s(new FormalParam(
-                                      s(new Identifier("event"))))),
-                            handler))))));
+            (Declaration) QuasiBuilder.substV(
+                "var @handlerFnName = ___.simpleFunc("
+                + "   function (" + ReservedNames.THIS_NODE + ", event) {"
+                + "     @handler*;"
+                + "   });",
+                "handlerFnName", s(new Identifier(handlerFnName)),
+                "handler", handler));
 
         String handlerFnNameLit = StringLiteral.toQuotedValue(handlerFnName);
 

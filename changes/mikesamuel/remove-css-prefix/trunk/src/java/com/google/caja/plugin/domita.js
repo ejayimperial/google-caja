@@ -262,22 +262,23 @@ attachDocumentStub = (function () {
       switch (type) {
         case html4.atype.IDREF:
           value = String(value);
-          if (!(value && !illegalSuffix.test(value) && isXmlName(value))) {
-            return null;
+          value = String(value);
+          if (value && !illegalSuffix.test(value) && isXmlName(value)) {
+            return value + idSuffix;
           }
-          return value + idSuffix;
+          return null;
         case html4.atype.NAME:
           value = String(value);
-          if (!(value && !illegalSuffix.test(value) && isXmlName(value))) {
-            return null;
+          if (value && !illegalSuffix.test(value) && isXmlName(value)) {
+            return value;
           }
-          return value;
+          return null;
         case html4.atype.NMTOKENS:
           value = String(value);
-          if (!(value && !illegalSuffix.test(value) && isXmlNmTokens(value))) {
-            return null;
+          if (value && !illegalSuffix.test(value) && isXmlNmTokens(value)) {
+            return value;
           }
-          return value;
+          return null;
         case html4.atype.SCRIPT:
           value = String(value);
           // Translate a handler that calls a simple function like
