@@ -135,6 +135,17 @@ public final class CssCompiler {
     // Render the CSS to a string, split it (effectively) on the
     // GADGET_ID_PLACEHOLDER to get an array of strings, and produce JavaScript
     // which joins it on the actual gadget id which is chosen at runtime.
+
+    // The below will, if GADGET_ID_PLACEHOLDER where "X", given the sequence
+    // of calls
+    //    call            sb        cssParts
+    //    consume("a")    "a"       []
+    //    consume("bX")   ""        ["ab"]
+    //    consume("cX")   ""        ["ab", "c"]
+    //    consume("d")    "d"       ["ab", "c"]
+    //    noMoreTokens()  ""        ["ab", "c", "d"]
+    // Which has he property that the output list joined with the placeholder
+    // produces the concatenation of the original string.
     final List<Expression> cssParts = new ArrayList<Expression>();
     TokenConsumer cssCompiler = new TokenConsumer() {
           final StringBuilder sb = new StringBuilder();
@@ -180,8 +191,8 @@ public final class CssCompiler {
     // will only make purple paragraphs that are under a node with class g123__.
     ExpressionStmt emitStmt = new ExpressionStmt(
         (Expression) QuasiBuilder.substV(
-            "@outers.emitCss___(@cssParts.join(@outers.getIdClass___()))",
-            "outers", TreeConstruction.ref(ReservedNames.OUTERS),
+            ReservedNames.OUTERS + ".emitCss___(@cssParts.join("
+            + ReservedNames.OUTERS + ".getIdClass___()))",
             "cssParts", cssPartsArray));
     emitStmt.setFilePosition(ss.getFilePosition());
     return emitStmt;

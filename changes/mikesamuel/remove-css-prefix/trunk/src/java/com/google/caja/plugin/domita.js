@@ -504,9 +504,11 @@ attachDocumentStub = (function () {
       switch (type) {
         case html4.atype.IDREF:
           var n = idSuffix.length;
-          if (value && value.length >= n
-              && idSuffix === value.substring(0, value.length - n)) {
-            return value.substring(0, value.length - n);
+          if (!value) { return ''; }
+          var len = value.length;
+          var end = len - n;
+          if (end > 0 && idSuffix === value.substring(end, len)) {
+            return value.substring(0, end);
           }
           return '';
         default:
