@@ -21,6 +21,8 @@ import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessagePart;
+import com.google.caja.reporting.SimpleMessageQueue;
+import com.google.caja.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -132,7 +134,7 @@ public class ConfigUtil {
       Reader in, FilePosition src, MessageQueue mq)
       throws IOException, ParseException {
     JSONWhiteListLoader wll = new JSONWhiteListLoader(src, mq);
-    return wll.loadFrom(wll.expectJSONObject(parseJson(in), "whitelist"));
+    return wll.loadFrom(in);
   }
 
   /**
@@ -157,28 +159,16 @@ public class ConfigUtil {
     return new JSONWhiteListLoader(src, mq).loadFrom(value);
   }
 
-  // Prevent unnecessary reparsing of schemas.
-  private static final Map<URI, JSONObject> cache = Collections.synchronizedMap(
-      new WeakHashMap<URI, JSONObject>());
-
-  static Object parseJson(Reader in) throws IOException {
-    if (in instanceof UriReader) {
-      JSONObject val = cache.get(((UriReader) in).getUri());
-      if (val != null) { return val; }
-    }
-    return JSONValue.parse(in);
-  }
-
-  private final static class UriReader extends BufferedReader {
-    private final URI uri;
-    UriReader(URI uri, Reader underlying) {
-      super(underlying);
-      this.uri = uri;
-    }
-    public URI getUri() { return uri; }
-  }
-
   private ConfigUtil() {}
+}
+
+final class UriReader extends BufferedReader {
+  private final URI uri;
+  UriReader(URI uri, Reader underlying) {
+    super(underlying);
+    this.uri = uri;
+  }
+  public URI getUri() { return uri; }
 }
 
 class JSONWhiteListLoader {
@@ -190,8 +180,45 @@ class JSONWhiteListLoader {
     this.mq = mq;
   }
 
+  WhiteList loadFrom(Reader in) throws IOException, ParseException {
+    return fromSkeleton(loadSkeleton(in));
+  }
+
   WhiteList loadFrom(JSONObject value) throws IOException, ParseException {
     return fromSkeleton(loadSkeleton(value));
+  }
+
+  // Prevent unnecessary reparsing of schemas.
+  private static final Map<URI, Pair<WhiteListSkeleton, List<Message>>> cache
+      = Collections.synchronizedMap(
+            new WeakHashMap<URI, Pair<WhiteListSkeleton, List<Message>>>());
+
+  private WhiteListSkeleton loadSkeleton(Reader in)
+      throws IOException, ParseException {
+    if (in instanceof UriReader) {
+      URI uri = ((UriReader) in).getUri();
+      Pair<WhiteListSkeleton, List<Message>> p = cache.get(uri);
+      if (p != null) {
+        mq.getMessages().addAll(p.b);
+        return p.a;
+      }
+    }
+    MessageQueue origMq = mq;
+    SimpleMessageQueue cacheMq = new SimpleMessageQueue();
+    this.mq = cacheMq;
+    try {
+      WhiteListSkeleton skel = loadSkeleton(
+          expectJSONObject(JSONValue.parse(in), "whitelist"));
+      if (in instanceof UriReader) {
+        cache.put(
+            ((UriReader) in).getUri(),
+            Pair.pair(skel, cacheMq.getMessages()));
+      }
+      return skel;
+    } finally {
+      this.mq = origMq;
+      origMq.getMessages().addAll(cacheMq.getMessages());
+    }
   }
 
   /**
@@ -240,13 +267,9 @@ class JSONWhiteListLoader {
           URI uri = src.source().getUri().resolve(new URI(srcStr));
           FilePosition pos = FilePosition.startOfFile(new InputSource(uri));
 
-          JSONWhiteListLoader inheritedLoader
-              = new JSONWhiteListLoader(pos, mq);
-          JSONObject inheritedJson = inheritedLoader.expectJSONObject(
-              ConfigUtil.parseJson(ConfigUtil.openConfigResource(
-                  uri, src.source().getUri())), "whitelist");
-
-          inherited.add(inheritedLoader.loadSkeleton(inheritedJson));
+          inherited.add(
+              new JSONWhiteListLoader(pos, mq).loadSkeleton(
+                  ConfigUtil.openConfigResource(uri, src.source().getUri())));
         } catch (URISyntaxException ex) {
           mq.addMessage(ConfigMessageType.BAD_URL, src,
                         MessagePart.Factory.valueOf(srcStr));
@@ -531,7 +554,7 @@ class WhiteListImpl implements WhiteList {
     this.allowed = Collections.unmodifiableSet(allowed);
     this.defs = Collections.unmodifiableMap(defs);
   }
-  
+
   public Set<String> allowedItems() { return allowed; }
 
   public Map<String, TypeDefinition> typeDefinitions() { return defs; }
