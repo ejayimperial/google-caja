@@ -60,8 +60,8 @@ public final class JsMinimalPrinter implements TokenConsumer {
       try {
         ((Flushable) out).flush();
       } catch (IOException ex) {
-        closed = true;
         if (!closed) {
+          closed = true;
           ioExceptionHandler.handle(ex);
         }
       }
