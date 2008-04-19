@@ -54,6 +54,94 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
+  public void testAttachedMethod() throws Exception {
+    // The cases that succeed are tested in DefaultCajaRewriterTest
+    execGadget(
+        "<script>" +
+        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
+        "var foo = new Foo();" +
+        "var g=foo.f;" +
+        "var passed=false;" +
+        "try { g(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Attached method should not be able to be called as a simple function.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
+        "var foo = new Foo();" +
+        "var h={f:foo.f};" +
+        "var passed=false;" +
+        "try { h.f(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Attached method should not be able to be called on a different object.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() {}" +
+        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
+        "foo = new Foo;" +
+        "h={setX:foo.setX};" +
+        "passed = false;" +
+        "try { h.setX(1); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Unattached methods are not being attached properly.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() {}" +
+        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
+        "foo = new Foo;" +
+        "g = foo.setX;" +
+        "passed = false;" +
+        "try { g(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Unattached methods are not being attached properly.');" +
+        "}" +
+        "</script>",
+        ""); 
+    execGadget(
+        "<script>" +
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  this.Bar = function Bar(x){ " +
+        "    this.x_ = x; " +
+        "    this.getX = function() { return this.x_; }" +
+        "  }; " +
+        "};" +
+        "foo = new Foo;" +
+        "passed = false;" +
+        "try { foo.Bar(5); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Constructors are being attached as methods.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  function Bar(x){ " +
+        "    this.x_ = x; " +
+        "  }" +
+        "  Bar.prototype.getX = function () { return this.x_; };" +
+        "  this.Bar = Bar;" +
+        "};" +
+        "foo = new Foo;" +
+        "passed = false;" +
+        "try { foo.Bar(5); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Constructors are being attached as methods.');" +
+        "}" +
+        "</script>",
+        "");
+  }
   // TODO(metaweta): Move as many of these as possible to DefaultCajaRewriterTest
   // using assertConsistent
   public void testEmptyGadget() throws Exception {
@@ -365,7 +453,7 @@ public class HtmlCompiledPluginTest extends TestCase {
 
         "assertEquals('<a onclick=\"return plugin_dispatchEvent___(" +
         "this, event || window.event, 0, \\'c_1___\\')\">hi</a>'," +
-        " outers.emitHtml___.htmlBuf_.join(''))"
+        " document.getElementById('test-test').innerHTML)"
         );
   }
 
@@ -435,7 +523,7 @@ public class HtmlCompiledPluginTest extends TestCase {
   public void testECMAScript31Scoping() throws Exception {
     // TODO(stay): Once they decide on scoping & initialization rules, test them here.
   }
-  
+
   public void testForIn() throws Exception {
     execGadget(
         "<script>" +
@@ -489,61 +577,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "    ___.getNewModuleHandler().getOuters().obj.test().sort().toSource()," +
         "    (['test', 'x_', 'y']).toSource());");
   }
-    
-  public void testAttachedMethod() throws Exception {
-    // The case that succeeds is tested in DefaultCajaRewriterTest
-    execGadget(
-        "<script>" +
-        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
-        "var foo = new Foo();" +
-        "var g=foo.f;" +
-        "var passed=false;" +
-        "try { g(); } catch (e) { passed = true; }" +
-        "if (!passed) {" +
-        "  fail('Attached method should not be able to be called as a simple function.');" +
-        "}" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
-        "var foo = new Foo();" +
-        "var h={f:foo.f};" +
-        "var passed=false;" +
-        "try { h.f(); } catch (e) { passed = true; }" +
-        "if (!passed) {" +
-        "  fail('Attached method should not be able to be called on a different object.');" +
-        "}" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Foo() {}" +
-        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
-        "foo = new Foo;" +
-        "h={setX:foo.setX};" +
-        "passed = false;" +
-        "try { h.setX(1); } catch (e) { passed = true; }" +
-        "if (!passed) {" +
-        "  fail('Unattached methods are not being attached properly.');" +
-        "}" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Foo() {}" +
-        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
-        "foo = new Foo;" +
-        "passed = false;" +
-        "g = foo.setX;" +
-        "try { g(); } catch (e) { passed = true; }" +
-        "if (!passed) {" +
-        "  fail('Unattached methods are not being attached properly.');" +
-        "}" +
-        "</script>",
-        "");
-  }
-  
+
   public void testGlobalThis() throws Exception {
     execGadget(
         "<script>" +
@@ -561,13 +595,12 @@ public class HtmlCompiledPluginTest extends TestCase {
         "</script>",
         "");
   }
-  
+
   private void execGadget(String gadgetSpec, String tests) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = new EchoingMessageQueue(
         new PrintWriter(System.err), mc, true);
-    PluginMeta meta = new PluginMeta(
-        "test", PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
+    PluginMeta meta = new PluginMeta();
     PluginCompiler compiler = new PluginCompiler(meta, mq);
     compiler.setMessageContext(mc);
     DomTree html = parseHtml(gadgetSpec, mq);
@@ -596,17 +629,18 @@ public class HtmlCompiledPluginTest extends TestCase {
           // Initialize the DOM
           new RhinoTestBed.Input(
               // Document not defined until window.location set.
-              new StringReader("location = '" + htmlStubUrl + "';\n"),
+              "location = '" + htmlStubUrl + "';\n",
               "dom"),
           // Make the assertTrue, etc. functions available to javascript
           new RhinoTestBed.Input(getClass(), "asserts.js"),
           // Plugin Framework
           new RhinoTestBed.Input(getClass(), "../caja.js"),
+          new RhinoTestBed.Input(getClass(), "html-emitter.js"),
           new RhinoTestBed.Input(getClass(), "container.js"),
           // The gadget
-          new RhinoTestBed.Input(new StringReader(js.toString()), "gadget"),
+          new RhinoTestBed.Input(js.toString(), "gadget"),
           // The tests
-          new RhinoTestBed.Input(new StringReader(tests), "tests"),
+          new RhinoTestBed.Input(tests, "tests"),
         };
       RhinoTestBed.runJs(null, inputs);
     }

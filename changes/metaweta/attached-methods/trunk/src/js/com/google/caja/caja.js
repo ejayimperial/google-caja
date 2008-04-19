@@ -661,9 +661,6 @@ var ___;
     if (isMethod(constr)) {
       fail("Methods can't be constructors: ", constr);
     }
-    if (isSimpleFunc(constr)) {
-      fail("Simple-functions can't be constructors: ", constr);
-    }
     constr.___CONSTRUCTOR___ = true;
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
@@ -683,8 +680,6 @@ var ___;
     }
     return constr;  // translator freezes constructor later
   }
-
-
 
   /**
    * Supports the split-translation for first-class constructors.
@@ -761,7 +756,7 @@ var ___;
     }
     function result(var_args) {
       if (this !== that) {
-        fail('Method ', meth, ' is already attached.');
+        fail('Method ', meth, ' is already attached.\nthis: '+this.toSource()+'\nthat: '+that.toSource());
       }
       return meth.apply(that, arguments);
     }
@@ -794,8 +789,8 @@ var ___;
     if (isCtor(meth)) {
       fail("Constructors can't be methods: ", meth);
     }
-    if (isSimpleFunc(fun)) {
-      fail("Simple functions can't be exophoric: ", fun);
+    if (isSimpleFunc(meth)) {
+      fail("Simple functions can't be methods: ", meth);
     }
     if (isXo4aFunc(meth)) {
       fail("Internal: exophoric functions can't be methods: ", meth);

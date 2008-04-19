@@ -14,10 +14,8 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.js.Block;
 import com.google.caja.render.JsPrettyPrinter;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageQueue;
@@ -26,19 +24,16 @@ import com.google.caja.util.Callback;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Rewrites a JavaScript parse tree.
- *  
+ *
  * @author ihab.awad@gmail.com (Ihab Awad)
  */
 public abstract class Rewriter {
-  private final Map<String, QuasiNode> patternCache = new HashMap<String, QuasiNode>();
   private final List<Rule> rules = new ArrayList<Rule>();
   private final Set<String> ruleNames = new HashSet<String>();
   private final boolean logging;
@@ -62,7 +57,7 @@ public abstract class Rewriter {
    * @return the expanded parse tree node.
    */
   public final ParseTreeNode expand(ParseTreeNode node, MessageQueue mq) {
-    return expand(node, Scope.fromRootBlock((Block)node, mq), mq);
+    return expand(node, null, mq);
   }
 
   /**
@@ -78,13 +73,13 @@ public abstract class Rewriter {
 
       ParseTreeNode result = null;
       RuntimeException ex = null;
-      
+
       try {
         result = rule.fire(node, scope, mq);
       } catch (RuntimeException e) {
         ex = e;
       }
-      
+
       if (result != Rule.NONE || ex != null) {
         if (logging) logResults(rule, node, result, ex);
         if (ex != null) throw ex;
@@ -110,28 +105,6 @@ public abstract class Rewriter {
       throw new IllegalArgumentException("Duplicate rule name: " + rule.getName());
     rules.add(rule);
     ruleNames.add(rule.getName());
-  }
-
-  /**
-   * Obtains a quasiliteral node from a text pattern. Components of the rewriter should prefer
-   * this methood over calling a {@link QuasiBuilder} directly since this method matains a
-   * cache of pre-compiled patterns.
-   *
-   * @param patternText a quasiliteral pattern.
-   * @return the quasiliteral node represented by the supplied pattern.
-   */
-  public final QuasiNode getPatternNode(String patternText) {
-    if (!patternCache.containsKey(patternText)) {
-      try {
-        patternCache.put(
-            patternText,
-            QuasiBuilder.parseQuasiNode(patternText));
-      } catch (ParseException e) {
-        // Pattern programming error
-        throw new RuntimeException(e);
-      }
-    }
-    return patternCache.get(patternText);
   }
 
   private void logResults(
@@ -172,7 +145,7 @@ public abstract class Rewriter {
         throw new RuntimeException(ex);
       }
     };
-    
+
     StringBuilder output = new StringBuilder();
     TokenConsumer renderer = new JsPrettyPrinter(output, handler);
     n.render(new RenderContext(new MessageContext(), renderer));
