@@ -584,7 +584,7 @@ var ___;
     obj[name + '_canEnum___'] = true;
   }
   
-  /** allowEnum for members*/
+  /** allowEnum for members */
   function allowEnumOnly(obj, name) { 
     obj[name + '_canEnum___'] = true;
   }
