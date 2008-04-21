@@ -262,7 +262,6 @@ attachDocumentStub = (function () {
       switch (type) {
         case html4.atype.IDREF:
           value = String(value);
-          value = String(value);
           if (value && !illegalSuffix.test(value) && isXmlName(value)) {
             return value + idSuffix;
           }
@@ -506,8 +505,8 @@ attachDocumentStub = (function () {
       if ('string' !== typeof value) { return value; }
       switch (type) {
         case html4.atype.IDREF:
-          var n = idSuffix.length;
           if (!value) { return ''; }
+          var n = idSuffix.length;
           var len = value.length;
           var end = len - n;
           if (end > 0 && idSuffix === value.substring(end, len)) {
@@ -891,7 +890,6 @@ attachDocumentStub = (function () {
         style = document.createElement('style');
         style.setAttribute('type', 'text/css');
         style.appendChild(document.createTextNode(stylesheet));
-        document
       } catch (e) {  // Above fails on IE 6
         var container = document.createElement('div');
         container.innerHTML = ('<style type="text/css">/*<![CDATA[[<!--*/'
