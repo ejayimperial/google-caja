@@ -313,11 +313,14 @@ public abstract class Rule implements MessagePart {
         return substV(
             "___.method(function(@ps*) {" +
             "  @fh*;" +
+            "  @stmts;" +
             "  @bs*;" +
             "});",
             "ps",    bindings.get("ps"),
+            // It's important to expand bs before computing fh and stmts.
             "bs",    rewriter.expand(bindings.get("bs"), s2, mq),
-            "fh",    getFunctionHeadDeclarations(rule, s2, mq));
+            "fh",    getFunctionHeadDeclarations(rule, s2, mq),
+            "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
       }
     }
 
@@ -535,7 +538,7 @@ public abstract class Rule implements MessagePart {
                         || isOutersReference(left))) {
       object = (Reference) left;
     } else {
-      Identifier tmpVar = scope.declareStartOfScopeVariable();
+      Identifier tmpVar = scope.declareStartOfScopeTempVariable();
       temporaries.add(s(new ExpressionStmt((Expression)substV(
           "@tmpVar = @left;",
           "tmpVar", s(new Reference(tmpVar)),
@@ -547,7 +550,7 @@ public abstract class Rule implements MessagePart {
     if (isKeySimple) {
       key = right;
     } else {
-      Identifier tmpVar = scope.declareStartOfScopeVariable();
+      Identifier tmpVar = scope.declareStartOfScopeTempVariable();
       temporaries.add(s(new ExpressionStmt((Expression)substV(
           "@tmpVar = @right;",
           "tmpVar", s(new Reference(tmpVar)),

@@ -175,13 +175,13 @@ public class DefaultCajaRewriter extends Rewriter {
 
         List<Statement> declsList = new ArrayList<Statement>();
 
-        Identifier oTemp = scope.declareStartOfScopeVariable();
+        Identifier oTemp = scope.declareStartOfScopeTempVariable();
         declsList.add(s(new ExpressionStmt((Expression)substV(
             "@oTemp = @o;",
             "oTemp", s(new Reference(oTemp)),
             "o", expand(bindings.get("o"), scope, mq)))));
         
-        Identifier kTemp = scope.declareStartOfScopeVariable();
+        Identifier kTemp = scope.declareStartOfScopeTempVariable();
 
         if (isDecl) {
           String kName = ((Reference)bindings.get("k")).getIdentifierName();
@@ -1318,6 +1318,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 "      @bs*;" +
                 "}))",
                 "ps", bindings.get("ps"),
+                // It's important to expand bs before computing fh and stmts.
                 "bs", expand(bindings.get("bs"), s2, mq),
                 "fh", getFunctionHeadDeclarations(this, s2, mq),
                 "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
@@ -1338,23 +1339,27 @@ public class DefaultCajaRewriter extends Rewriter {
               (FunctionConstructor)node.children().get(1));
           if (!s2.hasFreeThis()) {
             checkFormals(bindings.get("ps"), mq);
-            return expandDef(
+            Identifier f = (Identifier)bindings.get("f");
+            scope.declareStartOfScopeVariable(f);
+            scope.addStartOfBlockStatement((Statement)expandDef(
                 new Reference((Identifier)bindings.get("f")),
                 substV(
                     "___.simpleFunc(" +
-                    "  function @f(@ps*) {" + // "
+                    "  function @f(@ps*) {" +
                     "    @fh*;" +
                     "    @stmts*;" +
                     "    @bs*;" +
                     "});",
-                    "f", bindings.get("f"),
+                    "f", f,
                     "ps", bindings.get("ps"),
+                    // It's important to expand bs before computing fh and stmts.
                     "bs", expand(bindings.get("bs"), s2, mq),
                     "fh", getFunctionHeadDeclarations(this, s2, mq),
                     "stmts", new ParseTreeNodeContainer(s2.getStartStatements())),
                 this,
                 scope,
-                mq);
+                mq));
+            return substV(";");
           }
         }
         return NONE;
@@ -1381,6 +1386,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 "  }));",
                 "f", bindings.get("f"),
                 "ps", bindings.get("ps"),
+                // It's important to expand bs before computing fh and stmts.
                 "bs", expand(bindings.get("bs"), s2, mq),
                 "fh", getFunctionHeadDeclarations(this, s2, mq),
                 "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
@@ -1409,9 +1415,12 @@ public class DefaultCajaRewriter extends Rewriter {
           // If we're in a constructor or a method, attach the method.
           if (s2.inMethodContext()) {
             return substV(
-                "___.attach(t___, ___.method(function(@formals*) { @body*; }))", 
+                "___.attach(t___, ___.method(function(@formals*) { @fh*; @stmts; @body*; }))", 
                 "formals", bindings.get("formals"),
-                "body", expand(bindings.get("body"), s2, mq));
+                // It's important that body is expanded before computing fh and stmts. 
+                "body", expand(bindings.get("body"), s2, mq),
+                "fh", getFunctionHeadDeclarations(this, s2, mq),
+                "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
           }
         }
         return NONE;
@@ -1445,10 +1454,13 @@ public class DefaultCajaRewriter extends Rewriter {
           rewrittenBody.acceptPreOrder(new ExophoricFunctionRewriter(mq), null);
           return substV(
               "___.xo4a(" +
-              "    function (@formals*) { var @localThis = this; @body*; })",
+              "    function (@formals*) { var @localThis = this; @fh*; @stmts*; @body*; })",
               "formals", bindings.get("formals"),
               "localThis", s(new Identifier(ReservedNames.LOCAL_THIS)),
-              "body", expand(rewrittenBody, scope, mq));
+              // It's important that body is expanded before computing fh and stmts.
+              "body", expand(rewrittenBody, scope, mq),
+              "fh", getFunctionHeadDeclarations(this, s2, mq),
+              "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
         }
         return NONE;
       }
@@ -1498,6 +1510,10 @@ public class DefaultCajaRewriter extends Rewriter {
             Reference fRef = new Reference(f);
             Identifier f_init___ = new Identifier(f.getName() + "_init___");
             Reference f_init___Ref = new Reference(f_init___);
+            // Add a declaration to the start of function body
+            if (declaration) {
+              scope.declareStartOfScopeVariable(f);
+            }
             ParseTreeNode result = substV(
                 "(function () {" +
                 "  ___.splitCtor(@fRef, @f_init___Ref);" +
@@ -1515,21 +1531,24 @@ public class DefaultCajaRewriter extends Rewriter {
                 "f_init", f_init___,
                 "f_init___Ref", f_init___Ref,
                 "ps", bindings.get("ps"),
+                // It's important to expand bs before computing fh and stmts.
+                "bs", expand(bindings.get("bs"), s2, mq),
                 "fh", getFunctionHeadDeclarations(this, s2, mq),
                 "b", bNode,
-                "bs", expand(bindings.get("bs"), s2, mq),
                 "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
-            return declaration ?
-                // If it's a declaration, assign the result to a variable with the same name.
-                expandDef(
-                    new Reference((Identifier)bindings.get("f")),
-                    result,
-                    this,
-                    scope,
-                    mq) :
-                // If used in an expression, it's the first use, so we freeze it.
-                substV("___.primFreeze(@result);",
-                    "result", result);
+            if (declaration) {
+              // Add the initialization to the start of block
+              scope.addStartOfBlockStatement((Statement)expandDef(
+                  new Reference((Identifier)bindings.get("f")),
+                  result,
+                  this,
+                  scope,
+                  mq));
+              return substV(";");
+            } else {
+              // If used in an expression, it's the first use, so we freeze it.
+              return substV("___.primFreeze(@result);", "result", result);
+            }
           }
         }
         return NONE;

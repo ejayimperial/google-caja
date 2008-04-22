@@ -78,6 +78,95 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "    ___.readPub(___OUTERS___, '" + varName + "'" + (flag ? ", true" : "") + "))";
   }
 
+  public void testAttachedMethod() throws Exception {
+    // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
+    // to check cases where calling the attached method should fail.
+    assertConsistent(
+        "function Foo(){" +
+        "  this.f = function (){this.x_ = 1;};" +
+        "  this.getX = function (){return this.x_;};" +
+        "}" +
+        "foo = new Foo();" +
+        "foo.f();" +
+        "foo.getX();");
+    assertConsistent(
+        "function Foo(){}" +
+        "Foo.prototype.setX = function(x) { this.x_ = x; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo(){}" +
+        "caja.def(Foo, Object, {" +
+        "  setX: function(x) { this.x_ = x; }," +
+        "  getX: function() { return this.x_; }," +
+        "  y: 1" +
+        "});" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo(){ this.gogo(); }" +
+        "Foo.prototype.gogo = function() { this.setX = function(x) { this.x_ = x; }; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo(){ this.gogo(); }" +
+        "caja.def(Foo, Object, {" +
+        "  gogo: function() { this.setX = function(x) { this.x_ = x; }; }," +
+        "  getX: function() { return this.x_; }," +
+        "  y: 1" +
+        "});" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  this.Bar = function Bar(x){ " +
+        "    this.x_ = x; " +
+        "    this.getX = function() { return this.x_; };" +
+        "  }; " +
+        "};" +
+        "foo = new Foo;" +
+        "Bar = foo.Bar;" +
+        "bar = new Bar(5);" +
+        "bar.getX();");
+    assertConsistent(
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  function Bar(x){ " +
+        "    this.x_ = x; " +
+        "  }" +
+        "  Bar.prototype.getX = function () { return this.x_; };" +
+        "  this.Bar = Bar;" +
+        "};" +
+        "foo = new Foo;" +
+        "Bar = foo.Bar;" +
+        "bar = new Bar(5);" +
+        "bar.getX();");
+    checkFails(
+        "function (){" +
+        "  this.x_ = 1;" +
+        "}",
+        "Public properties cannot end in \"_\"");
+    checkFails(
+        "function Foo(){}" +
+        "Foo.prototype.m = function () {" +
+        "  var y = function() {" +
+        "    var z = function() {" +
+        "      this.x_ = 1;" +
+        "    }" +
+        "  }" +
+        "}",
+        "Public properties cannot end in \"_\"");
+  }
+
   ////////////////////////////////////////////////////////////////////////
   // Handling of synthetic nodes
   ////////////////////////////////////////////////////////////////////////
@@ -2048,95 +2137,6 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
     } catch (AssertionFailedError e) {
       // Pass
     }
-  }
-
-  public void testAttachedMethod() throws Exception {
-    // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
-    // to check cases where calling the attached method should fail.
-    assertConsistent(
-        "function Foo(){" +
-        "  this.f = function (){this.x_ = 1;};" +
-        "  this.getX = function (){return this.x_;};" +
-        "}" +
-        "foo = new Foo();" +
-        "foo.f();" +
-        "foo.getX();");
-    assertConsistent(
-        "function Foo(){}" +
-        "Foo.prototype.setX = function(x) { this.x_ = x; };" +
-        "Foo.prototype.getX = function() { return this.x_; };" +
-        "Foo.prototype.y = 1;" +
-        "foo=new Foo;" +
-        "foo.setX(5);" +
-        "''+foo.y+foo.getX();");
-    assertConsistent(
-        "function Foo(){}" +
-        "caja.def(Foo, Object, {" +
-        "  setX: function(x) { this.x_ = x; }," +
-        "  getX: function() { return this.x_; }," +
-        "  y: 1" +
-        "});" +
-        "foo=new Foo;" +
-        "foo.setX(5);" +
-        "''+foo.y+foo.getX();");
-    assertConsistent(
-        "function Foo(){ this.gogo(); }" +
-        "Foo.prototype.gogo = function() { this.setX = function(x) { this.x_ = x; }; };" +
-        "Foo.prototype.getX = function() { return this.x_; };" +
-        "Foo.prototype.y = 1;" +
-        "foo=new Foo;" +
-        "foo.setX(5);" +
-        "''+foo.y+foo.getX();");
-    assertConsistent(
-        "function Foo(){ this.gogo(); }" +
-        "caja.def(Foo, Object, {" +
-        "  gogo: function() { this.setX = function(x) { this.x_ = x; }; }," +
-        "  getX: function() { return this.x_; }," +
-        "  y: 1" +
-        "});" +
-        "foo=new Foo;" +
-        "foo.setX(5);" +
-        "''+foo.y+foo.getX();");
-    assertConsistent(
-        "function Foo() { this.gogo(); }" +
-        "Foo.prototype.gogo = function () { " +
-        "  this.Bar = function Bar(x){ " +
-        "    this.x_ = x; " +
-        "    this.getX = function() { return this.x_; };" +
-        "  }; " +
-        "};" +
-        "foo = new Foo;" +
-        "Bar = foo.Bar;" +
-        "bar = new Bar(5);" +
-        "bar.getX();");
-    assertConsistent(
-        "function Foo() { this.gogo(); }" +
-        "Foo.prototype.gogo = function () { " +
-        "  function Bar(x){ " +
-        "    this.x_ = x; " +
-        "  }" +
-        "  Bar.prototype.getX = function () { return this.x_; };" +
-        "  this.Bar = Bar;" +
-        "};" +
-        "foo = new Foo;" +
-        "Bar = foo.Bar;" +
-        "bar = new Bar(5);" +
-        "bar.getX();");
-    checkFails(
-        "function (){" +
-        "  this.x_ = 1;" +
-        "}",
-        "Public properties cannot end in \"_\"");
-    checkFails(
-        "function Foo(){}" +
-        "Foo.prototype.m = function () {" +
-        "  var y = function() {" +
-        "    var z = function() {" +
-        "      this.x_ = 1;" +
-        "    }" +
-        "  }" +
-        "}",
-        "Public properties cannot end in \"_\"");
   }
 
   private void setSynthetic(ParseTreeNode n) {
