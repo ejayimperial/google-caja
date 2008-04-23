@@ -634,21 +634,25 @@ var ___;
   // Classifying functions
   ////////////////////////////////////////////////////////////////////////
 
-  function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
-  function isMethod(meth)    { 
-    return (meth === null) ? 
-        false : 
-        (typeof meth === 'function') ? 
-            !!meth.___METHOD___ : 
-            false; 
+  function isCtor(constr)    {
+    return (typeof(constr) === 'function') ?
+        !!constr.___CONSTRUCTOR___ :
+        false; 
   }
-  function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
+  function isMethod(meth)    { 
+    return (typeof meth === 'function') ? 
+        !!meth.___METHOD___ : 
+        false; 
+  }
+  function isSimpleFunc(fun) { 
+    return (typeof fun === 'function') ?
+        !!fun.___SIMPLE_FUNC___ :
+        false; 
+  }
   function isXo4aFunc(func) {
-    return (func === null) ?
-        false :
-        (typeof func === 'function') ?
-            (!!func.___XO4A___ || isSimpleFunc(func)) :
-            false;
+    return (typeof func === 'function') ?
+        (!!func.___XO4A___ || isSimpleFunc(func)) :
+        false;
   }
 
   /**
