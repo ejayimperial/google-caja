@@ -676,6 +676,12 @@ var ___;
     if (isMethod(constr)) {
       fail("Methods can't be constructors: ", constr);
     }
+    // TODO(erights): We shouldn't be able to mark simple functions
+    // as constructors, but we should be able to use simple functions
+    // in caja.def().
+    /* if (isSimpleFunc(constr)) {
+      fail("Simple functions can't be constructors:", constr);
+    } */
     constr.___CONSTRUCTOR___ = true;
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
