@@ -10,9 +10,9 @@ pkg.Foo.prototype.getX = function() { return this.x_; };
 }}} 
   into 
   {{{
-  (function () {
-    function Foo(x) { this.x_ = x; }
-    Foo.prototype.getX = function() { return this.x_; };
-    pkg.Foo = Foo;
-  })();
+(function () {
+  function Foo(x) { this.x_ = x; }
+  Foo.prototype.getX = function() { return this.x_; };
+  pkg.Foo = Foo;
+})();
   }}}
