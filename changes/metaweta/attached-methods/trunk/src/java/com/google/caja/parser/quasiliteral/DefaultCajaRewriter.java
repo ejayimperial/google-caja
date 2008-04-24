@@ -622,8 +622,6 @@ public class DefaultCajaRewriter extends Rewriter {
         // Currently, since we have no such test, the translated expression will
         // safely evaluate to <tt>undefined</tt>, but this behavior is not within
         // a fail-stop subset of JavaScript.
-        // TODO(ihab): make a quasiliteral that recognizes an arbitrary dotted/bracketed
-        // expression for allowing packaged constructors
         if (match("@clazz.prototype.@p = @m;", node, bindings)) {
           ParseTreeNode clazz = bindings.get("clazz");
           if (clazz instanceof Reference) {
