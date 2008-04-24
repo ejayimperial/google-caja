@@ -20,19 +20,7 @@ import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.js.BooleanLiteral;
-import com.google.caja.parser.js.Declaration;
-import com.google.caja.parser.js.Expression;
-import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.FormalParam;
-import com.google.caja.parser.js.FunctionConstructor;
-import com.google.caja.parser.js.Identifier;
-import com.google.caja.parser.js.Literal;
-import com.google.caja.parser.js.Operation;
-import com.google.caja.parser.js.Operator;
-import com.google.caja.parser.js.Reference;
-import com.google.caja.parser.js.StringLiteral;
-import com.google.caja.parser.js.Statement;
+import com.google.caja.parser.js.*;
 import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
 import static com.google.caja.plugin.SyntheticNodes.s;
@@ -176,59 +164,25 @@ public abstract class Rule implements MessagePart {
     return s(new Reference(s(new Identifier(name))));
   }
 
-  protected Pair<ParseTreeNode, ParseTreeNode> reuseEmpty(
-      String variableName,
-      boolean inOuters,
-      Rule rule,
-      Scope scope,
-      MessageQueue mq) {
-    ParseTreeNode variableDefinition;
-
-    if (inOuters) {
-      variableDefinition = expandReferenceToOuters(
-          new Reference(new Identifier(variableName)),
-          scope,
-          mq);
-      variableDefinition = s(
-          new ExpressionStmt((Expression)variableDefinition));
-    } else {
-      variableDefinition = substV(
-          "var @ref;",
-          "ref", s(new Identifier(variableName)));
+  protected Expression newCommaOperation(List<? extends ParseTreeNode> operands) {
+    if (operands.size() == 0) return new UndefinedLiteral();
+    Expression result = (Expression)operands.get(0);
+    for (int i = 1; i < operands.size(); i++) {
+      result = Operation.create(Operator.COMMA, result, (Expression)operands.get(i));
     }
-
-    return new Pair<ParseTreeNode, ParseTreeNode>(
-        newReference(variableName),
-        variableDefinition);
+    return result;
   }
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuse(
-      String variableName,
       ParseTreeNode value,
-      boolean inOuters,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    ParseTreeNode variableDefinition, reference;
-
-    if (inOuters) {
-      variableDefinition = substV(
-          "___OUTERS___.@ref = @rhs;",
-          "ref", s(new Reference(s(new Identifier(variableName)))),
-          "rhs", rewriter.expand(value, scope, mq));
-      variableDefinition = s(
-          new ExpressionStmt((Expression)variableDefinition));
-      reference = substV(
-          "___OUTERS___.@ref",
-          "ref", newReference(variableName));
-    } else {
-      variableDefinition = substV(
-          "var @ref = @rhs;",
-          "ref", SyntheticNodes.s(new Identifier(variableName)),
-          "rhs", rewriter.expand(value, scope, mq));
-      reference = newReference(variableName);
-    }
-
+    ParseTreeNode reference = s(new Reference(scope.declareStartOfScopeTempVariable()));
+    ParseTreeNode variableDefinition = substV(
+        "@ref = @rhs;",
+        "ref", reference,
+        "rhs", rewriter.expand(value, scope, mq));
     return new Pair<ParseTreeNode, ParseTreeNode>(
         reference,
         variableDefinition);
@@ -236,7 +190,6 @@ public abstract class Rule implements MessagePart {
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuseAll(
       ParseTreeNode arguments,
-      boolean inOuters,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
@@ -245,9 +198,7 @@ public abstract class Rule implements MessagePart {
 
     for (int i = 0; i < arguments.children().size(); i++) {
       Pair<ParseTreeNode, ParseTreeNode> p = reuse(
-          "x" + i + "___",
           arguments.children().get(i),
-          inOuters,
           rule,
           scope,
           mq);
@@ -283,7 +234,7 @@ public abstract class Rule implements MessagePart {
           "s", symbol,
           "sCanSet", new Reference(new Identifier(sName + "_canSet___")),
           "sName", toStringLiteral(symbol),
-          "temp", s(new Reference(scope.declareStartOfScopeVariable())),
+          "temp", s(new Reference(scope.declareStartOfScopeTempVariable())),
           "value", value)));
     } else {
       return substV(
@@ -543,7 +494,7 @@ public abstract class Rule implements MessagePart {
                         || isOutersReference(left))) {
       object = (Reference) left;
     } else {
-      Identifier tmpVar = scope.declareStartOfScopeVariable();
+      Identifier tmpVar = scope.declareStartOfScopeTempVariable();
       temporaries.add(s(new ExpressionStmt((Expression)substV(
           "@tmpVar = @left;",
           "tmpVar", s(new Reference(tmpVar)),
@@ -555,7 +506,7 @@ public abstract class Rule implements MessagePart {
     if (isKeySimple) {
       key = right;
     } else {
-      Identifier tmpVar = scope.declareStartOfScopeVariable();
+      Identifier tmpVar = scope.declareStartOfScopeTempVariable();
       temporaries.add(s(new ExpressionStmt((Expression)substV(
           "@tmpVar = @right;",
           "tmpVar", s(new Reference(tmpVar)),

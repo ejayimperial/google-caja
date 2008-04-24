@@ -175,13 +175,13 @@ public class DefaultCajaRewriter extends Rewriter {
 
         List<Statement> declsList = new ArrayList<Statement>();
 
-        Identifier oTemp = scope.declareStartOfScopeVariable();
+        Identifier oTemp = scope.declareStartOfScopeTempVariable();
         declsList.add(s(new ExpressionStmt((Expression)substV(
             "@oTemp = @o;",
             "oTemp", s(new Reference(oTemp)),
             "o", expand(bindings.get("o"), scope, mq)))));
         
-        Identifier kTemp = scope.declareStartOfScopeVariable();
+        Identifier kTemp = scope.declareStartOfScopeTempVariable();
 
         if (isDecl) {
           String kName = ((Reference)bindings.get("k")).getIdentifierName();
@@ -468,7 +468,7 @@ public class DefaultCajaRewriter extends Rewriter {
               "  @ref.@fp ?" +
               "  @ref.@p :" +
               "  ___.readPub(@ref, @rp)",
-              "ref", s(new Reference(scope.declareStartOfScopeVariable())),
+              "ref", s(new Reference(scope.declareStartOfScopeTempVariable())),
               "o", expand(bindings.get("o"), scope, mq),
               "p",  p,
               "fp", new Reference(new Identifier(propertyName + "_canRead___")),
@@ -532,7 +532,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 "___OUTERS___.@fp ?" +
                 "  (___OUTERS___.@p = @ref) :" +
                 "  ___.setPub(___OUTERS___, @rp, @ref);",
-                "ref", s(new Reference(scope.declareStartOfScopeVariable())),
+                "ref", s(new Reference(scope.declareStartOfScopeTempVariable())),
                 "r",  expand(bindings.get("r"), scope, mq),
                 "p",  p,
                 "fp", new Reference(new Identifier(propertyName + "_canSet___")),
@@ -580,7 +580,7 @@ public class DefaultCajaRewriter extends Rewriter {
               "___OUTERS___.@fp ?" +
               "  (___OUTERS___.@p = @ref) :" +
               "  ___.setPub(___OUTERS___, @rp, @ref);",
-              "ref", s(new Reference(scope.declareStartOfScopeVariable())),
+              "ref", s(new Reference(scope.declareStartOfScopeTempVariable())),
               "r",  expand(bindings.get("r"), scope, mq),
               "p",  p,
               "fp", new Reference(new Identifier(propertyName + "_canSet___")),
@@ -602,7 +602,7 @@ public class DefaultCajaRewriter extends Rewriter {
               "@target.@fp ?" +
               "  (@target.@p = @ref) :" +
               "  ___.setProp(@target, @rp, @ref);",
-              "ref", s(new Reference(scope.declareStartOfScopeVariable())),
+              "ref", s(new Reference(scope.declareStartOfScopeTempVariable())),
               "r",  expand(bindings.get("r"), scope, mq),
               "p",  bindings.get("p"),
               "fp", new Reference(new Identifier(propertyName + "_canSet___")),
@@ -692,8 +692,8 @@ public class DefaultCajaRewriter extends Rewriter {
               "@tmpO.@pCanSet ?" +
               "    (@tmpO.@p = @tmpR) :" +
               "    ___.setPub(@tmpO, @pName, @tmpR);",
-              "tmpO", s(new Reference(scope.declareStartOfScopeVariable())),
-              "tmpR", s(new Reference(scope.declareStartOfScopeVariable())),
+              "tmpO", s(new Reference(scope.declareStartOfScopeTempVariable())),
+              "tmpR", s(new Reference(scope.declareStartOfScopeTempVariable())),
               "expandO", expand(bindings.get("o"), scope, mq),
               "expandR", expand(bindings.get("r"), scope, mq),
               "pCanSet", new Reference(new Identifier(propertyName + "_canSet___")),
@@ -1083,17 +1083,15 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this.@m(@as*)", node, bindings) && scope.isGlobal()) {
           Pair<ParseTreeNode, ParseTreeNode> aliases =
-              reuseAll(bindings.get("as"), false, this, scope, mq);
+              reuseAll(bindings.get("as"), this, scope, mq);
           Reference m = (Reference) bindings.get("m");
           String methodName = m.getIdentifierName();
           return substV(
-              "(function() {" +
-              "  @as*;" +
-              "  return ___OUTERS___.@fm ?" +
-              "      ___OUTERS___.@m(@vs*) :" +
-              "      ___.callPub(___OUTERS___, @rm, [@vs*]);" +
-              "})()",
-              "as", aliases.b,
+              "@as," +
+              "___OUTERS___.@fm ?" +
+              "    ___OUTERS___.@m(@vs*) :" +
+              "    ___.callPub(___OUTERS___, @rm, [@vs*])",
+              "as", newCommaOperation(aliases.b.children()),
               "vs", aliases.a,
               "m",  m,
               "fm", new Reference(new Identifier(methodName + "_canCall___")),
@@ -1108,15 +1106,13 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("this.@m(@as*)", node, bindings)) {
           Pair<ParseTreeNode, ParseTreeNode> aliases =
-              reuseAll(bindings.get("as"), false, this, scope, mq);
+              reuseAll(bindings.get("as"), this, scope, mq);
           Reference m = (Reference) bindings.get("m");
           String methodName = m.getIdentifierName();
           return substV(
-              "(function() {" +
-              "  @as*;" +
-              "  return t___.@fm ? t___.@m(@vs*) : ___.callProp(t___, @rm, [@vs*]);" +
-              "})()",
-              "as", aliases.b,
+              "@as," +
+              "t___.@fm ? t___.@m(@vs*) : ___.callProp(t___, @rm, [@vs*])",
+              "as", newCommaOperation(aliases.b.children()),
               "vs", aliases.a,
               "m",  bindings.get("m"),
               "fm", new Reference(new Identifier(methodName + "_canCall___")),
@@ -1212,17 +1208,16 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("@o.@m(@as*)", node, bindings)) {
           Pair<ParseTreeNode, ParseTreeNode> aliases =
-              reuseAll(bindings.get("as"), false, this, scope, mq);
+              reuseAll(bindings.get("as"), this, scope, mq);
           Reference m = (Reference) bindings.get("m");
           String methodName = m.getIdentifierName();
           return substV(
-              "(function() {" +
-              "  var x___ = @o;" +
-              "  @as*;" +
-              "  return x___.@fm ? x___.@m(@vs*) : ___.callPub(x___, @rm, [@vs*]);" +
-              "})()",
+              "@oTmp = @o," +
+              "@as," +
+              "@oTmp.@fm ? @oTmp.@m(@vs*) : ___.callPub(@oTmp, @rm, [@vs*]);",
+              "oTmp", s(new Reference(scope.declareStartOfScopeTempVariable())),
               "o",  expand(bindings.get("o"), scope, mq),
-              "as", aliases.b,
+              "as", newCommaOperation(aliases.b.children()),
               "vs", aliases.a,
               "m",  m,
               "fm", new Reference(new Identifier(methodName + "_canCall___")),
@@ -1312,7 +1307,9 @@ public class DefaultCajaRewriter extends Rewriter {
               (FunctionConstructor)node.children().get(1));
           if (!s2.hasFreeThis()) {
             checkFormals(bindings.get("ps"), mq);
-            return expandDef(
+            Identifier f = (Identifier)bindings.get("f");
+            scope.declareStartOfScopeVariable(f);
+            scope.addStartOfBlockStatement((Statement)expandDef(
                 new Reference((Identifier)bindings.get("f")),
                 substV(
                     "___.simpleFunc(" +
@@ -1321,14 +1318,15 @@ public class DefaultCajaRewriter extends Rewriter {
                     "    @stmts*;" +
                     "    @bs*;" +
                     "});",
-                    "f", bindings.get("f"),
+                    "f", f,
                     "ps", bindings.get("ps"),
                     "bs", expand(bindings.get("bs"), s2, mq),
                     "fh", getFunctionHeadDeclarations(this, s2, mq),
                     "stmts", new ParseTreeNodeContainer(s2.getStartStatements())),
                 this,
                 scope,
-                mq);
+                mq));
+            return substV(";");
           }
         }
         return NONE;
@@ -1455,6 +1453,10 @@ public class DefaultCajaRewriter extends Rewriter {
             Reference fRef = new Reference(f);
             Identifier f_init___ = new Identifier(f.getName() + "_init___");
             Reference f_init___Ref = new Reference(f_init___);
+            // Add a declaration to the start of function body
+            if (declaration) {
+              scope.declareStartOfScopeVariable(f);
+            }
             ParseTreeNode result = substV(
                 "(function () {" +
                 "  ___.splitCtor(@fRef, @f_init___Ref);" +
@@ -1476,17 +1478,19 @@ public class DefaultCajaRewriter extends Rewriter {
                 "b", bNode,
                 "bs", expand(bindings.get("bs"), s2, mq),
                 "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
-            return declaration ?
-                // If it's a declaration, assign the result to a variable with the same name.
-                expandDef(
-                    new Reference((Identifier)bindings.get("f")),
-                    result,
-                    this,
-                    scope,
-                    mq) :
-                // If used in an expression, it's the first use, so we freeze it.
-                substV("___.primFreeze(@result);",
-                    "result", result);
+            if (declaration) {
+              // Add the initialization to the start of block
+              scope.addStartOfBlockStatement((Statement)expandDef(
+                  new Reference((Identifier)bindings.get("f")),
+                  result,
+                  this,
+                  scope,
+                  mq));
+              return substV(";");
+            } else {
+              // If used in an expression, it's the first use, so we freeze it.
+              return substV("___.primFreeze(@result);", "result", result);
+            }
           }
         }
         return NONE;
