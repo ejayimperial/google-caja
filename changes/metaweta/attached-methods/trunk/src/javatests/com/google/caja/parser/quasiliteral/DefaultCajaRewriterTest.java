@@ -78,6 +78,39 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "    ___.readPub(___OUTERS___, '" + varName + "'" + (flag ? ", true" : "") + "))";
   }
 
+  public void testConstructorProperty() throws Exception {
+    assertConsistent(
+        "pkg = {};" +
+        "(function (){" +
+        "  function Foo(x) {" +
+        "    this.x_ = x;" +
+        "  };" +
+        "  Foo.prototype.getX = function(){ return this.x_; };" +
+        "  pkg.Foo = Foo;" +
+        "})();" +
+        "foo = new pkg.Foo(2);" +
+        "foo.getX();");
+    // TODO(metaweta): enable once issue138 is fixed.
+    if (false){
+      assertConsistent(
+          "pkg = {};" +
+          "pkg.Foo = function Foo(x) {" +
+          "  this.x_ = x;" +
+          "};" +
+          "caja.def(pkg.Foo, Object, {getX: function(){ return this.x_; }});" +
+          "foo = new pkg.Foo(2);" +
+          "foo.getX();");
+      assertConsistent(
+          "pkg = {};" +
+          "pkg.Foo = function Foo(x) {" +
+          "  this.x_ = x;" +
+          "};" +
+          "pkg.Foo.prototype.getX = function(){ return this.x_; };" +
+          "foo = new pkg.Foo(2);" +
+          "foo.getX();");
+    }
+  }
+  
   public void testAttachedMethod() throws Exception {
     // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
     // to check cases where calling the attached method should fail.
