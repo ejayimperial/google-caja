@@ -25,6 +25,7 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Callback;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +51,17 @@ public abstract class Rewriter {
    */
   public Rewriter(boolean logging) {
     this.logging = logging;
+  }
+
+  /**
+   * Creates a new Rewriter.
+   *
+   * @param logging whether this Rewriter should log the details of rule firings to
+   * standard error.
+   */
+  public Rewriter(boolean logging, Rule[] rules) {
+    this.logging = logging;
+    addRules(rules);
   }
 
   /**
@@ -104,11 +116,38 @@ public abstract class Rewriter {
    * @exception IllegalArgumentException if a rule with a duplicate name is added.
    */
   public void addRule(Rule rule) {
-   // We keep 'ruleNames' as a guard against programming errors
+    // We keep 'ruleNames' as a guard against programming errors
     if (ruleNames.contains(rule.getName()))
       throw new IllegalArgumentException("Duplicate rule name: " + rule.getName());
     rules.add(rule);
     ruleNames.add(rule.getName());
+  }
+
+  /**
+   * Adds a list of rules in order to this rewriter.
+   * 
+   * @param rules list of rewriting rules
+   * @exception IllegalArgumentException if a rule with a duplicate name is added.
+   */
+  public void addRules(Rule[] rules) {
+    for ( Rule r : rules ) {
+      Class<Rule> c = (Class<Rule>) r.getClass();
+      Method m = null;
+      try {
+        Class[] args = {ParseTreeNode.class, Scope.class, MessageQueue.class};
+        m = c.getMethod("fire", args);
+        RuleDescription rDesc = m.getAnnotation(RuleDescription.class);
+        if ( rDesc == null )
+          throw new IllegalArgumentException("RuleDescription not found");
+        r.setName(rDesc.name());
+        r.setRewriter(this);
+        addRule(r);
+      } catch (NoSuchMethodException e) {
+        // This should not occur all Rules have a fire method
+        e.printStackTrace();
+        throw new RuntimeException("Rule has no \"fire\" method");
+      }
+    }
   }
 
   private void logResults(

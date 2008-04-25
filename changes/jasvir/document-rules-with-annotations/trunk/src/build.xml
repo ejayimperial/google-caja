@@ -49,7 +49,7 @@
   <property name="instr"       location="ant-instr"/>  <!-- instrumented src -->
   <property name="lib"         location="ant-lib"/>
   <property name="docs"        location="ant-docs"/>
-  <property name="ruledoclet"        location="ant-ruledoclet"/>
+  <property name="ruledoclet"  location="ant-ruledoclet"/>
   <property name="jars"        location="ant-jars"/>
   <property name="www"         location="ant-www"/>  <!-- demo files dir -->
 

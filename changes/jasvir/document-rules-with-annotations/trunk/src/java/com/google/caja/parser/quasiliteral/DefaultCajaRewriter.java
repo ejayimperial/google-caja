@@ -77,14 +77,13 @@ import java.util.Arrays;
     synopsis="Default set of transformations used by Caja"
   )
 public class DefaultCajaRewriter extends Rewriter {
-  final Rule[] cajaRules = {        
+  final private Rule[] cajaRules = {        
     new Rule () {
+      @Override
       @RuleDescription(
           name="block",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -118,9 +117,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="synthetic0",
           synopsis="Remove temprorary nodes introduced during cajoling",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (isSynthetic(node)) {
@@ -145,22 +142,15 @@ public class DefaultCajaRewriter extends Rewriter {
           reason="`with` violates the assumptions that Scope makes and makes it very"
             + "hard to write a Scope that works."
             + "http://yuiblog.com/blog/2006/04/11/with-statement-considered-harmful/"
-            + "briefly touches on why `with` is bad for programmers",
+            + "briefly touches on why `with` is bad for programmers."
+            + "For reviewers -- matching of references with declarations can only"
+            + "be done at runtime."
+            + "All other secure JS subsets that I know of (ADSafe Jacaranda & FBJS)"
+            + "also disallow `with`.",
           matches="with (@scope) @body;",
           substitutes=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        // `with` violates the assumptions that Scope makes and makes it very
-        // hard to write a Scope that works.
-
-        // http://yuiblog.com/blog/2006/04/11/with-statement-considered-harmful/
-        // briefly touches on why `with` is bad for programmers and more-so
-        // for reviewers -- matching of references with declarations can only
-        // be done at runtime.
-
-        // All other secure JS subsets that I know of (ADSafe Jacaranda & FBJS)
-        // also disallow `with`.
-
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (match("with (@scope) @body;", node, bindings)) {
           mq.addMessage(
@@ -350,9 +340,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varArgs",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -368,9 +356,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varThis",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -409,9 +395,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varBadSuffixDeclaration",
           synopsis="Throw an error if a variable with `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof Declaration &&
@@ -430,9 +414,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varBadGlobalSuffix",
           synopsis="Throw an error if a global variable with `_` suffix is found",
-          reason="Caja defines variable with a `_` ",
-          matches="",
-          substitutes=""
+          reason="Caja defines variable with a `_` "
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -454,9 +436,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varFuncFreeze",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -478,9 +458,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varGlobal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -497,9 +475,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="varDefault",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -520,9 +496,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readBadSuffix",
           synopsis="Throw an error if a property has `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -541,9 +515,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readGlobalViaThis",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -564,9 +536,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readInternal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -588,9 +558,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readBadInternal",
           synopsis="Throw an error if a global variable with `_` suffix is found",
-          reason="Caja defines variable with a `_` suffix as private",
-          matches="",
-          substitutes=""
+          reason="Caja defines variable with a `_` suffix as private"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -609,9 +577,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readPublic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -637,9 +603,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readIndexGlobal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -657,9 +621,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readIndexInternal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -677,9 +639,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="readIndexPublic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -702,9 +662,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setGlobal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -735,9 +693,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setBadThis",
           synopsis="Throw an error if an expression assigns to `this`",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -756,9 +712,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setBadSuffix",
           synopsis="Throw an error if a property with `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -777,9 +731,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setGlobalViaThis",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -807,9 +759,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setInternal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -838,9 +788,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setMember",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -881,9 +829,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setBadInternal",
           synopsis="Throw an error if a global variable with `_` suffix is found",
-          reason="Caja defines variable with a `_` suffix as private",
-          matches="",
-          substitutes=""
+          reason="Caja defines variable with a `_` suffix as private"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -902,9 +848,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setStatic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -930,9 +874,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setPublic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -967,9 +909,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setIndexInternal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -988,9 +928,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setIndexPublic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1010,9 +948,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setBadInitialize",
           synopsis="Throw an error if a variable with `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1031,9 +967,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setInitialize",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1055,9 +989,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setBadDeclare",
           synopsis="Throw an error if a variable with `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1076,9 +1008,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setDeclare",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1108,9 +1038,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setVar",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1156,9 +1084,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setReadModifyWriteLocalVar",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       // Handle x += 3 and similar ops by rewriting them using the assignment
       // delegate, "x += y" => "x = x + y", with deconstructReadAssignOperand
@@ -1198,9 +1124,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="setIncrDecr",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (!(node instanceof AssignOperation)) { return NONE; }
@@ -1294,9 +1218,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="newCalllessCtor",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1314,9 +1236,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="newCtor",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1340,9 +1260,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="deleteProp",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1378,9 +1296,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="deletePub",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1408,9 +1324,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="deleteGlobal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings
@@ -1433,9 +1347,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="deleteNonLvalue",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings
@@ -1458,9 +1370,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callBadSuffix",
           synopsis="Throw an error if a selector with `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1479,9 +1389,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callGlobalViaThis",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1512,9 +1420,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callInternal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1543,9 +1449,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callBadInternal",
           synopsis="Throw an error if a public selector with `_` suffix is found",
-          reason="Caja defines selectors with a `_` as private",
-          matches="",
-          substitutes=""
+          reason="Caja defines selectors with a `_` as private"
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1564,9 +1468,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callCajaDef2",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1587,9 +1489,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callCajaDef2Bad",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1608,9 +1508,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callCajaDef3Plus",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1643,9 +1541,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callCajaDef3PlusBad",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1664,9 +1560,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callPublic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1697,9 +1591,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callIndexInternal",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1718,9 +1610,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callIndexPublic",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1739,9 +1629,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="callFunc",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1764,9 +1652,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="funcAnonSimple",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1798,9 +1684,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="funcNamedSimpleDecl",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1840,9 +1724,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="funcNamedSimpleValue",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1877,9 +1759,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="funcExophoricFunction",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, final MessageQueue mq) {
@@ -1908,9 +1788,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="funcBadMethod",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -1934,9 +1812,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="funcCtor",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -2028,9 +1904,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="mapEmpty",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -2046,9 +1920,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="mapBadKeySuffix",
           synopsis="Throw an error if a key with `_` suffix is found",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -2068,9 +1940,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="mapNonEmpty",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -2095,9 +1965,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="multiDeclaration",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof MultiDeclaration) {
@@ -2168,9 +2036,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="otherInstanceof",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -2189,9 +2055,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="otherTypeof",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -2219,9 +2083,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="otherSpecialOp",
           synopsis="",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -2240,9 +2102,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @RuleDescription(
           name="labeledStatement",
           synopsis="Throw an error if a label with `__` suffix is found",
-          reason="Caja reserves the `__` suffix for internal use",
-          matches="",
-          substitutes=""
+          reason="Caja reserves the `__` suffix for internal use"
           )
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -2263,14 +2123,16 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     },
 
+    ////////////////////////////////////////////////////////////////////////
+    // recurse - automatically recurse into some structures
+    ////////////////////////////////////////////////////////////////////////
+
     new Rule () {
       @Override
       @RuleDescription(
           name="recurse",
           synopsis="Automatically recurse into some structures",
-          reason="",
-          matches="",
-          substitutes=""
+          reason=""
           )
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof ParseTreeNodeContainer ||
@@ -2297,39 +2159,13 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     }
   };
-    
-  private void addAllRules () {
-    int ruleNumber = 1;
-    // Add all rules in order
-    for ( Rule r : cajaRules ) {
-      Class<Rule> c = (Class<Rule>) r.getClass();
-      Method m = null;
-      ruleNumber ++;
-      try {
-        Class[] args = {ParseTreeNode.class, Scope.class, MessageQueue.class};
-        m = c.getMethod("fire", args);
-        RuleDescription rDesc = m.getAnnotation(RuleDescription.class);
-        String ruleName = rDesc == null ? "Unnamed Rule " + ruleNumber : rDesc.name();
-        r.setName(ruleName);
-        r.setRewriter(this);
-        addRule(r);
-      } catch (SecurityException e) {
-        // This should not occur - Rule.fire is public 
-        e.printStackTrace();
-        System.exit(-1);
-      } catch (NoSuchMethodException e) {
-        // This should not occur all Rules have a fire method
-        e.printStackTrace();
-        System.exit(-1);
-      }
-    }
-  }
-  
+      
   public DefaultCajaRewriter() {
     this(true);
   }
+  
   public DefaultCajaRewriter(boolean logging) {
     super(logging);
-    addAllRules();
+    addRules(cajaRules);
   }
 }
