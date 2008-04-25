@@ -77,7 +77,7 @@ import java.util.Arrays;
     synopsis="Default set of transformations used by Caja"
   )
 public class DefaultCajaRewriter extends Rewriter {
-  final private Rule[] cajaRules = {        
+  final public Rule[] cajaRules = {        
     new Rule () {
       @Override
       @RuleDescription(
