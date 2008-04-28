@@ -2281,11 +2281,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         cajole(js(fromResource("../../plugin/asserts.js")), cajaTree));
 
     assertNoErrors();
-
-    Object cajoledResult = runCajoled(cajoledJs);
-
-    System.err.println("Result: " + cajoledResult + " for " + getName());
-    assertEquals(message, uncajoledResult, cajoledResult);
+    assertEquals(message, uncajoledResult, runCajoled(cajoledJs));
   }
 
   /**
@@ -2301,7 +2297,6 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
     String cajoledJs = render(cajole(asserts, cajaTree));
 
     assertNoErrors();
-
     runCajoled(cajoledJs);
   }
 
