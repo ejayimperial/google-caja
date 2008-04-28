@@ -155,7 +155,7 @@ public final class JsMinimalPrinter implements TokenConsumer {
       if (spaceBefore) {
         // Some security tools/proxies/firewalls break on really long javascript
         // lines.
-        if (charInLine >= 500) {
+        if (charInLine >= 500 && canBreakBetween(lastToken, text)) {
           newLine();
         } else {
           space();
@@ -184,6 +184,39 @@ public final class JsMinimalPrinter implements TokenConsumer {
       out.append(" ");
       ++charInLine;
     }
+  }
+
+  private static boolean canBreakBetween(String before, String after) {
+    // According to semicolon insertion rules in ES262 Section 7.9.1
+    //     When, as the program is parsed from left to right, a token
+    //     is encountered that is allowed by some production of the
+    //     grammar, but the production is a restricted production and
+    //     the token would be the first token for a terminal or
+    //     nonterminal immediately following the annotation "[no
+    //     LineTerminator here]" within the restricted production (and
+    //     therefore such a token is called a restricted token), and
+    //     the restricted token is separated from the previous token
+    //     by at least one LineTerminator, then a semicolon is
+    //     automatically inserted before the restricted token.
+
+    //     These are the only restricted productions in the grammar:
+    //     PostfixExpression :
+    //         LeftHandSideExpression [no LineTerminator here] ++
+    //         LeftHandSideExpression [no LineTerminator here] --
+    //     ContinueStatement :
+    //         continue [no LineTerminator here] Identifieropt ;
+    //     BreakStatement :
+    //         break [no LineTerminator here] Identifieropt ;
+    //     ReturnStatement :
+    //         return [no LineTerminator here] Expressionopt ;
+    //     ThrowStatement :
+    //         throw [no LineTerminator here] Expression ;
+    return !("++".equals(after)
+             || "--".equals(after)
+             || "continue".equals(before)
+             || "break".equals(before)
+             || "return".equals(before)
+             || "throw".equals(before));
   }
 
   private void emit(CharSequence s) throws IOException {
