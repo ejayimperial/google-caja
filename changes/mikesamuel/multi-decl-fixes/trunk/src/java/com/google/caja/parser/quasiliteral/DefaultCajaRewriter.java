@@ -1611,9 +1611,10 @@ public class DefaultCajaRewriter extends Rewriter {
               }
             }
             Expression[] initOperands = initializers.toArray(new Expression[0]);
-            Expression init = (initOperands.length > 1
-                               ? Operation.create(Operator.COMMA, initOperands)
-                               : initOperands[0]);
+            Expression init = initOperands[0];
+            for (int i = 1; i < initOperands.length; ++i) {
+              init = Operation.create(Operator.COMMA, init, initOperands[i]);
+            }
             if (declarations.isEmpty()) {
               return new ExpressionStmt(init);
             } else {
