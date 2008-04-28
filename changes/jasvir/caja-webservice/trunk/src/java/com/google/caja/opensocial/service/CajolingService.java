@@ -1,0 +1,138 @@
+//Copyright (C) 2008 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package com.google.caja.opensocial.service;
+
+import com.google.caja.lexer.InputSource;
+import com.google.caja.plugin.Config;
+
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+
+/**
+ * An webservice that can be run and proxies connections, cajoling any 
+ * javascript.
+ *
+ * @author jasvir@gmail.com (Jasvir Nagra)
+ */
+public class CajolingService implements HttpHandler {
+  Config config;
+  private Map<InputSource, CharSequence> originalSources
+    = new HashMap<InputSource, CharSequence>();
+  private List<ContentHandler> handlers = new Vector<ContentHandler>();
+  private ContentTypeCheck typeCheck = new LooseContentTypeCheck();
+  
+  public CajolingService(Config config) {
+    this.config = config;
+    registerHandlers();
+    try{
+      HttpServer server = HttpServer.create(new InetSocketAddress(8887),0);
+      HttpContext ctx = server.createContext("/cajaservice",this);
+      server.setExecutor(null);
+      server.start();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  
+  private Map<String, String> parseQuery(String query) {
+    String[] params = query.split("&");
+    Map<String, String> map = new HashMap<String, String>();
+    for (String param : params) {
+      String[] result = param.split("=");
+      String name = result[0];
+      String value = result[1];
+      map.put(name, value);
+    }
+    return map;
+  }
+  
+  public void handle(HttpExchange ex) throws IOException {
+    try {
+      String requestMethod = ex.getRequestMethod();
+      if (requestMethod.equalsIgnoreCase("GET")) {
+        Map<String,String> urlMap = parseQuery(ex.getRequestURI().getQuery());
+
+        String gadgetUrlString = urlMap.get("url");
+        if (gadgetUrlString == null)
+          throw new URISyntaxException(ex.getRequestURI().toString(), "Missing parameter \"url\" is required");
+        URL gadgetUrl = new URL(gadgetUrlString);
+        
+        String expectedMimeType = urlMap.get("mimetype");
+        if (expectedMimeType == null)
+          throw new URISyntaxException(ex.getRequestURI().toString(), "Missing parameter \"mimetype\" is required");
+        
+        URLConnection urlConnect = gadgetUrl.openConnection();
+        urlConnect.connect();
+        Reader stream = new InputStreamReader(urlConnect.getInputStream());
+        
+        Headers responseHeaders = ex.getResponseHeaders();
+        
+        if (!typeCheck.check(expectedMimeType, urlConnect.getContentType())) {
+          ex.sendResponseHeaders(HttpStatus.BAD_REQUEST.value(),0);
+          ex.getResponseBody().close();
+          return;
+        }
+        
+        responseHeaders.set("Content-Type", expectedMimeType);
+        ex.sendResponseHeaders(HttpStatus.ACCEPTED.value(), 0);
+  
+        Writer response = new OutputStreamWriter(ex.getResponseBody());
+  
+        applyHandler(gadgetUrl.toURI(), urlConnect.getContentType(), stream, response);
+        
+        response.close();
+      }
+    } catch (MalformedURLException e){ 
+      e.printStackTrace();
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+    }
+  }
+   
+  public void registerHandlers() {
+    handlers.add(new ImageHandler());
+    handlers.add(new GadgetHandler());
+    handlers.add(new JsHandler());
+  }
+  
+  private void applyHandler(URI uri, String contentType, 
+                            Reader stream, Writer response) {
+    for (ContentHandler handler : handlers) {
+      if ( handler.canHandle(uri, contentType, typeCheck) ) {
+        handler.apply(uri, contentType, stream, response);
+        return;
+      }
+    }
+  }
+}
