@@ -160,7 +160,7 @@
     </junit>
     <!-- Generate the code coverage report. -->
     <emma enabled="${emma.enabled}">
-      <report sourcepath="${src}:${testsrc}" sort="+block,+name,+method,+class"
+      <report sourcepath="${src}:${testsrc}" sort="+name"
        metrics="method:70,block:80,line:80,class:100">
         <fileset dir="${reports}/coverage">
           <include name="*.em" />
@@ -196,8 +196,6 @@
     <java classname="com.google.caja.plugin.PluginCompilerMain"
      failonerror="yes">
       <classpath refid="classpath.run"/>
-      <arg value="--css_prefix"/>
-      <arg value="plugin"/>
       <arg value="--out"/>
       <arg file="${lib}/com/google/caja/plugin/domita_test_cajoled"/>
       <arg value="--input"/>
@@ -252,6 +250,7 @@
       <fileset dir="${src}">
         <include name="**/caja/plugin/domita.js"/>
         <include name="**/caja/plugin/html4-defs.js"/>
+        <include name="**/caja/plugin/html-emitter.js"/>
         <include name="**/caja/plugin/html-sanitizer.js"/>
         <include name="**/caja/plugin/unicode.js"/>
       </fileset>
@@ -269,14 +268,9 @@
         <include name="**/caja/lexer/lexertest1.js"/>
         <include name="**/caja/lexer/lexertest2.js"/>
         <include name="**/caja/lexer/testinput1.txt"/>
-        <include name="**/caja/opensocial/example.xml"/>
+        <include name="**/caja/opensocial/*.js"/>
+        <include name="**/caja/opensocial/*.xml"/>
         <include name="**/caja/opensocial/example-gadget-files/*"/>
-        <include name="**/caja/opensocial/example-rewritten.xml"/>
-        <include name="**/caja/opensocial/listfriends-inline.xml"/>
-        <include name="**/caja/opensocial/listfriends.js"/>
-        <include name="**/caja/opensocial/listfriends.xml"/>
-        <include name="**/caja/opensocial/SocialHelloWorld.xml"/>
-        <include name="**/caja/opensocial/test-parsing.xml"/>
         <include name="**/caja/parser/css/cssparsergolden*.txt"/>
         <include name="**/caja/parser/css/cssparserinput*.css"/>
         <include name="**/caja/parser/css/cssrendergolden*.txt"/>
@@ -394,9 +388,7 @@
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${testsrc}"/>
       <classpath refid="classpath.tests.compile"/>
-      <include name="**/caja/util/MoreAsserts.java"/>
-      <include name="**/caja/util/RhinoTestBed.java"/>
-      <include name="**/caja/util/TestUtil.java"/>
+      <include name="**/caja/util/*.java"/>
       <!-- compilerarg line="-Xlint:unchecked"/ -->
     </javac>
   </target>
@@ -621,8 +613,6 @@
     <java classname="com.google.caja.plugin.PluginCompilerMain"
      failonerror="yes">
       <classpath refid="classpath.run"/>
-      <arg value="--css_prefix"/>
-      <arg value="plugin"/>
       <arg value="--out"/>
       <arg file="${www}/contact-spring-graph/plugin-files/plugin"/>
       <arg value="--input"/>
@@ -651,10 +641,6 @@
       <arg value="${src}/com/google/caja/demos/lolcat-search/searchbox.html"/>
       <arg value="--output_js"/>
       <arg value="${www}/lolcat-search/searchbox-cajoled.js"/>
-      <arg value="--output_css"/>
-      <arg value="${www}/lolcat-search/searchbox-cajoled.css"/>
-      <arg value="--css_prefix"/>
-      <arg value="searchbox"/>
     </java>
 
     <java classname="com.google.caja.plugin.PluginCompilerMain"
@@ -664,10 +650,6 @@
       <arg value="${src}/com/google/caja/demos/lolcat-search/kittens.html"/>
       <arg value="--output_js"/>
       <arg value="${www}/lolcat-search/kittens-cajoled.js"/>
-      <arg value="--output_css"/>
-      <arg value="${www}/lolcat-search/kittens-cajoled.css"/>
-      <arg value="--css_prefix"/>
-      <arg value="kittens"/>
     </java>
 
     <copy todir="${www}/lolcat-search">
@@ -677,8 +659,14 @@
       <fileset dir="${third_party}/js/firebug">
         <include name="firebugx.js"/>
       </fileset>
+      <fileset dir="${src}/com/google/caja/plugin">
+        <include name="domita"/>
+        <include name="unicode.js"/>
+        <include name="html4-defs.js"/>
+        <include name="html-emitter.js"/>
+        <include name="html-sanitizer.js"/>
+      </fileset>
       <fileset dir="${src}/com/google/caja/demos/lolcat-search">
-        <include name="container.js"/>
         <include name="chtml.js"/>
         <include name="error.jpg"/>
         <include name="loading.jpg"/>
@@ -711,9 +699,9 @@
         <include name="caja.js"/>
       </fileset>
       <fileset dir="${src}/com/google/caja/plugin">
-        <include name="html-sanitizer.js"/>
         <include name="domita.js"/>
         <include name="html4-defs.js"/>
+        <include name="html-emitter.js"/>
         <include name="html-sanitizer.js"/>
         <include name="unicode.js"/>
       </fileset>

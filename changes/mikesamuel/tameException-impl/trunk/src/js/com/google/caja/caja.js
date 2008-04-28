@@ -31,10 +31,10 @@
 //                detecting a conflict.
 ////////////////////////////////////////////////////////////////////////
 
-if (Array.prototype.indexOf === undefined) {
-  /** 
+if (Array.prototype.indexOf === (void 0)) {
+  /**
    * Returns the first index at which the specimen is found (by
-   * "===") or -1 if none.  
+   * "===") or -1 if none.
    */
   Array.prototype.indexOf = function(specimen) {
     var len = this.length;
@@ -47,10 +47,10 @@ if (Array.prototype.indexOf === undefined) {
   };
 }
 
-if (Array.prototype.lastIndexOf === undefined) {
-  /** 
+if (Array.prototype.lastIndexOf === (void 0)) {
+  /**
    * Returns the last index at which the specimen is found (by
-   * "===") or -1 if none.  
+   * "===") or -1 if none.
    */
   Array.prototype.lastIndexOf = function(specimen) {
     for (var i = this.length; --i >= 0; ) {
@@ -62,7 +62,7 @@ if (Array.prototype.lastIndexOf === undefined) {
   };
 }
 
-if (Date.prototype.toISOString === undefined) {
+if (Date.prototype.toISOString === (void 0)) {
   /**
    * Like the date.toJSONString() method defined in json.js, but
    * without the surrounding quotes.
@@ -234,18 +234,18 @@ var ___;
     toString: function() { return '<Logging Keeper>'; },
 
     /**
-     * 
+     *
      */
     handleRead: function(obj, name, opt_shouldThrow) {
       log('Not readable: (' + obj + ').' + name);
-      if (opt_shouldThrow) { 
+      if (opt_shouldThrow) {
         throw new ReferenceError('' + name + ' is not defined');
       }
-      return undefined; 
+      return (void 0);
     },
 
     /**
-     * 
+     *
      */
     handleCall: function(obj, name, args) {
       fail('Not callable: (', obj, ').', name);
@@ -383,7 +383,7 @@ var ___;
     return strLen >= sufLen && 
       (str.substring(strLen-sufLen, strLen) === suffix);
   }
-  
+
   /**
    * Returns the 'constructor' property of obj's prototype.
    * <p>
@@ -397,25 +397,25 @@ var ___;
    * If obj is a function or not an object, return undefined.
    */
   function directConstructor(obj) {
-    if (obj === null) { return undefined; }
+    if (obj === null) { return (void 0); }
     try {
       if (typeof obj !== 'object') {
         // Note that functions thereby return undefined,
         // so directConstructor() doesn't provide access to the
         // forbidden Function constructor.
-        return undefined;
+        return (void 0);
       }
       // The following test will initially return false in IE
-      if (hasOwnProp(obj, '__proto__')) { 
-        if (obj.__proto__ === null) { return undefined; }
-        return obj.__proto__.constructor; 
+      if (hasOwnProp(obj, '__proto__')) {
+        if (obj.__proto__ === null) { return (void 0); }
+        return obj.__proto__.constructor;
       }
       var result;
-      if (!hasOwnProp(obj, 'constructor')) { 
+      if (!hasOwnProp(obj, 'constructor')) {
         result = obj.constructor;
       } else {
         var oldConstr = obj.constructor;
-        if (!(delete obj.constructor)) { return undefined; }
+        if (!(delete obj.constructor)) { return (void 0); }
         result = obj.constructor;
         obj.constructor = oldConstr;
       }
@@ -428,7 +428,7 @@ var ___;
       return null;
     }
   }
-  
+
   /**
    * A JSON container is an object whose direct constructor is
    * Object or Array.
@@ -471,7 +471,18 @@ var ___;
    * the virtual <tt>Object.prototype.freeze_()</tt>.
    */
   function primFreeze(obj) {
-    if (undefined === obj) { throw new ReferenceError('The object "undefined" may not be frozen.'); }
+    // Fail silently on undefined, since
+    //   (function(){
+    //     var f = Foo;
+    //     if (true) { function Foo() {} }
+    //   })();
+    // gets translated to (roughly)
+    //   (function(){
+    //     var Foo;
+    //     var f = ___.primFreeze(Foo);
+    //     if (true) { Foo = function Foo() {}; }
+    //   })();
+    if ((void 0) === obj) { return obj; }
     if (null === obj) { return obj; }
     if (isFrozen(obj)) { return obj; }
     var typ = typeof obj;
@@ -480,9 +491,9 @@ var ___;
     // badFlags are names of properties we need to turn off.
     // We accumulate these first, so that we're not in the midst of a
     // for/in loop on obj while we're deleting properties from obj.
-    var badFlags = []; 
+    var badFlags = [];
     for (var k in obj) {
-      if (endsWith(k, '_canSet___') || endsWith(k, '_canDelete___')) { 
+      if (endsWith(k, '_canSet___') || endsWith(k, '_canDelete___')) {
         if (obj[k]) {
           badFlags.push(k);
         }
@@ -504,7 +515,7 @@ var ___;
         // for a future optimization, where the
         // prototype can record as canSet those
         // properties that appear in instances that
-        // inherit from this prototype. 
+        // inherit from this prototype.
         obj[flag] = false;
       }
     }
@@ -515,7 +526,7 @@ var ___;
     }
     return obj;
   }
-  
+
   /**
    * Like primFreeze(obj), but applicable only to JSON containers.
    */
@@ -621,8 +632,8 @@ var ___;
   function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
   function isMethod(meth)    { return '___METHOD_OF___' in meth; }
   function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
-  function isUnattachedMethod(meth) {
-    return meth.___METHOD_OF___ === null || isSimpleFunc(meth);
+  function isExophoric(fun) {
+    return fun.___METHOD_OF___ === null || isSimpleFunc(fun);
   }
 
   /**
@@ -745,23 +756,23 @@ var ___;
   }
 
   /** 
-   * Mark meth as an unattached method -- a method not attached to any
-   * particular class, so not allowed access to private fields.
+   * Mark fun as an exophoric function -- a function whose this can safely
+   * be bound to any object -- this is not used to access private fields.
    * <p>
    * @param opt_name if provided, should be the message name associated
    *   with the method. Currently, this is used only to generate
    *   friendlier error messages.
    */
-  function unattachedMethod(meth, opt_name) {
-    enforceType(meth, 'function', opt_name);
-    if (isCtor(meth)) {
-      fail("constructors can't be methods: ", meth);
+  function exophora(fun, opt_name) {
+    enforceType(fun, 'function', opt_name);
+    if (isCtor(fun)) {
+      fail("constructors can't be exophoric: ", fun);
     }
-    if (isSimpleFunc(meth)) {
-      fail("Simple functions can't be methods: ", meth);
+    if (isSimpleFunc(fun)) {
+      fail("Simple functions can't be exophoric: ", fun);
     }
-    meth.___METHOD_OF___ = null;
-    return primFreeze(meth);
+    fun.___METHOD_OF___ = null;
+    return primFreeze(fun);
   }
 
   /** 
@@ -1114,7 +1125,7 @@ var ___;
     if (canCall(obj, name)) { return true; }
     if (!canReadPub(obj, name)) { return false; }
     var func = obj[name];
-    if (!isUnattachedMethod(func)) { return false; }
+    if (!isExophoric(func)) { return false; }
     allowCall(obj, name);  // memoize
     return true;
   }
@@ -1286,6 +1297,9 @@ var ___;
     return primFreeze(Array.prototype.slice.call(original, 0));
   }
 
+  /** Sealer for call stacks as from {@code (new Error).stack}. */
+  var callStackSealer = makeSealerUnsealerPair();
+
   /**
    * Receives the exception caught by a user defined catch block.
    * @param ex a value caught in a try block.
@@ -1303,14 +1317,15 @@ var ___;
             var name = ex.constructor && ex.constructor.name;  // S15.11.7.9
             // Convert to undefined if null or undefined, or a string otherwise.
             message = message == null ? void 0 : '' + message;
-            stack = stack == null ? void 0 : '' + stack;
+            stack = stack == null ? void 0 : callStackSealer.seal('' + stack);
             name = name == null ? void 0 : '' + name;
-            return { message: message, name: name, stack: stack };
+            return primFreeze({ message: message, name: name, stack: stack });
           }
           return '' + ex;
         case 'string':
         case 'number':
         case 'boolean':
+        case 'undefined':
           // Immutable.
           return ex;
         case 'function':
@@ -1333,8 +1348,8 @@ var ___;
           // We return undefined to make sure that caught functions cannot be
           // evaluated within the catch block.
           return void 0;
-        case 'undefined':
         default:
+          log('Unrecognized exception type ' + (typeof ex));
           return void 0;
       }
     } catch (_) {
@@ -1365,7 +1380,7 @@ var ___;
    * opt_statics added as members to sub.
    * <p>
    * TODO(erights): return a builder object that allows further
-   * initialization. 
+   * initialization.
    */
   function def(sub, opt_Sup, opt_members, opt_statics) {
     var sup = opt_Sup || Object;
@@ -1544,9 +1559,9 @@ var ___;
     'abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'exp', 'floor',
     'log', 'max', 'min', 'pow', 'random', 'round', 'sin', 'sqrt', 'tan'
   ]);
-  
-  
-  ctor(Object, undefined, 'Object');
+
+
+  ctor(Object, (void 0), 'Object');
   all2(allowMethod, Object, [
     'toString', 'toLocaleString', 'valueOf', 'isPrototypeOf'
   ]);
@@ -1595,10 +1610,15 @@ var ___;
     'concat', 'join', 'slice', 'indexOf', 'lastIndexOf'
   ]);
   all2(allowMutator, Array, [
-    'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'
+    'pop', 'push', 'reverse', 'shift', 'splice', 'unshift'
   ]);
-  
-  
+
+  useCallHandler(Array.prototype, 'sort', function (comparator) {
+    if (isFrozen(this)) { fail("Can't sort a frozen array"); }
+    return Array.prototype.sort.call(
+        this, comparator ? ___.asSimpleFunc(comparator) : (void 0));
+  });
+
   ctor(String, Object, 'String');
   allowSimpleFunc(String, 'fromCharCode');
   all2(allowMethod, String, [
@@ -1610,10 +1630,14 @@ var ___;
     enforceMatchable(regexp);
     return this.match(regexp);
   });
-  useCallHandler(String.prototype, 'replace', function(searchValue, 
+  useCallHandler(String.prototype, 'replace', function(searchValue,
                                                        replaceValue) {
     enforceMatchable(searchValue);
-    return this.replace(searchValue, replaceValue);
+    return this.replace(
+        searchValue,
+        (typeof replaceValue === 'function'
+         ? ___.asSimpleFunc(replaceValue)
+         : '' + replaceValue));
   });
   useCallHandler(String.prototype, 'search', function(regexp) {
     enforceMatchable(regexp);
@@ -1799,7 +1823,7 @@ var ___;
    */
   function getOuters(id) {
     var result = registeredOuters[enforceType(id, 'number', 'id')];
-    if (result === undefined) {
+    if (result === (void 0)) {
       fail('outers#', id, ' unregistered');
     }
     return result;
@@ -1815,10 +1839,10 @@ var ___;
    * reregisters itself at its old id.
    */
   function unregister(outers) {
-    enforceType(outers, 'object', 'outers');      
+    enforceType(outers, 'object', 'outers');
     if ('id___' in outers) {
       var id = enforceType(outers.id___, 'number', 'id');
-      registeredOuters[id] = undefined;
+      registeredOuters[id] = (void 0);
     }
   }
 
@@ -1866,6 +1890,40 @@ var ___;
 
 
   ////////////////////////////////////////////////////////////////////////
+  // Sealing and Unsealing
+  ////////////////////////////////////////////////////////////////////////
+  /**
+   * Returns a pair of functions such that the seal9x) wraps x in an object
+   * so that only unseal can get x back from the object.
+   *
+   * @return {object} of the form
+   *     { seal: function (x) { return {}; },
+   *       unseal: function (obj) { return x; } }.
+   */
+  function makeSealerUnsealerPair() {
+    var notSealed = {};
+    var cache;
+    function seal(x) {
+      return primFreeze({ test___: function () { cache = x; } });
+    }
+    function unseal(sealed) {
+      var x;
+      try {
+        cache = notSealed;
+        sealed && sealed.test___ && sealed.test___();
+        x = cache;
+      } finally {
+        cache = null;
+      }
+      if (x === notSealed) { throw new Error('Sealer/Unsealer mismatch.'); }
+      return x;
+    }
+    // Don't freeze, so a paranoid caller can null out unseal.
+    return { seal: seal, unseal: unseal };
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////
   // Exports
   ////////////////////////////////////////////////////////////////////////
   
@@ -1900,20 +1958,23 @@ var ___;
     hasTrademark: hasTrademark,
     guard: guard,
     audit: audit,
-    
+
+    // Sealing & Unsealing
+    makeSealerUnsealerPair: makeSealerUnsealerPair,
+
     // Other
     def: def
   };
-  
+
   sharedOuters = {
     caja: caja,
-    
+
     'null': null,
     'false': false,
     'true': true,
     'NaN': NaN,
     'Infinity': Infinity,
-    'undefined': undefined,
+    'undefined': (void 0),
     parseInt: parseInt,
     parseFloat: parseFloat,
     isNaN: isNaN,
@@ -1923,7 +1984,7 @@ var ___;
     encodeURI: encodeURI,
     encodeURIComponent: encodeURIComponent,
     Math: Math,
-    
+
     Object: Object,
     Array: Array,
     String: String,
@@ -1931,7 +1992,7 @@ var ___;
     Number: Number,
     Date: Date,
     RegExp: RegExp,
-    
+
     Error: Error,
     EvalError: EvalError,
     RangeError: RangeError,
@@ -1940,7 +2001,7 @@ var ___;
     TypeError: TypeError,
     URIError: URIError
   };
-  
+
   each(sharedOuters, simpleFunc(function(k, v) {
     switch (typeof v) {
     case 'object':
@@ -1952,7 +2013,7 @@ var ___;
     }
   }));
   primFreeze(sharedOuters);
-  
+
   ___ = {
 
     // Privileged fault handlers
@@ -1963,14 +2024,14 @@ var ___;
     directConstructor: directConstructor,
     isFrozen: isFrozen,
     primFreeze: primFreeze,
-    
+
     // Accessing property attributes
     canRead: canRead,             allowRead: allowRead,
     canEnum: canEnum,             allowEnum: allowEnum,
     canCall: canCall,             allowCall: allowCall,
     canSet: canSet,               allowSet: allowSet,
     canDelete: canDelete,         allowDelete: allowDelete,
-    
+
     // Classifying functions
     isCtor: isCtor,
     isMethod: isMethod,
@@ -1979,12 +2040,12 @@ var ___;
     asCtor: asCtor,
     splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
-    unattachedMethod: unattachedMethod,
-    isUnattachedMethod: isUnattachedMethod,
+    exophora: exophora,
+    isExophoric: isExophoric,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
     setMember: setMember,
     setMemberMap: setMemberMap,
-    
+
     // Accessing properties
     canReadProp: canReadProp,     readProp: readProp,
     canInnocentEnum: canInnocentEnum,
@@ -1997,6 +2058,7 @@ var ___;
     hasOwnProp: hasOwnProp,
     args: args,
     tameException: tameException,
+    callStackUnsealer: callStackSealer.unseal,
 
     // Taming mechanism
     useGetHandler: useGetHandler,
@@ -2010,10 +2072,10 @@ var ___;
     allowMutator: allowMutator,
     enforceMatchable: enforceMatchable,
     all2: all2,
-    
+
     // Taming decisions
     sharedOuters: sharedOuters,
-    
+
     // Module loading
     getNewModuleHandler: getNewModuleHandler,
     setNewModuleHandler: setNewModuleHandler,
@@ -2025,7 +2087,7 @@ var ___;
     getOuters: getOuters,
     unregister: unregister
   };
-  
+
   each(caja, simpleFunc(function(k, v) {
     if (k in ___) {
       fail('internal: initialization conflict: ', k);
@@ -2037,7 +2099,7 @@ var ___;
     ___[k] = v;
   }));
   primFreeze(caja);
-  
+
   setNewModuleHandler(makeNormalNewModuleHandler());
-  
+
 })(this);
