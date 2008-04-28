@@ -185,6 +185,35 @@ public class JsMinimalPrinterTest extends CajaTestCase {
     assertTokens("< !=", "<", "!=");
   }
 
+  public void testRestrictedSemicolonInsertion() throws Exception {
+    ParseTreeNode node = js(fromString(
+        ""
+        // 0123456789
+        + "var x=abcd+\n"
+        + "+ef;return 1-\n"
+        + "-c;if(b)throw new\n"
+        + "Error();break label;do\n"
+        + "nothing;while(0);continue top;a-\n"
+        + "-b;number=counter++"
+        + ";number=counter--"
+        + ";number=n-++"
+        + "counter"
+        ));
+    StringBuilder out = new StringBuilder();
+    JsMinimalPrinter pp = new JsMinimalPrinter(out, null);
+    pp.setLineLengthLimit(10);
+    node.render(new RenderContext(new MessageContext(), false, pp));
+    pp.noMoreTokens();
+    assertEquals(
+        "{var x=abcd+"
+        + "\n+ef;return 1-"
+        + "\n-c;if(b)throw new"
+        + "\nError();break label;do"
+        + "\nnothing;while(0);continue top;a-"
+        + "\n-b;number=counter++;number=counter--;number=n-++counter;}",
+        out.toString());
+  }
+
   private static final JsTokenType[] TYPES = JsTokenType.values();
   private static final String[] PUNCTUATORS;
   static {
@@ -295,6 +324,7 @@ public class JsMinimalPrinterTest extends CajaTestCase {
     StringBuilder out = new StringBuilder();
     JsMinimalPrinter pp = new JsMinimalPrinter(out, null);
     node.render(new RenderContext(new MessageContext(), false, pp));
+    pp.noMoreTokens();
 
     assertEquals(golden, out.toString());
   }
@@ -309,6 +339,7 @@ public class JsMinimalPrinterTest extends CajaTestCase {
       pp.mark(t.pos);
       pp.consume(t.text);
     }
+    pp.noMoreTokens();
 
     assertEquals(golden, out.toString());
   }
@@ -320,6 +351,7 @@ public class JsMinimalPrinterTest extends CajaTestCase {
     for (String token : input) {
       pp.consume(token);
     }
+    pp.noMoreTokens();
     assertEquals(golden, out.toString());
   }
 }

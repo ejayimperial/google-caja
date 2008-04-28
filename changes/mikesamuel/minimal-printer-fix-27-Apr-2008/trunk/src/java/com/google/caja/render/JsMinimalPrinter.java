@@ -43,6 +43,12 @@ public final class JsMinimalPrinter implements TokenConsumer {
   private boolean closed;
   /** Keeps track of our position in a run of punctuation tokens. */
   private PunctuationTrie trie;
+  /**
+   * Line length below which the printer will not wrap lines.
+   * At or above this limit, the printer will try to replace a space with
+   * a line-break.
+   */
+  private int lineLengthLimit = 500;
 
   /**
    * @param out receives the rendered text.
@@ -69,6 +75,11 @@ public final class JsMinimalPrinter implements TokenConsumer {
   }
 
   public void mark(FilePosition pos) {}
+
+  /** Visible for testing.  Should not be used by clients. */
+  void setLineLengthLimit(int lineLengthLimit) {
+    this.lineLengthLimit = lineLengthLimit;
+  }
 
   /**
    * @throws NullPointerException if out raises an IOException
@@ -155,7 +166,7 @@ public final class JsMinimalPrinter implements TokenConsumer {
       if (spaceBefore) {
         // Some security tools/proxies/firewalls break on really long javascript
         // lines.
-        if (charInLine >= 500 && canBreakBetween(lastToken, text)) {
+        if (charInLine >= lineLengthLimit && canBreakBetween(lastToken, text)) {
           newLine();
         } else {
           space();
