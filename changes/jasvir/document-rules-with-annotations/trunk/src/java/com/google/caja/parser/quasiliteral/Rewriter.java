@@ -58,6 +58,7 @@ public abstract class Rewriter {
    *
    * @param logging whether this Rewriter should log the details of rule firings to
    * standard error.
+   * @throws NoSuchMethodException 
    */
   public Rewriter(boolean logging, Rule[] rules) {
     this.logging = logging;
@@ -127,26 +128,25 @@ public abstract class Rewriter {
    * Adds a list of rules in order to this rewriter.
    * 
    * @param rules list of rewriting rules
-   * @exception IllegalArgumentException if a rule with a duplicate name is added.
+   * @throws NoSuchMethodException if {@code Rule} is missing {@code fire} method 
+   * @throws IllegalArgumentException if a rule with a duplicate name is added.
    */
   public void addRules(Rule[] rules) {
-    for ( Rule r : rules ) {
+    for (Rule r : rules) {
       Class<Rule> c = (Class<Rule>) r.getClass();
       Method m = null;
+      Class[] args = {ParseTreeNode.class, Scope.class, MessageQueue.class};
       try {
-        Class[] args = {ParseTreeNode.class, Scope.class, MessageQueue.class};
         m = c.getMethod("fire", args);
-        RuleDescription rDesc = m.getAnnotation(RuleDescription.class);
-        if ( rDesc == null )
-          throw new IllegalArgumentException("RuleDescription not found");
-        r.setName(rDesc.name());
-        r.setRewriter(this);
-        addRule(r);
       } catch (NoSuchMethodException e) {
-        // This should not occur all Rules have a fire method
-        e.printStackTrace();
-        throw new RuntimeException("Rule has no \"fire\" method");
+        throw new IllegalArgumentException("Method \"fire\" not found in Rule");
       }
+      RuleDescription rDesc = m.getAnnotation(RuleDescription.class);
+      if (rDesc == null)
+        throw new IllegalArgumentException("RuleDescription not found");
+      r.setName(rDesc.name());
+      r.setRewriter(this);
+      addRule(r);
     }
   }
 
