@@ -39,9 +39,27 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An executable that compresses the input javascript.
+ * Usage
+ * <pre>
+ * java com.google.caja.parser.js.Minify file1.js file2.js ... > minified.js
+ * </pre>
+ *
+ * <p>This parses and renders JS so guarantees valid output, but does not
+ * otherwise change the structure.  The output is semantically the same even
+ * in the presence of aliased eval.
+ *
+ * <p>It does strip comments and unnecessary whitespace.</p>
+ *
+ * <p>It does not rename local variables, inline constants or functions,
+ * eliminate dead code, or zip content.</p>
+ *
+ * @author mikesamuel@gmail.com
+ */
 public class Minify {
-  public static void main(String[] args) throws IOException {
-    List<Pair<InputSource, File>> inputs = checkInputs(args);
+  public static void main(String[] jsFilePaths) throws IOException {
+    List<Pair<InputSource, File>> inputs = checkInputs(jsFilePaths);
     MessageContext mc = new MessageContext();
     mc.inputSources = new ArrayList<InputSource>();
     for (Pair<InputSource, File> input : inputs) {
@@ -88,6 +106,7 @@ public class Minify {
     System.exit(maxMessageLevel.compareTo(MessageLevel.ERROR) >= 0 ? -1 : 0);
   }
 
+  /** Called before opening files to checks that all input are readable. */
   private static List<Pair<InputSource, File>> checkInputs(String... jsFiles)
       throws IOException {
     List<Pair<InputSource, File>> inputs
