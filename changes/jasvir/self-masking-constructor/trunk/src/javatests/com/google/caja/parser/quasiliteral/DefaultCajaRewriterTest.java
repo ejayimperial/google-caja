@@ -1631,18 +1631,17 @@ public class DefaultCajaRewriterTest extends TestCase {
   }
 
   public void testMaskingFunction () throws Exception {
-    checkAddsMessage(
+    assertAddsMessage(
         "function Goo() { function Goo() {} }",
         MessageType.SYMBOL_REDEFINED, 
         MessageLevel.ERROR );
-    checkAddsMessage(
+    assertAddsMessage(
         "function Goo() { var Goo = 1}",
         MessageType.MASKING_SYMBOL, 
         MessageLevel.LINT );
-    checkDoesNotAddMessage(
+    assertMessageNotPresent(
         "function Goo() { this.x = 1; }",
-        MessageType.MASKING_SYMBOL, 
-        MessageLevel.WARNING );
+        MessageType.MASKING_SYMBOL );
   }
   
   public void testFuncCtor() throws Exception {
@@ -2113,10 +2112,24 @@ public class DefaultCajaRewriterTest extends TestCase {
     }
   }
 
-  private void checkDoesNotAddMessage( String src, MessageType type, MessageLevel level) throws Exception {
+  private void assertMessageNotPresent( String src, MessageType type, MessageLevel level) throws Exception {
     checkDoesNotAddMessage( TestUtil.parse(src), type, level);
   }
-    
+
+  private void assertMessageNotPresent( String src, MessageType type) throws Exception {
+    checkDoesNotAddMessage( TestUtil.parse(src), type);
+  }
+
+  private void checkDoesNotAddMessage( 
+      ParseTreeNode inputNode, 
+      MessageType type)  {
+    mq.getMessages().clear();
+    ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
+    if ( containsConsistentMessage(mq.getMessages(),type)) {
+      fail("Unexpected add message of type " + type);
+    }
+  }
+
   private void checkDoesNotAddMessage( 
         ParseTreeNode inputNode, 
         MessageType type,
@@ -2128,7 +2141,7 @@ public class DefaultCajaRewriterTest extends TestCase {
     }
   }
 
-  private void checkAddsMessage( String src, MessageType type, MessageLevel level) throws Exception {
+  private void assertAddsMessage( String src, MessageType type, MessageLevel level) throws Exception {
     checkAddsMessage( TestUtil.parse(src), type, level);
   }
     
@@ -2143,7 +2156,17 @@ public class DefaultCajaRewriterTest extends TestCase {
     }
   }
 
-  private boolean containsConsistentMessage( List<Message> list, MessageType type, MessageLevel level) {
+  private boolean containsConsistentMessage(List<Message> list, MessageType type) {
+    for (Message m : list) {
+      System.out.println("**"+m.getMessageType() + "|" + m.getMessageLevel());
+      if (m.getMessageType().equals(type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean containsConsistentMessage(List<Message> list, MessageType type, MessageLevel level) {
     for (Message m : list) {
       System.out.println("**"+m.getMessageType() + "|" + m.getMessageLevel());
       if ( m.getMessageType().equals(type) && m.getMessageLevel().equals(level) ) {
