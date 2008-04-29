@@ -10,9 +10,9 @@ A function can steal secrets passed to its caller but not directly passed to it.
 Any value can be thrown, but the {{{Error}}} class is most frequently used, and is the base class for interpreter Errors.
 
 According to section 15.11 of ES 262:
-    *15.11 Error Objects*
+    S15.11 *Error* *Objects*
+    
     Instances of Error objects are thrown as exceptions when runtime errors occur. The Error objects may also serve as base objects for user-defined exception classes.
-    ...
 
 When {{{Error}}}s are converted to a string, the result is implementation-dependent.  Some interpreters (e.g. SpiderMonkey) add members to {{{Error}}} that include stack trace information.  That stack may include not just names, and source files and line numbers, but also parameter values.
 
