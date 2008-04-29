@@ -88,9 +88,9 @@ public class CajolingService implements HttpHandler {
           throw new URISyntaxException(ex.getRequestURI().toString(), "Missing parameter \"url\" is required");
         URL gadgetUrl = new URL(gadgetUrlString);
         
-        String expectedMimeType = urlMap.get("mimetype");
+        String expectedMimeType = urlMap.get("mime-type");
         if (expectedMimeType == null)
-          throw new URISyntaxException(ex.getRequestURI().toString(), "Missing parameter \"mimetype\" is required");
+          throw new URISyntaxException(ex.getRequestURI().toString(), "Missing parameter \"mime-type\" is required");
         
         URLConnection urlConnect = gadgetUrl.openConnection();
         urlConnect.connect();

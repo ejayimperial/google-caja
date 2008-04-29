@@ -41,16 +41,15 @@ public class JsHandler extends ContentHandler {
   @Override
   public void apply(URI uri, String contentType, Reader stream,
       Writer response) {
-    System.out.println("Handling " + uri.toString() + " of type " + contentType);
     try {
-      cajole(uri, stream, response);
+      cajoleJs(uri, stream, response);
     } catch (URISyntaxException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }  
       
-  private void cajole(URI inputUri, Reader cajaInput, Appendable output) throws URISyntaxException {
+  private void cajoleJs(URI inputUri, Reader cajaInput, Appendable output) throws URISyntaxException {
     InputSource is = new InputSource (inputUri);    
     CharProducer cp = CharProducer.Factory.create(cajaInput,is);
     MessageQueue mq = new SimpleMessageQueue();
