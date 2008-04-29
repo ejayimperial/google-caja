@@ -28,6 +28,7 @@ Works in Firefox.
 
 
 ==Example==
+{{{
 // President Skroob knows his luggage combination.
 function skroob(luggageCombination) {
   // He orders Dark Helmet around but does not give
@@ -45,3 +46,4 @@ function darkHelmet() {
 }
 
 skroob(1234);
+}}}
