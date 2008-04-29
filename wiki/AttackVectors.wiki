@@ -25,6 +25,7 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * ParentCircumventsScoping -- The javascript1.2 feature {{{__parent__}}} circumvents normal scoping.
   * JsControlFormatChars -- {{{[:Cf:]}}} can be used hide code in string or comments.
   * InconsistentlyReservedKeywords -- Different reserved keyword set can cause parser ambiguity
+  * ErrorExposesParameterValues -- The stack property of Error includes parameter values.
 
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
