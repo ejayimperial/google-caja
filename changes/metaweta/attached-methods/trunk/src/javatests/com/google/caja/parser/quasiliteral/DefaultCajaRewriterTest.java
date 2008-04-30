@@ -117,25 +117,6 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "})();" +
         "foo = new pkg.Foo(2);" +
         "foo.getX();");
-    // TODO(metaweta): enable once issue138 is fixed.
-    if (false){
-      assertConsistent(
-          "pkg = {};" +
-          "pkg.Foo = function Foo(x) {" +
-          "  this.x_ = x;" +
-          "};" +
-          "caja.def(pkg.Foo, Object, {getX: function(){ return this.x_; }});" +
-          "foo = new pkg.Foo(2);" +
-          "foo.getX();");
-      assertConsistent(
-          "pkg = {};" +
-          "pkg.Foo = function Foo(x) {" +
-          "  this.x_ = x;" +
-          "};" +
-          "pkg.Foo.prototype.getX = function(){ return this.x_; };" +
-          "foo = new pkg.Foo(2);" +
-          "foo.getX();");
-    }
   }
   
   public void testAttachedMethod() throws Exception {
