@@ -15,14 +15,15 @@
 package com.google.caja.parser;
 
 import com.google.caja.parser.quasiliteral.ParseTreeNodeContainer;
-import com.google.caja.reporting.RenderContext;
-import com.google.caja.reporting.MessageContext;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A utility class for common operations on {@link ParseTreeNode}s.
@@ -64,21 +65,26 @@ public class ParseTreeNodes {
       throw new RuntimeException(getCtorErrorMessage(ctor, value, children), e);
     }
   }
-  
+
   // TODO(ihab): Instead of creating a new list each time, pass the list in and
   // append to it.
   // TODO(mikesamuel): clean up dependency.  This package should not depend on
   // quasiliterals.
   private static List<? extends ParseTreeNode> flattenNodeList(
       List<? extends ParseTreeNode> nodes) {
-    List<ParseTreeNode> results = new ArrayList<ParseTreeNode>();
+    List<ParseTreeNode> results = null;
+    int pos = 0;
     for (int i = 0; i < nodes.size(); i++) {
-      if (nodes.get(i) instanceof ParseTreeNodeContainer) {
-        results.addAll(flattenNodeList(nodes.get(i).children()));
-      } else {
-        results.add(nodes.get(i));
+      ParseTreeNode node = nodes.get(i);
+      if (node instanceof ParseTreeNodeContainer) {
+        if (results == null) { results = new ArrayList<ParseTreeNode>(); }
+        results.addAll(nodes.subList(pos, i));
+        results.addAll(flattenNodeList(node.children()));
+        pos = i + 1;
       }
     }
+    if (results == null) { return nodes; }
+    results.addAll(nodes.subList(pos, nodes.size()));
     return results;
   }
 
@@ -88,7 +94,7 @@ public class ParseTreeNodes {
    * @param x a {@code ParseTreeNode}.
    * @param y another {@code ParseTreeNode}.
    * @return whether the trees rooted at {@code this} and {@code n} are equal.
-   */  
+   */
   public static boolean deepEquals(ParseTreeNode x, ParseTreeNode y) {
     if (x.getClass() == y.getClass()) {
       if ((x.getValue() == null && y.getValue() == null) ||
@@ -105,15 +111,31 @@ public class ParseTreeNodes {
     return false;
   }
 
-  private static <T extends ParseTreeNode> Constructor<T> findCloneCtor(
-      Class<T> clazz) {
+  private static final Map<Class<? extends ParseTreeNode>,
+                           Constructor<? extends ParseTreeNode>> cloneCtorCache
+      = Collections.synchronizedMap(
+            new HashMap<Class<? extends ParseTreeNode>,
+                        Constructor<? extends ParseTreeNode>>());
+  private static <T extends ParseTreeNode>
+  Constructor<T> findCloneCtor(Class<T> clazz) {
+    {
+      Constructor<T> ctor = fromCtorCache(clazz);
+      if (ctor != null) { return ctor; }
+    }
     for (Constructor<T> ctor : declaredCtors(clazz)) {
       if (ctor.getParameterTypes().length != 2) continue;
       if (ctor.getParameterTypes()[1].isAssignableFrom(List.class)) {
+        cloneCtorCache.put(clazz, ctor);
         return ctor;
       }
     }
     throw new RuntimeException("Cannot find clone ctor for node " + clazz);
+  }
+
+  @SuppressWarnings({"unchecked", "cast"})
+  private static <T extends ParseTreeNode>
+  Constructor<T> fromCtorCache(Class<T> clazz) {
+    return (Constructor<T>) cloneCtorCache.get(clazz);
   }
 
   @SuppressWarnings({"unchecked", "cast"})

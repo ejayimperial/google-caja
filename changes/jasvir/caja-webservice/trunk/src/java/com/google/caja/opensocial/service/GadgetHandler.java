@@ -47,14 +47,12 @@ public class GadgetHandler extends ContentHandler {
 
   @Override
   public boolean canHandle(URI uri, String contentType, ContentTypeCheck checker) {
-   System.out.println("Check GadgetHanlder canHandle " + uri + " (" + contentType + ")");
    return checker.check("application/xml",contentType);
   }
 
   @Override
   public void apply(URI uri, String contentType, Reader stream,
       Writer response) {
-    System.out.println("Applying GadgetHandlder on " + uri + " (" + contentType + ")");    
     try {
       cajoleGadget(uri, stream, response);
     } catch (URISyntaxException e) {
@@ -91,7 +89,6 @@ public class GadgetHandler extends ContentHandler {
       }
 
       public URI rewrite(ExternalReference extref, String mimeType) {
-        System.out.println("Rewriting " + extref);
         try {
           return URI.create(
               "http://localhost:8887/?url="

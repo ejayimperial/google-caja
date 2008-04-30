@@ -344,7 +344,9 @@ public abstract class AbstractParseTreeNode<T extends ParseTreeNode>
     AbstractParseTreeNode<?> cloned = (AbstractParseTreeNode<?>)
         ParseTreeNodes.newNodeInstance(getClass(), getValue(), clonedChildren);
     cloned.setFilePosition(getFilePosition());
-    cloned.getAttributes().putAll(getAttributes());    
+    if (attributes != null) {
+      cloned.attributes = new SyntheticAttributes(attributes);
+    }
     return cloned;
   }
 

@@ -36,7 +36,7 @@
 /**
  * Add a tamed document implementation to a Gadget's global scope.
  *
- * @param {string} idPrefix a string prefix prepended to all node IDs.
+ * @param {string} idSuffix a string suffix appended to all node IDs.
  * @param {Object} uriCallback an object like <pre>{
  *       rewrite: function (uri, mimeType) { return safeUri }
  *     }</pre>.
@@ -165,7 +165,7 @@ attachDocumentStub = (function () {
   var cssSealerUnsealerPair = makeSealerUnsealerPair(false);
 
   // See above for a description of this function.
-  function attachDocumentStub(idPrefix, uriCallback, outers) {
+  function attachDocumentStub(idSuffix, uriCallback, outers) {
     var elementPolicies = {};
     elementPolicies.form = function (attribs) {
       // Forms must have a gated onsubmit handler or they must have an
@@ -238,11 +238,12 @@ attachDocumentStub = (function () {
             var atype = html4.ATTRIBS[attribName];
             var value = attribs[i + 1];
             if (atype === html4.atype.IDREF) {
-              if (value.length <= idPrefix.length
-                  || idPrefix !== value.substring(0, idPrefix.length)) {
+              if (value.length <= idSuffix.length
+                  || (idSuffix
+                      !== value.substring(value.length - idSuffix.length))) {
                 continue;
               }
-              value = value.substring(idPrefix.length);
+              value = value.substring(0, value.length - idSuffix.length);
             }
             if (value != null) {
               out.push(' ', attribName, '="', html.escapeAttrib(value), '"');
@@ -256,20 +257,27 @@ attachDocumentStub = (function () {
         cdata: function (text, out) { out.push(text); }
       });
 
+    var illegalSuffix = /__(?:\s|$)/;
     function rewriteAttribute(tagName, attribName, type, value) {
       switch (type) {
         case html4.atype.IDREF:
           value = String(value);
-          if (!(value && isXmlName(value))) { return null; }
-          return idPrefix + value;
+          if (value && !illegalSuffix.test(value) && isXmlName(value)) {
+            return value + idSuffix;
+          }
+          return null;
         case html4.atype.NAME:
           value = String(value);
-          if (!(value && isXmlName(value))) { return null; }
-          return value;
+          if (value && !illegalSuffix.test(value) && isXmlName(value)) {
+            return value;
+          }
+          return null;
         case html4.atype.NMTOKENS:
           value = String(value);
-          if (!(value && isXmlNmTokens(value))) { return null; }
-          return value;
+          if (value && !illegalSuffix.test(value) && isXmlNmTokens(value)) {
+            return value;
+          }
+          return null;
         case html4.atype.SCRIPT:
           value = String(value);
           // Translate a handler that calls a simple function like
@@ -338,6 +346,9 @@ attachDocumentStub = (function () {
               break;
             case 'input':
               tamed = new TameInputElement(node, editable);
+              break;
+            case 'img':
+              tamed = new TameImageElement(node, editable);
               break;
             default:
               tamed = new TameElement(node, editable);
@@ -494,10 +505,12 @@ attachDocumentStub = (function () {
       if ('string' !== typeof value) { return value; }
       switch (type) {
         case html4.atype.IDREF:
-          var n = idPrefix.length;
-          if (value && value.length >= n
-              && idPrefix === value.substring(0, n)) {
-            return value.substring(n);
+          if (!value) { return ''; }
+          var n = idSuffix.length;
+          var len = value.length;
+          var end = len - n;
+          if (end > 0 && idSuffix === value.substring(end, len)) {
+            return value.substring(0, end);
           }
           return '';
         default:
@@ -566,7 +579,7 @@ attachDocumentStub = (function () {
       this.node___.innerHTML = html;
     };
     TameElement.prototype.setStyle = function (style) {
-      this.setAttribute('STYLE', style);
+      this.setAttribute('style', style);
     };
     TameElement.prototype.getStyle = function () {
       return this.node___.style.cssText;
@@ -586,7 +599,7 @@ attachDocumentStub = (function () {
         // See CssTemplate.toPropertyValueList.
         var semi = propName.indexOf(';');
         if (semi >= 0) { propName = propName.substring(semi + 1); }
-        style[propName] = propValue;
+        styleNode[propName] = propValue;
       }
     };
     TameElement.prototype.addEventListener = function (name, listener, bubble) {
@@ -667,6 +680,22 @@ attachDocumentStub = (function () {
     ___.all2(___.allowMethod, TameInputElement,
              ['getValue', 'setValue', 'focus', 'getForm']);
     exportFields(TameInputElement, ['value', 'form']);
+
+
+    function TameImageElement(node, editable) {
+      TameElement.call(this, node, editable);
+    }
+    extend(TameImageElement, TameElement);
+    TameImageElement.prototype.getSrc = function () {
+      return this.node___.src;
+    };
+    TameImageElement.prototype.setSrc = function (src) {
+      console.log('setting src to ' + src);
+      this.setAttribute('src', src);
+    };
+    ___.ctor(TameImageElement, TameElement, 'TameImageElement');
+    ___.all2(___.allowMethod, TameImageElement, ['getSrc', 'setSrc']);
+    exportFields(TameImageElement, ['src']);
 
 
     function TameEvent(event) {
@@ -760,7 +789,7 @@ attachDocumentStub = (function () {
           this.doc___.createTextNode(text != null ? '' + text : ''), true);
     };
     TameDocument.prototype.getElementById = function (id) {
-      id = idPrefix + id;
+      id += idSuffix;
       var node = this.doc___.getElementById(id);
       return tameNode(node, this.editable___);
     };
@@ -792,11 +821,21 @@ attachDocumentStub = (function () {
       if (!s) { throw new Error(); }
       return s;
     };
-    outers.prefix___ = function (nmtokens) {
+    outers.suffix___ = function (nmtokens) {
       var p = String(nmtokens).replace(/^\s+|\s+$/g, '').split(/\s+/g);
       var out = [];
       for (var i = 0; i < p.length; ++i) {
         nmtoken = rewriteAttribute(null, null, html4.atype.IDREF, p[i]);
+        if (!nmtoken) { throw new Error(nmtokens); }
+        out.push(nmtoken);
+      }
+      return out.join(' ');
+    };
+    outers.ident___ = function (nmtokens) {
+      var p = String(nmtokens).replace(/^\s+|\s+$/g, '').split(/\s+/g);
+      var out = [];
+      for (var i = 0; i < p.length; ++i) {
+        nmtoken = rewriteAttribute(null, null, html4.atype.NMTOKENS, p[i]);
         if (!nmtoken) { throw new Error(nmtokens); }
         out.push(nmtoken);
       }
@@ -840,6 +879,30 @@ attachDocumentStub = (function () {
       var s = rewriteAttribute(null, null, html4.atype.URI, uri);
       if (!s) { throw new Error(); }
       return s;
+    };
+
+    /**
+     * Create a CSS stylesheet with the given text and append it to the DOM.
+     */
+    outers.emitCss___ = function (stylesheet) {
+      var style;
+      try {
+        style = document.createElement('style');
+        style.setAttribute('type', 'text/css');
+        style.appendChild(document.createTextNode(stylesheet));
+      } catch (e) {  // Above fails on IE 6
+        var container = document.createElement('div');
+        container.innerHTML = ('<style type="text/css">/*<![CDATA[[<!--*/'
+                               + stylesheet
+                               + '/*-->]]>*/</style>');
+        style = container.firstChild;
+      }
+      document.body.appendChild(style);
+    };
+
+    /** A per-gadget class used to separate style rules. */
+    outers.getIdClass___ = function () {
+      return idSuffix;
     };
 
     outers.document = new TameDocument(document, true);

@@ -47,6 +47,7 @@ import com.google.caja.plugin.CompiledPluginTest;
 import com.google.caja.plugin.CssRewriterTest;
 import com.google.caja.plugin.CssTemplateTest;
 import com.google.caja.plugin.CssValidatorTest;
+import com.google.caja.plugin.DomProcessingEventsTest;
 import com.google.caja.plugin.ExpressionSanitizerTest;
 import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
@@ -56,6 +57,7 @@ import com.google.caja.plugin.JsHtmlSanitizerTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
 import com.google.caja.plugin.stages.OpenTemplateStageTest;
 import com.google.caja.plugin.stages.RewriteHtmlStageTest;
+import com.google.caja.render.JsMinimalPrinterTest;
 import com.google.caja.render.JsPrettyPrinterTest;
 import com.google.caja.render.SideBySideRendererTest;
 import com.google.caja.reporting.BuildInfoTest;
@@ -94,6 +96,7 @@ public class AllTests {
           DefaultCajaRewriterTest.class,
           DefaultGadgetRewriterTest.class,
           DomParserTest.class,
+          DomProcessingEventsTest.class,
           EscapingTest.class,
           ExpressionSanitizerTest.class,
           GadgetParserTest.class,
@@ -108,6 +111,7 @@ public class AllTests {
           JsHtmlParserTest.class,
           JsHtmlSanitizerTest.class,
           JsLexerTest.class,
+          JsMinimalPrinterTest.class,
           JsPrettyPrinterTest.class,
           LayoutTest.class,
           LookaheadCharProducerTest.class,

@@ -83,7 +83,6 @@ public class CajolingService implements HttpHandler {
       String name = result[0];
       String value = URLDecoder.decode(result[1], "UTF-8");
       map.put(name, value);
-      System.out.println(""+name+"="+value);
     }
     return map;
   }

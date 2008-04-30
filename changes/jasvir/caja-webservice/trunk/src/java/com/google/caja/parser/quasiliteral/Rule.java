@@ -32,6 +32,8 @@ import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.StringLiteral;
+import com.google.caja.parser.js.Statement;
+import com.google.caja.parser.js.UndefinedLiteral;
 import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
 import static com.google.caja.plugin.SyntheticNodes.s;
@@ -42,13 +44,15 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Callback;
 import com.google.caja.util.Pair;
 
+import static com.google.caja.parser.quasiliteral.QuasiBuilder.match;
+import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.HashMap;
 
 /**
  * A rewriting rule supplied by a subclass.
@@ -71,8 +75,10 @@ public abstract class Rule implements MessagePart {
         }
       };
 
-  private final String name;
-  private final Rewriter rewriter;
+  private String name;
+  private Rewriter rewriter;
+
+  public Rule() {}
 
   /**
    * Create a new {@code Rule}.
@@ -88,6 +94,21 @@ public abstract class Rule implements MessagePart {
    * @return the name of this {@code Rule}.
    */
   public String getName() { return name; }
+
+  /**
+   * Set the name of this {@code Rule}.
+   */
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  /**
+   * Set the rewriter this{@code Rule} uses.
+   */
+  public void setRewriter(Rewriter rewriter) {
+    this.rewriter = rewriter;
+  }
+
 
   /**
    * Process the given input, returning a rewritten node.
@@ -110,38 +131,6 @@ public abstract class Rule implements MessagePart {
     out.append("Rule \"" + name + "\"");
   }
   
-  protected final boolean match(
-      QuasiNode pattern,
-      ParseTreeNode node) {
-    return match(pattern, node, new HashMap<String, ParseTreeNode>());
-  }
-
-  protected final boolean match(
-      QuasiNode pattern,
-      ParseTreeNode node,
-      Map<String, ParseTreeNode> bindings) {
-    Map<String, ParseTreeNode> tempBindings = pattern.matchHere(node);
-
-    if (tempBindings != null) {
-      bindings.putAll(tempBindings);
-      return true;
-    }
-    return false;
-  }
-
-  protected final boolean match(
-      String patternText,
-      ParseTreeNode node) {
-    return match(getPatternNode(patternText), node);
-  }
-
-  protected final boolean match(
-      String patternText,
-      ParseTreeNode node,
-      Map<String, ParseTreeNode> bindings) {
-    return match(getPatternNode(patternText), node, bindings);
-  }
-
   protected final void expandEntry(
       Map<String, ParseTreeNode> bindings,
       String key,
@@ -179,38 +168,6 @@ public abstract class Rule implements MessagePart {
         rewrittenChildren);
   }
 
-
-  protected final ParseTreeNode subst(
-      String patternText,
-      Map<String, ParseTreeNode> bindings) {
-    return subst(getPatternNode(patternText), bindings);
-  }
-
-  protected final ParseTreeNode subst(
-      QuasiNode pattern,
-      Map<String, ParseTreeNode> bindings) {
-    ParseTreeNode result = pattern.substituteHere(bindings);
-
-    if (result == null) {
-      // Pattern programming error
-      // TODO(ihab.awad): Provide a detailed dump of the bindings in the exception
-      throw new RuntimeException("Failed to substitute into: \"" + pattern + "\"");
-    }
-
-    return result;
-  }
-
-  protected final ParseTreeNode substV(String pattern, Object... args) {
-    if (args.length %2 != 0) throw new RuntimeException("Wrong # of args for subst()");
-    Map<String, ParseTreeNode> bindings = new HashMap<String, ParseTreeNode>();
-    for (int i = 0; i < args.length; ) {
-      bindings.put(
-          (String)args[i++],
-          (ParseTreeNode)args[i++]);
-    }
-    return subst(pattern, bindings);
-  }
-
   protected ParseTreeNode getFunctionHeadDeclarations(
       Rule rule,
       Scope scope,
@@ -237,59 +194,25 @@ public abstract class Rule implements MessagePart {
     return s(new Reference(s(new Identifier(name))));
   }
 
-  protected Pair<ParseTreeNode, ParseTreeNode> reuseEmpty(
-      String variableName,
-      boolean inOuters,
-      Rule rule,
-      Scope scope,
-      MessageQueue mq) {
-    ParseTreeNode variableDefinition;
-
-    if (inOuters) {
-      variableDefinition = expandReferenceToOuters(
-          new Reference(new Identifier(variableName)),
-          scope,
-          mq);
-      variableDefinition = s(
-          new ExpressionStmt((Expression)variableDefinition));
-    } else {
-      variableDefinition = substV(
-          "var @ref;",
-          "ref", s(new Identifier(variableName)));
+  protected Expression newCommaOperation(List<? extends ParseTreeNode> operands) {
+    if (operands.size() == 0) return new UndefinedLiteral();
+    Expression result = (Expression)operands.get(0);
+    for (int i = 1; i < operands.size(); i++) {
+      result = Operation.create(Operator.COMMA, result, (Expression)operands.get(i));
     }
-
-    return new Pair<ParseTreeNode, ParseTreeNode>(
-        newReference(variableName),
-        variableDefinition);
+    return result;
   }
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuse(
-      String variableName,
       ParseTreeNode value,
-      boolean inOuters,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    ParseTreeNode variableDefinition, reference;
-
-    if (inOuters) {
-      variableDefinition = substV(
-          "___OUTERS___.@ref = @rhs;",
-          "ref", s(new Reference(s(new Identifier(variableName)))),
-          "rhs", rewriter.expand(value, scope, mq));
-      variableDefinition = s(
-          new ExpressionStmt((Expression)variableDefinition));
-      reference = substV(
-          "___OUTERS___.@ref",
-          "ref", newReference(variableName));
-    } else {
-      variableDefinition = substV(
-          "var @ref = @rhs;",
-          "ref", SyntheticNodes.s(new Identifier(variableName)),
-          "rhs", rewriter.expand(value, scope, mq));
-      reference = newReference(variableName);
-    }
-
+    ParseTreeNode reference = s(new Reference(scope.declareStartOfScopeTempVariable()));
+    ParseTreeNode variableDefinition = substV(
+        "@ref = @rhs;",
+        "ref", reference,
+        "rhs", rewriter.expand(value, scope, mq));
     return new Pair<ParseTreeNode, ParseTreeNode>(
         reference,
         variableDefinition);
@@ -297,7 +220,6 @@ public abstract class Rule implements MessagePart {
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuseAll(
       ParseTreeNode arguments,
-      boolean inOuters,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
@@ -306,9 +228,7 @@ public abstract class Rule implements MessagePart {
 
     for (int i = 0; i < arguments.children().size(); i++) {
       Pair<ParseTreeNode, ParseTreeNode> p = reuse(
-          "x" + i + "___",
           arguments.children().get(i),
-          inOuters,
           rule,
           scope,
           mq);
@@ -336,22 +256,16 @@ public abstract class Rule implements MessagePart {
     }
     String sName = getReferenceName(symbol);
     if (scope.isGlobal(sName)) {
-      ParseTreeNode pva = new Reference(new Identifier("x___"));
-      ParseTreeNode pvb = substV(
-          "var @ref = @rhs;",
-          "ref", new Identifier("x___"),
-          "rhs", value);
-      return new ExpressionStmt((Expression)substV(
-          "(function() {" +
-          "  @pvb;" +
-          "  return ___OUTERS___.@sCanSet ? (___OUTERS___.@s = @pva) : " +
-          "                                 ___.setPub(___OUTERS___, @sName, @pva);" +
-          "})();",
+      return s(new ExpressionStmt((Expression)substV(
+          "@temp = @value," +
+          "___OUTERS___.@sCanSet ?" +
+          "  (___OUTERS___.@s = @temp) :" +
+          "  ___.setPub(___OUTERS___, @sName, @temp);",
           "s", symbol,
           "sCanSet", new Reference(new Identifier(sName + "_canSet___")),
           "sName", toStringLiteral(symbol),
-          "pva", pva,
-          "pvb", pvb));
+          "temp", s(new Reference(scope.declareStartOfScopeTempVariable())),
+          "value", value)));
     } else {
       return substV(
           "var @s = @v",
@@ -379,12 +293,14 @@ public abstract class Rule implements MessagePart {
         return substV(
             "___.method(@fname, function(@ps*) {" +
             "  @fh*;" +
+            "  @stmts*;" +
             "  @bs*;" +
             "});",
             "fname", expandReferenceToOuters(fname, scope, mq),
             "ps",    bindings.get("ps"),
             "bs",    rewriter.expand(bindings.get("bs"), s2, mq),
-            "fh",    getFunctionHeadDeclarations(rule, s2, mq));
+            "fh",    getFunctionHeadDeclarations(rule, s2, mq),
+            "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
       }
     }
 
@@ -529,10 +445,6 @@ public abstract class Rule implements MessagePart {
     return false;
   }
 
-  private QuasiNode getPatternNode(String patternText) {
-    return rewriter.getPatternNode(patternText);
-  }
-
   /**
    * Split the target of a read/set operation into an lvalue, an rvalue, and
    * an ordered list of temporary variables needed to ensure proper order
@@ -576,7 +488,7 @@ public abstract class Rule implements MessagePart {
   private ReadAssignOperands sideEffectlessReadAssignOperand(
       final Expression lhs) {
     assert lhs.isLeftHandSide();
-    return new ReadAssignOperands(Collections.<Declaration>emptyList(), lhs) {
+    return new ReadAssignOperands(Collections.<Expression>emptyList(), lhs) {
         @Override
         public Expression makeAssignment(Expression rvalue) {
           return Operation.create(Operator.ASSIGN, lhs, rvalue);
@@ -589,7 +501,7 @@ public abstract class Rule implements MessagePart {
       Scope scope, MessageQueue mq) {
     final Reference object;  // The object that contains the field to assign.
     final Expression key;  // Identifies the field to assign.
-    List<Declaration> temporaries = new ArrayList<Declaration>();
+    List<Expression> temporaries = new ArrayList<Expression>();
 
     // Cajole the operands
     Expression left = (Expression) rewriter.expand(uncajoledObject, scope, mq);
@@ -612,8 +524,11 @@ public abstract class Rule implements MessagePart {
                         || isOutersReference(left))) {
       object = (Reference) left;
     } else {
-      Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
-      temporaries.add(s(new Declaration(tmpVar, left)));
+      Identifier tmpVar = scope.declareStartOfScopeTempVariable();
+      temporaries.add((Expression)substV(
+          "@tmpVar = @left;",
+          "tmpVar", s(new Reference(tmpVar)),
+          "left", left));
       object = s(new Reference(tmpVar));
     }
 
@@ -621,8 +536,11 @@ public abstract class Rule implements MessagePart {
     if (isKeySimple) {
       key = right;
     } else {
-      Identifier tmpVar = s(new Identifier(scope.newTempVariable()));
-      temporaries.add(s(new Declaration(tmpVar, right)));
+      Identifier tmpVar = scope.declareStartOfScopeTempVariable();
+      temporaries.add((Expression)substV(
+          "@tmpVar = @right;",
+          "tmpVar", s(new Reference(tmpVar)),
+          "right", right));
       key = s(new Reference(tmpVar));
     }
 
@@ -680,11 +598,11 @@ public abstract class Rule implements MessagePart {
    * execution, and the cajoled lvalue and rvalue.
    */
   protected static abstract class ReadAssignOperands {
-    private final List<Declaration> temporaries;
+    private final List<Expression> temporaries;
     private final Expression rvalue;
 
     ReadAssignOperands(
-        List<Declaration> temporaries, Expression rvalue) {
+        List<Expression> temporaries, Expression rvalue) {
       this.temporaries = temporaries;
       this.rvalue = rvalue;
     }
@@ -693,7 +611,7 @@ public abstract class Rule implements MessagePart {
      * The temporaries required by lvalue and rvalue in order of
      * initialization.
      */
-    public List<Declaration> getTemporaries() { return temporaries; }
+    public List<Expression> getTemporaries() { return temporaries; }
     public ParseTreeNodeContainer getTemporariesAsContainer() {
       return new ParseTreeNodeContainer(temporaries);
     }

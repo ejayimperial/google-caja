@@ -14,7 +14,6 @@
 
 package com.google.caja.parser.html;
 
-import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
@@ -25,21 +24,17 @@ import com.google.caja.lexer.TokenQueue;
 import com.google.caja.render.Concatenator;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageContext;
-import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
-import com.google.caja.reporting.SimpleMessageQueue;
+import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.Criterion;
 import com.google.caja.util.Join;
 import static com.google.caja.util.MoreAsserts.*;
 
-import java.io.StringReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
-
-import junit.framework.TestCase;
 
 /**
  * testcase for {@link DomParser}.
@@ -48,24 +43,7 @@ import junit.framework.TestCase;
  *
  * @author mikesamuel@gmail.com
  */
-public class DomParserTest extends TestCase {
-  private MessageQueue mq;
-  private MessageContext mc;
-  private InputSource is;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    mq = new SimpleMessageQueue();
-    mc = new MessageContext();
-    is = new InputSource(URI.create("text:///" + getName()));
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
+public class DomParserTest extends CajaTestCase {
   static final String DOM1_XML = (
       "\n"
       + "<foo a=\"b\" c =\"d\" e = \"&lt;&quot;f&quot;&amp;amp;\">\n"
@@ -78,25 +56,26 @@ public class DomParserTest extends TestCase {
       + "\n"
       );
 
-  static final String DOM1_GOLDEN = "Tag : foo\n"
-        + "  Attrib : a\n"
-        + "    Value : b\n"
-        + "  Attrib : c\n"
-        + "    Value : d\n"
-        + "  Attrib : e\n"
-        + "    Value : <\"f\"&amp;\n"
-        + "  Text : \n"
-        + "\n"
-        + "  Tag : bar\n"
-        + "  Text :  \n"
-        + "  Tag : bar\n"
-        + "  Text :  before  after \n"
-        + "Hello <there>\n"
-        + "\n"
-        + "  Tag : baz\n"
-        + "    CData : Hello <there>\n"
-        + "  Text : \n"
-        + "";
+  static final String DOM1_GOLDEN = (
+      "Tag : foo\n"
+      + "  Attrib : a\n"
+      + "    Value : b\n"
+      + "  Attrib : c\n"
+      + "    Value : d\n"
+      + "  Attrib : e\n"
+      + "    Value : <\"f\"&amp;\n"
+      + "  Text : \n"
+      + "\n"
+      + "  Tag : bar\n"
+      + "  Text :  \n"
+      + "  Tag : bar\n"
+      + "  Text :  before  after \n"
+      + "Hello <there>\n"
+      + "\n"
+      + "  Tag : baz\n"
+      + "    CData : Hello <there>\n"
+      + "  Text : \n"
+      );
 
   public void testParseDom() throws Exception {
     TokenQueue<HtmlTokenType> tq = tokenizeTestInput(DOM1_XML, true);
@@ -104,6 +83,21 @@ public class DomParserTest extends TestCase {
     StringBuilder actual = new StringBuilder();
     t.format(new MessageContext(), actual);
     assertEquals(DOM1_GOLDEN, actual.toString());
+  }
+
+  public void testEmptyFragment() throws Exception {
+    assertParsedMarkup(Arrays.<String>asList(),
+                       Arrays.asList("Fragment 1+1-1+1"),
+                       Arrays.<String>asList(),
+                       Arrays.asList(""),
+                       null,
+                       true);
+    assertParsedMarkup(Arrays.asList(" "),
+                       Arrays.asList("Fragment 1+1-1+2"),
+                       Arrays.<String>asList(),
+                       Arrays.asList(""),
+                       null,
+                       true);
   }
 
   public void testHtml1() throws Exception {
@@ -1606,6 +1600,58 @@ public class DomParserTest extends TestCase {
         null, false);
   }
 
+  public void testFileExtensionsBasedContentTypeGuessing() throws Exception {
+    // Override input sources, so that DomParser has a file extension available
+    // when deciding whether to treat the input as HTML or XML.
+    this.is = new InputSource(URI.create("test:///" + getName() + ".html"));
+    assertParsedMarkup(
+        Arrays.asList(
+            "<xmp><br/></xmp>"
+            ),
+        Arrays.asList(
+            "Fragment 1+1-1+17",
+            "  Tag : xmp 1+1-1+17",
+            "    Text : <br/> 1+6-1+11"
+            ),
+        Arrays.<String>asList(),
+        Arrays.asList(
+            "<xmp><br/></xmp>"
+            ),
+        null, true);
+
+    this.is = new InputSource(URI.create("test:///" + getName() + ".xml"));
+    assertParsedMarkup(
+        Arrays.asList(
+            "<xmp><br/></xmp>"
+            ),
+        Arrays.asList(
+            "Fragment 1+1-1+17",
+            "  Tag : xmp 1+1-1+17",
+            "    Tag : br 1+6-1+11"
+            ),
+        Arrays.<String>asList(),
+        Arrays.asList(
+            "<xmp><br /></xmp>"
+            ),
+        null, true);
+
+    this.is = new InputSource(URI.create("test:///" + getName() + ".xhtml"));
+    assertParsedMarkup(
+        Arrays.asList(
+            "<xmp><br/></xmp>"
+            ),
+        Arrays.asList(
+            "Fragment 1+1-1+17",
+            "  Tag : xmp 1+1-1+17",
+            "    Tag : br 1+6-1+11"
+            ),
+        Arrays.<String>asList(),
+        Arrays.asList(
+            "<xmp><br /></xmp>"
+            ),
+        null, true);
+  }
+
   public void testQualifiedNameTreatedAsXml() throws Exception {
     assertParsedMarkup(
         Arrays.asList(
@@ -1660,9 +1706,8 @@ public class DomParserTest extends TestCase {
           Join.join("\n", htmlInput), asXml);
       p = new DomParser(tq, asXml, mq);
     } else {
-      CharProducer cp = CharProducer.Factory.create(
-          new StringReader(Join.join("\n", htmlInput)), is);
-      p = new DomParser(new HtmlLexer(cp), is, mq);
+      p = new DomParser(
+          new HtmlLexer(fromString(Join.join("\n", htmlInput))), is, mq);
     }
     DomTree tree = fragment ? p.parseFragment() : p.parseDocument();
 
@@ -1688,9 +1733,7 @@ public class DomParserTest extends TestCase {
 
   private TokenQueue<HtmlTokenType> tokenizeTestInput(
       String sgmlInput, boolean asXml) {
-    CharProducer cp = CharProducer.Factory.create(
-        new StringReader(sgmlInput), is);
-    HtmlLexer lexer = new HtmlLexer(cp);
+    HtmlLexer lexer = new HtmlLexer(fromString(sgmlInput));
     lexer.setTreatedAsXml(asXml);
     return new TokenQueue<HtmlTokenType>(
         lexer, is, Criterion.Factory.<Token<HtmlTokenType>>optimist());
