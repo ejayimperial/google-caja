@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -34,29 +35,33 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
 /**
- * An webservice that can be run and proxies connections, cajoling any 
- * javascript.
- *
+ * A cajoling service which proxies connections:
+ *      - cajole any javascript
+ *      - cajoles any gadgets
+ *      - checks requested and retrieved mime-types  
+ *      
  * @author jasvir@gmail.com (Jasvir Nagra)
  */
 public class CajolingService implements HttpHandler {
-  Config config;
   private Map<InputSource, CharSequence> originalSources
     = new HashMap<InputSource, CharSequence>();
   private List<ContentHandler> handlers = new Vector<ContentHandler>();
   private ContentTypeCheck typeCheck = new LooseContentTypeCheck();
+  private HttpServer server;
   
-  public CajolingService(Config config) {
-    this.config = config;
+  public CajolingService() {
     registerHandlers();
     try{
-      HttpServer server = HttpServer.create(new InetSocketAddress(8887),0);
+      // TODO(jas): Use Config to config port
+      server = HttpServer.create(new InetSocketAddress(8887),0);
       HttpContext ctx = server.createContext("/cajaservice",this);
       server.setExecutor(null);
       server.start();
@@ -65,16 +70,33 @@ public class CajolingService implements HttpHandler {
     }
   }
   
-  private Map<String, String> parseQuery(String query) {
+  public void stop() {
+    server.stop(0);
+  }
+
+  private Map<String, String> parseQuery(String query) throws UnsupportedEncodingException {
     String[] params = query.split("&");
     Map<String, String> map = new HashMap<String, String>();
+    
     for (String param : params) {
       String[] result = param.split("=");
       String name = result[0];
-      String value = result[1];
+      String value = URLDecoder.decode(result[1], "UTF-8");
       map.put(name, value);
+      System.out.println(""+name+"="+value);
     }
     return map;
+  }
+  
+  /**
+   * Read the remainder of the input request, send a BAD_REQUEST http status
+   * to browser and close the connection
+   * @param ex
+   * @throws IOException 
+   */
+  private void closeBadRequest(HttpExchange ex) throws IOException {
+    ex.sendResponseHeaders(HttpStatus.BAD_REQUEST.value(),0);
+    ex.getResponseBody().close();    
   }
   
   public void handle(HttpExchange ex) throws IOException {
@@ -99,8 +121,7 @@ public class CajolingService implements HttpHandler {
         Headers responseHeaders = ex.getResponseHeaders();
         
         if (!typeCheck.check(expectedMimeType, urlConnect.getContentType())) {
-          ex.sendResponseHeaders(HttpStatus.BAD_REQUEST.value(),0);
-          ex.getResponseBody().close();
+          closeBadRequest(ex);
           return;
         }
         
@@ -113,26 +134,31 @@ public class CajolingService implements HttpHandler {
         
         response.close();
       }
-    } catch (MalformedURLException e){ 
+    } catch (MalformedURLException e){
+      closeBadRequest(ex);
       e.printStackTrace();
     } catch (URISyntaxException e) {
+      closeBadRequest(ex);
+      e.printStackTrace();
+    } catch (UnsupportedContentTypeException e) {
+      closeBadRequest(ex);
       e.printStackTrace();
     }
   }
    
   public void registerHandlers() {
-    handlers.add(new ImageHandler());
-    handlers.add(new GadgetHandler());
     handlers.add(new JsHandler());
   }
   
   private void applyHandler(URI uri, String contentType, 
-                            Reader stream, Writer response) {
+                            Reader stream, Writer response) 
+      throws UnsupportedContentTypeException {
     for (ContentHandler handler : handlers) {
       if ( handler.canHandle(uri, contentType, typeCheck) ) {
         handler.apply(uri, contentType, stream, response);
         return;
       }
     }
+    throw new UnsupportedContentTypeException();
   }
 }

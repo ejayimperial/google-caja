@@ -30,6 +30,7 @@ public class LooseContentTypeCheck extends ContentTypeCheck {
   
   public LooseContentTypeCheck () {
     canonicalMimeType.put("application/x-javascript", "text/javascript");
+    canonicalMimeType.put("text/xml", "application/xml");
   }
     
   /**
@@ -38,17 +39,20 @@ public class LooseContentTypeCheck extends ContentTypeCheck {
    */
   @Override
   public boolean check(String spec, String candidate) {
+    boolean result = false;
     ContentType ct_spec;
     ContentType ct_candidate;
     try {
       ct_spec = new ContentType(spec);
       ct_candidate = new ContentType(candidate);
-      return ct_spec.match(ct_candidate) 
-          || ct_spec.match(canonicalMimeType.get(candidate));
+      result = ct_spec.match(ct_candidate) 
+          || ct_spec.match(canonicalMimeType.get(ct_candidate.getBaseType()));
     } catch (ParseException e) {
       e.printStackTrace();
-      return false;
+      result = false;
     }
+    System.out.println("Check (" + spec + " == " + candidate +")=" + result);
+    return result;
   }
 
 }

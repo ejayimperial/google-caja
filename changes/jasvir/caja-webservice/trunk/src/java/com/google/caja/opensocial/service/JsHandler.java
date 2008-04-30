@@ -35,7 +35,8 @@ public class JsHandler extends ContentHandler {
 
   @Override
   public boolean canHandle(URI uri, String contentType, ContentTypeCheck checker) {
-    return checker.check("text/gadget",contentType);
+    System.out.println("Check JsHanlder canHandle " + uri + " (" + contentType + ")");
+    return checker.check("text/javascript",contentType);
   }
   
   @Override

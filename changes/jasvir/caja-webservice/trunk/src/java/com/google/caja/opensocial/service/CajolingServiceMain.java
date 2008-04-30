@@ -17,16 +17,18 @@ package com.google.caja.opensocial.service;
 import com.google.caja.plugin.Config;
 
 /**
- * An webservice that can be run and proxies connections, cajoling any 
- * javascript.
- *
+ * A executable that starts a cajoling service which proxies connections:
+ *      - cajole any javascript
+ *      - cajoles any gadgets
+ *      - checks requested and retrieved mime-types  
+ *      
  * @author jasvir@gmail.com (Jasvir Nagra)
  */
 public class CajolingServiceMain {
+  // Config should be subclassed for options specific to service
   private Config config = new Config(getClass(), System.err, "Cajoling service");
   
   public static void main(String[] args) {
-    CajolingServiceMain csm = new CajolingServiceMain();
-    CajolingService service = new CajolingService(csm.config);
+    CajolingService service = new CajolingService();
   }  
 }

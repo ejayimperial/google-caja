@@ -18,13 +18,12 @@ import java.io.Writer;
 import java.net.URI;
 
 /**
+ * Loads content from streams it can handle
+ * possibly modifying them as it does so
  * 
- * @author jasvir@google.com (Your Name Here)
- *
+ * @author jasvir@google.com (Jasvir Nagra)
  */
 public abstract class ContentHandler {
-  
   public abstract boolean canHandle(URI uri, String contentType, ContentTypeCheck checker);
   public abstract void apply(URI uri, String contentType, Reader stream, Writer response);
-    
 }

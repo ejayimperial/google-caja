@@ -13,16 +13,13 @@
 
 package com.google.caja.opensocial.service;
 
-/**
- * 
- * @author jasvir@google.com (Jasvir Nagra)
- */
-
 public abstract class ContentTypeCheck {
 
   /**
-   * Tests whether the content-type {@code spec} is consistent with {@code candidate} 
+   * Tests whether content-type {@code requested} mime-type
+   * is consistent with {@code received} mime-type
+   * @return true if they are consistent 
    */
-  public abstract boolean check(String spec, String candidate);
+  public abstract boolean check(String requested, String received);
   
 }
