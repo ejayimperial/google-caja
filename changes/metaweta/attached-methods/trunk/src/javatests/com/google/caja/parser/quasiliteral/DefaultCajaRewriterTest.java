@@ -1854,10 +1854,11 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
   public void testFuncExophoricFunction() throws Exception {
     checkSucceeds(
         "function (x) { return this.x; };",
+        "var x0___;" +
         "___.xo4a(" +
         "    function (x) {" +
         "       var t___ = this;" +
-        "       var x0___;" +
+        "       var t___ = this;" +
         "       return " + weldReadPub(
                                "t___",
                                "x",
