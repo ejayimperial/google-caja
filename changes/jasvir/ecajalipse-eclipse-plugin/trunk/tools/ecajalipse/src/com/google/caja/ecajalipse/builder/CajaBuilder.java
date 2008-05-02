@@ -132,8 +132,11 @@ public class CajaBuilder extends IncrementalProjectBuilder {
         if (part instanceof FilePosition) {
           FilePosition filePosition = (FilePosition)part;
           lineNumber = filePosition.startLineNo();
-          start = filePosition.startCharInFile();
-          end = filePosition.endCharInFile();
+          
+          // Eclipse buffer is zero-indexed
+          // Caja fileposition is one-indexed
+          start = filePosition.startCharInFile()-1;
+          end = filePosition.endCharInFile()-1;
         }
         CajaBuilder.this.addMarker(file, errorMessage, lineNumber, 
             start, end, errorMap(type.getLevel()));
