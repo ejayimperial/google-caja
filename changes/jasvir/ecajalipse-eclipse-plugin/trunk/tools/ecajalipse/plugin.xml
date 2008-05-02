@@ -23,7 +23,7 @@
          </run>
       </runtime>
       <builder
-            id="caja_builder.cajaBuilder">
+            id="com.google.caja.ecajalipse.cajaBuilder">
       </builder>
    </extension>
    <extension
@@ -32,13 +32,13 @@
             adaptable="true"
             objectClass="org.eclipse.core.resources.IProject"
             nameFilter="*"
-            id="caja_builder.contribution1">
+            id="com.google.caja.ecajalipse.cajaBuilder.menuPopUpcontribution">
          <action
                label="Add/Remove Caja Nature"
                class="com.google.caja.ecajalipse.builder.ToggleCajaNatureAction"
                menubarPath="additions"
                enablesFor="+"
-               id="caja_builder.addRemoveNatureAction">
+               id="com.google.caja.ecajalipse.cajaBuilder.addRemoveNatureAction">
          </action>
       </objectContribution>
    </extension>
