@@ -852,7 +852,7 @@ attachDocumentStub = (function () {
         arr[i] = arguments[i];
       }
       return cssSealerUnsealerPair.seal(arr);
-    }
+    };
     outers.htmlAttr___ = function (s) {
       return html.escapeAttrib(String(s || ''));
     };
