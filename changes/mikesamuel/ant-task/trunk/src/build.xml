@@ -505,7 +505,6 @@
         <include name="domita-minified.js"/>
       </fileset>
       <fileset dir="${javascript}/com/google/caja">
-        <include name="caja.js"/>
         <include name="log-to-console.js"/>
       </fileset>
       <fileset dir="${third_party}/js/firebug">
@@ -514,8 +513,7 @@
     </copy>
   </target>
 
-
-  <target name="lolcat-search" depends="dirs,pluginc"
+  <target name="lolcat-search" depends="dirs,pluginc,MinifiedJs"
    description="IM IN UR BUILD DEMOING UR GADGETZ">
     <cajole>
       <job output="${www}/lolcat-search/searchbox-cajoled.js"
@@ -531,21 +529,21 @@
     </cajole>
 
     <copy todir="${www}/lolcat-search">
-      <fileset dir="${javascript}/com/google/caja">
-        <include name="caja.js"/>
-      </fileset>
-      <fileset dir="${third_party}/js/firebug">
-        <include name="firebugx.js"/>
-      </fileset>
-      <fileset dir="${src}/com/google/caja/plugin">
-        <include name="domita-minified.js"/>
-      </fileset>
       <fileset dir="${src}/com/google/caja/demos/lolcat-search">
         <include name="chtml.js"/>
         <include name="error.jpg"/>
         <include name="loading.jpg"/>
         <include name="search.html"/>
         <include name="searchengine.js"/>
+      </fileset>
+      <fileset dir="${lib}/com/google/caja/plugin">
+        <include name="domita-minified.js"/>
+      </fileset>
+      <fileset dir="${javascript}/com/google/caja">
+        <include name="log-to-console.js"/>
+      </fileset>
+      <fileset dir="${third_party}/js/firebug">
+        <include name="firebugx.js"/>
       </fileset>
     </copy>
   </target>

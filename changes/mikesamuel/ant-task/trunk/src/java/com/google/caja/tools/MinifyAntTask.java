@@ -34,7 +34,7 @@ import org.apache.tools.ant.BuildException;
  * concatenates input1.js and input2.js stripping unnecessary comments and
  * whitespace
  * <p>
- * A single {@code <minify>} element can have multiple {@code <job>s}.
+ * A single {@code <minify>} element can have multiple {@code <job>}s.
  * <p>
  * The minify element current serves no purpose, but can be extended to provide
  * options over a bunch of jobs.

@@ -92,6 +92,11 @@ attachDocumentStub = (function () {
     return XML_NMTOKENS_PATTERN.test(s);
   }
 
+  function mimeTypeForAttr(tagName, attribName) {
+    if (tagName === 'img' && attribName === 'src') { return 'image/*'; }
+    return '*/*';
+  }
+
   function assert(cond) {
     if (!cond) {
       console && (console.log('domita assertion failed'), console.trace());
@@ -329,7 +334,8 @@ attachDocumentStub = (function () {
           value = String(value);
           if (!uriCallback) { return null; }
           // TODO(mikesamuel): determine mime type properly.
-          return uriCallback.rewrite(value, '*/*') || null;
+          return uriCallback.rewrite(
+              value, mimeTypeForAttr(tagName, attribName)) || null;
         case html4.atype.STYLE:
           var cssPropertiesAndValues = cssSealerUnsealerPair.unseal(value);
           if (!cssPropertiesAndValues) { return null; }
@@ -731,7 +737,6 @@ attachDocumentStub = (function () {
       return this.node___.src;
     };
     TameImageElement.prototype.setSrc = function (src) {
-      console.log('setting src to ' + src);
       this.setAttribute('src', src);
     };
     ___.ctor(TameImageElement, TameElement, 'TameImageElement');
