@@ -69,11 +69,12 @@
     <pathelement path="${third_party}/java/rhino/js.jar"/>
   </path>
   <path id="classpath.tests.run">
-    <path refid="classpath.run"/>
-    <path refid="classpath.tests.compile"/>
     <pathelement path="${third_party}/java/emma/emma.jar"/>
     <pathelement path="${third_party}/java/htmlparser/htmlparser.jar"/>
+    <path refid="classpath.tests.compile"/>
     <pathelement path="${instr}/classes"/>
+    <!-- Must be last for coverage to work -->
+    <path refid="classpath.run"/>
   </path>
   <path id="classpath.extensions">
     <pathelement path="${third_party}/java/emma/emma_ant.jar"/>
@@ -118,27 +119,6 @@
     <mkdir dir="${jars}"/>
     <mkdir dir="${lib}"/>
     <mkdir dir="${www}"/>
-  </target>
-
-  <!--
-    - Enable Emma
-    -
-    - See
-    - * http://wiki.metawerx.net/Wiki.jsp
-    -   ?page=UsingEMMAWithANTForJUnitTestCoverageReporting
-    - * http://emma.sourceforge.net/reference_single/reference.html#tool-ref.run
-   -->
-  <target name="emma" depends="dirs"
-   description="Turns on EMMA instrumentation and reporting." >
-    <property name="emma.enabled" value="true" />
-    <!--
-      - See http://emma.sourceforge.net/reference/ch02s06s02.html
-      - This property can be overriden via -Demma.filter=<list of filter specs>
-      - on ANT's command line, will set the coverage filter; by default, all
-      - com.google classes found in ${lib} will be instrumented.
-      - org.commons.cli.apache and other third_party classes will not be.
-     -->
-    <property name="emma.filter" value="com.google.*"/>
   </target>
 
   <target name="runtests" depends="AllTests"
@@ -648,7 +628,31 @@
     <fileset dir="${lib}/com/google/caja/plugin">
       <include name="domita-minified.js"/>
     </fileset>
+    <fileset dir="${third_party}/js/firebug">
+      <include name="firebugx.js"/>
+    </fileset>
    </copy>
+  </target>
+
+  <!--
+    - Enable Emma
+    -
+    - See
+    - * http://wiki.metawerx.net/Wiki.jsp
+    -   ?page=UsingEMMAWithANTForJUnitTestCoverageReporting
+    - * http://emma.sourceforge.net/reference_single/reference.html#tool-ref.run
+   -->
+  <target name="emma" depends="dirs"
+   description="Turns on EMMA instrumentation and reporting.">
+    <property name="emma.enabled" value="true" />
+    <!--
+      - See http://emma.sourceforge.net/reference/ch02s06s02.html
+      - This property can be overriden via -Demma.filter=<list of filter specs>
+      - on ANT's command line, will set the coverage filter; by default, all
+      - com.google classes found in ${lib} will be instrumented.
+      - org.commons.cli.apache and other third_party classes will not be.
+     -->
+    <property name="emma.filter" value="com.google.*"/>
   </target>
 
 </project>
