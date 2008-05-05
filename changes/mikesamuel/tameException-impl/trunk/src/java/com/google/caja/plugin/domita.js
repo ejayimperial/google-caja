@@ -59,7 +59,9 @@ attachDocumentStub = (function () {
         : html.escapeAttrib(String(htmlFragment || ''));
   }
   function blessHtml(htmlFragment) {
-    return (caja instanceof Html) ? htmlFragment : new Html(htmlFragment);
+    return (htmlFragment instanceof Html)
+        ? htmlFragment
+        : new Html(htmlFragment);
   }
 
   var XML_SPACE = '\t\n\r ';
@@ -533,10 +535,8 @@ attachDocumentStub = (function () {
         // part of an entity.
         innerHtml = html.normalizeRCData(innerHtml);
       } else {
-        // TODO(mikesamuel): seal this?
         innerHtml = tameInnerHtml(innerHtml);
       }
-      // TODO(mikesamuel): rewrite ids
       return innerHtml;
     };
     TameElement.prototype.setInnerHTML = function (htmlFragment) {
@@ -548,7 +548,9 @@ attachDocumentStub = (function () {
       if (flags & html4.eflags.RCDATA) {
         htmlFragment = html.normalizeRCData(String(htmlFragment || ''));
       } else {
-        htmlFragment = safeHtml(htmlFragment);
+        htmlFragment = (html instanceof Html
+			? safeHtml(htmlFragment)
+			: sanitizeHtml(String(htmlFragment || '')));
       }
       this.node___.innerHTML = htmlFragment;
     };
@@ -664,7 +666,6 @@ attachDocumentStub = (function () {
       return this.node___.src;
     };
     TameImageElement.prototype.setSrc = function (src) {
-      console.log('setting src to ' + src);
       this.setAttribute('src', src);
     };
     ___.ctor(TameImageElement, TameElement, 'TameImageElement');
@@ -724,7 +725,6 @@ attachDocumentStub = (function () {
       return kc && Number(kc);
     };
     TameEvent.prototype.toString = function () { return 'Not a real event'; };
-    TameEvent.prototype.current
     ___.ctor(TameEvent, undefined, 'TameEvent');
     ___.all2(___.allowMethod, TameEvent,
              ['getType', 'getTarget', 'getPageX', 'getPageY', 'stopPropagation',
@@ -781,7 +781,7 @@ attachDocumentStub = (function () {
         arr[i] = arguments[i];
       }
       return cssSealerUnsealerPair.seal(arr);
-    }
+    };
     outers.htmlAttr___ = function (s) {
       return html.escapeAttrib(String(s || ''));
     };

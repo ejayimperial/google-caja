@@ -15,6 +15,7 @@
 package com.google.caja;
 
 import com.google.caja.config.ConfigUtilTest;
+import com.google.caja.demos.calendar.EventStoreTest;
 import com.google.caja.demos.calendar.HcalTest;
 import com.google.caja.demos.calendar.LayoutTest;
 import com.google.caja.demos.calendar.RRuleTest;
@@ -57,6 +58,7 @@ import com.google.caja.plugin.JsHtmlSanitizerTest;
 import com.google.caja.plugin.caps.CapabilityRewriterTest;
 import com.google.caja.plugin.stages.OpenTemplateStageTest;
 import com.google.caja.plugin.stages.RewriteHtmlStageTest;
+import com.google.caja.render.JsMinimalPrinterTest;
 import com.google.caja.render.JsPrettyPrinterTest;
 import com.google.caja.render.SideBySideRendererTest;
 import com.google.caja.reporting.BuildInfoTest;
@@ -97,6 +99,7 @@ public class AllTests {
           DomParserTest.class,
           DomProcessingEventsTest.class,
           EscapingTest.class,
+          EventStoreTest.class,
           ExpressionSanitizerTest.class,
           GadgetParserTest.class,
           GxpCompilerTest.class,
@@ -110,6 +113,7 @@ public class AllTests {
           JsHtmlParserTest.class,
           JsHtmlSanitizerTest.class,
           JsLexerTest.class,
+          JsMinimalPrinterTest.class,
           JsPrettyPrinterTest.class,
           LayoutTest.class,
           LookaheadCharProducerTest.class,

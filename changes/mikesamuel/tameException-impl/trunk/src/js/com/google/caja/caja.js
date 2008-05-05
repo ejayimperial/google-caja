@@ -1612,11 +1612,13 @@ var ___;
   all2(allowMutator, Array, [
     'pop', 'push', 'reverse', 'shift', 'splice', 'unshift'
   ]);
-
   useCallHandler(Array.prototype, 'sort', function (comparator) {
     if (isFrozen(this)) { fail("Can't sort a frozen array"); }
-    return Array.prototype.sort.call(
-        this, comparator ? ___.asSimpleFunc(comparator) : (void 0));
+    if (comparator) {
+      return Array.prototype.sort.call(this, ___.asSimpleFunc(comparator));
+    } else {
+      return Array.prototype.sort.call(this);
+    }
   });
 
   ctor(String, Object, 'String');
@@ -1893,7 +1895,7 @@ var ___;
   // Sealing and Unsealing
   ////////////////////////////////////////////////////////////////////////
   /**
-   * Returns a pair of functions such that the seal9x) wraps x in an object
+   * Returns a pair of functions such that the seal(x) wraps x in an object
    * so that only unseal can get x back from the object.
    *
    * @return {object} of the form
@@ -1901,25 +1903,30 @@ var ___;
    *       unseal: function (obj) { return x; } }.
    */
   function makeSealerUnsealerPair() {
-    var notSealed = {};
-    var cache;
-    function seal(x) {
-      return primFreeze({ test___: function () { cache = x; } });
-    }
-    function unseal(sealed) {
-      var x;
-      try {
-        cache = notSealed;
-        sealed && sealed.test___ && sealed.test___();
-        x = cache;
-      } finally {
-        cache = null;
+    var flag = false;  // Was a box successfully unsealed
+    var squirrel = null;  // Receives the payload from an unsealed box.
+    function seal(payload) {
+      function box() {
+        flag = true, squirrel = payload;
       }
-      if (x === notSealed) { throw new Error('Sealer/Unsealer mismatch.'); }
-      return x;
+      box.toString = primFreeze(simpleFunc(function () { return '(box)'; }));
+      return primFreeze(simpleFunc(box));
     }
-    // Don't freeze, so a paranoid caller can null out unseal.
-    return { seal: seal, unseal: unseal };
+    function unseal(box) {
+      // Start off in a known good state.
+      flag = false;
+      squirrel = null;
+      try {  // Don't do anything outside try to foil forwarding functions.
+        asSimpleFunc(box)();
+        if (!flag) { throw new Error('Sealer/Unsealer mismatch'); }
+        return squirrel;
+      } finally {
+        // Restore to a known good state.
+        flag = false;
+        squirrel = null;
+      }
+    }
+    return freeze({ seal: seal, unseal: unseal });
   }
 
 
