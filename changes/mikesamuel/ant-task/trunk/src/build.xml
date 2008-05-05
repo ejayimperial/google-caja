@@ -601,7 +601,6 @@
         <include name="html-sanitizer.js"/>
         <include name="unicode.js"/>
       </fileset>
-
       <fileset dir="${src}/com/google/caja/opensocial/applet">
         <include name="*.html"/>
         <include name="*.js"/>
@@ -614,24 +613,24 @@
 
   <target name="calendar" depends="dirs,pluginc,MinifiedJsDemos,MinifiedJs"
    description="A calendar that can mine data from a read only DOM.">
-   <mkdir dir="${www}/calendar"/>
-   <copy todir="${www}/calendar">
-    <fileset dir="${javascript}/com/google/caja">
-      <include name="caja.js"/>
-    </fileset>
-    <fileset dir="${lib}/com/google/caja/demos/calendar">
-      <include name="*-minified.js"/>
-    </fileset>
-    <fileset dir="${src}/com/google/caja/demos/calendar">
-      <include name="demo.html"/>
-    </fileset>
-    <fileset dir="${lib}/com/google/caja/plugin">
-      <include name="domita-minified.js"/>
-    </fileset>
-    <fileset dir="${third_party}/js/firebug">
-      <include name="firebugx.js"/>
-    </fileset>
-   </copy>
+    <mkdir dir="${www}/calendar"/>
+    <copy todir="${www}/calendar">
+      <fileset dir="${javascript}/com/google/caja">
+        <include name="caja.js"/>
+      </fileset>
+      <fileset dir="${lib}/com/google/caja/demos/calendar">
+        <include name="*-minified.js"/>
+      </fileset>
+      <fileset dir="${src}/com/google/caja/demos/calendar">
+        <include name="demo.html"/>
+      </fileset>
+      <fileset dir="${lib}/com/google/caja/plugin">
+        <include name="domita-minified.js"/>
+      </fileset>
+      <fileset dir="${third_party}/js/firebug">
+        <include name="firebugx.js"/>
+      </fileset>
+    </copy>
   </target>
 
   <!--
