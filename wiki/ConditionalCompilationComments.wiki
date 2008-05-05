@@ -1,3 +1,4 @@
+#summary Conditional compilation may allow disabling of runtime checks.
 #labels Attack-Vector
 Reported by futurama
 
@@ -17,16 +18,25 @@ According to [http://msdn2.microsoft.com/en-us/library/121hztk3.aspx]
 
     Always place conditional compilation code in comments, so that hosts (like Netscape Navigator) that do not understand conditional compilation will ignore it. Here is an example.
 
+According to [http://www.svendtofte.com/code/learning_venkman/advanced.php]
+
+    The {{{//@JSD_EVAL}}} command will insert a breakpoint which is set
+    to execute the script that follows without stopping and without logging the result.
+
 
 ==Assumptions==
 Rewritten source code includes comments or conditional compilation is supported outside comments without being rewritten into equivalent javascript control structures.
 
 
 ==Versions==
-IE
+IE, Firefox w/ Venkman
 
 
 ==Example==
 {{{
-//@cc_on alert(document.cookie); @/ //@cc_on alert(document.cookie);
+/*@cc_on @*/ /*@if (1) alert(document.cookie) @end @*/
+}}}
+
+{{{
+//@JSD_EVAL alert(document.cookie);
 }}}
