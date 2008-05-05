@@ -18,7 +18,7 @@ According to [http://msdn2.microsoft.com/en-us/library/121hztk3.aspx]
 
     Always place conditional compilation code in comments, so that hosts (like Netscape Navigator) that do not understand conditional compilation will ignore it. Here is an example.
 
-According to [http://www.svendtofte.com/code/learning_venkman/advanced.php]
+According to [http://devedge-temp.mozilla.org/viewsource/2003/venkman/01/index_en.html]
 
     The {{{//@JSD_EVAL}}} command will insert a breakpoint which is set
     to execute the script that follows without stopping and without logging the result.
