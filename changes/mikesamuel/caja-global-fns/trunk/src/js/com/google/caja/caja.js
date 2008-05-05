@@ -232,7 +232,7 @@ var ___;
         if (obj === null) { return '<null>'; }
         return '[' + (obj.constructor.name || 'Object') + ']';
       default:
-        return uneval(obj) + ':' + (typeof obj);
+        return '(' + obj + ':' + (typeof obj) + ')';
     }
   }
 

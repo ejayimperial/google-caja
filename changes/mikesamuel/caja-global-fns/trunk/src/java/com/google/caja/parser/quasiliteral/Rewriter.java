@@ -23,6 +23,7 @@ import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Callback;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +50,17 @@ public abstract class Rewriter {
   }
 
   /**
+   * Creates a new Rewriter.
+   *
+   * @param logging whether this Rewriter should log the details of rule firings to
+   * standard error.
+   */
+  public Rewriter(boolean logging, Rule[] rules) {
+    this.logging = logging;
+    addRules(rules);
+  }
+
+  /**
    * Expands a parse tree node according to the rules of this rewriter, returning
    * the expanded result.
    *
@@ -66,7 +78,7 @@ public abstract class Rewriter {
    * @param node a parse tree node to expand.
    * @param scope the scope in which 'node' is defined.
    * @param mq a message queue for compiler messages.
-   * @return the exapnded parse tree node.
+   * @return the expanded parse tree node.
    */
   public final ParseTreeNode expand(ParseTreeNode node, Scope scope, MessageQueue mq) {
     for (Rule rule : rules) {
@@ -105,6 +117,32 @@ public abstract class Rewriter {
       throw new IllegalArgumentException("Duplicate rule name: " + rule.getName());
     rules.add(rule);
     ruleNames.add(rule.getName());
+  }
+
+  /**
+   * Adds a list of rules in order to this rewriter.
+   *
+   * @param rules list of rewriting rules
+   * @throws IllegalArgumentException if a rule with a duplicate name is added.
+   */
+  public void addRules(Rule[] rules) {
+    for (Rule r : rules) {
+      Class<? extends Rule> c = r.getClass();
+      Method m = null;
+      Class<?>[] args = {ParseTreeNode.class, Scope.class, MessageQueue.class};
+      try {
+        m = c.getMethod("fire", args);
+      } catch (NoSuchMethodException e) {
+        throw new IllegalArgumentException("Method \"fire\" not found in Rule");
+      }
+      RuleDescription rDesc = m.getAnnotation(RuleDescription.class);
+      if (rDesc == null) {
+        throw new IllegalArgumentException("RuleDescription not found");
+      }
+      r.setName(rDesc.name());
+      r.setRewriter(this);
+      addRule(r);
+    }
   }
 
   private void logResults(
