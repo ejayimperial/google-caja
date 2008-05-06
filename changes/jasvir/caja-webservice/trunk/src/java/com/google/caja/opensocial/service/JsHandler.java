@@ -16,6 +16,11 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
 
+/**
+ * Retrieves javascript files and cajoles them
+ * 
+ * @author jasvir@google.com (Jasvir Nagra)
+ */
 public class JsHandler implements ContentHandler {
 
   public boolean canHandle(URI uri, String contentType, ContentTypeCheck checker) {

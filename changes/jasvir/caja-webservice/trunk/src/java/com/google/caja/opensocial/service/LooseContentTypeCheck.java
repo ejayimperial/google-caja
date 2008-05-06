@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2008 Google Inc. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -20,7 +20,15 @@ import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
 
 /**
- * Loose content-type check to handle different but consistent content types
+ * Tests if two content-types denoted the same type of content.
+ * 
+ * A "loose" content-type check is for javascript because while 
+ * "text/javascript" is recognized by all major browsers it is not a 
+ * <a href="http://www.iana.org/assignments/media-types/">registered</a> MIME 
+ * type.  
+ * 
+ * Different server return other MIME types for javascript and xml files. This 
+ * checker maps other variants of content-type to the canonical one.
  * 
  * @author jasvir@google.com (Jasvir Nagra)
  */
@@ -40,13 +48,13 @@ public class LooseContentTypeCheck extends ContentTypeCheck {
   @Override
   public boolean check(String spec, String candidate) {
     boolean result = false;
-    ContentType ct_spec;
-    ContentType ct_candidate;
+    ContentType ctSpec;
+    ContentType ctCandidate;
     try {
-      ct_spec = new ContentType(spec);
-      ct_candidate = new ContentType(candidate);
-      result = ct_spec.match(ct_candidate) 
-          || ct_spec.match(canonicalMimeType.get(ct_candidate.getBaseType()));
+      ctSpec = new ContentType(spec);
+      ctCandidate = new ContentType(candidate);
+      result = ctSpec.match(ctCandidate) 
+          || ctSpec.match(canonicalMimeType.get(ctCandidate.getBaseType()));
     } catch (ParseException e) {
       e.printStackTrace();
       result = false;
