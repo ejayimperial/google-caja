@@ -39,21 +39,19 @@ public class GadgetHandler implements ContentHandler {
   }
 
   public void apply(URI uri, String contentType, Reader stream,
-      Writer response) {
+      Writer response) throws UnsupportedContentTypeException {
     try {
       cajoleGadget(uri, stream, response);
-    } catch (UriCallbackException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (GadgetRewriteException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new UnsupportedContentTypeException();
+    } catch (IllegalArgumentException e) {
+      throw new UnsupportedContentTypeException();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new UnsupportedContentTypeException();
+    } catch (UriCallbackException e) {
+      throw new UnsupportedContentTypeException();
+    } catch (GadgetRewriteException e) {
+      throw new UnsupportedContentTypeException();
     }
   }
   

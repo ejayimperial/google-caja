@@ -23,11 +23,11 @@ public class JsHandler implements ContentHandler {
   }
   
   public void apply(URI uri, String contentType, Reader stream,
-      Writer response) {
+      Writer response) throws UnsupportedContentTypeException {
     cajoleJs(uri, stream, response);
   }  
       
-  private void cajoleJs(URI inputUri, Reader cajaInput, Appendable output) {
+  private void cajoleJs(URI inputUri, Reader cajaInput, Appendable output) throws UnsupportedContentTypeException {
     InputSource is = new InputSource (inputUri);    
     CharProducer cp = CharProducer.Factory.create(cajaInput,is);
     MessageQueue mq = new SimpleMessageQueue();
@@ -42,13 +42,11 @@ public class JsHandler implements ContentHandler {
       DefaultCajaRewriter dcr = new DefaultCajaRewriter();
       output.append(dcr.format(dcr.expand(input, mq)));
     } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new UnsupportedContentTypeException();
     } catch (IllegalArgumentException e) {
-      e.printStackTrace();
+      throw new UnsupportedContentTypeException();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new UnsupportedContentTypeException();
     }
   }
 }

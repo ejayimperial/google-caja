@@ -3,8 +3,8 @@ package com.google.caja.opensocial.service;
 /**
  * Http response codes
  * @author jasvir@google.com (Jasvir Nagra)
- * TODO: Move to a more appropriate package
  */
+// TODO(jasvir): Use a standard class or move to appropriate package
 public enum HttpStatus {
 
   CONTINUE(100),

@@ -12,15 +12,14 @@ public class ImageHandler implements ContentHandler {
   }
   
   public void apply(URI uri, String contentType, Reader stream,
-      Writer response) {
+      Writer response) throws UnsupportedContentTypeException {
     try {
       int next;
       while ((next = stream.read()) != -1) {
         response.write(next);
       } 
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new UnsupportedContentTypeException();
     }
   }
 }

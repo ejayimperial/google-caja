@@ -15,7 +15,6 @@
 package com.google.caja.opensocial.service;
 
 import com.google.caja.lexer.InputSource;
-import com.google.caja.plugin.Config;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpContext;
@@ -36,7 +35,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +95,7 @@ public class CajolingService implements HttpHandler {
    * @throws IOException 
    */
   private void closeBadRequest(HttpExchange ex) throws IOException {
-    ex.sendResponseHeaders(HttpStatus.BAD_REQUEST.value(),0);
+    ex.sendResponseHeaders(HttpStatus.INTERNAL_SERVER_ERROR.value(),0);
     ex.getResponseBody().close();    
   }
   

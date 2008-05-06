@@ -46,5 +46,6 @@ public interface ContentHandler {
    * @param stream reads content from uri
    * @param response writes modified content to user
    */
-  public void apply(URI uri, String contentType, Reader stream, Writer response);
+  public void apply(URI uri, String contentType, Reader stream, Writer response)
+    throws UnsupportedContentTypeException;
 }
