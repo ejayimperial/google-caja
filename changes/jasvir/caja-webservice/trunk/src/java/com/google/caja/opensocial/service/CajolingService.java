@@ -59,6 +59,9 @@ public class CajolingService implements HttpHandler {
   
   public CajolingService() {
     registerHandlers();
+  }
+  
+  public void start() {
     try{
       // TODO(jas): Use Config to config port
       server = HttpServer.create(new InetSocketAddress(8887),0);

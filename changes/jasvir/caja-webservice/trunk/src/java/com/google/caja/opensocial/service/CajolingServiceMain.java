@@ -30,5 +30,6 @@ public class CajolingServiceMain {
   
   public static void main(String[] args) {
     CajolingService service = new CajolingService();
+    service.start();
   }  
 }

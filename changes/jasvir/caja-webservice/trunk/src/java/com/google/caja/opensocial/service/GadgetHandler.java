@@ -16,48 +16,32 @@ package com.google.caja.opensocial.service;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.InputSource;
-import com.google.caja.lexer.JsLexer;
-import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.lexer.ParseException;
-import com.google.caja.opensocial.Callback;
 import com.google.caja.opensocial.DefaultGadgetRewriter;
 import com.google.caja.opensocial.GadgetRewriteException;
 import com.google.caja.opensocial.UriCallback;
 import com.google.caja.opensocial.UriCallbackException;
 import com.google.caja.opensocial.UriCallbackOption;
-import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.js.Parser;
-import com.google.caja.parser.quasiliteral.DefaultCajaRewriter;
-import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.SimpleMessageQueue;
-import com.google.caja.reporting.SnippetProducer;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 
-public class GadgetHandler extends ContentHandler {
+public class GadgetHandler implements ContentHandler {
 
-  @Override
   public boolean canHandle(URI uri, String contentType, ContentTypeCheck checker) {
    return checker.check("application/xml",contentType);
   }
 
-  @Override
   public void apply(URI uri, String contentType, Reader stream,
       Writer response) {
     try {
       cajoleGadget(uri, stream, response);
-    } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     } catch (UriCallbackException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -74,7 +58,7 @@ public class GadgetHandler extends ContentHandler {
   }
   
   private void cajoleGadget(URI inputUri, Reader cajaInput, Appendable output) 
-    throws URISyntaxException, UriCallbackException, ParseException, 
+    throws UriCallbackException, ParseException, 
            GadgetRewriteException, IOException {
     MessageQueue mq = new SimpleMessageQueue();
     DefaultGadgetRewriter rewriter = new DefaultGadgetRewriter(mq);

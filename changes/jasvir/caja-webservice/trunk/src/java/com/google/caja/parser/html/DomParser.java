@@ -129,8 +129,7 @@ public final class DomParser {
       // one exception for whitespace preceding the prologue.
       Token<HtmlTokenType> t = tokens.peek();
 
-      if (HtmlTokenType.COMMENT == t.type
-          || HtmlTokenType.DIRECTIVE == t.type) {
+      if (HtmlTokenType.COMMENT == t.type) {
         tokens.advance();
         continue;
       }
@@ -221,8 +220,6 @@ public final class DomParser {
         case COMMENT:
           continue;
         default:
-          System.err.println ( "JAS:" + t.toString());
-          System.err.println ( "JAS:" + t.type);
           throw new ParseException(new Message(
               MessageType.MALFORMED_XHTML, t.pos,
               MessagePart.Factory.valueOf(t.text)));

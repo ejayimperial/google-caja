@@ -23,7 +23,28 @@ import java.net.URI;
  * 
  * @author jasvir@google.com (Jasvir Nagra)
  */
-public abstract class ContentHandler {
-  public abstract boolean canHandle(URI uri, String contentType, ContentTypeCheck checker);
-  public abstract void apply(URI uri, String contentType, Reader stream, Writer response);
+public interface ContentHandler {
+  /**
+   * Returns if this content handler can check the given {@code uri} and ensure it has 
+   * the correct {@code contentType}.  Testing {@code contentType} equality is done using
+   * {@code checker}
+   *  
+   * @param uri URI of content
+   * @param contentType Expected content-type
+   * @param checker Used to check whether two content-types are compatible
+   * @return true if this content-handler is appropriate for this URL and content-type
+   */
+  public boolean canHandle(URI uri, String contentType, ContentTypeCheck checker);
+  
+  /**
+   * Reads content from {@code stream} and writes it to {@code response}.
+   * Checks to ensure that content has type compatible with {@code contentType}
+   * if fetched from {@code uri} 
+   * 
+   * @param uri URI of content
+   * @param contentType Expected content-type
+   * @param stream reads content from uri
+   * @param response writes modified content to user
+   */
+  public void apply(URI uri, String contentType, Reader stream, Writer response);
 }
