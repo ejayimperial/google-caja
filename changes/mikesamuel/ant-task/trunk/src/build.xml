@@ -183,7 +183,7 @@
      <!-- overview="${src}/overview.html" -->
   </target>
 
-  <target name="pluginc" depends="dirs,PluginCompiler,BuildInfo"
+  <target name="pluginc" depends="dirs,PluginCompiler,build.info"
    description="Build the plugin compiler and other main classes">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
@@ -300,7 +300,7 @@
     </minify>
   </target>
 
-  <target name="AllTests" depends="pluginc,CajoledTests,dirs">
+  <target name="AllTests" depends="opensocial,CajoledTests,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${testsrc}"/>
       <classpath refid="classpath.tests.compile"/>
@@ -340,7 +340,17 @@
     </copy>
   </target>
 
-  <target name="BuildInfo">
+  <target name="opensocial" depends="PluginCompiler,MinifiedJs,dirs">
+    <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
+      <src path="${src}"/>
+      <classpath refid="classpath.compile"/>
+      <include name="**/caja/opensocial/*.java"/>
+      <include name="**/caja/opensocial/applet/ExpressionLanguageStage.java"/>
+      <include name="**/caja/plugin/PluginCompilerMain.java"/>
+    </javac>
+  </target>
+
+  <target name="build.info">
     <tstamp>
       <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss"/>
     </tstamp>
@@ -580,6 +590,7 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/opensocial/applet/*.java"/>
+      <compilerarg line="-Xlint:unchecked"/>
     </javac>
 
     <jar destfile="${jars}/testbed.jar" basedir="${lib}">
