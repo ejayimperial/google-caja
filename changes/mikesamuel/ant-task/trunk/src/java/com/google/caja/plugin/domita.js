@@ -328,6 +328,7 @@ attachDocumentStub = (function () {
           return uriCallback.rewrite(
               value, mimeTypeForAttr(tagName, attribName)) || null;
         case html4.atype.STYLE:
+          if ('function' !== typeof value) { return null; }
           var cssPropertiesAndValues = cssSealerUnsealerPair.unseal(value);
           if (!cssPropertiesAndValues) { return null; }
 

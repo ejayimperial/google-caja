@@ -174,7 +174,7 @@
     <javadoc sourcepath="${src}" destdir="${docs}" access="private"
      author="true"
      bottom="Copyright (C) 2008 Google Inc.&lt;br&gt;
-             &lt;a href=http://www.apache.org/licenses/LICENSE-2.0&gt;
+             &lt;a href=&#34;http://www.apache.org/licenses/LICENSE-2.0&#34;&gt;
              Licensed under the Apache License, Version 2.0&lt;/a&gt;"
      docencoding="utf-8"
      packagenames="com/google/caja/*"
@@ -189,6 +189,7 @@
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/opensocial/*.java"/>
+      <include name="**/caja/opensocial/applet/ExpressionLanguageStage.java"/>
       <include name="**/caja/plugin/PluginCompilerMain.java"/>
     </javac>
     <!-- Now that we have the main method, build ant task wrappers -->
@@ -300,7 +301,7 @@
     </minify>
   </target>
 
-  <target name="AllTests" depends="opensocial,CajoledTests,dirs">
+  <target name="AllTests" depends="pluginc,CajoledTests,dirs">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${testsrc}"/>
       <classpath refid="classpath.tests.compile"/>
@@ -338,16 +339,6 @@
         <include name="js/jqueryjs/runtest/env.js"/>
       </fileset>
     </copy>
-  </target>
-
-  <target name="opensocial" depends="PluginCompiler,MinifiedJs,dirs">
-    <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
-      <src path="${src}"/>
-      <classpath refid="classpath.compile"/>
-      <include name="**/caja/opensocial/*.java"/>
-      <include name="**/caja/opensocial/applet/ExpressionLanguageStage.java"/>
-      <include name="**/caja/plugin/PluginCompilerMain.java"/>
-    </javac>
   </target>
 
   <target name="build.info">
