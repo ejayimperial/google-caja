@@ -2029,9 +2029,7 @@ var ___;
     ReferenceError: ReferenceError,
     SyntaxError: SyntaxError,
     TypeError: TypeError,
-    URIError: URIError,
-
-    toString: simpleFunc(function () { return '(IMPORTS)'; })
+    URIError: URIError
   };
 
   each(sharedImports, simpleFunc(function(k, v) {
