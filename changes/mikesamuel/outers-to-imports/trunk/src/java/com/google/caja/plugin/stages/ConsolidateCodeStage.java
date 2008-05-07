@@ -18,18 +18,13 @@ import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.MutableParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.js.Block;
-import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.quasiliteral.ParseTreeNodeContainer;
 import com.google.caja.parser.quasiliteral.QuasiBuilder;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
-import com.google.caja.plugin.ReservedNames;
-import com.google.caja.plugin.TreeConstruction;
 import com.google.caja.util.Pipeline;
-import static com.google.caja.plugin.SyntheticNodes.s;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.ListIterator;
 

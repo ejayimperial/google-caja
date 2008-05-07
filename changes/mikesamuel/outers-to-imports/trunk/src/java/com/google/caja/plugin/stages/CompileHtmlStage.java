@@ -22,9 +22,6 @@ import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.Identifier;
-import com.google.caja.parser.js.Operation;
-import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.quasiliteral.QuasiBuilder;
@@ -32,7 +29,6 @@ import com.google.caja.plugin.GxpCompiler;
 import com.google.caja.plugin.HtmlCompiler;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
-import com.google.caja.plugin.ReservedNames;
 import com.google.caja.util.Pipeline;
 import static com.google.caja.plugin.SyntheticNodes.s;
 
