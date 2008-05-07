@@ -26,9 +26,12 @@ import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.SimpleMessageQueue;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.URI;
 import java.net.URLEncoder;
 
@@ -38,10 +41,10 @@ public class GadgetHandler implements ContentHandler {
    return checker.check("application/xml",contentType);
   }
 
-  public void apply(URI uri, String contentType, Reader stream,
-      Writer response) throws UnsupportedContentTypeException {
+  public void apply(URI uri, String contentType, InputStream stream,
+      OutputStream response) throws UnsupportedContentTypeException {
     try {
-      cajoleGadget(uri, stream, response);
+      cajoleGadget(uri, new InputStreamReader(stream), new OutputStreamWriter(response));
     } catch (ParseException e) {
       throw new UnsupportedContentTypeException();
     } catch (IllegalArgumentException e) {

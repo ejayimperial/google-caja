@@ -13,8 +13,8 @@
 
 package com.google.caja.opensocial.service;
 
-import java.io.Reader;
-import java.io.Writer;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
 /**
@@ -46,6 +46,6 @@ public interface ContentHandler {
    * @param stream reads content from uri
    * @param response writes modified content to user
    */
-  public void apply(URI uri, String contentType, Reader stream, Writer response)
+  public void apply(URI uri, String contentType, InputStream stream, OutputStream response)
     throws UnsupportedContentTypeException;
 }

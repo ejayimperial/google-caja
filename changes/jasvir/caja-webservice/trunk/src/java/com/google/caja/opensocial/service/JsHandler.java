@@ -12,8 +12,11 @@ import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.SimpleMessageQueue;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.net.URI;
 
 /**
@@ -27,9 +30,9 @@ public class JsHandler implements ContentHandler {
     return checker.check("text/javascript",contentType);
   }
   
-  public void apply(URI uri, String contentType, Reader stream,
-      Writer response) throws UnsupportedContentTypeException {
-    cajoleJs(uri, stream, response);
+  public void apply(URI uri, String contentType, InputStream stream,
+      OutputStream response) throws UnsupportedContentTypeException {
+    cajoleJs(uri, new InputStreamReader(stream), new OutputStreamWriter(response));
   }  
       
   private void cajoleJs(URI inputUri, Reader cajaInput, Appendable output) throws UnsupportedContentTypeException {

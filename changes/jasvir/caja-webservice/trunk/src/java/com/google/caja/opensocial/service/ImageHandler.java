@@ -14,8 +14,8 @@
 package com.google.caja.opensocial.service;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
 /**
@@ -30,8 +30,8 @@ public class ImageHandler implements ContentHandler {
     return checker.check("image/*", contentType);    
   }
   
-  public void apply(URI uri, String contentType, Reader stream,
-      Writer response) throws UnsupportedContentTypeException {
+  public void apply(URI uri, String contentType, InputStream stream,
+      OutputStream response) throws UnsupportedContentTypeException {
     try {
       int next;
       while ((next = stream.read()) != -1) {

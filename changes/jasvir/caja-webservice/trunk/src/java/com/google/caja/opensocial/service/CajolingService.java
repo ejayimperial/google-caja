@@ -22,14 +22,12 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -116,7 +114,7 @@ public class CajolingService implements HttpHandler {
         
         URLConnection urlConnect = gadgetUrl.openConnection();
         urlConnect.connect();
-        Reader stream = new InputStreamReader(urlConnect.getInputStream());
+        InputStream stream = urlConnect.getInputStream();
         
         Headers responseHeaders = ex.getResponseHeaders();
         
@@ -124,23 +122,24 @@ public class CajolingService implements HttpHandler {
           closeBadRequest(ex);
           return;
         }
-        
-        responseHeaders.set("Content-Type", expectedMimeType);
-        ex.sendResponseHeaders(HttpStatus.ACCEPTED.value(), 0);
-  
-        Writer response = new OutputStreamWriter(ex.getResponseBody());
-  
-        applyHandler(gadgetUrl.toURI(), urlConnect.getContentType(), stream, response);
-        
-        response.close();
+
+        try {
+          ByteArrayOutputStream intermediateResponse = new ByteArrayOutputStream();
+          applyHandler(gadgetUrl.toURI(), urlConnect.getContentType(), stream, intermediateResponse);
+
+          responseHeaders.set("Content-Type", expectedMimeType);
+          byte[] response = intermediateResponse.toByteArray();
+          int responseLength = response.length;
+          
+          ex.sendResponseHeaders(HttpStatus.ACCEPTED.value(), responseLength);
+          ex.getResponseBody().write(response);
+          ex.close();
+        } catch (UnsupportedContentTypeException e) {
+          closeBadRequest(ex);
+          e.printStackTrace();
+        }
       }
-    } catch (MalformedURLException e){
-      closeBadRequest(ex);
-      e.printStackTrace();
     } catch (URISyntaxException e) {
-      closeBadRequest(ex);
-      e.printStackTrace();
-    } catch (UnsupportedContentTypeException e) {
       closeBadRequest(ex);
       e.printStackTrace();
     }
@@ -148,10 +147,11 @@ public class CajolingService implements HttpHandler {
    
   public void registerHandlers() {
     handlers.add(new JsHandler());
+    handlers.add(new ImageHandler());
   }
   
   private void applyHandler(URI uri, String contentType, 
-                            Reader stream, Writer response) 
+                            InputStream stream, OutputStream response) 
       throws UnsupportedContentTypeException {
     for (ContentHandler handler : handlers) {
       if ( handler.canHandle(uri, contentType, typeCheck) ) {
