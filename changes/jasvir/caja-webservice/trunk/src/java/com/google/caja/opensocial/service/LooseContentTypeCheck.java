@@ -59,6 +59,7 @@ public class LooseContentTypeCheck extends ContentTypeCheck {
       e.printStackTrace();
       result = false;
     }
+    System.out.println("Checking " + spec + "==" + candidate + ":" + result);
     return result;
   }
 

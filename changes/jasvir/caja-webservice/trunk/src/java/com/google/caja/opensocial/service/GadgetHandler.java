@@ -46,20 +46,22 @@ public class GadgetHandler implements ContentHandler {
     try {
       cajoleGadget(uri, new InputStreamReader(stream), new OutputStreamWriter(response));
     } catch (ParseException e) {
+      e.printStackTrace();
       throw new UnsupportedContentTypeException();
     } catch (IllegalArgumentException e) {
+      e.printStackTrace();
       throw new UnsupportedContentTypeException();
     } catch (IOException e) {
-      throw new UnsupportedContentTypeException();
-    } catch (UriCallbackException e) {
+      e.printStackTrace();
       throw new UnsupportedContentTypeException();
     } catch (GadgetRewriteException e) {
+      e.printStackTrace();
       throw new UnsupportedContentTypeException();
     }
   }
   
   private void cajoleGadget(URI inputUri, Reader cajaInput, Appendable output) 
-    throws UriCallbackException, ParseException, 
+    throws ParseException, 
            GadgetRewriteException, IOException {
     MessageQueue mq = new SimpleMessageQueue();
     DefaultGadgetRewriter rewriter = new DefaultGadgetRewriter(mq);
@@ -85,8 +87,7 @@ public class GadgetHandler implements ContentHandler {
       }
     };
 
-    Reader r = uriCallback.retrieve(new ExternalReference(inputUri, null), null);
-    CharProducer p = CharProducer.Factory.create(r, new InputSource(inputUri));
+    CharProducer p = CharProducer.Factory.create(cajaInput, new InputSource(inputUri));
     rewriter.rewrite(inputUri, p, uriCallback, "view", output);
   }
 }

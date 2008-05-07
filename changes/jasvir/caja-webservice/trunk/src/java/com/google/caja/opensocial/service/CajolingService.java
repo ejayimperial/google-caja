@@ -148,6 +148,7 @@ public class CajolingService implements HttpHandler {
   public void registerHandlers() {
     handlers.add(new JsHandler());
     handlers.add(new ImageHandler());
+    handlers.add(new GadgetHandler());    
   }
   
   private void applyHandler(URI uri, String contentType, 
