@@ -25,14 +25,15 @@ import org.apache.tools.ant.BuildException;
  *
  * Given an ANT task like {@code
  * <cajole>
- *   <job output="foo/bar.js" src="baz">
+ *   <job output="foo/bar.js">
  *     <include file="baz/input1.js"/>
  *     <include file="baz/input2.css"/>
+ *     <depend file="baz/boo.css"/>
  *   </job>
  * </cajole>
  * }
- * cajoles input1.js and input2.css to foo/bar.js making sure that any
- * file paths in the inputs can only resolve to files under baz.
+ * cajoles input1.js and input2.css to foo/bar.js allowing the inputs to
+ * reference {@code baz/boo.css}, e.g. via an {@code @import}.
  * <p>
  * A single {@code <cajole>} element can have multiple {@code <job>s}.
  * <p>

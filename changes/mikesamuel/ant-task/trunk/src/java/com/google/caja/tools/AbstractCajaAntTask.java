@@ -103,11 +103,6 @@ abstract class AbstractCajaAntTask extends Task {
   public class Job {
     /** The file to build. */
     private File output;
-    /**
-     * The base source directory.  Any file references within source files must
-     * resolve under this directory.
-     */
-    private File srcDir;
     /** Inputs files to compile. */
     private final List<Include> includes = new ArrayList<Include>();
     /** Files that the inputs might include. */
@@ -130,17 +125,12 @@ abstract class AbstractCajaAntTask extends Task {
      * are seen.
      */
     public void setOutput(File output) { this.output = output; }
-    public void setSrc(File srcDir) { this.srcDir = srcDir; }
 
     /** Checks that there is enough information to execute before execution. */
     void requireExecutable() throws BuildException {
       if (output == null) {
         throw new BuildException(
             "<job> at " + getLocation() + "missing 'output' attribute");
-      }
-      if (srcDir != null && !srcDir.isDirectory()) {
-        throw new BuildException(
-            "src '" + srcDir + "' at " + getLocation() + "is not a directory");
       }
       if (includes.isEmpty()) {
         throw new BuildException(

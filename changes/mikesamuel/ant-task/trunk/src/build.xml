@@ -543,8 +543,7 @@
   <target name="lolcat-search" depends="dirs,pluginc,MinifiedJs"
    description="IM IN UR BUILD DEMOING UR GADGETZ">
     <cajole>
-      <job output="${www}/lolcat-search/searchbox-cajoled.js"
-       src="${src}/com/google/caja/demos/lolcat-search">
+      <job output="${www}/lolcat-search/searchbox-cajoled.js">
         <include
          file="${src}/com/google/caja/demos/lolcat-search/searchbox.html"/>
         <depend
@@ -552,8 +551,7 @@
         <depend
          file="${src}/com/google/caja/demos/lolcat-search/searchbox.js"/>
       </job>
-      <job output="${www}/lolcat-search/kittens-cajoled.js"
-       src="${src}/com/google/caja/demos/lolcat-search">
+      <job output="${www}/lolcat-search/kittens-cajoled.js">
         <include
          file="${src}/com/google/caja/demos/lolcat-search/kittens.html"/>
         <depend
