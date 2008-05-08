@@ -31,6 +31,10 @@
 //                detecting a conflict.
 ////////////////////////////////////////////////////////////////////////
 
+// Add a tag to builtin types so we can check the class cross-frame.
+Array.typeTag___ = 'Array';
+Object.typeTag___ = 'Object';
+
 if (Array.prototype.indexOf === (void 0)) {
   /**
    * Returns the first index at which the specimen is found (by
@@ -172,8 +176,7 @@ var ___;
    * </pre>
    */
   function enforce(test, var_args) {
-    return test || fail.apply({}, 
-                              Array.prototype.slice.call(arguments, 1));
+    return test || fail.apply({}, Array.prototype.slice.call(arguments, 1));
   }
   
   /**
@@ -222,9 +225,19 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
   // Privileged fault handlers
   ////////////////////////////////////////////////////////////////////////
-  
+
+  function debugReference(obj) {
+    switch (typeof obj) {
+      case 'object':
+        if (obj === null) { return '<null>'; }
+        return '[' + (obj.constructor.name || 'Object') + ']';
+      default:
+        return '(' + obj + ':' + (typeof obj) + ')';
+    }
+  }
+
   /**
-   * 
+   *
    */
   var myKeeper_ = {
 
@@ -237,10 +250,10 @@ var ___;
      *
      */
     handleRead: function(obj, name, opt_shouldThrow) {
-      log('Not readable: (' + obj + ').' + name);
       if (opt_shouldThrow) {
-        throw new ReferenceError('' + name + ' is not defined');
+        fail('Not readable: (', debugReference(obj), ').', name);
       }
+      log('Not readable: (' + debugReference(obj) + ').' + name);
       return (void 0);
     },
 
@@ -248,21 +261,21 @@ var ___;
      *
      */
     handleCall: function(obj, name, args) {
-      fail('Not callable: (', obj, ').', name);
+      fail('Not callable: (', debugReference(obj), ').', name);
     },
 
     /**
      * 
      */
     handleSet: function(obj, name, val) {
-      fail('Not settable: (', obj, ').', name);
+      fail('Not settable: (', debugReference(obj), ').', name);
     },
 
     /**
      * 
      */
     handleDelete: function(obj, name) {
-      fail('Not deletable: (', obj, ').', name);
+      fail('Not deletable: (', debugReference(obj), ').', name);
     }
   };
 
@@ -425,7 +438,7 @@ var ___;
       }
       return result;
     } catch (ex) {
-      return null;
+      return (void 0);
     }
   }
 
@@ -437,8 +450,10 @@ var ___;
    * expressed in the JSON language.
    */
   function isJSONContainer(obj) {
+    if (obj == null) { return false; }  // Match null and undefined
     var constr = directConstructor(obj);
-    return constr === Object || constr === Array;
+    var typeTag = constr && constr.typeTag___
+    return typeTag === 'Object' || typeTag === 'Array';
   }
   
   /**
@@ -503,7 +518,7 @@ var ___;
       var flag = badFlags[i];
       if (hasOwnProp(obj, flag)) {
         if (!(delete obj[flag])) {
-          fail('internal: failed delete: ', obj, '.', flag);
+          fail('internal: failed delete: ', debugReference(obj), '.', flag);
         }
       }
       if (obj[flag]) {
@@ -532,7 +547,8 @@ var ___;
    */
   function freeze(obj) {
     if (!isJSONContainer(obj)) {
-      fail('caja.freeze(obj) applies only to JSON Containers: ', obj);
+      fail('caja.freeze(obj) applies only to JSON Containers: ',
+           debugReference(obj));
     }
     return primFreeze(obj);
   }
@@ -544,9 +560,10 @@ var ___;
    */
   function copy(obj) {
     if (!isJSONContainer(obj)) {
-      fail('caja.copy(obj) applies only to JSON Containers: ', obj);
+      fail('caja.copy(obj) applies only to JSON Containers: ',
+           debugReference(obj));
     }
-    var result = (obj instanceof Array) ? [] : {};
+    var result = (obj.constructor.typeTag___ === 'Array') ? [] : {};
     each(obj, simpleFunc(function(k, v) {
       result[k] = v;
     }));
@@ -585,13 +602,20 @@ var ___;
    * they are called internally to memoize decisions arrived at by
    * other means. 
    */
-  function allowRead(obj, name) { 
+  function allowRead(obj, name) {
+    enforce(obj != null, 'Cannot grant read of ', name, ' on null');
     obj[name + '_canRead___'] = true; 
   }
   
   /** allowEnum implies allowRead */
-  function allowEnum(obj, name) { 
+  function allowEnum(obj, name) {
+    enforce(obj != null, 'Cannot grant enum of ', name, ' on null');
     allowRead(obj, name);
+    obj[name + '_canEnum___'] = true;
+  }
+  
+  /** allowEnum for members */
+  function allowEnumOnly(obj, name) { 
     obj[name + '_canEnum___'] = true;
   }
   
@@ -599,7 +623,8 @@ var ___;
    * Simple functions should callable and readable, but methods
    * should only be callable.
    */
-  function allowCall(obj, name) { 
+  function allowCall(obj, name) {
+    enforce(obj != null, 'Cannot grant call of ', name, ' on null');
     obj[name + '_canCall___'] = true; 
   }
   
@@ -607,8 +632,9 @@ var ___;
    * allowSet implies allowEnum and allowRead.
    */
   function allowSet(obj, name) {
+    enforce(obj != null, 'Cannot allow set of member ', name, ' on null');
     if (isFrozen(obj)) {
-      fail("Can't set .", name, ' on frozen (', obj, ')');
+      fail("Can't set .", name, ' on frozen (', debugReference(obj), ')');
     }
     allowEnum(obj, name);
     obj[name + '_canSet___'] = true;
@@ -619,8 +645,9 @@ var ___;
    * implemented. 
    */
   function allowDelete(obj, name) {
+    enforce(obj != null, 'Cannot allow delete of member ', name, ' on null');
     if (isFrozen(obj)) {
-      fail("Can't delete .", name, ' on frozen (', obj, ')');
+      fail("Can't delete .", name, ' on frozen (', debugReference(obj), ')');
     }
     obj[name + '_canDelete___'] = true;
   }
@@ -629,11 +656,25 @@ var ___;
   // Classifying functions
   ////////////////////////////////////////////////////////////////////////
 
-  function isCtor(constr)    { return !!constr.___CONSTRUCTOR___; }
-  function isMethod(meth)    { return '___METHOD_OF___' in meth; }
-  function isSimpleFunc(fun) { return !!fun.___SIMPLE_FUNC___; }
-  function isExophoric(fun) {
-    return fun.___METHOD_OF___ === null || isSimpleFunc(fun);
+  function isCtor(constr)    {
+    return (typeof(constr) === 'function') ?
+        !!constr.___CONSTRUCTOR___ :
+        false; 
+  }
+  function isMethod(meth)    { 
+    return (typeof meth === 'function') ? 
+        !!meth.___METHOD___ : 
+        false; 
+  }
+  function isSimpleFunc(fun) { 
+    return (typeof fun === 'function') ?
+        !!fun.___SIMPLE_FUNC___ :
+        false; 
+  }
+  function isXo4aFunc(func) {
+    return (typeof func === 'function') ?
+        (!!func.___XO4A___ || isSimpleFunc(func)) :
+        false;
   }
 
   /**
@@ -657,9 +698,12 @@ var ___;
     if (isMethod(constr)) {
       fail("Methods can't be constructors: ", constr);
     }
-    if (isSimpleFunc(constr)) {
-      fail("Simple-functions can't be constructors: ", constr);
-    }
+    // TODO(erights): We shouldn't be able to mark simple functions
+    // as constructors, but we should be able to use simple functions
+    // in caja.def().
+    /* if (isSimpleFunc(constr)) {
+      fail("Simple functions can't be constructors:", constr);
+    } */
     constr.___CONSTRUCTOR___ = true;
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
@@ -679,8 +723,6 @@ var ___;
     }
     return constr;  // translator freezes constructor later
   }
-
-
 
   /**
    * Supports the split-translation for first-class constructors.
@@ -736,43 +778,68 @@ var ___;
     return constr;
   }
 
+  /**
+   * Enables first-class methods.
+   */
+  function attach(that, meth) {
+    if (typeof that !== 'function') {
+      enforceType(that, 'object');
+    }
+    if (that === null) {
+      fail('Internal: may not attach to null: ', meth);
+    }
+    if (!isMethod(meth)) {
+      fail('Internal: attach should not see non-methods: ', meth);
+    }
+    if (meth.___ATTACHMENT___ === that) {
+      return meth;
+    }
+    if (meth.___ATTACHMENT___ !== undefined) {
+      fail('Method ', meth, ' cannot be reattached to: ', that);
+    }
+    function result(var_args) {
+      if (this !== that) {
+        fail('Method ', meth, ' is already attached.\nthis: '+this+'\nthat: '+that);
+      }
+      return meth.apply(that, arguments);
+    }
+    var result = method(result, meth.___NAME___);
+    result.___ATTACHMENT___ = that;
+    result.___ORIGINAL___ = meth;
+    return result;
+  }
+
+  /**
+   * Marks an anonymous function as exophoric:
+   * the function mentions <tt>this</tt>,
+   * but only accesses the public interface.
+   */
+  function xo4a(func, opt_name) {
+    enforceType(func, 'function', opt_name);
+    func.___XO4A___ = true;
+    return func;
+  }
+
   /** 
-   * Mark meth as a method of instances of constr. 
+   * Mark meth as a method.
    * <p>
    * @param opt_name if provided, should be the message name associated
    *   with the method. Currently, this is used only to generate
    *   friendlier error messages.
    */
-  function method(constr, meth, opt_name) {
+  function method(meth, opt_name) {
     enforceType(meth, 'function', opt_name);
     if (isCtor(meth)) {
-      fail("constructors can't be methods: ", meth);
+      fail("Constructors can't be methods: ", meth);
     }
     if (isSimpleFunc(meth)) {
       fail("Simple functions can't be methods: ", meth);
     }
-    meth.___METHOD_OF___ = asCtorOnly(constr);
+    if (isXo4aFunc(meth)) {
+      fail("Internal: exophoric functions can't be methods: ", meth);
+    }
+    meth.___METHOD___ = true;
     return primFreeze(meth);
-  }
-
-  /** 
-   * Mark fun as an exophoric function -- a function whose this can safely
-   * be bound to any object -- this is not used to access private fields.
-   * <p>
-   * @param opt_name if provided, should be the message name associated
-   *   with the method. Currently, this is used only to generate
-   *   friendlier error messages.
-   */
-  function exophora(fun, opt_name) {
-    enforceType(fun, 'function', opt_name);
-    if (isCtor(fun)) {
-      fail("constructors can't be exophoric: ", fun);
-    }
-    if (isSimpleFunc(fun)) {
-      fail("Simple functions can't be exophoric: ", fun);
-    }
-    fun.___METHOD_OF___ = null;
-    return primFreeze(fun);
   }
 
   /** 
@@ -887,9 +954,9 @@ var ___;
     if (!canSetProp(proto, name)) {
       fail('not settable: ', name);
     }
-    if (member.___METHOD_OF___ === constr) {
+    if (isMethod(member) || isXo4aFunc(member)) {
       allowCall(proto, name);  // grant
-      allowEnum(proto, name); // grant
+      allowEnumOnly(proto, name); // grant
     } else if (isSimpleFunc(member)) {
       allowCall(proto, name);  // grant
       allowSet(proto, name);  // grant
@@ -927,8 +994,13 @@ var ___;
    */
   function readProp(that, name) {
     name = String(name);
-    if (canReadProp(that, name)) { return that[name]; }
-    return that.handleRead___(name, false);
+    if (canReadProp(that, name)) { 
+      return that[name];
+    } else if (canCall(that, name)) {
+      return ___.attach(that, that[name]);
+    } else {
+      return that.handleRead___(name, false);
+    }
   }
   
   /** 
@@ -963,6 +1035,9 @@ var ___;
     name = String(name);
     var ext;
     if (canReadPub(obj, name)) { return obj[name]; }
+    if (canCall(obj, name)) {
+      return ___.attach(obj, obj[name]); 
+    }  
     if ((ext = getExtension(POE, obj, name)).length) {
       return ext[0];
     }
@@ -1047,7 +1122,7 @@ var ___;
    */
   function each(obj, fn, POE) {
     fn = asSimpleFunc(fn);
-    if (obj instanceof Array) {
+    if (obj && obj.constructor.typeTag___ === 'Array') {
       var len = obj.length;
       for (var i = 0; i < len; i++) {
         if (fn(i, readPub(obj, i, POE)) === BREAK) {
@@ -1129,7 +1204,7 @@ var ___;
     if (canCall(obj, name)) { return true; }
     if (!canReadPub(obj, name)) { return false; }
     var func = obj[name];
-    if (!isExophoric(func)) { return false; }
+    if (!isXo4aFunc(func) && !isMethod(func)) { return false; }
     allowCall(obj, name);  // memoize
     return true;
   }
@@ -1150,7 +1225,7 @@ var ___;
     if (obj.handleCall___) {
       return obj.handleCall___(name, args);
     } 
-    fail('not callable %o %s', obj, name);
+    fail('not callable %o %s', debugReference(obj), name);
   }
 
   /**
@@ -1304,7 +1379,70 @@ var ___;
   function args(original) {
     return primFreeze(Array.prototype.slice.call(original, 0));
   }
-  
+
+  /** Sealer for call stacks as from {@code (new Error).stack}. */
+  var callStackSealer = makeSealerUnsealerPair();
+
+  /**
+   * Receives the exception caught by a user defined catch block.
+   * @param ex a value caught in a try block.
+   * @return a tamed exception.
+   */
+  function tameException(ex) {
+    try {
+      switch (typeof ex) {
+        case 'object':
+          if (ex === null) { return null; }
+          if (ex instanceof Error) {  // TODO: or the cross frame equivalent
+            // See Ecma-262 S15.11 for the definitions of these properties.
+            var message = ex.message || ex.desc;
+            var stack = ex.stack;
+            var name = ex.constructor && ex.constructor.name;  // S15.11.7.9
+            // Convert to undefined if null or undefined, or a string otherwise.
+            message = message == null ? void 0 : '' + message;
+            stack = stack == null ? void 0 : callStackSealer.seal('' + stack);
+            name = name == null ? void 0 : '' + name;
+            return primFreeze({ message: message, name: name, stack: stack });
+          }
+          return '' + ex;
+        case 'string':
+        case 'number':
+        case 'boolean':
+        case 'undefined':
+          // Immutable.
+          return ex;
+        case 'function':
+          // According to Pratap Lakhsman's "JScript Deviations" S2.11
+          // If the caught object is a function, calling it within the catch
+          // supplies the head of the scope chain as the "this value".  The
+          // called function can add properties to this object.  This implies
+          // that for code of this shape:
+          //     var x;
+          //     try {
+          //       // ...
+          //     } catch (E) {
+          //       E();
+          //       return s;
+          //     }
+          // The reference to 'x' within the catch is not necessarily to the
+          // local declaration of 'x'; this gives Catch the same performance
+          // problems as with.
+
+          // We return undefined to make sure that caught functions cannot be
+          // evaluated within the catch block.
+          return void 0;
+        default:
+          log('Unrecognized exception type ' + (typeof ex));
+          return void 0;
+      }
+    } catch (_) {
+      // Can occur if coercion to string fails, or if ex has getters that fail.
+      // This function must never throw an exception because doing so would
+      // cause control to leave a catch block before the handler fires.
+      return void 0;
+    }
+  }
+
   /**
    *
    */
@@ -1313,7 +1451,7 @@ var ___;
       setMember(sub, mname, member);
     }));
   }
-  
+
   /**
    * Provides a shorthand for a class-like declaration of a fresh
    * Caja constructor.
@@ -1325,7 +1463,7 @@ var ___;
    * opt_statics added as members to sub.
    * <p>
    * TODO(erights): return a builder object that allows further
-   * initialization. 
+   * initialization.
    */
   function def(sub, opt_Sup, opt_members, opt_statics) {
     var sup = opt_Sup || Object;
@@ -1440,7 +1578,7 @@ var ___;
    * on instances of constr.
    */
   function allowMethod(constr, name) {
-    method(constr, constr.prototype[name], name);
+    method(constr.prototype[name], name);
     allowCall(constr.prototype, name);
   }
   
@@ -1557,11 +1695,13 @@ var ___;
   all2(allowMutator, Array, [
     'pop', 'push', 'reverse', 'shift', 'splice', 'unshift'
   ]);
-
   useCallHandler(Array.prototype, 'sort', function (comparator) {
     if (isFrozen(this)) { fail("Can't sort a frozen array"); }
-    return Array.prototype.sort.call(
-        this, comparator ? ___.asSimpleFunc(comparator) : (void 0));
+    if (comparator) {
+      return Array.prototype.sort.call(this, ___.asSimpleFunc(comparator));
+    } else {
+      return Array.prototype.sort.call(this);
+    }
   });
 
   ctor(String, Object, 'String');
@@ -1927,6 +2067,45 @@ var ___;
   }
 
   ////////////////////////////////////////////////////////////////////////
+  // Sealing and Unsealing
+  ////////////////////////////////////////////////////////////////////////
+  /**
+   * Returns a pair of functions such that the seal(x) wraps x in an object
+   * so that only unseal can get x back from the object.
+   *
+   * @return {object} of the form
+   *     { seal: function (x) { return {}; },
+   *       unseal: function (obj) { return x; } }.
+   */
+  function makeSealerUnsealerPair() {
+    var flag = false;  // Was a box successfully unsealed
+    var squirrel = null;  // Receives the payload from an unsealed box.
+    function seal(payload) {
+      function box() {
+        flag = true, squirrel = payload;
+      }
+      box.toString = primFreeze(simpleFunc(function () { return '(box)'; }));
+      return primFreeze(simpleFunc(box));
+    }
+    function unseal(box) {
+      // Start off in a known good state.
+      flag = false;
+      squirrel = null;
+      try {  // Don't do anything outside try to foil forwarding functions.
+        asSimpleFunc(box)();
+        if (!flag) { throw new Error('Sealer/Unsealer mismatch'); }
+        return squirrel;
+      } finally {
+        // Restore to a known good state.
+        flag = false;
+        squirrel = null;
+      }
+    }
+    return freeze({ seal: seal, unseal: unseal });
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////
   // Exports
   ////////////////////////////////////////////////////////////////////////
   
@@ -1963,7 +2142,10 @@ var ___;
     hasTrademark: hasTrademark,
     guard: guard,
     audit: audit,
-    
+
+    // Sealing & Unsealing
+    makeSealerUnsealerPair: makeSealerUnsealerPair,
+
     // Other
     def: def
   };
@@ -1977,14 +2159,14 @@ var ___;
     'NaN': NaN,
     'Infinity': Infinity,
     'undefined': (void 0),
-    parseInt: parseInt,
-    parseFloat: parseFloat,
-    isNaN: isNaN,
-    isFinite: isFinite,
-    decodeURI: decodeURI,
-    decodeURIComponent: decodeURIComponent,
-    encodeURI: encodeURI,
-    encodeURIComponent: encodeURIComponent,
+    parseInt: simpleFunc(parseInt),
+    parseFloat: simpleFunc(parseFloat),
+    isNaN: simpleFunc(isNaN),
+    isFinite: simpleFunc(isFinite),
+    decodeURI: simpleFunc(decodeURI),
+    decodeURIComponent: simpleFunc(decodeURIComponent),
+    encodeURI: simpleFunc(encodeURI),
+    encodeURIComponent: simpleFunc(encodeURIComponent),
     Math: Math,
 
     Object: Object,
@@ -2015,7 +2197,7 @@ var ___;
     }
   }));
   primFreeze(sharedOuters);
-  
+
   ___ = {
     // Primordial object extension table
     makePOE: makePOE,
@@ -2029,28 +2211,29 @@ var ___;
     directConstructor: directConstructor,
     isFrozen: isFrozen,
     primFreeze: primFreeze,
-    
+
     // Accessing property attributes
     canRead: canRead,             allowRead: allowRead,
     canEnum: canEnum,             allowEnum: allowEnum,
     canCall: canCall,             allowCall: allowCall,
     canSet: canSet,               allowSet: allowSet,
     canDelete: canDelete,         allowDelete: allowDelete,
-    
+
     // Classifying functions
     isCtor: isCtor,
     isMethod: isMethod,
     isSimpleFunc: isSimpleFunc,
+    isXo4aFunc: isXo4aFunc,
     ctor: ctor,                   asCtorOnly: asCtorOnly,
     asCtor: asCtor,
     splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
-    exophora: exophora,
-    isExophoric: isExophoric,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
+    xo4a: xo4a,
     setMember: setMember,
     setMemberMap: setMemberMap,
-    
+    attach: attach,
+
     // Accessing properties
     canReadProp: canReadProp,     readProp: readProp,
     canInnocentEnum: canInnocentEnum,
@@ -2058,13 +2241,15 @@ var ___;
     canCallProp: canCallProp,     callProp: callProp,
     canSetProp: canSetProp,       setProp: setProp,
     canDeleteProp: canDeleteProp, deleteProp: deleteProp,
-    
+
     // Other
     hasOwnProp: hasOwnProp,
     args: args,
-    
+    tameException: tameException,
+    callStackUnsealer: callStackSealer.unseal,
+
     // Taming mechanism
-    useGetHandler: useGetHandler, 
+    useGetHandler: useGetHandler,
     useApplyHandler: useApplyHandler,
     useCallHandler: useCallHandler,
     useSetHandler: useSetHandler,
@@ -2075,10 +2260,10 @@ var ___;
     allowMutator: allowMutator,
     enforceMatchable: enforceMatchable,
     all2: all2,
-    
+
     // Taming decisions
     sharedOuters: sharedOuters,
-    
+
     // Module loading
     getNewModuleHandler: getNewModuleHandler,
     setNewModuleHandler: setNewModuleHandler,
@@ -2090,7 +2275,7 @@ var ___;
     getOuters: getOuters,
     unregister: unregister
   };
-  
+
   each(caja, simpleFunc(function(k, v) {
     if (k in ___) {
       fail('internal: initialization conflict: ', k);
@@ -2107,7 +2292,7 @@ var ___;
   delete caja.extend_canCall___;
   
   primFreeze(caja);
-  
+
   setNewModuleHandler(makeNormalNewModuleHandler());
-  
+
 })(this);

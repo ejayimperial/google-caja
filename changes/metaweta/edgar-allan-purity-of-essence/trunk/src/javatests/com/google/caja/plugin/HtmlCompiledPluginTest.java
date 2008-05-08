@@ -54,20 +54,8 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
-
-  public void testCajaExtend() throws Exception {
-    execGadget(
-        "<script>" +
-        "function Foo(){}" +
-        "var passed = false;" +
-        "try { caja.extend(Foo, {x:1}); } catch(e) { passed = true; }" +
-        "if (!passed) { fail('Should only be allowed to extend prmordial objects!'); }" +
-        "</script>",
-        "");
-  }
-  
-  // TODO(stay): Move as many of these as possible to DefaultCajaRewriterTest
-  //             using assertConsistent
+  // TODO(metaweta): Move as many of these as possible to DefaultCajaRewriterTest
+  // using assertConsistent
   public void testEmptyGadget() throws Exception {
     execGadget("", "");
   }
@@ -501,17 +489,6 @@ public class HtmlCompiledPluginTest extends TestCase {
         "    (['test', 'x_', 'y']).toSource());");
   }
 
-  public void testInstanceMethod() throws Exception {
-    // TODO(metaweta): Put this test back in when issue143 is fixed.
-    if (false) {
-      execGadget(
-          "<script>" +
-          "function Foo() { this.f = function(){ return this; }}" +
-          "</script>",
-          "");
-    }
-  }
-
   public void testGlobalThis() throws Exception {
     execGadget(
         "<script>" +
@@ -530,10 +507,91 @@ public class HtmlCompiledPluginTest extends TestCase {
         "");
   }
 
-  public void testStaticMembers() throws Exception {
-    execGadget("<script>" +
-        "function Foo(){}" +
-        "Foo.prototype.x = 1;" +
+  public void testAttachedMethod() throws Exception {
+    // The cases that succeed are tested in DefaultCajaRewriterTest
+    execGadget(
+        "<script>" +
+        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
+        "var foo = new Foo();" +
+        "var g=foo.f;" +
+        "var passed=false;" +
+        "try { g(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Attached method should not be able to be called as a simple function.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
+        "var foo = new Foo();" +
+        "var h={f:foo.f};" +
+        "var passed=false;" +
+        "try { h.f(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Attached method should not be able to be called on a different object.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() {}" +
+        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
+        "foo = new Foo;" +
+        "h={setX:foo.setX};" +
+        "passed = false;" +
+        "try { h.setX(1); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Unattached methods are not being attached properly.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() {}" +
+        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
+        "foo = new Foo;" +
+        "g = foo.setX;" +
+        "passed = false;" +
+        "try { g(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Unattached methods are not being attached properly.');" +
+        "}" +
+        "</script>",
+        ""); 
+    execGadget(
+        "<script>" +
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  this.Bar = function Bar(x){ " +
+        "    this.x_ = x; " +
+        "    this.getX = function() { return this.x_; }" +
+        "  }; " +
+        "};" +
+        "foo = new Foo;" +
+        "passed = false;" +
+        "try { foo.Bar(5); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Constructors are being attached as methods.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  function Bar(x){ " +
+        "    this.x_ = x; " +
+        "  }" +
+        "  Bar.prototype.getX = function () { return this.x_; };" +
+        "  this.Bar = Bar;" +
+        "};" +
+        "foo = new Foo;" +
+        "passed = false;" +
+        "try { foo.Bar(5); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Constructors are being attached as methods.');" +
+        "}" +
         "</script>",
         "");
   }
@@ -563,6 +621,17 @@ public class HtmlCompiledPluginTest extends TestCase {
         "");
   }
 
+  public void testCajaExtend() throws Exception {
+    execGadget(
+        "<script>" +
+        "function Foo(){}" +
+        "var passed = false;" +
+        "try { caja.extend(Foo, {x:1}); } catch(e) { passed = true; }" +
+        "if (!passed) { fail('Should only be allowed to extend prmordial objects!'); }" +
+        "</script>",
+        "");
+  }
+  
   private void execGadget(String gadgetSpec, String tests) throws Exception {
     MessageContext mc = new MessageContext();
     MessageQueue mq = new EchoingMessageQueue(

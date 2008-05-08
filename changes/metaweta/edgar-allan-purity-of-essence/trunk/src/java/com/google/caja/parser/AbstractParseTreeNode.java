@@ -341,10 +341,13 @@ public abstract class AbstractParseTreeNode<T extends ParseTreeNode>
     for (ParseTreeNode child : children) {
       clonedChildren.add(child.clone());
     }
-    ParseTreeNode cloned = ParseTreeNodes.newNodeInstance(
-        getClass(), getValue(), clonedChildren);
-    ((AbstractParseTreeNode<?>) cloned).setFilePosition(getFilePosition());
-    cloned.getAttributes().putAll(getAttributes());
+    AbstractParseTreeNode<?> cloned = (AbstractParseTreeNode<?>)
+        ParseTreeNodes.newNodeInstance(getClass(), getValue(), clonedChildren);
+    cloned.setFilePosition(getFilePosition());
+    if (attributes != null) {
+      cloned.attributes = new SyntheticAttributes(attributes);
+      cloned.attributes.remove(TAINTED);
+    }
     return cloned;
   }
 

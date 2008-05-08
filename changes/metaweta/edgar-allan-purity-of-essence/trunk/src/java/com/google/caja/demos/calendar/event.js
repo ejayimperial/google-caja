@@ -24,6 +24,9 @@
  * @author mikesamuel@gmail.com
  */
 function VEvent(eid, calendarId, summary, start, end) {
+  console.assert('string' === typeof summary);
+  console.assert('number' === typeof start);
+  console.assert('number' === typeof end);
   this.eid = eid;
   this.calendarId = calendarId;
   this.summary = summary;
@@ -34,6 +37,9 @@ function VEvent(eid, calendarId, summary, start, end) {
 VEvent.prototype.isOvernightEvent = function () {
   return time.isDate(this.start) ||
       time.nextDate(time.toDate(this.start)) < time.toDateOnOrAfter(this.end);
-}
+};
 
-VEvent.prototype.toString = function () { return '[Event ' + this.eid + ']'; };
+VEvent.prototype.toString = function () {
+  return '[Event ' + this.eid + '@' + time.toIcal(this.start)
+      + '/' + time.toIcal(this.end) + ']';
+};

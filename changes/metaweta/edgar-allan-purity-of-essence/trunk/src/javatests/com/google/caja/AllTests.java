@@ -15,6 +15,7 @@
 package com.google.caja;
 
 import com.google.caja.config.ConfigUtilTest;
+import com.google.caja.demos.calendar.EventStoreTest;
 import com.google.caja.demos.calendar.HcalTest;
 import com.google.caja.demos.calendar.LayoutTest;
 import com.google.caja.demos.calendar.RRuleTest;
@@ -30,6 +31,7 @@ import com.google.caja.lexer.PunctuationTrieTest;
 import com.google.caja.lexer.escaping.EscapingTest;
 import com.google.caja.opensocial.DefaultGadgetRewriterTest;
 import com.google.caja.opensocial.GadgetParserTest;
+import com.google.caja.opensocial.applet.ExpressionLanguageStageTest;
 import com.google.caja.parser.ParseTreeNodeTest;
 import com.google.caja.parser.ParserBaseTest;
 import com.google.caja.parser.css.CssParserTest;
@@ -43,6 +45,8 @@ import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
 import com.google.caja.parser.quasiliteral.MatchTest;
 import com.google.caja.parser.quasiliteral.QuasiBuilderTest;
 import com.google.caja.parser.quasiliteral.ScopeTest;
+import com.google.caja.parser.quasiliteral.IllegalReferenceCheckRewriterTest;
+import com.google.caja.parser.quasiliteral.RewriterTest;
 import com.google.caja.plugin.CompiledPluginTest;
 import com.google.caja.plugin.CssRewriterTest;
 import com.google.caja.plugin.CssTemplateTest;
@@ -98,6 +102,8 @@ public class AllTests {
           DomParserTest.class,
           DomProcessingEventsTest.class,
           EscapingTest.class,
+          EventStoreTest.class,
+          ExpressionLanguageStageTest.class,
           ExpressionSanitizerTest.class,
           GadgetParserTest.class,
           GxpCompilerTest.class,
@@ -107,6 +113,7 @@ public class AllTests {
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
           HtmlSchemaTest.class,
+          IllegalReferenceCheckRewriterTest.class,
           JoinTest.class,
           JsHtmlParserTest.class,
           JsHtmlSanitizerTest.class,
@@ -125,6 +132,7 @@ public class AllTests {
           QuasiBuilderTest.class,
           RRuleTest.class,
           RewriteHtmlStageTest.class,
+          RewriterTest.class,
           ScopeTest.class,
           SideBySideRendererTest.class,
           SnippetProducerTest.class,
