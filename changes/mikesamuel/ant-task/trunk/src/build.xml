@@ -547,11 +547,21 @@
        src="${src}/com/google/caja/demos/lolcat-search">
         <include
          file="${src}/com/google/caja/demos/lolcat-search/searchbox.html"/>
+        <depend
+         file="${src}/com/google/caja/demos/lolcat-search/searchbox.css"/>
+        <depend
+         file="${src}/com/google/caja/demos/lolcat-search/searchbox.js"/>
       </job>
       <job output="${www}/lolcat-search/kittens-cajoled.js"
        src="${src}/com/google/caja/demos/lolcat-search">
         <include
          file="${src}/com/google/caja/demos/lolcat-search/kittens.html"/>
+        <depend
+         file="${src}/com/google/caja/demos/lolcat-search/katTranzlator.js"/>
+        <depend
+         file="${src}/com/google/caja/demos/lolcat-search/kittens.css"/>
+        <depend
+         file="${src}/com/google/caja/demos/lolcat-search/kittens.js"/>
       </job>
     </cajole>
 

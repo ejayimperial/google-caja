@@ -33,8 +33,7 @@ public interface BuildService {
    * iff the task passes.
    *
    * @param logger receives messages that should be included in the build log.
-   * @param baseDir the source directory below which files referenced by inputs
-   *   may resolve.
+   * @param dependees files which may be referenced from inputs.
    * @param inputs files to cajole.
    * @param output file to write cajoled output to.
    * @param options a key/value map supplying optional parameters that may
@@ -42,15 +41,14 @@ public interface BuildService {
    *   should be ignored.
    * @return true iff output contains the successfully cajoled inputs.
    */
-  boolean cajole(PrintWriter logger, File baseDir, List<File> inputs,
+  boolean cajole(PrintWriter logger, List<File> dependees, List<File> inputs,
                  File output, Map<String, Object> options);
   /**
    * Minifies inputs to output writing any messages to logger, returning true
    * iff the task passes.
    *
    * @param logger receives messages that should be included in the build log.
-   * @param baseDir the source directory below which files referenced by inputs
-   *   may resolve.
+   * @param dependees files which may be referenced from inputs.
    * @param inputs files to minify.
    * @param output file to write minified output to.
    * @param options a key/value map supplying optional parameters that may
@@ -58,6 +56,6 @@ public interface BuildService {
    *   should be ignored.
    * @return true iff output contains the successfully cajoled inputs.
    */
-  boolean minify(PrintWriter logger, File baseDir, List<File> inputs,
+  boolean minify(PrintWriter logger, List<File> dependees, List<File> inputs,
                  File output, Map<String, Object> options);
 }

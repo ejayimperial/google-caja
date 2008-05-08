@@ -160,9 +160,13 @@ attachDocumentStub = (function () {
 
   var cssSealerUnsealerPair = caja.makeSealerUnsealerPair();
 
-  // Implementations of setTimeout/setInterval/clearTimeout/clearInterval that
-  // only allow simple functions as timeouts and that deal treat timeout ids
-  // as capabilities.
+  // Implementations of setTimeout, setInterval, clearTimeout, and
+  // clearInterval that only allow simple functions as timeouts and
+  // that treat timeout ids as capabilities.
+  // This is safe even if accessed across frame since the same
+  // trademark value is never used with more than one version of
+  // setTimeout.
+
   var timeoutIdTrademark = {};
   function tameSetTimeout(timeout, delayMillis) {
     var timeoutId = setTimeout(___.asSimpleFunc(timeout), delayMillis | 0);

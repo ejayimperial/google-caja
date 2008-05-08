@@ -47,8 +47,10 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Build integration to {@link PluginCompiler} and {@link Minify}.
@@ -64,41 +66,34 @@ public class BuildServiceImplementation implements BuildService {
    * iff the task passes.
    */
   public boolean cajole(
-      PrintWriter logger, File baseDir, List<File> inputs, File output,
+      PrintWriter logger, List<File> dependees, List<File> inputs, File output,
       Map<String, Object> options) {
-    final File canonBaseDir;
+    final Set<File> canonFiles = new HashSet<File>();
     try {
-      canonBaseDir = baseDir.getCanonicalFile();
+      for (File f : dependees) { canonFiles.add(f.getCanonicalFile()); }
+      for (File f : inputs) { canonFiles.add(f.getCanonicalFile()); }
     } catch (IOException ex) {
-      logger.println("Bad base directory " + baseDir);
+      logger.println(ex.toString());
       return false;
     }
-    final URI baseUri = canonBaseDir.toURI();
     final MessageQueue mq = new SimpleMessageQueue();
 
     PluginEnvironment env = new PluginEnvironment() {
         public CharProducer loadExternalResource(
             ExternalReference ref, String mimeType) {
-          URI absUri = baseUri.resolve(ref.getUri());
-          InputSource is = new InputSource(absUri);
+          URI uri = ref.getUri();
+          uri = ref.getReferencePosition().source().getUri().resolve(uri);
+          InputSource is = new InputSource(uri);
 
-          File f;
           try {
-            f = new File(absUri).getCanonicalFile();
+            if (!canonFiles.contains(new File(uri).getCanonicalFile())) {
+              return null;
+            }
           } catch (IllegalArgumentException ex) {
             return null;  // Not a file reference.
           } catch (IOException ex) {
             return null;  // Not a file reference.
           }
-          // Make sure f is under baseDir
-          boolean allowed = false;
-          for (File tmp = f; tmp != null; tmp = tmp.getParentFile()) {
-            if (tmp.equals(canonBaseDir)) {
-              allowed = true;
-              break;
-            }
-          }
-          if (!allowed) { return null; }
 
           try {
             String content = getSourceContent(is);
@@ -222,7 +217,7 @@ public class BuildServiceImplementation implements BuildService {
    * iff the task passes.
    */
   public boolean minify(
-      PrintWriter logger, File baseDir, List<File> inputs, File output,
+      PrintWriter logger, List<File> dependees, List<File> inputs, File output,
       Map<String, Object> options) {
     try {
       List<Pair<InputSource, File>> inputSources

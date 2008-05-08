@@ -42,8 +42,8 @@ abstract class AbstractCajaAntTask extends Task {
 
   /** Called to actually execute a job by invoking the BuildService. */
   protected abstract boolean run(BuildService buildService, PrintWriter logger,
-                                 File baseDir, List<File> inputs, File output,
-                                 Map<String, Object> options)
+                                 List<File> depends, List<File> inputs,
+                                 File output, Map<String, Object> options)
       throws BuildException;
 
   @Override
@@ -110,11 +110,19 @@ abstract class AbstractCajaAntTask extends Task {
     private File srcDir;
     /** Inputs files to compile. */
     private final List<Include> includes = new ArrayList<Include>();
+    /** Files that the inputs might include. */
+    private final List<Depend> depends = new ArrayList<Depend>();
 
     public Include createInclude() {
       Include include = new Include();
       includes.add(include);
       return include;
+    }
+
+    public Depend createDepend() {
+      Depend depend = new Depend();
+      depends.add(depend);
+      return depend;
     }
 
     /**
@@ -164,10 +172,16 @@ abstract class AbstractCajaAntTask extends Task {
         }
         inputs.add(include.file);
       }
+      List<File> dependees = new ArrayList<File>();
+      for (Depend depend : depends) {
+        if (!modified && depend.file.lastModified() > outputModified) {
+          modified = true;
+        }
+        dependees.add(depend.file);
+      }
       if (modified) {
         logger.println("compiling " + inputs.size() + " files to " + output);
-        File baseDir = srcDir != null ? srcDir : getProject().getBaseDir();
-        if (!run(buildService, logger, baseDir, inputs, output,
+        if (!run(buildService, logger, dependees, inputs, output,
                  Collections.<String, Object>emptyMap())) {
           if (output.exists()) { output.delete(); }
           throw new BuildException("Failed to build " + output);
@@ -190,6 +204,25 @@ abstract class AbstractCajaAntTask extends Task {
       }
       if (!file.canRead()) {
         throw new BuildException("<include> at " + getLocation()
+                                 + "of '" + file + "' is not readable");
+      }
+    }
+  }
+
+  /** An ancillary file. */
+  public class Depend {
+    /** An ancillary file.  Could use FileSet to get globbing? */
+    private File file;
+
+    public void setFile(File file) { this.file = file; }
+
+    void requireExecutable() throws BuildException {
+      if (file == null) {
+        throw new BuildException("<depend> at " + getLocation()
+                                 + "missing 'file' attribute");
+      }
+      if (!file.canRead()) {
+        throw new BuildException("<depend> at " + getLocation()
                                  + "of '" + file + "' is not readable");
       }
     }
