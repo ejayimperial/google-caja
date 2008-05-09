@@ -57,6 +57,7 @@ import java.util.LinkedHashMap;
  * A rewriting rule supplied by a subclass.
  */
 public abstract class Rule implements MessagePart {
+
   /**
    * The special return value from a rule that indicates the rule
    * does not apply to the supplied input.
@@ -101,7 +102,12 @@ public abstract class Rule implements MessagePart {
   }
 
   /**
-   * Set the rewriter this{@code Rule} uses.
+   * @return the rewriter this {@code Rule} uses.
+   */
+  public Rewriter getRewriter() { return rewriter; }
+
+  /**
+   * Set the rewriter this {@code Rule} uses.
    */
   public void setRewriter(Rewriter rewriter) {
     this.rewriter = rewriter;
@@ -160,10 +166,14 @@ public abstract class Rule implements MessagePart {
       rewrittenChildren.add(rewriter.expand(child, scope, mq));
     }
 
-    return ParseTreeNodes.newNodeInstance(
+    ParseTreeNode result = ParseTreeNodes.newNodeInstance(
         parentNodeClass,
         node.getValue(),
         rewrittenChildren);
+    result.getAttributes().putAll(node.getAttributes());
+    result.getAttributes().remove(ParseTreeNode.TAINTED);
+
+    return result;
   }
 
   protected ParseTreeNode getFunctionHeadDeclarations(
@@ -175,14 +185,14 @@ public abstract class Rule implements MessagePart {
     if (scope.hasFreeArguments()) {
       stmts.add(substV(
           "var @la = ___.args(@ga);",
-          "la", new Identifier(ReservedNames.LOCAL_ARGUMENTS),
-          "ga", new Reference(new Identifier(ReservedNames.ARGUMENTS))));
+          "la", s(new Identifier(ReservedNames.LOCAL_ARGUMENTS)),
+          "ga", newReference(ReservedNames.ARGUMENTS)));
     }
     if (scope.hasFreeThis()) {
       stmts.add(substV(
           "var @lt = @gt;",
-          "lt", new Identifier(ReservedNames.LOCAL_THIS),
-          "gt", new Reference(new Identifier(ReservedNames.THIS))));
+          "lt", s(new Identifier(ReservedNames.LOCAL_THIS)),
+          "gt", newReference(ReservedNames.THIS)));
     }
 
     return new ParseTreeNodeContainer(stmts);
@@ -260,7 +270,7 @@ public abstract class Rule implements MessagePart {
           "  (" + ReservedNames.IMPORTS + ".@s = @temp) :" +
           "  ___.setPub(" + ReservedNames.IMPORTS + ", @sName, @temp);",
           "s", symbol,
-          "sCanSet", new Reference(new Identifier(sName + "_canSet___")),
+          "sCanSet", newReference(sName + "_canSet___"),
           "sName", toStringLiteral(symbol),
           "temp", s(new Reference(scope.declareStartOfScopeTempVariable())),
           "value", value)));
@@ -273,15 +283,10 @@ public abstract class Rule implements MessagePart {
   }
 
   protected ParseTreeNode expandMember(
-      ParseTreeNode fname,
       ParseTreeNode member,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    if (!scope.isDeclaredFunction(getReferenceName(fname))) {
-      throw new RuntimeException("Internal: not statically a function name: " + fname);
-    }
-
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
     if (match("function(@ps*) { @bs*; }", member, bindings)) {
@@ -289,13 +294,13 @@ public abstract class Rule implements MessagePart {
       if (s2.hasFreeThis()) {
         checkFormals(bindings.get("ps"), mq);
         return substV(
-            "___.method(@fname, function(@ps*) {" +
+            "___.method(function(@ps*) {" +
             "  @fh*;" +
             "  @stmts*;" +
             "  @bs*;" +
             "});",
-            "fname", expandReferenceToImports(fname, scope, mq),
             "ps",    bindings.get("ps"),
+            // It's important to expand bs before computing fh and stmts.
             "bs",    rewriter.expand(bindings.get("bs"), s2, mq),
             "fh",    getFunctionHeadDeclarations(rule, s2, mq),
             "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
@@ -306,28 +311,22 @@ public abstract class Rule implements MessagePart {
   }
 
   protected ParseTreeNode expandAllMembers(
-      ParseTreeNode fname,
       ParseTreeNode members,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
     List<ParseTreeNode> results = new ArrayList<ParseTreeNode>();
     for (ParseTreeNode member : members.children()) {
-      results.add(expandMember(fname, member, rule, scope, mq));
+      results.add(expandMember(member, rule, scope, mq));
     }
     return new ParseTreeNodeContainer(results);
   }
 
   protected ParseTreeNode expandMemberMap(
-      ParseTreeNode fname,
       ParseTreeNode memberMap,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    if (!scope.isDeclaredFunction(getReferenceName(fname))) {
-      throw new RuntimeException("Internal: not statically a function name: " + fname);
-    }
-
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
     if (match("({@keys*: @vals*})", memberMap, bindings)) {
@@ -341,7 +340,7 @@ public abstract class Rule implements MessagePart {
       return substV(
           "({@keys*: @vals*})",
           "keys", bindings.get("keys"),
-          "vals", expandAllMembers(fname, bindings.get("vals"), rule, scope, mq));
+          "vals", expandAllMembers(bindings.get("vals"), rule, scope, mq));
     }
 
     mq.addMessage(RewriterMessageType.MAP_EXPRESSION_EXPECTED,
@@ -361,7 +360,7 @@ public abstract class Rule implements MessagePart {
            + "    ? IMPORTS___.@x"
            + "    : ___.readPub(IMPORTS___, @xName, true);"),
           "x", ref,
-          "xCanRead", new Reference(new Identifier(xName + "_canRead___")),
+          "xCanRead", newReference(xName + "_canRead___"),
           "xName", new StringLiteral(StringLiteral.toQuotedValue(xName)));
     } else {
       return ref;

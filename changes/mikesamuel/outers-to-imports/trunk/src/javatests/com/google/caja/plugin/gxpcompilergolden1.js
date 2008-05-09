@@ -26,7 +26,7 @@ function aSquareMeal(beer, mayonnaise, cheetos) {
           }
         }
       } else {
-        out___.push('<h1 onclick=\"return plugin_dispatchEvent___(this, event || window.event, ', ___.getId(IMPORTS___), ', \'c4___\');\">PANIC</h1>');
+        out___.push('<h1 onclick=\"', 'return plugin_dispatchEvent___(this, event || window.event, ' + ___.getId(IMPORTS___) + ', \'c4___\')', '\">PANIC</h1>');
       }
     }
   }
@@ -40,6 +40,6 @@ function aSquareMeal(beer, mayonnaise, cheetos) {
   out___.push(IMPORTS___.htmlAttr___(IMPORTS___.suffix___(c5___.join(''))), '\">\n  </form>\n  <a href=\"/testplugin/help.html\" target=\"_new\">Help</a>\n\n</div>');
   return IMPORTS___.blessHtml___(out___.join(''));
 }
-function c4___(thisNode___, event) {
-  panic();
-}
+IMPORTS___.c4___ = ___.simpleFunc(function (thisNode___, event) {
+                                    panic();
+                                  })

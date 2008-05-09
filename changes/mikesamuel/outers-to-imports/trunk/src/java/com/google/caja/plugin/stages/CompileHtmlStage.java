@@ -19,21 +19,14 @@ import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
-import com.google.caja.parser.js.Declaration;
-import com.google.caja.parser.js.Expression;
-import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
-import com.google.caja.parser.quasiliteral.QuasiBuilder;
 import com.google.caja.plugin.GxpCompiler;
 import com.google.caja.plugin.HtmlCompiler;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
 import com.google.caja.util.Pipeline;
-import static com.google.caja.plugin.SyntheticNodes.s;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -74,17 +67,9 @@ public final class CompileHtmlStage implements Pipeline.Stage<Jobs> {
       }
     }
 
-    for (Declaration handler : htmlc.getEventHandlers()) {
-      // var c_1___ = function () { ... };
-      // => IMPORTS___.c_1___ = function c_1___() { ... };
-      Statement def = s(new ExpressionStmt(
-          (Expression) QuasiBuilder.substV(
-              "IMPORTS___.@handlerName = @handler",
-              "handlerName", s(new Reference(handler.getIdentifier())),
-              "handler", handler.getInitializer())));
-      jobs.getJobs().add(
-          new Job(new AncestorChain<Block>(
-                      new Block(Collections.singletonList(def)))));
+    if (!htmlc.getEventHandlers().isEmpty()) {
+      jobs.getJobs().add(new Job(new AncestorChain<Block>(new Block(
+          new ArrayList<Statement>(htmlc.getEventHandlers())))));
     }
 
     if (!renderedHtmlStatements.isEmpty()) {
