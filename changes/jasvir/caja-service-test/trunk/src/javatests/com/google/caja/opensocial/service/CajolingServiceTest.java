@@ -15,7 +15,6 @@ package com.google.caja.opensocial.service;
 
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.quasiliteral.DefaultCajaRewriter;
 import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
 import com.google.caja.util.CajaTestCase;
 
@@ -102,7 +101,7 @@ public class CajolingServiceTest extends CajaTestCase {
   public void testSimpleJs() throws Exception {
     checkJs(
         "{ var x = y; }",
-        "{" + DefaultCajaRewriterTest.weldSetOuters("x", DefaultCajaRewriterTest.weldReadOuters("y")) + "}");
+        "{" + DefaultCajaRewriterTest.weldSetOuters("x", "x0___", DefaultCajaRewriterTest.weldReadOuters("y")) + "}");
   }
   
   private void checkJs(String original, String cajoled) throws IOException, ParseException {
