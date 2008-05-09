@@ -14,7 +14,6 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
@@ -29,14 +28,10 @@ import com.google.caja.parser.js.Statement;
 import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
-import com.google.caja.util.CajaTestCase;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.util.RhinoTestBed;
-import com.google.caja.util.TestUtil;
 
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
-
-import junit.framework.AssertionFailedError;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -47,7 +42,7 @@ import java.util.List;
 /**
  * @author ihab.awad@gmail.com
  */
-public class DefaultCajaRewriterTest extends CajaTestCase {
+public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   /**
    * Welds together a string representing the repeated pattern of expected test output for
@@ -99,6 +94,109 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "(___OUTERS___." + varName + "_canRead___ ?" +
         "    ___OUTERS___." + varName + ":" +
         "    ___.readPub(___OUTERS___, '" + varName + "'" + (flag ? ", true" : "") + "))";
+  }
+
+  public void testConstructorProperty() throws Exception {
+    assertConsistent(
+        "pkg = {};" +
+        "(function (){" +
+        "  function Foo(x) {" +
+        "    this.x_ = x;" +
+        "  };" +
+        "  Foo.prototype.getX = function(){ return this.x_; };" +
+        "  pkg.Foo = Foo;" +
+        "})();" +
+        "foo = new pkg.Foo(2);" +
+        "foo.getX();");
+  }
+
+  public void testAttachedMethod() throws Exception {
+    // See also <tt>testAttachedMethod()</tt> in <tt>HtmlCompiledPluginTest</tt>
+    // to check cases where calling the attached method should fail.
+    assertConsistent(
+        "function Foo(){" +
+        "  this.f = function (){this.x_ = 1;};" +
+        "  this.getX = function (){return this.x_;};" +
+        "}" +
+        "foo = new Foo();" +
+        "foo.f();" +
+        "foo.getX();");
+    assertConsistent(
+        "function Foo(){}" +
+        "Foo.prototype.setX = function(x) { this.x_ = x; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo(){}" +
+        "caja.def(Foo, Object, {" +
+        "  setX: function(x) { this.x_ = x; }," +
+        "  getX: function() { return this.x_; }," +
+        "  y: 1" +
+        "});" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo(){ this.gogo(); }" +
+        "Foo.prototype.gogo = function() { this.setX = function(x) { this.x_ = x; }; };" +
+        "Foo.prototype.getX = function() { return this.x_; };" +
+        "Foo.prototype.y = 1;" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo(){ this.gogo(); }" +
+        "caja.def(Foo, Object, {" +
+        "  gogo: function() { this.setX = function(x) { this.x_ = x; }; }," +
+        "  getX: function() { return this.x_; }," +
+        "  y: 1" +
+        "});" +
+        "foo=new Foo;" +
+        "foo.setX(5);" +
+        "''+foo.y+foo.getX();");
+    assertConsistent(
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  this.Bar = function Bar(x){ " +
+        "    this.x_ = x; " +
+        "    this.getX = function() { return this.x_; };" +
+        "  }; " +
+        "};" +
+        "foo = new Foo;" +
+        "Bar = foo.Bar;" +
+        "bar = new Bar(5);" +
+        "bar.getX();");
+    assertConsistent(
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  function Bar(x){ " +
+        "    this.x_ = x; " +
+        "  }" +
+        "  Bar.prototype.getX = function () { return this.x_; };" +
+        "  this.Bar = Bar;" +
+        "};" +
+        "foo = new Foo;" +
+        "Bar = foo.Bar;" +
+        "bar = new Bar(5);" +
+        "bar.getX();");
+    checkFails(
+        "function (){" +
+        "  this.x_ = 1;" +
+        "}",
+        "Public properties cannot end in \"_\"");
+    checkFails(
+        "function Foo(){}" +
+        "Foo.prototype.m = function () {" +
+        "  var y = function() {" +
+        "    var z = function() {" +
+        "      this.x_ = 1;" +
+        "    }" +
+        "  }" +
+        "}",
+        "Public properties cannot end in \"_\"");
   }
 
   private static String weldReadPub(String obj, String varName, String tempObj) {
@@ -449,6 +547,10 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
             "  return foo;" +
             "})()") +
         ";14;;");
+    assertAddsMessage(
+        "function f() { for (var x__ in a) {} }",
+        RewriterMessageType.VARIABLES_CANNOT_END_IN_DOUBLE_UNDERSCORE,
+        MessageLevel.FATAL_ERROR);
   }
 
   public void testTryCatch() throws Exception {
@@ -526,7 +628,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "  handled = true;" +
         "}" +
         "assertTrue(handled);");
-    assertCajoled(
+    rewriteAndExecute(
         "var handled = false;" +
         "try {" +
         "  throw function () { throw 'should not be called'; };" +
@@ -535,7 +637,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "  handled = true;" +
         "}" +
         "assertTrue(handled);");
-    assertCajoled(
+    rewriteAndExecute(
         "var handled = false;" +
         "try {" +
         "  throw { toString: function () { return 'hiya'; }, y: 4 };" +
@@ -545,7 +647,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "  handled = true;" +
         "}" +
         "assertTrue(handled);");
-    assertCajoled(
+    rewriteAndExecute(
         "var handled = false;" +
         "try {" +
         "  throw { toString: function () { throw new Error(); } };" +
@@ -962,8 +1064,6 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "  ;" +
         "  ___.setMember(" +
         "      foo, 'p', ___.method(" +
-        // TODO(mikesamuel): Should not reevaluate foo if it is a global.
-        "          foo," +
         "          function(a, b) {" +
         "            var t___ = this;" +
         "            t___;" +
@@ -1604,7 +1704,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         ";" +
         "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ", {" +
         "    m0: " + weldReadOuters("x") + "," +
-        "    m1: ___.method(" + weldReadOuters("WigglyPoint") + ", function() {" +
+        "    m1: ___.method(function() {" +
         "      var t___ = this;" +
         "      var x0___;" +
         "      " + weldSetProp("p", "3", "x0___") + ";" +
@@ -1626,7 +1726,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         ";" +
         "caja.def(" + weldReadOuters("WigglyPoint") + ", " + weldReadOuters("Point") + ", {" +
         "    m0: " + weldReadOuters("x") + "," +
-        "    m1: ___.method(" + weldReadOuters("WigglyPoint") + ", function() {" +
+        "    m1: ___.method(function() {" +
         "      var t___ = this;" +
         "      var x0___;" +
         "      " + weldSetProp("p", "3", "x0___") +
@@ -1832,10 +1932,11 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
   public void testFuncExophoricFunction() throws Exception {
     checkSucceeds(
         "function (x) { return this.x; };",
-        "___.exophora(" +
+        "var x0___;" +
+        "___.xo4a(" +
         "    function (x) {" +
         "       var t___ = this;" +
-        "       var x0___;" +
+        "       var t___ = this;" +
         "       return " + weldReadPub(
                                "t___",
                                "x",
@@ -1843,30 +1944,30 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
         "});");
     checkFails(
         "function (k) { return this[k]; }",
-        "\"this\" in an exophoric function only exposes public fields");
+        "\"this\" in an exophoric function exposes only public fields");
     checkFails(
         "function () { delete this.k; }",
-        "\"this\" in an exophoric function only exposes public fields");
+        "\"this\" in an exophoric function exposes only public fields");
     checkFails(
         "function () { x in this; }",
-        "\"this\" in an exophoric function only exposes public fields");
+        "\"this\" in an exophoric function exposes only public fields");
     checkFails(
         "function () { 'foo_' in this; }",
-        "\"this\" in an exophoric function only exposes public fields");
+        "\"this\" in an exophoric function exposes only public fields");
     checkSucceeds(
         "function () { 'foo' in this; }",
-        "___.exophora(" +
+        "___.xo4a(" +
         "    function () {" +
+        "      var t___ = this;" +
         "      var t___ = this;" +
         "      'foo' in t___;" +
         "    })");
     checkFails(
         "function () { for (var k in this); }",
-        "\"this\" in an exophoric function only exposes public fields");
+        "\"this\" in an exophoric function exposes only public fields");
     checkFails(
         "function (y) { this.x = y; }",
-        "\"this\" in an exophoric function only exposes public fields");
-
+        "\"this\" in an exophoric function exposes only public fields");
     assertConsistent(
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7()");
   }
@@ -2329,147 +2430,11 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
     checkSucceeds(fromResource("listfriends.js"));
   }
 
-  public void testAssertConsistent() throws Exception {
-    try {
-      // A value that cannot be consistent across invocations.
-      assertConsistent("({})");
-      fail("assertConsistent not working");
-    } catch (AssertionFailedError e) {
-      // Pass
-    }
-  }
-
-  private void setSynthetic(ParseTreeNode n) {
-    SyntheticNodes.s(n);
-  }
-
-  private void setTreeSynthetic(ParseTreeNode n) {
-    setSynthetic(n);
-    for (ParseTreeNode child : n.children()) {
-      setTreeSynthetic(child);
-    }
-  }
-
-  private void checkFails(String input, String error) throws Exception {
-    mq.getMessages().clear();
-    ParseTreeNode expanded = new DefaultCajaRewriter(true)
-        .expand(js(fromString(input)), mq);
-
-    assertFalse(render(expanded), mq.getMessages().isEmpty());
-
-    StringBuilder messageText = new StringBuilder();
-    for (Message m : mq.getMessages()) {
-      m.format(mc, messageText);
-      messageText.append("\n");
-    }
-    assertTrue(
-        "Messages do not contain \"" + error + "\": " + messageText.toString(),
-        messageText.toString().contains(error));
-  }
-
-  private void checkSucceeds(ParseTreeNode inputNode,
-                             ParseTreeNode expectedResultNode)
-      throws Exception {
-    checkSucceeds(inputNode,expectedResultNode,MessageLevel.WARNING);
-  }
-
-  private void checkSucceeds(
-      ParseTreeNode inputNode,
-      ParseTreeNode expectedResultNode,
-      MessageLevel highest)
-      throws Exception {
-    mq.getMessages().clear();
-    ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
-    for (Message m : mq.getMessages()) {
-      if (m.getMessageLevel().compareTo(highest) >= 0) {
-        fail(m.toString());
-      }
-    }
-    if (expectedResultNode != null) {
-      // Test that the source code-like renderings are identical. This will catch any
-      // obvious differences between expected and actual.
-      assertEquals(render(expectedResultNode), render(actualResultNode));
-      // Then, for good measure, test that the S-expression-like formatted representations
-      // are also identical. This will catch any differences in tree topology that somehow
-      // do not appear in the source code representation (usually due to programming errors).
-      assertEquals(
-          TestUtil.format(expectedResultNode),
-          TestUtil.format(actualResultNode));
-    }
-  }
-
-  private void assertMessageNotPresent( String src, MessageType type) throws Exception {
-    checkDoesNotAddMessage(js(fromString(src)), type);
-  }
-
-  private void checkDoesNotAddMessage(
-      ParseTreeNode inputNode,
-      MessageType type)  {
-    mq.getMessages().clear();
-    ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
-    if ( containsConsistentMessage(mq.getMessages(),type)) {
-      fail("Unexpected add message of type " + type);
-    }
-  }
-
-  private void assertAddsMessage( String src, MessageType type, MessageLevel level) throws Exception {
-    checkAddsMessage(js(fromString(src)), type, level);
-  }
-
-  private void checkAddsMessage(
-        ParseTreeNode inputNode,
-        MessageType type,
-        MessageLevel level)  {
-    mq.getMessages().clear();
-    ParseTreeNode actualResultNode = new DefaultCajaRewriter().expand(inputNode, mq);
-    if ( !containsConsistentMessage(mq.getMessages(),type, level)) {
-      fail("Failed to add message of type " + type + " and level " + level);
-    }
-  }
-
-  private boolean containsConsistentMessage(List<Message> list, MessageType type) {
-    for (Message m : list) {
-      System.out.println("**"+m.getMessageType() + "|" + m.getMessageLevel());
-      if (m.getMessageType().equals(type)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean containsConsistentMessage(List<Message> list, MessageType type, MessageLevel level) {
-    for (Message m : list) {
-      System.out.println("**"+m.getMessageType() + "|" + m.getMessageLevel());
-      if ( m.getMessageType().equals(type) && m.getMessageLevel().equals(level) ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void checkSucceeds(String input, String expectedResult) throws Exception {
-    checkSucceeds(js(fromString(input)), js(fromString(expectedResult)));
-  }
-
-  private void checkSucceeds(CharProducer cp) throws Exception {
-    checkSucceeds(js(cp), null);
-  }
-
-  /**
-   * Asserts that the given caja code produces the same value both cajoled and
-   * uncajoled.
-   *
-   * @param caja executed in the context of asserts.js for its value.  The
-   *    value is computed from the last statement in caja.
-   */
-  private void assertConsistent(String caja)
+  protected Object executePlain(String caja)
       throws IOException, ParseException {
-    assertConsistent(null, caja);
-  }
-  private void assertConsistent(String message, String caja)
-      throws IOException, ParseException {
+    mq.getMessages().clear();
     // Make sure the tree assigns the result to the unittestResult___ var.
-    Object uncajoledResult = RhinoTestBed.runJs(
+    return RhinoTestBed.runJs(
         null,
         new RhinoTestBed.Input(
             "var caja = { def: function (clazz, sup, props, statics) {" +
@@ -2481,7 +2446,10 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
             "caja-stub"),
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
+  }
 
+  protected Object rewriteAndExecute(String caja)
+      throws IOException, ParseException {
     mq.getMessages().clear();
 
     Statement cajaTree = replaceLastStatementWithEmit(
@@ -2489,36 +2457,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
     String cajoledJs = render(
         cajole(js(fromResource("../../plugin/asserts.js")), cajaTree));
 
-    assertNoErrors();
-    assertEquals(message, uncajoledResult, runCajoled(cajoledJs));
-  }
-
-  /**
-   * Run cajoled code with jsunit predicates.  Passes if the code
-   * cajoles without erros and executes in Rhino without raising an
-   * exception.
-   */
-  private void assertCajoled(String caja) throws IOException, ParseException {
-    mq.getMessages().clear();
-
-    Statement cajaTree = js(fromString(caja));
-    Statement asserts = js(fromResource("../../plugin/asserts.js"));
-    String cajoledJs = render(cajole(asserts, cajaTree));
-
-    assertNoErrors();
-    runCajoled(cajoledJs);
-  }
-
-  private void assertNoErrors() {
-    for (Message msg : mq.getMessages()) {
-      if (MessageLevel.ERROR.compareTo(msg.getMessageLevel()) <= 0) {
-        fail(msg.format(mc));
-      }
-    }
-  }
-
-  private Object runCajoled(String cajoledJs) throws IOException {
-    return RhinoTestBed.runJs(
+    Object result = RhinoTestBed.runJs(
         null,
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
@@ -2538,6 +2477,17 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
             getName() + "-cajoled"),
         // Return the output field as the value of the run.
         new RhinoTestBed.Input("unittestResult___", getName()));
+
+    assertNoErrors();
+    return result;
+  }
+
+  private void assertNoErrors() {
+    for (Message msg : mq.getMessages()) {
+      if (MessageLevel.ERROR.compareTo(msg.getMessageLevel()) <= 0) {
+        fail(msg.format(mc));
+      }
+    }
   }
 
   private <T extends ParseTreeNode> T replaceLastStatementWithEmit(
@@ -2564,5 +2514,9 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
   private ParseTreeNode cajole(Statement... nodes) {
     return new DefaultCajaRewriter(false).expand(
         new Block(Arrays.asList(nodes)), mq);
+  }
+
+  protected Rewriter newRewriter() {
+    return new DefaultCajaRewriter(true);
   }
 }

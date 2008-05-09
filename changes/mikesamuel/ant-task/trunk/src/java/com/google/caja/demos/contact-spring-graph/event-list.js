@@ -30,13 +30,13 @@ function CalEvent(id, attendees) {
   this.attendees_ = caja.freeze(attendees.slice(0));
 }
 ___.ctor(CalEvent, Object, 'CalEvent');
-CalEvent.prototype.toString = ___.method(CalEvent, function () {
+CalEvent.prototype.toString = ___.method(function () {
   return '[CalEvent ' + this.id_ + ' : ' + this.attendees_ + ']';
 }, 'toString');
-CalEvent.prototype.getAttendees = ___.method(CalEvent, function () {
+CalEvent.prototype.getAttendees = ___.method(function () {
   return this.attendees_;
 }, 'getAttendees');
-CalEvent.prototype.getId = ___.method(CalEvent, function () {
+CalEvent.prototype.getId = ___.method(function () {
   return this.id_;
 }, 'getId');
 ___.allowCall(CalEvent.prototype, 'getAttendees');
@@ -51,9 +51,9 @@ function Calendar(events) {
 }
 ___.ctor(Calendar, Object, 'Calendar');
 Calendar.prototype.getEvents = ___.method(
-    Calendar, function () { return this.events_; }, 'getEvents');
+    function () { return this.events_; }, 'getEvents');
 Calendar.prototype.toString = ___.method(
-    Calendar, function () { return '[Calendar]'; }, 'toString');
+    function () { return '[Calendar]'; }, 'toString');
 ___.allowCall(Calendar.prototype, 'getEvents');
 
 
