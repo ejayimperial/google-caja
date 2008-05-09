@@ -14,8 +14,8 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.FilePosition;
-import com.google.caja.lexer.InputSource;
+import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
+
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
@@ -31,14 +31,10 @@ import com.google.caja.parser.js.Statement;
 import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
-import com.google.caja.reporting.MessagePart;
-import com.google.caja.reporting.MessageQueue;
-import com.google.caja.util.CajaTestCase;
 import com.google.caja.reporting.MessageType;
+import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.RhinoTestBed;
 import com.google.caja.util.TestUtil;
-
-import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 
 import junit.framework.AssertionFailedError;
 
@@ -59,7 +55,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
    *
    * @author erights@gmail.com
    */
-  private static String weldSetOuters(String varName, String tempValue, String value) {
+  public static String weldSetOuters(String varName, String tempValue, String value) {
     return
         tempValue + " = " + value + "," +
         "    ___OUTERS___." + varName + "_canSet___ ?" +
@@ -94,7 +90,7 @@ public class DefaultCajaRewriterTest extends CajaTestCase {
    *
    * @author erights@gmail.com
    */
-  private static String weldReadOuters(String varName) {
+  public static String weldReadOuters(String varName) {
     return weldReadOuters(varName, true);
   }
 
