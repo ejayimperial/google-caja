@@ -105,7 +105,7 @@ public abstract class Rule implements MessagePart {
    * @return the rewriter this {@code Rule} uses.
    */
   public Rewriter getRewriter() { return rewriter; }
-  
+
   /**
    * Set the rewriter this {@code Rule} uses.
    */

@@ -191,7 +191,7 @@ attachDocumentStub = (function () {
     clearInterval(intervalId.intervalId___);
   }
   ___.simpleFunc(tameClearInterval);
-  
+
   // See above for a description of this function.
   function attachDocumentStub(idSuffix, uriCallback, outers) {
     var elementPolicies = {};

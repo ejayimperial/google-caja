@@ -24,7 +24,7 @@
  * and, like this file, is untrusted code.
  * <p><tt>plugin-api.js</tt> contains the methods that the embedding Calendar
  * application exports to this plugin.
- * 
+ *
  * @author mikesamuel@gmail.com
  */
 
