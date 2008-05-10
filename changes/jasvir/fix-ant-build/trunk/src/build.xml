@@ -92,7 +92,6 @@
   <path id="classpath.docs">
     <path refid="classpath.compile"/>
     <path refid="classpath.ant"/>
-    <pathelement path="${java.home}/jre/lib/rt.jar"/>
   </path>
 
   <!--== Tasks Used Below ==-->
