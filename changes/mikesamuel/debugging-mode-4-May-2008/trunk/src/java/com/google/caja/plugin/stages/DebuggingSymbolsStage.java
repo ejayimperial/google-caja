@@ -417,8 +417,16 @@ final class CajaRuntimeRewriter extends Rewriter {
     for (ParseTreeNode child : node.children()) {
       FilePosition childPos = spanningPos(child);
       if (childPos != null) {
-        end = childPos;
-        if (start == null) { start = childPos; }
+        if (start == null) {
+          start = end = childPos;
+        } else if (start.source().equals(childPos.source())) {
+          if (childPos.startCharInFile() < start.startCharInFile()) {
+            start = childPos;
+          }
+          if (childPos.endCharInFile() > end.endCharInFile()) {
+            end = childPos;
+          }
+        }
       }
     }
     if (start != null) { return FilePosition.span(start, end); }

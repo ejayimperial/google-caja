@@ -191,7 +191,7 @@
     var stackFrame = pushFrame(this.debugSymbols_[callerIdx]);
     try {
       try {
-        return orig.callProp.apply(this, arguments);
+        return orig.callPub.apply(this, arguments);
       } catch (ex) {
         attachCajaStack(ex);
         throw ex;
@@ -225,7 +225,7 @@
     return orig.simpleFunc(wrapper);
   }
 
-  
+
   function tameException(ex) {
     var ex = orig.tameException(ex);
     // Make sure that tamed Errors propogate the cajaStack___,

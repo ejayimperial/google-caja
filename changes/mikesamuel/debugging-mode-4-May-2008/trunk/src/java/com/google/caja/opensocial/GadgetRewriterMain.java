@@ -58,11 +58,11 @@ public class GadgetRewriterMain {
      }
      System.exit(-1);
    }
-    
+
   public boolean init(String[] argv) {
     return config.processArguments(argv);
   }
-   
+
   public int run()
       throws GadgetRewriteException, IOException, UriCallbackException,
           ParseException {
@@ -95,10 +95,10 @@ public class GadgetRewriterMain {
     } finally {
       w.close();
     }
-    
+
     return 0;
   }
-  
+
   public Config getConfig() {
     return config;
   }
