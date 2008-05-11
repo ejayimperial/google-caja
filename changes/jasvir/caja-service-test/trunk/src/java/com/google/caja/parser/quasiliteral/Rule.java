@@ -32,7 +32,6 @@ import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.StringLiteral;
-import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.UndefinedLiteral;
 import com.google.caja.plugin.ReservedNames;
 import com.google.caja.plugin.SyntheticNodes;
@@ -58,7 +57,7 @@ import java.util.LinkedHashMap;
  * A rewriting rule supplied by a subclass.
  */
 public abstract class Rule implements MessagePart {
-  
+
   /**
    * The special return value from a rule that indicates the rule
    * does not apply to the supplied input.
@@ -82,7 +81,7 @@ public abstract class Rule implements MessagePart {
 
   /**
    * Create a new {@code Rule}.
-   * 
+   *
    * @param name the unique name of this rule.
    */
   public Rule(String name, Rewriter rewriter) {
@@ -103,7 +102,12 @@ public abstract class Rule implements MessagePart {
   }
 
   /**
-   * Set the rewriter this{@code Rule} uses.
+   * @return the rewriter this {@code Rule} uses.
+   */
+  public Rewriter getRewriter() { return rewriter; }
+
+  /**
+   * Set the rewriter this {@code Rule} uses.
    */
   public void setRewriter(Rewriter rewriter) {
     this.rewriter = rewriter;
@@ -130,7 +134,7 @@ public abstract class Rule implements MessagePart {
   public void format(MessageContext mc, Appendable out) throws IOException {
     out.append("Rule \"" + name + "\"");
   }
-  
+
   protected final void expandEntry(
       Map<String, ParseTreeNode> bindings,
       String key,
@@ -162,10 +166,14 @@ public abstract class Rule implements MessagePart {
       rewrittenChildren.add(rewriter.expand(child, scope, mq));
     }
 
-    return ParseTreeNodes.newNodeInstance(
+    ParseTreeNode result = ParseTreeNodes.newNodeInstance(
         parentNodeClass,
         node.getValue(),
         rewrittenChildren);
+    result.getAttributes().putAll(node.getAttributes());
+    result.getAttributes().remove(ParseTreeNode.TAINTED);
+
+    return result;
   }
 
   protected ParseTreeNode getFunctionHeadDeclarations(
@@ -177,14 +185,14 @@ public abstract class Rule implements MessagePart {
     if (scope.hasFreeArguments()) {
       stmts.add(substV(
           "var @la = ___.args(@ga);",
-          "la", new Identifier(ReservedNames.LOCAL_ARGUMENTS),
-          "ga", new Reference(new Identifier(ReservedNames.ARGUMENTS))));
+          "la", s(new Identifier(ReservedNames.LOCAL_ARGUMENTS)),
+          "ga", newReference(ReservedNames.ARGUMENTS)));
     }
     if (scope.hasFreeThis()) {
       stmts.add(substV(
           "var @lt = @gt;",
-          "lt", new Identifier(ReservedNames.LOCAL_THIS),
-          "gt", new Reference(new Identifier(ReservedNames.THIS))));
+          "lt", s(new Identifier(ReservedNames.LOCAL_THIS)),
+          "gt", newReference(ReservedNames.THIS)));
     }
 
     return new ParseTreeNodeContainer(stmts);
@@ -258,11 +266,11 @@ public abstract class Rule implements MessagePart {
     if (scope.isGlobal(sName)) {
       return s(new ExpressionStmt((Expression)substV(
           "@temp = @value," +
-          "___OUTERS___.@sCanSet ?" +
-          "  (___OUTERS___.@s = @temp) :" +
-          "  ___.setPub(___OUTERS___, @sName, @temp);",
+          ReservedNames.IMPORTS + ".@sCanSet ?" +
+          "  (" + ReservedNames.IMPORTS + ".@s = @temp) :" +
+          "  ___.setPub(" + ReservedNames.IMPORTS + ", @sName, @temp);",
           "s", symbol,
-          "sCanSet", new Reference(new Identifier(sName + "_canSet___")),
+          "sCanSet", newReference(sName + "_canSet___"),
           "sName", toStringLiteral(symbol),
           "temp", s(new Reference(scope.declareStartOfScopeTempVariable())),
           "value", value)));
@@ -275,15 +283,10 @@ public abstract class Rule implements MessagePart {
   }
 
   protected ParseTreeNode expandMember(
-      ParseTreeNode fname,
       ParseTreeNode member,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    if (!scope.isDeclaredFunction(getReferenceName(fname))) {
-      throw new RuntimeException("Internal: not statically a function name: " + fname);
-    }
-
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
     if (match("function(@ps*) { @bs*; }", member, bindings)) {
@@ -291,13 +294,13 @@ public abstract class Rule implements MessagePart {
       if (s2.hasFreeThis()) {
         checkFormals(bindings.get("ps"), mq);
         return substV(
-            "___.method(@fname, function(@ps*) {" +
+            "___.method(function(@ps*) {" +
             "  @fh*;" +
             "  @stmts*;" +
             "  @bs*;" +
             "});",
-            "fname", expandReferenceToOuters(fname, scope, mq),
             "ps",    bindings.get("ps"),
+            // It's important to expand bs before computing fh and stmts.
             "bs",    rewriter.expand(bindings.get("bs"), s2, mq),
             "fh",    getFunctionHeadDeclarations(rule, s2, mq),
             "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
@@ -308,28 +311,22 @@ public abstract class Rule implements MessagePart {
   }
 
   protected ParseTreeNode expandAllMembers(
-      ParseTreeNode fname,
       ParseTreeNode members,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
     List<ParseTreeNode> results = new ArrayList<ParseTreeNode>();
     for (ParseTreeNode member : members.children()) {
-      results.add(expandMember(fname, member, rule, scope, mq));
+      results.add(expandMember(member, rule, scope, mq));
     }
     return new ParseTreeNodeContainer(results);
   }
 
   protected ParseTreeNode expandMemberMap(
-      ParseTreeNode fname,
       ParseTreeNode memberMap,
       Rule rule,
       Scope scope,
       MessageQueue mq) {
-    if (!scope.isDeclaredFunction(getReferenceName(fname))) {
-      throw new RuntimeException("Internal: not statically a function name: " + fname);
-    }
-
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
     if (match("({@keys*: @vals*})", memberMap, bindings)) {
@@ -343,7 +340,7 @@ public abstract class Rule implements MessagePart {
       return substV(
           "({@keys*: @vals*})",
           "keys", bindings.get("keys"),
-          "vals", expandAllMembers(fname, bindings.get("vals"), rule, scope, mq));
+          "vals", expandAllMembers(bindings.get("vals"), rule, scope, mq));
     }
 
     mq.addMessage(RewriterMessageType.MAP_EXPRESSION_EXPECTED,
@@ -352,16 +349,18 @@ public abstract class Rule implements MessagePart {
   }
 
   // TODO(erights): Remove this when first class constructors are checked in.
-  protected ParseTreeNode expandReferenceToOuters(
+  protected ParseTreeNode expandReferenceToImports(
       ParseTreeNode ref,
       Scope scope,
       MessageQueue mq) {
     String xName = getReferenceName(ref);
     if (scope.isGlobal(xName)) {
       return substV(
-          "___OUTERS___.@xCanRead ? ___OUTERS___.@x : ___.readPub(___OUTERS___, @xName, true);",
+          ("IMPORTS___.@xCanRead"
+           + "    ? IMPORTS___.@x"
+           + "    : ___.readPub(IMPORTS___, @xName, true);"),
           "x", ref,
-          "xCanRead", new Reference(new Identifier(xName + "_canRead___")),
+          "xCanRead", newReference(xName + "_canRead___"),
           "xName", new StringLiteral(StringLiteral.toQuotedValue(xName)));
     } else {
       return ref;
@@ -461,10 +460,10 @@ public abstract class Rule implements MessagePart {
           (Expression) rewriter.expand(operand, scope, mq));
     } else if (operand instanceof Reference) {
       rewriter.expand(operand, scope, mq);
-      Reference outers = s(new Reference(s(new Identifier("___OUTERS___"))));
-      outers.setFilePosition(FilePosition.startOf(operand.getFilePosition()));
+      Reference imports = newReference(ReservedNames.IMPORTS);
+      imports.setFilePosition(FilePosition.startOf(operand.getFilePosition()));
       return sideEffectingReadAssignOperand(
-          outers, toStringLiteral(operand), scope, mq);
+          imports, toStringLiteral(operand), scope, mq);
     } else if (operand instanceof Operation) {
       Operation op = (Operation) operand;
       switch (op.getOperator()) {
@@ -521,7 +520,7 @@ public abstract class Rule implements MessagePart {
     // If the left is simple and the right does not need a temporary variable
     // then don't introduce one.
     if (isKeySimple && (isLocalReference(left, scope)
-                        || isOutersReference(left))) {
+                        || isImportsReference(left))) {
       object = (Reference) left;
     } else {
       Identifier tmpVar = scope.declareStartOfScopeTempVariable();
@@ -554,7 +553,7 @@ public abstract class Rule implements MessagePart {
         "object", object,
         "key", key,
         // Make sure exception thrown if global variable not defined.
-        "isGlobal", new BooleanLiteral(isOutersReference(object)));
+        "isGlobal", new BooleanLiteral(isImportsReference(object)));
 
     return new ReadAssignOperands(temporaries, rvalueCajoled) {
         @Override
@@ -572,7 +571,7 @@ public abstract class Rule implements MessagePart {
   /**
    * True iff e is a reference to a local in scope.
    * We distinguish local references in many places because members of
-   * {@code ___OUTERS___} might be backed by getters/setters, and so
+   * {@code IMPORTS___} might be backed by getters/setters, and so
    * must be evaluated exactly once as an lvalue.
    */
   private static boolean isLocalReference(Expression e, Scope scope) {
@@ -581,10 +580,10 @@ public abstract class Rule implements MessagePart {
   }
 
   /** True iff e is a reference to the global object. */
-  private static boolean isOutersReference(Expression e) {
+  private static boolean isImportsReference(Expression e) {
     if (!(e instanceof Reference)) { return false; }
     // TODO(mikesamuel): move ReservedNames into this package and use it here.
-    return "___OUTERS___".equals(((Reference) e).getIdentifierName());
+    return ReservedNames.IMPORTS.equals(((Reference) e).getIdentifierName());
   }
 
   /**

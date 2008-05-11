@@ -54,8 +54,8 @@ public class HtmlCompiledPluginTest extends TestCase {
     super.tearDown();
   }
 
-  // TODO(stay): Move as many of these as possible to DefaultCajaRewriterTest
-  //             using assertConsistent
+  // TODO(metaweta): Move as many of these as possible to DefaultCajaRewriterTest
+  // using assertConsistent
   public void testEmptyGadget() throws Exception {
     execGadget("", "");
   }
@@ -69,7 +69,7 @@ public class HtmlCompiledPluginTest extends TestCase {
   public void testWrapperAccess() throws Exception {
     execGadget(
         "<script>x='test';</script>",
-        "if (___.getNewModuleHandler().getOuters().x != 'test') {" +
+        "if (___.getNewModuleHandler().getImports().x != 'test') {" +
           "fail('Cannot see inside the wrapper');" +
         "}"
         );
@@ -268,9 +268,9 @@ public class HtmlCompiledPluginTest extends TestCase {
     execGadget(
         "<script>x=this;</script>",
 
-        "if (___.getNewModuleHandler().getOuters().x"
-        + "!== ___.getNewModuleHandler().getOuters())"
-        + "  fail('this not rewritten to outers in global scope');"
+        "if (___.getNewModuleHandler().getImports().x"
+        + "!== ___.getNewModuleHandler().getImports())"
+        + "  fail('this not rewritten to imports in global scope');"
         );
   }
 
@@ -282,7 +282,7 @@ public class HtmlCompiledPluginTest extends TestCase {
   public void testThisIsGlobalScope() throws Exception {
     execGadget(
         "<script>try{x=this;}catch(e){}</script>",
-        "if (___.getNewModuleHandler().getOuters().x === this)" +
+        "if (___.getNewModuleHandler().getImports().x === this)" +
           "fail('Global scope is accessible');"
         );
   }
@@ -298,7 +298,7 @@ public class HtmlCompiledPluginTest extends TestCase {
     if (false) {
     execGadget(
         "<script>var x = 1; x = this.prototype; x = 2;</script>",
-        "if (___.getNewModuleHandler().getOuters().x === 2)" +
+        "if (___.getNewModuleHandler().getImports().x === 2)" +
           "fail('Global scope prototype is accessible');"
         );
     }
@@ -452,7 +452,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "}" +
         "</script>",
         "assertEquals(" +
-        "    ___.getNewModuleHandler().getOuters().result.toSource()," +
+        "    ___.getNewModuleHandler().getImports().result.toSource()," +
         "    (['y', 'z']).toSource());");
     execGadget(
         "<script>" +
@@ -466,7 +466,8 @@ public class HtmlCompiledPluginTest extends TestCase {
         "}" +
         "</script>",
         "assertEquals(" +
-        "    ___.getNewModuleHandler().getOuters().test({x_:1, y:2, z:3}).sort().toSource()," +
+        "    ___.getNewModuleHandler().getImports().test({x_:1, y:2, z:3})" +
+        "        .sort().toSource()," +
         "    (['y', 'z']).toSource());");
     execGadget(
         "<script>" +
@@ -486,19 +487,9 @@ public class HtmlCompiledPluginTest extends TestCase {
         "var obj = new Foo();" +
         "</script>",
         "assertEquals(" +
-        "    ___.getNewModuleHandler().getOuters().obj.test().sort().toSource()," +
+        "    ___.getNewModuleHandler().getImports().obj.test()" +
+        "        .sort().toSource()," +
         "    (['test', 'x_', 'y']).toSource());");
-  }
-
-  public void testInstanceMethod() throws Exception {
-    // TODO(metaweta): Put this test back in when issue143 is fixed.
-    if (false) {
-      execGadget(
-          "<script>" +
-          "function Foo() { this.f = function(){ return this; }}" +
-          "</script>",
-          "");
-    }
   }
 
   public void testGlobalThis() throws Exception {
@@ -519,10 +510,91 @@ public class HtmlCompiledPluginTest extends TestCase {
         "");
   }
 
-  public void testStaticMembers() throws Exception {
-    execGadget("<script>" +
-        "function Foo(){}" +
-        "Foo.prototype.x = 1;" +
+  public void testAttachedMethod() throws Exception {
+    // The cases that succeed are tested in DefaultCajaRewriterTest
+    execGadget(
+        "<script>" +
+        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
+        "var foo = new Foo();" +
+        "var g=foo.f;" +
+        "var passed=false;" +
+        "try { g(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Attached method should not be able to be called as a simple function.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.f = function(){ this.x_ = 1; }; };" +
+        "var foo = new Foo();" +
+        "var h={f:foo.f};" +
+        "var passed=false;" +
+        "try { h.f(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Attached method should not be able to be called on a different object.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() {}" +
+        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
+        "foo = new Foo;" +
+        "h={setX:foo.setX};" +
+        "passed = false;" +
+        "try { h.setX(1); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Unattached methods are not being attached properly.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() {}" +
+        "Foo.prototype.setX = function (x) { this.x_ = x; };" +
+        "foo = new Foo;" +
+        "g = foo.setX;" +
+        "passed = false;" +
+        "try { g(); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Unattached methods are not being attached properly.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  this.Bar = function Bar(x){ " +
+        "    this.x_ = x; " +
+        "    this.getX = function() { return this.x_; }" +
+        "  }; " +
+        "};" +
+        "foo = new Foo;" +
+        "passed = false;" +
+        "try { foo.Bar(5); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Constructors are being attached as methods.');" +
+        "}" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Foo() { this.gogo(); }" +
+        "Foo.prototype.gogo = function () { " +
+        "  function Bar(x){ " +
+        "    this.x_ = x; " +
+        "  }" +
+        "  Bar.prototype.getX = function () { return this.x_; };" +
+        "  this.Bar = Bar;" +
+        "};" +
+        "foo = new Foo;" +
+        "passed = false;" +
+        "try { foo.Bar(5); } catch (e) { passed = true; }" +
+        "if (!passed) {" +
+        "  fail('Constructors are being attached as methods.');" +
+        "}" +
         "</script>",
         "");
   }

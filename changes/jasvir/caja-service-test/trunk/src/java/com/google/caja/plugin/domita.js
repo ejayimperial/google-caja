@@ -42,7 +42,7 @@
  *     }</pre>.
  *     The rewrite function should be idempotent to allow rewritten HTML
  *     to be reinjected.
- * @param {Object} outers the gadget's global scope.
+ * @param {Object} imports the gadget's global scope.
  */
 attachDocumentStub = (function () {
   var tameNodeTrademark = {};
@@ -109,6 +109,11 @@ attachDocumentStub = (function () {
     return XML_NMTOKENS_PATTERN.test(s);
   }
 
+  function mimeTypeForAttr(tagName, attribName) {
+    if (tagName === 'img' && attribName === 'src') { return 'image/*'; }
+    return '*/*';
+  }
+
   function assert(cond) {
     if (!cond) {
       console && (console.log('domita assertion failed'), console.trace());
@@ -155,8 +160,40 @@ attachDocumentStub = (function () {
 
   var cssSealerUnsealerPair = caja.makeSealerUnsealerPair();
 
+  // Implementations of setTimeout, setInterval, clearTimeout, and
+  // clearInterval that only allow simple functions as timeouts and
+  // that treat timeout ids as capabilities.
+  // This is safe even if accessed across frame since the same
+  // trademark value is never used with more than one version of
+  // setTimeout.
+
+  var timeoutIdTrademark = {};
+  function tameSetTimeout(timeout, delayMillis) {
+    var timeoutId = setTimeout(___.asSimpleFunc(timeout), delayMillis | 0);
+    return ___.audit(timeoutIdTrademark,
+                     ___.freeze({ timeoutId___: timeoutId }));
+  }
+  ___.simpleFunc(tameSetTimeout);
+  function tameClearTimeout(timeoutId) {
+    ___.guard(timeoutIdTrademark, timeoutId);
+    clearTimeout(timeoutId.timeoutId___);
+  }
+  ___.simpleFunc(tameClearTimeout);
+  var intervalIdTrademark = {};
+  function tameSetInterval(interval, delayMillis) {
+    var intervalId = setInterval(___.asSimpleFunc(interval), delayMillis | 0);
+    return ___.audit(intervalIdTrademark,
+                     ___.freeze({ intervalId___: intervalId }));
+  }
+  ___.simpleFunc(tameSetInterval);
+  function tameClearInterval(intervalId) {
+    ___.guard(intervalIdTrademark, intervalId);
+    clearInterval(intervalId.intervalId___);
+  }
+  ___.simpleFunc(tameClearInterval);
+
   // See above for a description of this function.
-  function attachDocumentStub(idSuffix, uriCallback, outers) {
+  function attachDocumentStub(idSuffix, uriCallback, imports) {
     var elementPolicies = {};
     elementPolicies.form = function (attribs) {
       // Forms must have a gated onsubmit handler or they must have an
@@ -280,7 +317,7 @@ attachDocumentStub = (function () {
           if (!match) { return null; }
           var doesReturn = match[1];
           var fnName = match[2];
-          var pluginId = ___.getId(outers);
+          var pluginId = ___.getId(imports);
           value = (doesReturn ? 'return ' : '') + 'plugin_dispatchEvent___('
               + 'this, event || window.event, ' + pluginId + ', "'
               + fnName + '");';
@@ -292,8 +329,10 @@ attachDocumentStub = (function () {
           value = String(value);
           if (!uriCallback) { return null; }
           // TODO(mikesamuel): determine mime type properly.
-          return uriCallback.rewrite(value, '*/*') || null;
+          return uriCallback.rewrite(
+              value, mimeTypeForAttr(tagName, attribName)) || null;
         case html4.atype.STYLE:
+          if ('function' !== typeof value) { return null; }
           var cssPropertiesAndValues = cssSealerUnsealerPair.unseal(value);
           if (!cssPropertiesAndValues) { return null; }
 
@@ -421,16 +460,16 @@ attachDocumentStub = (function () {
       this.node___.replaceChild(child.node___, replacement.node___);
     };
     TameNode.prototype.getFirstChild = function () {
-      return tameNode(this.node___.firstChild);
+      return tameNode(this.node___.firstChild, this.editable___);
     };
     TameNode.prototype.getLastChild = function () {
-      return tameNode(this.node___.lastChild);
+      return tameNode(this.node___.lastChild, this.editable___);
     };
     TameNode.prototype.getNextSibling = function () {
-      return tameNode(this.node___.nextSibling);
+      return tameNode(this.node___.nextSibling, this.editable___);
     };
     TameNode.prototype.getPrevSibling = function () {
-      return tameNode(this.node___.prevSibling);
+      return tameNode(this.node___.prevSibling, this.editable___);
     };
     TameNode.prototype.getElementsByTagName = function (tagName) {
       return tameNodeList(
@@ -517,7 +556,7 @@ attachDocumentStub = (function () {
     };
     TameElement.prototype.setClassName = function (classes) {
       if (!this.editable___) { throw new Error(); }
-      return this.getAttribute('class', String(classes));
+      return this.setAttribute('class', String(classes));
     };
     TameElement.prototype.getTagName = TameNode.prototype.getNodeName;
     TameElement.prototype.getInnerHTML = function () {
@@ -588,7 +627,7 @@ attachDocumentStub = (function () {
         var wrappedListener = function (event) {
           return plugin_dispatchEvent___(
               this, event || window.event,
-              ___.getId(outers), listener);
+              ___.getId(imports), listener);
         };
         this.node___.addEventListener(
             name, wrappedListener,
@@ -597,10 +636,22 @@ attachDocumentStub = (function () {
         var thisNode = this.node___;
         var wrappedListener = function (event) {
           return plugin_dispatchEvent___(
-              thisNode, event || window.event, ___.getId(outers), listener);
+              thisNode, event || window.event, ___.getId(imports), listener);
         };
         this.node___.attachEvent('on' + name, wrappedListener);
       }
+    };
+    TameElement.prototype.getOffsetLeft = function () {
+      return this.node___.offsetLeft;
+    };
+    TameElement.prototype.getOffsetTop = function () {
+      return this.node___.offsetTop;
+    };
+    TameElement.prototype.getOffsetWidth = function () {
+      return this.node___.offsetWidth;
+    };
+    TameElement.prototype.getOffsetHeight = function () {
+      return this.node___.offsetHeight;
     };
     TameElement.prototype.toString = function () {
       return '<' + this.node___.tagName + '>';
@@ -611,10 +662,11 @@ attachDocumentStub = (function () {
        ['addEventListener', 'getAttribute', 'setAttribute',
         'getClassName', 'setClassName', 'getId', 'setId',
         'getInnerHTML', 'setInnerHTML', 'updateStyle', 'getStyle', 'setStyle',
-        'getTagName']);
+        'getTagName', 'getOffsetLeft', 'getOffsetTop', 'getOffsetWidth',
+        'getOffsetHeight']);
     exportFields(TameElement,
-                 ['className', 'id', 'innerHTML', 'tagName', 'style']);
-
+                 ['className', 'id', 'innerHTML', 'tagName', 'style',
+                  'offsetLeft', 'offsetTop', 'offsetWidth', 'offsetHeight']);
 
     function TameFormElement(node, editable) {
       TameElement.call(this, node, editable);
@@ -650,7 +702,7 @@ attachDocumentStub = (function () {
       this.node___.blur();
     };
     TameInputElement.prototype.getForm = function () {
-      return tameNode(this.node___.form);
+      return tameNode(this.node___.form, this.editable___);
     };
     ___.ctor(TameInputElement, TameElement, 'TameInputElement');
     ___.all2(___.allowMethod, TameInputElement,
@@ -772,26 +824,26 @@ attachDocumentStub = (function () {
     ___.all2(___.allowMethod, TameDocument,
              ['createElement', 'createTextNode', 'getElementById']);
 
-    outers.tameNode___ = tameNode;
-    outers.tameEvent___ = function (event) { return new TameEvent(event); };
-    outers.blessHtml___ = blessHtml;
-    outers.blessCss___ = function (var_args) {
+    imports.tameNode___ = tameNode;
+    imports.tameEvent___ = function (event) { return new TameEvent(event); };
+    imports.blessHtml___ = blessHtml;
+    imports.blessCss___ = function (var_args) {
       var arr = [];
       for (var i = 0, n = arguments.length; i < n; ++i) {
         arr[i] = arguments[i];
       }
       return cssSealerUnsealerPair.seal(arr);
     };
-    outers.htmlAttr___ = function (s) {
+    imports.htmlAttr___ = function (s) {
       return html.escapeAttrib(String(s || ''));
     };
-    outers.html___ = safeHtml;
-    outers.rewriteUri___ = function (uri, mimeType) {
+    imports.html___ = safeHtml;
+    imports.rewriteUri___ = function (uri, mimeType) {
       var s = rewriteAttribute(null, null, html4.atype.URI, uri);
       if (!s) { throw new Error(); }
       return s;
     };
-    outers.suffix___ = function (nmtokens) {
+    imports.suffix___ = function (nmtokens) {
       var p = String(nmtokens).replace(/^\s+|\s+$/g, '').split(/\s+/g);
       var out = [];
       for (var i = 0; i < p.length; ++i) {
@@ -801,7 +853,7 @@ attachDocumentStub = (function () {
       }
       return out.join(' ');
     };
-    outers.ident___ = function (nmtokens) {
+    imports.ident___ = function (nmtokens) {
       var p = String(nmtokens).replace(/^\s+|\s+$/g, '').split(/\s+/g);
       var out = [];
       for (var i = 0; i < p.length; ++i) {
@@ -818,7 +870,7 @@ attachDocumentStub = (function () {
      * @return {string} an CSS representation of a number suitable for both html
      *    attribs and plain text.
      */
-    outers.cssNumber___ = function (num) {
+    imports.cssNumber___ = function (num) {
       if ('number' === typeof num && isFinite(num) && !isNaN(num)) {
         return '' + num;
       }
@@ -831,7 +883,7 @@ attachDocumentStub = (function () {
      * @return {String} an CSS representation of num suitable for both html
      *    attribs and plain text.
      */
-    outers.cssColor___ = function (color) {
+    imports.cssColor___ = function (color) {
       // TODO: maybe whitelist the color names defined for CSS if the arg is a
       // string.
       if ('number' !== typeof color || (color != (color | 0))) {
@@ -845,7 +897,7 @@ attachDocumentStub = (function () {
           + hex.charAt((color >> 4) & 0xf)
           + hex.charAt(color & 0xf);
     };
-    outers.cssUri___ = function (uri, mimeType) {
+    imports.cssUri___ = function (uri, mimeType) {
       var s = rewriteAttribute(null, null, html4.atype.URI, uri);
       if (!s) { throw new Error(); }
       return s;
@@ -854,7 +906,7 @@ attachDocumentStub = (function () {
     /**
      * Create a CSS stylesheet with the given text and append it to the DOM.
      */
-    outers.emitCss___ = function (stylesheet) {
+    imports.emitCss___ = function (stylesheet) {
       var style;
       try {
         style = document.createElement('style');
@@ -871,11 +923,16 @@ attachDocumentStub = (function () {
     };
 
     /** A per-gadget class used to separate style rules. */
-    outers.getIdClass___ = function () {
-      return idSuffix;
+    imports.getIdClass___ = function () {
+      return idSuffix.replace(/^-/, '');
     };
 
-    outers.document = new TameDocument(document, true);
+    imports.setTimeout = tameSetTimeout;
+    imports.setInterval = tameSetInterval;
+    imports.clearTimeout = tameClearTimeout;
+    imports.clearInterval = tameClearInterval;
+
+    imports.document = new TameDocument(document, true);
   }
 
   return attachDocumentStub;
@@ -889,10 +946,10 @@ function plugin_dispatchEvent___(thisNode, event, pluginId, handler) {
   console.log(
       'Dispatch %s event thisNode=%o, event=%o, pluginId=%o, handler=%o',
       event.type, thisNode, event, pluginId, handler);
-  var outers = ___.getOuters(pluginId);
+  var imports = ___.getImports(pluginId);
   switch (typeof handler) {
     case 'string':
-      handler = outers[handler];
+      handler = imports[handler];
       break;
     case 'function':
       break;
@@ -901,5 +958,5 @@ function plugin_dispatchEvent___(thisNode, event, pluginId, handler) {
           'Expected function as event handler, not ' + typeof handler);
   }
   return (___.asSimpleFunc(handler))(
-      outers.tameNode___(thisNode), outers.tameEvent___(event));
+      imports.tameNode___(thisNode, true), imports.tameEvent___(event));
 }

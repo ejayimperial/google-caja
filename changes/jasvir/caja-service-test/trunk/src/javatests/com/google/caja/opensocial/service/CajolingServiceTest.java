@@ -24,6 +24,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -65,11 +66,12 @@ public class CajolingServiceTest extends CajaTestCase {
 
    public void handle(HttpExchange ex) throws IOException {
      Reader request = new InputStreamReader(ex.getRequestBody());
+     while(request.read() != -1) {}
      ex.getResponseHeaders().set("Content-Type", contentType);
      ex.sendResponseHeaders(HttpStatus.OK.value(), 0);
      Writer response = null;
      try {
-       response = new OutputStreamWriter(ex.getResponseBody(), charSet);
+       response = new OutputStreamWriter(ex.getResponseBody(), "UTF-8");
        response.write(testInstance);
      } finally {
        response.close();
@@ -101,7 +103,8 @@ public class CajolingServiceTest extends CajaTestCase {
   public void testSimpleJs() throws Exception {
     checkJs(
         "{ var x = y; }",
-        "{" + DefaultCajaRewriterTest.weldSetOuters("x", "x0___", DefaultCajaRewriterTest.weldReadOuters("y")) + "}");
+        "var x0___;" +
+        "{" + DefaultCajaRewriterTest.weldSetImports("x", "x0___", DefaultCajaRewriterTest.weldReadImports("y")) + "}");
   }
   
   private void checkJs(String original, String cajoled) throws IOException, ParseException {
@@ -113,15 +116,14 @@ public class CajolingServiceTest extends CajaTestCase {
     String request = localTestServer 
         + "?url=" + URLEncoder.encode(fetchUrl,"UTF-8")
         + "&mime-type=" + URLEncoder.encode(mimeType, "UTF-8");
-    String response = getTextRequest(request);
+    String response = getTextRequest(fetchUrl);
     ParseTreeNodes.deepEquals(js(fromString(response)), js(fromString(cajoled)));
   }
 
   private String getTextRequest(String testServer) 
     throws IOException {
     URL serverUrl = new URL(testServer);
-    HttpURLConnection connection = (HttpURLConnection)serverUrl.openConnection();
-    InputStreamReader content = new InputStreamReader(connection.getInputStream());
+    InputStream content = serverUrl.openStream();
     StringBuilder request = new StringBuilder();
     int in;
     while ((in = content.read()) != -1) { 
