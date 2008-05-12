@@ -140,7 +140,7 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
         + "  }\n"
         + "})();",
 
-        "testEnumerateOfNull:3+12 - 4+6\n"
+        "testEnumerateOfNull:2+7 - 4+6\n"
         + "testEnumerateOfNull:3+17 - 22");
   }
 

@@ -89,12 +89,12 @@ public abstract class Rewriter {
       try {
         ParseTreeNode result = rule.fire(node, scope, mq);
         if (result != Rule.NONE) {
-          if (result instanceof AbstractParseTreeNode) {
-            FilePosition pos = node.getFilePosition();
-            if (!QuasiBuilder.NULL_INPUT_SOURCE.equals(pos.source())
-                && !FilePosition.UNKNOWN.equals(pos)) {
-              ((AbstractParseTreeNode<?>) result).setFilePosition(pos);
-            }
+          FilePosition resultPos = result.getFilePosition();
+          if (result instanceof AbstractParseTreeNode
+              && (QuasiBuilder.NULL_INPUT_SOURCE.equals(resultPos.source())
+                  || FilePosition.UNKNOWN.equals(resultPos))) {
+            ((AbstractParseTreeNode<?>) result)
+                .setFilePosition(node.getFilePosition());
           }
           if (logging) { logResults(rule, node, result, null); }
           return result;
