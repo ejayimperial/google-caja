@@ -1526,7 +1526,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  toString : function () {" +
         "    var pairs = [];" +
         "    for (var k in this) {" +
-        "      if (typeof this[k] !== 'function') {" +
+        // TODO(metaweta): come up with a better way to be the same cajoled and plain
+        "      if (typeof this[k] !== 'function' && caja.canInnocentEnum(this, k)) {" +
         "        pairs.push(k + ':' + this[k]);" +
         "      }" +
         "    }" +

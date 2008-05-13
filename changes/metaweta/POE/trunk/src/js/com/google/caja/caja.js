@@ -1704,7 +1704,7 @@ var ___;
   allowSimpleFunc(String, 'fromCharCode');
   all2(allowMethod, String, [
     'charAt', 'charCodeAt', 'concat', 'indexOf', 'lastIndexOf',
-    'localeCompare', 'slice', 'substring',
+    'localeCompare', 'slice', 'substr', 'substring',
     'toLowerCase', 'toLocaleLowerCase', 'toUpperCase', 'toLocaleUpperCase'
   ]);
   useCallHandler(String.prototype, 'match', function(regexp) {
@@ -1938,6 +1938,10 @@ var ___;
 
   // Do not change the order of these without modifying the corresponding
   // lookup table below.
+  // This function is called in the new normal module handler; when
+  // using DOMado, this function will need to be replaced with another
+  // that returns a map including tamed dom element wrappers, since we
+  // can't inherit from those properly under IE.
   function makePOE() {
     return [
       { instance: Array,
@@ -2143,6 +2147,7 @@ var ___;
     canReadPub: canReadPub,       readPub: readPub,
     canEnumPub: canEnumPub,
     canEnumOwn: canEnumOwn,       
+    canInnocentEnum: canInnocentEnum,
     BREAK: BREAK,                 each: each,                   
     canCallPub: canCallPub,       callPub: callPub,
     canSetPub: canSetPub,         setPub: setPub,
@@ -2245,7 +2250,6 @@ var ___;
 
     // Accessing properties
     canReadProp: canReadProp,     readProp: readProp,
-    canInnocentEnum: canInnocentEnum,
     canEnumProp: canEnumProp,
     canCallProp: canCallProp,     callProp: callProp,
     canSetProp: canSetProp,       setProp: setProp,
