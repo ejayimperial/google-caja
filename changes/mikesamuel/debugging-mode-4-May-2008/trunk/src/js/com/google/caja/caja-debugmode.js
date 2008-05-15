@@ -202,15 +202,34 @@
   }
 
   function asSimpleFunc(fun, callerIdx) {
-    var debugSymbols = this.debugSymbols_;
+    return makeWrapper(fun, 'asSimpleFunc', this.debugSymbols_[callerIdx]);
+  }
+  function asCtor(fun, callerIdx) {
+    var wrapper = makeWrapper(fun, 'asCtor', this.debugSymbols_[callerIdx]);
+    wrapper.prototype = fun.prototype;
+    return wrapper;
+  }
+  /**
+   * Return a function of the same kind (simple/method/ctor) as fun, but
+   * making sure that any Error thrown because fun is not of the required kind
+   * has a stack attached.
+   *
+   * @param {Function} fun
+   * @param {string} conditionName name of the condition that checks
+   *     that fun is of the right kind.  E.g. 'asSimpleFunc'
+   * @param stackFrame of the call of fun in original source code.
+   * @return {Function} applies fun, but attaches a caja stack trace to any
+   *     Error raised by fun.
+   */
+  function makeWrapper(fun, conditionName, stackFrame) {
     try {
-      fun = orig.asSimpleFunc(fun);
+      fun = orig[conditionName](fun);
       if (!fun) { return fun; }
     } catch (ex) {
-      rethrowWith(ex, debugSymbols[callerIdx]);
+      rethrowWith(ex, stackFrame);
     }
     function wrapper() {
-      var stackFrame = pushFrame(debugSymbols[callerIdx]);
+      pushFrame(stackFrame);
       try {
         try {
           return fun.apply(this, arguments);
@@ -222,9 +241,19 @@
         popFrame(stackFrame);
       }
     }
-    return orig.simpleFunc(wrapper);
-  }
 
+    // fun might pass asCtor because it is simple.  Copy only the bits onto
+    // wrapper that allow it to survive similar checks.
+    if (fun.___SIMPLE_FUNC___) {
+      wrapper.___SIMPLE_FUNC___ = true;
+    } else if (fun.___METHOD___) {
+      wrapper.___METHOD___ = true;
+    } else if (fun.___CONSTRUCTOR___) {
+      wrapper.___CONSTRUCTOR___ = true;
+    }
+    
+    return orig.primFreeze(wrapper);
+  }
 
   function tameException(ex) {
     var ex = orig.tameException(ex);
@@ -285,6 +314,7 @@
         [
          'callPub', callPub,
          'callProp', callProp,
+         'asCtor', asCtor,
          'asSimpleFunc', asSimpleFunc
         ], 1);
     override(

@@ -69,7 +69,7 @@ public class CajaApplet extends Applet {
    * @param cajaInput as an HTML gadget.
    * @param embeddable true to render the output as embeddable.
    * @param debugMode true to build with
-   *   {@link com.google.caja.plugin.stage.DebugginSymbolsStage debugging}
+   *   {@link com.google.caja.plugin.stages.DebuggingSymbolsStage debugging}
    *   symbols.
    * @return a tuple of {@code [ cajoledHtml, messageHtml ]}.
    *     If the cajoledHtml is non-null then cajoling succeeded.

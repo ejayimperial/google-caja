@@ -155,6 +155,24 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
         + "testPropertyInNull:2+17 - 18");
   }
 
+  public void testIllegalAccessInsideHoistedFunction() throws Exception {
+    assertStackTrace(
+        "var x = true;\n"
+        + "if (x) {\n"
+        + "  var y = 5;\n"
+        + "  function f() {\n"
+        + "    var x = 'y___';\n"
+        + "    this[x] = 1;\n"
+        //          ^^^^^^
+        + "  }\n"
+        + "}\n"
+        + "new f();",
+        //     ^
+
+        "testIllegalAccessInsideHoistedFunction:9+5 - 6\n"
+        + "testIllegalAccessInsideHoistedFunction:6+10 - 16");
+  }
+
   private void assertStackTrace(String js, String golden) throws Exception {
     Block block = js(fromString(js));
     System.err.println("\n\nblock\n=====\n" + block.toStringDeep(1));
