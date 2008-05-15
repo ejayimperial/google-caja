@@ -11,106 +11,82 @@ rewrite the remaining program with additional runtime checks.
 
 = Transformations =
 
-Cajoling rules are specified using QuasiLiterals to identify a snippet
-of code which needs to be rewritten and .
+Cajoling rules are specified using QuasiLiterals to identify the snippet
+of code which needs to be rewritten and what it is to be replaced with.
 
-== Static Restrictions ==
-
-Internal properties restrictions:
-  * VarBadGlobalSuffixRule
-  * ReadBadInternalRule
-  * SetBadInternalRule
-  * CallBadInternalRule
-  * MapBadKeySuffixRule
-
-Global environment restrictions:
-  * SetBadThisRule
-
-Stylistic restrictions:
-  * WithRule
-
-Implementation specific restrictions:
-  * VarBadSuffixRule
-  * VarBadSuffixDeclarationRule
-  * ReadBadSuffixRule
-  * SetBadInitializeRule
-  * SetBadDeclareRule
-  * SetBadSuffixRule
-  * CallBadSuffixRule
-
-Other:
-  * CallCajaDef2BadRule
-  * CallCajaDef3PlusBadRule
-  * FuncBadMethodRule
-
-== Dynamic Restrictions ==
-
-Frozen Prototypes:
-
-Well-formed inheritence:
-
-Shape change:
-
-Non-reflective constructors:
-
-Attached methods:
-
-Other:
-
-  * ForeachRule
-  * TryCatchRule
-  * TryCatchFinallyRule
-  * TryFinallyRule
-  * VarArgsRule
-  * VarThisRule
-  * VarFuncFreezeRule
-  * VarGlobalRule
-  * VarDefaultRule
-  * ReadGlobalViaThisRule
-  * ReadInternalRule
-  * ReadIndexGlobalRule
-  * ReadIndexInternalRule
-  * ReadIndexPublicRule
-  * SetGlobalRule
-  * SetGlobalViaThisRule
-  * SetInternalRule
-  * SetMemberRule
-  * SetStaticRule
-  * SetPublicRule
-  * SetIndexInternalRule
-  * SetIndexPublicRule
-  * SetInitializeRule
-  * SetDeclareRule
-  * SetVarRule
-  * SetReadModifyWriteLocalVarRule
-  * SetIncrDecrRule
-  * NewCalllessCtorRule
-  * NewCtorRule
-  * DeletePropRule
-  * DeletePubRule
-  * DeleteGlobalRule
-  * DeleteNonLvalueRule
-  * CallGlobalViaThisRule
-  * CallInternalRule
-  * CallCajaDef2Rule
-  * CallCajaDef3PlusRule
-  * CallPublicRule
-  * CallIndexInternalRule
-  * CallIndexPublicRule
-  * CallFuncRule
-  * FuncAnonSimpleRule
-  * FuncNamedSimpleDeclRule
-  * FuncNamedSimpleValueRule
-  * FuncUnattachedMethodRule
-  * FuncCtorRule
-  * MapEmptyRule
-  * MapNonEmptyRule
-  * MultiDeclarationRule
-  * OtherInstanceofRule
-  * OtherTypeofRule
-  * OtherSpecialOpRule
-  * LabeledStatementRule
-
-== Required for correctness   ==
-  * Synthetic0Rule
-  * RecurseRule
+==Default set of transformations used by Caja==
+|| ||Rule||Synopsis||Reason||Matches||Substitutes||
+||0||block|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||1||synthetic||Pass through synthetic nodes|| ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||2||with||Throw an error if a `with` block is found||`with` violates the assumptions that Scope makes and makes it veryhard to write a Scope that works.http://yuiblog.com/blog/2006/04/11/with-statement-considered-harmful/briefly touches on why `with` is bad for programmers.For reviewers -- matching of references with declarations can onlybe done at runtime.All other secure JS subsets that I know of (ADSafe Jacaranda & FBJS)also disallow `with`.||{{{with (@scope) @body;}}}|| ||
+||3||foreach|| || ||{{{for (var @k in @o) @ss;}}}|| ||
+||4||tryCatch|| || ||{{{try { @s0*; } catch (@x) { @s1*; }}}}|| ||
+||5||tryCatchFinally|| || ||{{{try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }}}}|| ||
+||6||tryFinally|| || ||{{{try { @s0*; } finally { @s1*; }}}}|| ||
+||7||varArgs|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||8||varThis|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||9||varBadSuffix||Throw an error if a variable with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{@x__}}}|| ||
+||10||varBadSuffixDeclaration||Throw an error if a variable with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||11||varBadGlobalSuffix||Throw an error if a global variable with `_` suffix is found||Caja defines variable with a `_` ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||12||varFuncFreeze|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||13||varGlobal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||14||varDefault|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||15||readBadSuffix||Throw an error if a property has `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||16||readGlobalViaThis|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||17||readInternal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||18||readBadInternal||Throw an error if a global variable with `_` suffix is found||Caja defines variable with a `_` suffix as private||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||19||readPublic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||20||readIndexGlobal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||21||readIndexInternal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||22||readIndexPublic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||23||setGlobal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||24||setBadThis||Throw an error if an expression assigns to `this`|| ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||25||setBadSuffix||Throw an error if a property with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||26||setGlobalViaThis|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||27||setInternal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||28||setMember|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||29||setBadInternal||Throw an error if a global variable with `_` suffix is found||Caja defines variable with a `_` suffix as private||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||30||setStatic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||31||setPublic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||32||setIndexInternal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||33||setIndexPublic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||34||setBadInitialize||Throw an error if a variable with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||35||setInitialize|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||36||setBadDeclare||Throw an error if a variable with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||37||setDeclare|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||38||setVar|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||39||setReadModifyWriteLocalVar|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||40||setIncrDecr|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||41||newCalllessCtor|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||42||newCtor|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||43||deleteProp|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||44||deletePub|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||45||deleteGlobal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||46||deleteNonLvalue|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||47||callBadSuffix||Throw an error if a selector with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||48||callGlobalViaThis|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||49||callInternal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||50||callBadInternal||Throw an error if a public selector with `_` suffix is found||Caja defines selectors with a `_` as private||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||51||callCajaDef2|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||52||callCajaDef2Bad|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||53||callCajaDef3Plus|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||54||callCajaDef3PlusBad|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||55||callPublic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||56||callIndexInternal|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||57||callIndexPublic|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||58||callFunc|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||59||funcAnonSimple|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||60||funcNamedSimpleDecl|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||61||funcNamedSimpleValue|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||62||funcMethod|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||63||funcXo4a|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||64||funcCtor|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||65||mapEmpty|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||66||mapBadKeySuffix||Throw an error if a key with `_` suffix is found|| ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||67||mapNonEmpty|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||68||multiDeclaration|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||69||otherInstanceof|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||70||otherTypeof|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||71||otherSpecialOp|| || ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||72||labeledStatement||Throw an error if a label with `__` suffix is found||Caja reserves the `__` suffix for internal use||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
+||73||recurse||Automatically recurse into some structures|| ||{{{UNKNOWN}}}||{{{UNKNOWN}}}||
