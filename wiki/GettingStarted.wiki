@@ -60,6 +60,17 @@ number of {{{ant-*}}} directories
   * {{{ant-www}}} - demo output.  See {{{ant demos}}}
   * {{{ant-docs}}} - javadoc (and eventually jsdoc) output.
 
+=== Problems running Ant ===
+
+If you see the following error when running ant, try upgrading to Ant 1.7:
+
+{{{
+google-caja/src/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/types/ResourceCollection
+        at org.apache.tools.ant.IntrospectionHelper$Creator.create(IntrospectionHelper.java:1166)
+        at org.apache.tools.ant.UnknownElement.handleChild(UnknownElement.java:549)
+        at org.apache.tools.ant.UnknownElement.handleChildren(UnknownElement.java:326)
+...
+}}}
 
 == Code Layout ==
 
