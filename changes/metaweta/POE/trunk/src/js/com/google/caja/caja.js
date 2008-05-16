@@ -1838,7 +1838,7 @@ var ___;
       setImports: simpleFunc(function(newImports) { imports = newImports; }),
       handle: simpleFunc(function(newModule) {
         var map = begetCajaObjects();
-        map.___.POE = makePOE();
+        map.___.POE = {};
         map.caja.extend = safeExtend(map.___.POE);
         simpleFunc(map.caja.extend);
         allowCall(map.caja, "extend");
@@ -1936,54 +1936,53 @@ var ___;
   // Primordial object extension
   ////////////////////////////////////////////////////////////////////////
 
-  // Do not change the order of these without modifying the corresponding
-  // lookup table below.
-  // This function is called in the new normal module handler; when
-  // using DOMado, this function will need to be replaced with another
-  // that returns a map including tamed dom element wrappers, since we
-  // can't inherit from those properly under IE.
-  function makePOE() {
-    return [
-      { instance: Array,
-        members: {} },
-      { instance: Boolean,
-        members: {} },
-      { instance: Date,
-        members: {} },
-      { instance: Number,
-        members: {} },
-      { instance: String,
-        members: {} },
-      // Object has to be last
-      { instance: Object,
-        members: {} }
-    ];
-  }
-  
-  // The typeof operator returns 'undefined', 'boolean', 'function', 'number',
-  // 'object', or 'string'.  However, it returns 'object' for array literals and 
-  // actual instances of the constructors above.  Since we don't want to extend
-  // undefined and cajoled code should never have a reference to the Function class, we
-  // have three cases we can optimize.
-  var POETypeofMap = {'boolean':1, 'number':3, 'string':4 };
-  
-  function validatePOE(POE, clazz, members) {
-    if (directConstructor(members) !== Object) {
-      throw new Error("Property map must be an object literal.");
+  // The POE table is a map of entries indexed by property name.
+  // An entry is a map with two fields, 'clazz' and 'value'.
+  // The code
+  //   caja.extend{Boolean, {x:1, y:2});
+  //   caja.extend{Array, {x:3});
+  // results in a POE table that looks like
+  //   { x:[ { clazz: Boolean, value: 1 },
+  //         { clazz: Array, value: 3} ],
+  //     y:[ { clazz: Boolean, value: 2 } ] }
+
+  function validatePOE(POE, clazz, properties) {
+    if (directConstructor(properties) !== Object) {
+      throw new Error("The property map must be an object literal.");
     }
-    each(members, simpleFunc(function (m, val){
-      if (m in clazz.prototype) { 
-        throw new Error('The class [' + clazz + '] already has a member [' + m +'].');
+
+    // We'll want to add the tamed DOMado classes to this list.
+    var primordials = [Array, Boolean, Date, Number, String, Object];
+    
+    // Check whether the given class is in the list.
+    var extensible = false;
+    each(primordials, simpleFunc(function (i, value) {
+      if (value === clazz) { extensible = true; return BREAK; }
+    }));
+    if (!extensible) { 
+      throw new Error("The class " + clazz +
+          " is not extensible."); 
+    }
+    
+    // Check whether some super- or subclass has already been extended
+    // with the same name.
+    each(properties, simpleFunc(function (name, value){
+      var entry = POE[name];
+      if (entry) {
+        for (var i=0; i<entry.length; ++i) {
+          if (entry.clazz instanceof clazz) {
+            throw new Error("The subclass " + entry.clazz +
+                ' of the class ' + clazz + ' has already been extended' +
+                ' with the property ' + name);
+          }
+          if (clazz instanceof entry.clazz) {
+            throw new Error("The superclass " + entry.clazz +
+                ' of the class ' + clazz + ' has already been extended' +
+                ' with the property ' + name);
+          }
+        }
       }
     }));
-    var index = -1;
-    each(POE, simpleFunc(function (i, val) {
-        if (val.instance === clazz) { index = i; return BREAK; }
-      }));
-    if (-1 == index) {
-      throw new Error("Only primordial objects may be extended.");
-    }
-    return index;
   }
   
   /*
@@ -1993,18 +1992,18 @@ var ___;
    */
   function safeExtend(POE) {
     return function(clazz, members) {
-      var index = validatePOE(POE, clazz, members);
-      each(members, simpleFunc(function (m, val){
-          POE[index].members[m] = val;
+      validatePOE(POE, clazz, members);
+      each(members, simpleFunc(function (m, value){
+        if (!POE[m]) { POE[m] = []; }
+        POE[m].push({clazz:clazz, value:value});
       }));
     }
-    console.log(POE.toSource());
   }
   
   function unsafeExtend(clazz, members) {
-    validatePOE(makePOE(), clazz, members);
-    each(members, simpleFunc(function (m, val){
-      clazz.prototype[m] = val;
+    validatePOE({}, clazz, members);
+    each(members, simpleFunc(function (m, value){
+      clazz.prototype[m] = value;
     }));
   }
   
@@ -2012,28 +2011,19 @@ var ___;
   // [To distinguish between (exists and undefined) and (doesn't exist).]
   function getExtension(obj, name) {
     var POE = this.POE;
-    console.log(POE.toSource());
-    if (typeof POE === 'undefined' || POE === null) return [];
-    member = String(name);
-    if (endsWith(name, '_')) {
-      throw new Error('Cannot extend protected properties.')
-    }
-    var objType = POETypeofMap[typeof obj];
-    if (objType) {
-      var members = POE[objType].members;
-      var hasMember = hasOwnProp(members, name);
-      return hasMember ? [members[name]] : [];
-    } else {
-      var i;
-      for (i=0; i<POE.length; ++i) {
-        if (obj instanceof POE[i].instance) {
-            var members = POE[i].members;
-            var hasMember = hasOwnProp(members, name);
-            return hasMember ? [members[name]] : [];
-        }
+    var classes = POE[name];
+    if (!classes) return [];
+    var type = typeof obj;
+    if (type === "boolean") { obj = new Boolean(obj); }
+    else if (type === "number") { obj = new Number(obj); }
+    else if (type === "string") { obj = new String(obj); }
+    for (i=0;i<classes.length; ++i) {
+      var entry = classes[i];
+      if (obj instanceof entry.clazz) {
+        return [entry.value];
       }
-      return [];
     }
+    return [];
   }
   
   ////////////////////////////////////////////////////////////////////////
@@ -2124,9 +2114,6 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
   
   caja = {
-    // Primordial Object Extension
-    extend: unsafeExtend,
-    
     // Diagnostics and condition enforcement
     getLogFunc: getLogFunc, 
     setLogFunc: setLogFunc,
@@ -2299,6 +2286,9 @@ var ___;
     }
     ___[k] = v;
   }));
+  
+  // DO NOT WHITELIST--for uncajoled code's use only.
+  caja.extend = unsafeExtend;
   primFreeze(caja);
   setNewModuleHandler(makeNormalNewModuleHandler());
 

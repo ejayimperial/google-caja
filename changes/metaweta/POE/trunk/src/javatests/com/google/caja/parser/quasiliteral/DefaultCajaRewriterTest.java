@@ -15,7 +15,6 @@
 package com.google.caja.parser.quasiliteral;
 
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
-import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
@@ -31,7 +30,6 @@ import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageType;
-import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.RhinoTestBed;
 
 import java.io.IOException;
@@ -126,6 +124,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     assertConsistent(
         "caja.extend(Boolean, {not: function(){return !this.valueOf();}});" +
         "(true).not();");
+    assertConsistent(
+        "function foo() {this;}" +
+        "caja.def(foo, Object);" +
+        "function bar() {this;}" +
+        "caja.def(bar, foo);" +
+        "b=new bar;" +
+        "caja.extend(Object, {x:1});" +
+        "b.x;");
   }
 
   public void testConstructorProperty() throws Exception {
@@ -2543,14 +2549,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
     assertNoErrors();
     return result;
-  }
-
-  private void assertNoErrors() {
-    for (Message msg : mq.getMessages()) {
-      if (MessageLevel.ERROR.compareTo(msg.getMessageLevel()) <= 0) {
-        fail(msg.format(mc));
-      }
-    }
   }
 
   private <T extends ParseTreeNode> T replaceLastStatementWithEmit(
