@@ -59,6 +59,7 @@ import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlCompilerTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
 import com.google.caja.plugin.JsHtmlSanitizerTest;
+import com.google.caja.plugin.stages.DebuggingSymbolsStageTest;
 import com.google.caja.plugin.stages.OpenTemplateStageTest;
 import com.google.caja.plugin.stages.RewriteHtmlStageTest;
 import com.google.caja.render.JsMinimalPrinterTest;
@@ -96,6 +97,7 @@ public class AllTests {
           CssTemplateTest.class,
           CssTreeTest.class,
           CssValidatorTest.class,
+          DebuggingSymbolsStageTest.class,
           DefaultCajaRewriterTest.class,
           DefaultGadgetRewriterTest.class,
           DomParserTest.class,
