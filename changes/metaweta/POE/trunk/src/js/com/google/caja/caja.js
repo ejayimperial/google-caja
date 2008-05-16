@@ -2009,8 +2009,14 @@ var ___;
   
   // Return a zero- or one-element array with the result. 
   // [To distinguish between (exists and undefined) and (doesn't exist).]
+  
+  // "constructor" GIVES AN ERROR!@&
   function getExtension(obj, name) {
+    // If it already has one of these and made it here, it shouldn't
+    // be reading it. Like "constructor" or "prototype".
+    if (obj[name]) { return []; }
     var POE = this.POE;
+    console.log(POE.toSource()+"name: "+name)
     var classes = POE[name];
     if (!classes) return [];
     var type = typeof obj;

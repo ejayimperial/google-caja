@@ -67,6 +67,13 @@ public class HtmlCompiledPluginTest extends TestCase {
         "catch(e) { passed = true; }" +
         "if (!passed) { fail('Able to mask existing methods with extensions.'); }",
         "");
+    execGadget(
+        "var passed = false;" +
+        "function foo() {this;}" +
+        "try{ caja.extend(foo, {x: 1}); }" +
+        "catch(e) { passed = true; }" +
+        "if (!passed) { fail('Able to extend arbitrary classes.'); }",
+        "");
   }
   
   /**
