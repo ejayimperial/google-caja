@@ -40,7 +40,7 @@ public abstract class Rewriter {
    * Annotations on {@code rules} in subclasses of {@code Rewriter} are 
    * are collated and documented by {@code RulesDoclet}
    */
-  public final List<Rule> rules = new ArrayList<Rule>();
+  private final List<Rule> rules = new ArrayList<Rule>();
   private final Set<String> ruleNames = new HashSet<String>();
   private final boolean logging;
 
@@ -65,6 +65,13 @@ public abstract class Rewriter {
     addRules(rules);
   }
 
+  /**
+   * Returns the rules of this rewriter
+   */
+  public List<Rule> getRules() {
+    return rules;
+  }  
+  
   /**
    * Expands a parse tree node according to the rules of this rewriter, returning
    * the expanded result.
@@ -151,7 +158,7 @@ public abstract class Rewriter {
   public void addRules(Rule[] rules) {
     for (Rule r : rules) { addRule(r); }
   }
-  
+
   private void logResults(
       Rule rule,
       ParseTreeNode input,

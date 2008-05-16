@@ -49,7 +49,7 @@ public abstract class RuleDoclet {
    * and overriden to initialize variables or open files  
    * @throws IOException 
    */
-  public void cleanup(Writer output) throws IOException {}
+  public void finish(Writer output) throws IOException {}
 
   
   /**
@@ -82,16 +82,25 @@ public abstract class RuleDoclet {
       rewriter.getClass().getAnnotation(RulesetDescription.class);
     initialize(output);
     generateHeader(output, ruleSetDescription);
-    for ( Object oc : rewriter.rules ) {
-      Class c = oc.getClass();  
-      for ( Method mm : c.getDeclaredMethods() ) {
+    for (Object oc : rewriter.getRules()) {
+      Class c = oc.getClass();
+      boolean annotated = false;
+      for (Method mm : c.getMethods()) {
         RuleDescription anno = mm.getAnnotation(RuleDescription.class);
-        if ( anno != null ) {
-          generateRuleDocumentation(output, anno);
+        if (anno != null) {
+          if (!mm.getName().equals("fire")) {
+            throw new RuntimeException("RuleDescription should only be used to annotate the \"fire\" method, not " + mm.getName());
+          }
+          if (!annotated) {
+            generateRuleDocumentation(output, anno);
+            annotated = true;
+          } else {
+            throw new RuntimeException("RuleDescription annotation used more than once in the same rule");            
+          }     
         }
       }
     }
     generateFooter(output, ruleSetDescription);
-    cleanup(output);
+    finish(output);
   }
 }

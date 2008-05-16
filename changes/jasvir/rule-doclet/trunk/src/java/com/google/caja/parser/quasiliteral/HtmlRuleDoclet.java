@@ -68,12 +68,12 @@ public class HtmlRuleDoclet extends RuleDoclet {
     Element head = new Element("head");
     head.addContent(new Element("title").setText(ruleSet.name()));
     Element meta = new Element("meta");
-    meta.setAttribute( new Attribute("http-equiv", "Content-Type"));
-    meta.setAttribute( new Attribute("content", "text/html; charset=utf-8"));
+    meta.setAttribute(new Attribute("http-equiv", "Content-Type"));
+    meta.setAttribute(new Attribute("content", "text/html; charset=utf-8"));
     head.addContent(meta);
     
-    Element style    = new Element("style");
-    style.setAttribute( new Attribute("type", "text/css"));
+    Element style = new Element("style");
+    style.setAttribute(new Attribute("type", "text/css"));
     style.setText("h1 { text-align: center; } " +
                   "div.centered {text-align: center;} " +
                   "div.centered table {margin: 0 auto; text-align: left;}"); 
@@ -96,7 +96,7 @@ public class HtmlRuleDoclet extends RuleDoclet {
       throws IOException {}
   
   @Override
-  public void cleanup(Writer output) throws IOException {
+  public void finish(Writer output) throws IOException {
     XMLOutputter prettyHtml = new XMLOutputter(Format.getPrettyFormat());
     prettyHtml.output(htmlDocument, output);
   }
