@@ -1777,6 +1777,43 @@ public class DomParserTest extends CajaTestCase {
         null, false);
   }
 
+  public void testAmbiguousAttributes() throws Exception {
+    assertParsedHtmlFragment(
+        Arrays.asList(
+            "<a href= title=foo>bar</a>"
+            ),
+        Arrays.asList(
+            "Fragment 1+1-1+27",
+            "  Tag : a 1+1-1+27",
+            "    Attrib : href 1+4-1+8",
+            "      Value : title=foo 1+10-1+19",
+            "    Text : bar 1+20-1+23"
+            ),
+        Arrays.asList(
+            "WARNING testAmbiguousAttributes:1+4 - 19:"
+            + " attribute href has ambiguous value \"title=foo\""),
+        Arrays.asList(
+            "<a href=\"title=foo\">bar</a>"
+            )
+        );
+    assertParsedHtmlFragment(
+        Arrays.asList(
+            "<a href= \"title=foo\">bar</a>"
+            ),
+        Arrays.asList(
+            "Fragment 1+1-1+29",
+            "  Tag : a 1+1-1+29",
+            "    Attrib : href 1+4-1+8",
+            "      Value : title=foo 1+10-1+21",
+            "    Text : bar 1+22-1+25"
+            ),
+        Arrays.<String>asList(),  // No warning since not ambiguous
+        Arrays.asList(
+            "<a href=\"title=foo\">bar</a>"
+            )
+        );
+  }
+
   private void assertParsedHtml(
       List<String> htmlInput,
       List<String> expectedParseTree,
