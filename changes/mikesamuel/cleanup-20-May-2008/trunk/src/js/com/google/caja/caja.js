@@ -2017,9 +2017,7 @@ var ___;
     // If it already has one of these and made it here, it shouldn't
     // be reading it. Like "constructor" or "prototype".
     if (value[name]) { return []; }
-    var POE = this.POE;
-    log(POE.toSource() + "name: " + name);
-    var classes = POE[name];
+    var classes = this.POE[name];
     if (!classes) { return []; }
     switch (typeof value) {
       case 'boolean': value = new Boolean(value); break;
