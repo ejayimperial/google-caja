@@ -228,12 +228,14 @@
           case 11: return new fun(a, b, c, d, e, f, g, h, i, j, k);
           case 12: return new fun(a, b, c, d, e, f, g, h, i, j, k, l);
           default:
-            if (fun.typeTag___ === Array) {
-              return fun.apply(arguments);
+            if (fun.typeTag___ === 'Array') {
+              return fun.apply(this, arguments);
             }
-            var tmp = function () { fun.apply(arguments); };
+            var tmp = function (args) {
+              return fun.apply(this, args);
+            };
             tmp.prototype = fun.prototype;
-            return new tmp();
+            return new tmp(arguments);
         }
       };
       ctor.___CONSTRUCTOR___ = true;

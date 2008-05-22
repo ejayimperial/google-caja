@@ -181,6 +181,39 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
     // Make sure that the way we wrap constructors to catch errors does not
     // cause (new Date()) to produce an unusable value.
     assertConsistent("new Date(0).toString()");
+    assertConsistent("new Array(4).length");
+    assertConsistent("new Array('4.1').length");
+    assertConsistent("new Array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15).length");
+    assertConsistent("(new RegExp('foo', 'i')).test('foobar')");
+    assertConsistent(
+        ""
+        + "(function () {\n"
+        + "  function sum(nums) {\n"
+        + "    var n = 0;\n"
+        + "    for (var i = nums.length; --i >= 0;) { n += nums[i]; }\n"
+        + "    return n;\n"
+        + "  }\n"
+        + "  function Clazz() { this.x = sum(arguments); }\n"
+        + "  caja.def(Clazz, Object, {get: function () { return this.x; }});\n"
+        + "  var c = new Clazz(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16);\n"
+        + "  return c.get() + ',' + (c instanceof Clazz);\n"
+        + "})()");
+    assertConsistent(
+        ""
+        + "(function () {\n"
+        + "  function sum(nums) {\n"
+        + "    var n = 0;\n"
+        + "    for (var i = nums.length; --i >= 0;) { n += nums[i]; }\n"
+        + "    return n;\n"
+        + "  }\n"
+        + "  function Clazz() { this.x = sum(arguments); }\n"
+        + "  caja.def(Clazz, Object, {get: function () { return this.x; }});\n"
+        + "  function Factory (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q) {\n"
+        + "    return new Clazz(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q);\n"
+        + "  }\n"
+        + "  var c = new Factory(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16);\n"
+        + "  return c.get() + ',' + (c instanceof Clazz);\n"
+        + "})()");
   }
 
   private void assertStackTrace(String js, String golden) throws Exception {
@@ -198,7 +231,9 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
 
   private void assertConsistent(String js) throws Exception {
     Object golden = RhinoTestBed.runJs(
-        null, new RhinoTestBed.Input(js, getName()));
+        null,
+        new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
+        new RhinoTestBed.Input(js, getName()));
     runCajoled("caja.result(" + js + ")", golden,
                "var output = '<no-output>';"
                + "caja.result = function (x) { output = x; };"
