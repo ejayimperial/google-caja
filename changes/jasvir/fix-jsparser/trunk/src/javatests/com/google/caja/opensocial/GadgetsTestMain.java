@@ -195,6 +195,7 @@ public class GadgetsTestMain {
         try {
           rewriter.rewrite(baseUri, cp, cb, "canvas", w);
         } catch (Exception e) {
+          e.printStackTrace();
           addMessageNode(messages,"Compiler threw uncaught exception: " + e,
               MessageLevel.FATAL_ERROR.toString(),
               MessageType.INTERNAL_ERROR.toString(),
