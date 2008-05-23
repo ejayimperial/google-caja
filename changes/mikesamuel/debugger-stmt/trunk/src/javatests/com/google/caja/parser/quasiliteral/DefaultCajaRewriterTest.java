@@ -2344,10 +2344,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "a.join(',')");
   }
 
-  public void testDebugger() throws Exception {
-    checkSucceeds("debugger;", ";");
-  }
-
   public void testRecurseParseTreeNodeContainer() throws Exception {
     // Tested implicitly by other cases
   }
@@ -2405,6 +2401,10 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "while (true) { continue; }");
   }
 
+  public void testRecurseDebuggerStmt() throws Exception {
+    checkSucceeds("debugger;", "debugger;");
+  }
+  
   public void testRecurseDefaultCaseStmt() throws Exception {
     checkSucceeds(
         "switch (x) { default: break; }",

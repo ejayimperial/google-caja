@@ -60,7 +60,6 @@ import static com.google.caja.plugin.SyntheticNodes.s;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -2077,25 +2076,6 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     },
 
-    new Rule () {
-      @Override
-      @RuleDescription(
-          name="debuggerStatement",
-          synopsis="Replaces debugger statements with noops",
-          reason="That a debugger is attached to the interpreter"
-                 + " may leak information about the environment")
-      public ParseTreeNode fire(
-          ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings
-            = Collections.<String, ParseTreeNode>emptyMap();
-        if (QuasiBuilder.match("debugger", node, bindings)) {
-          // TODO: in debug mode, leave it in.
-          return QuasiBuilder.subst(";", bindings);
-        }
-        return NONE;
-      }
-    },
-
     ////////////////////////////////////////////////////////////////////////
     // recurse - automatically recurse into some structures
     ////////////////////////////////////////////////////////////////////////
@@ -2113,6 +2093,7 @@ public class DefaultCajaRewriter extends Rewriter {
             node instanceof CaseStmt ||
             node instanceof Conditional ||
             node instanceof ContinueStmt ||
+            node instanceof DebuggerStmt ||
             node instanceof DefaultCaseStmt ||
             node instanceof ExpressionStmt ||
             node instanceof Identifier ||
