@@ -19,6 +19,7 @@ import org.antlr.misc.IntSet;
 import org.antlr.misc.Utils;
 import org.antlr.runtime.*;
 import org.antlr.runtime.tree.*;
+import org.antlr.tool.DOTGenerator;
 import org.antlr.tool.Grammar;
 /**
  * The blame be here.
@@ -32,21 +33,20 @@ public class AntlrFuzzer {
   protected static void randomPhrase(Grammar g, List tokenTypes, String startRule) {
     NFAState state = g.getRuleStartState(startRule);
     NFAState stopState = g.getRuleStopState(startRule);
-
     Stack ruleInvocationStack = new Stack();
-    while (true) {
+    
+    while (true) {      
       if (state == stopState && ruleInvocationStack.size() == 0) {
         break;
       }
       //System.out.println("state "+state);
       if (state.getNumberOfTransitions() == 0) {
-        //System.out.println("dangling state: "+state);
+        System.out.println("dangling state: "+state);
         return;
       }
       // end of rule node
       if (state.isAcceptState()) {
         NFAState invokingState = (NFAState) ruleInvocationStack.pop();
-        // System.out.println("pop invoking state "+invokingState);
         RuleClosureTransition invokingTransition = 
             (RuleClosureTransition) invokingState.transition(0);
         // move to node after state that invoked this rule
@@ -57,26 +57,30 @@ public class AntlrFuzzer {
       if (state.getNumberOfTransitions() == 1) {
         // no branching, just take this path
         Transition t0 = state.transition(0);
+        System.out.println (state.getEnclosingRule() + " to " + ((NFAState)t0.target).getEnclosingRule());
         if (t0 instanceof  RuleClosureTransition) {
           ruleInvocationStack.push(state);
-          // System.out.println("push state "+state);
+          //System.out.println("push state "+state);
           int ruleIndex = ((RuleClosureTransition) t0).getRuleIndex();
           //System.out.println("invoke "+g.getRuleName(ruleIndex));
         } else if (!t0.label.isEpsilon()) {
+          //System.out.println(t0.label);
           tokenTypes.add(getTokenType(t0.label));
           //System.out.println(t0.label.toString(g));
         }
         state = (NFAState) t0.target;
+        System.out.println ("Chose " + state.getEnclosingRule() + "#" + state.getDescription() + "=" + state.stateNumber);
         continue;
       }
 
       int decisionNumber = state.getDecisionNumber();
       if (decisionNumber == 0) {
-        System.out.println("weird: no decision number but a choice node");
+        //System.out.println("weird: no decision number but a choice node");
         continue;
       }
       // decision point, pick ith alternative randomly
       int n = g.getNumberOfAltsForDecisionNFA(state);
+      System.out.println (state.getEnclosingRule() + "#" + state.getDescription() + " Alts=" + n);
       int randomAlt = random.nextInt(n) + 1;
       //System.out.println("randomAlt="+randomAlt);
       NFAState altStartState = g.getNFAStateForAltOfDecision(
@@ -89,6 +93,7 @@ public class AntlrFuzzer {
       }
        */
       state = (NFAState) t.target;
+      System.out.println ("Chose " + state.getEnclosingRule() + "#" + state.getDescription() + "=" + state.stateNumber);
     }
   }
   
@@ -102,7 +107,6 @@ public class AntlrFuzzer {
     } else {
       return Utils.integer(label.getAtom());
     }
-    //System.out.println(t0.label.toString(g));
   }
 
   private static Reader getResource(Class<?> cl, String resource) {
@@ -121,6 +125,7 @@ public class AntlrFuzzer {
     String grammarFileName = "ES3.g3";
     Grammar parser = new Grammar(null, grammarFileName, 
           getResource(AntlrFuzzer.class, grammarFileName));
+    
     parser.createNFAs();
     
     List leftRecursiveRules = parser
@@ -130,7 +135,7 @@ public class AntlrFuzzer {
     }
 
     String startRule = "program";
-    
+
     if (parser.getRule(startRule) == null) {
       System.out.println("undefined start rule " + startRule);
       return;
@@ -153,7 +158,7 @@ public class AntlrFuzzer {
 
     List tokenTypes = new ArrayList(100);
     randomPhrase(parser, tokenTypes, startRule);
-    System.out.println("token types="+tokenTypes + "::" + System.currentTimeMillis());
+    //System.out.println("token types="+tokenTypes + "::" + System.currentTimeMillis());
     for (int i = 0; i < tokenTypes.size(); i++) {
       Integer ttypeI = (Integer) tokenTypes.get(i);
       int ttype = ttypeI.intValue();
@@ -161,7 +166,7 @@ public class AntlrFuzzer {
       if (Character.isUpperCase(ttypeDisplayName.charAt(0))) {
         List charsInToken = new ArrayList(10);
         randomPhrase(lexer, charsInToken, ttypeDisplayName);
-        System.out.print("`");
+        //System.out.println("Random grammar got");
         for (int j = 0; j < charsInToken.size(); j++) {
           java.lang.Integer cI = (java.lang.Integer) charsInToken.get(j);
           System.out.print((char) cI.intValue());
@@ -172,7 +177,6 @@ public class AntlrFuzzer {
         System.out.print("`" + literal);
       }
     }
-    System.out.println("::" + System.currentTimeMillis());
     System.out.println();
   }
 }
