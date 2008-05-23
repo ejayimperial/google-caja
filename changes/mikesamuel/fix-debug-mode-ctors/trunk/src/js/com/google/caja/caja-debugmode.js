@@ -229,7 +229,7 @@
           case 12: return new fun(a, b, c, d, e, f, g, h, i, j, k, l);
           default:
             if (fun.typeTag___ === 'Array') {
-              return fun.apply(this, arguments);
+              return fun.apply(orig.USELESS, arguments);
             }
             var tmp = function (args) {
               return fun.apply(this, args);
@@ -285,6 +285,8 @@
       wrapper.___METHOD___ = true;
     } else if (fun.___CONSTRUCTOR___) {
       wrapper.___CONSTRUCTOR___ = true;
+    } else if (fun.___XO4A___) {
+      wrapper.___XO4A___ = true;
     }
 
     return orig.primFreeze(wrapper);
@@ -303,6 +305,14 @@
     return ex;
   }
 
+  // Extend to output the source file position with the message.
+  var origLog = caja.log;
+  function log(msg) {
+    if (!stackInvalid && stack.length) {
+      msg = stack[stack.length - 1] + ': ' + msg;
+    }
+    return origLog(msg);
+  }
 
   /**
    * Receive debugSymbols during module initialization, and set up the debugging
@@ -379,6 +389,9 @@
        'unsealCallerStack', unsealCallerStack,
        'useDebugSymbols', useDebugSymbols
       ]);
+
+  // Include the top stack frame in log messages.
+  override(caja, ['log', log], 0);
 
   startCallerStack();
 })();

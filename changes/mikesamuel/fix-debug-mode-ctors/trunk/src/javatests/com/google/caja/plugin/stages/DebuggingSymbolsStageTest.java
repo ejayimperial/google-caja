@@ -29,16 +29,6 @@ import com.google.caja.util.RhinoTestBed;
  */
 public class DebuggingSymbolsStageTest extends CajaTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   public void testDereferenceNull() throws Exception {
     assertStackTrace(
         "var x = null;\n"
@@ -216,6 +206,17 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
         + "})()");
   }
 
+  public void testExophora() throws Exception {
+    System.err.println("\n\n\ntestExophora");
+    assertConsistent("({ f: function (y) { return this.x * y; }, x: 4 }).f(2)");
+    assertStackTrace(
+        "({ f: function (y) { return this[y](); }, x: 4 }).f('foo___')",
+        //                                ^ 1+34-35        ^ 1+51-52
+
+        "testExophora:1+51 - 52\n"
+        + "testExophora:1+34 - 35");
+  }
+
   private void assertStackTrace(String js, String golden) throws Exception {
     runCajoled(js, golden,
                "var stack = '<no-stack>';                              "
@@ -226,7 +227,7 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
                + "  if (!stack) { throw e; }                           "
                + "  stack = ___.unsealCallerStack(stack).join('\\n');  "
                + "}                                                    "
-               + "stack                                                ");
+               + "stack                                               ");
   }
 
   private void assertConsistent(String js) throws Exception {
@@ -234,7 +235,7 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
         null,
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(js, getName()));
-    runCajoled("caja.result(" + js + ")", golden,
+    runCajoled("caja.result(" + js + ");", golden,
                "var output = '<no-output>';"
                + "caja.result = function (x) { output = x; };"
                + "___.allowCall(caja, 'result');"
@@ -274,10 +275,12 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
       String cajoled = String.format(context, render(block));
       Object actual = RhinoTestBed.runJs(
           null,
+          new RhinoTestBed.Input(getClass(), "../console-stubs.js"),
           new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
           new RhinoTestBed.Input(
+              getClass(), "/com/google/caja/log-to-console.js"),
+          new RhinoTestBed.Input(
               getClass(), "/com/google/caja/caja-debugmode.js"),
-          new RhinoTestBed.Input(getClass(), "../console-stubs.js"),
           new RhinoTestBed.Input(cajoled, getName()));
       assertEquals(golden, actual);
     } catch (Exception ex) {
