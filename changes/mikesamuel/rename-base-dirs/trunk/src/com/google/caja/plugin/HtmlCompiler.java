@@ -21,6 +21,7 @@ import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssLexer;
 import com.google.caja.lexer.CssTokenType;
 import com.google.caja.lexer.ExternalReference;
+import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.HtmlTokenType;
 import com.google.caja.lexer.JsLexer;
 import com.google.caja.lexer.JsTokenQueue;
@@ -266,8 +267,8 @@ public class HtmlCompiler {
     String tagName = node.getValue().toLowerCase();
     if (!htmlSchema.isElementAllowed(tagName)) {
       throw new GxpCompiler.BadContentException(
-          new Message(MessageType.MALFORMED_XHTML, node.getFilePosition(),
-                    MessagePart.Factory.valueOf(tagName)));
+          new Message(PluginMessageType.UNSAFE_TAG, node.getFilePosition(),
+                      MessagePart.Factory.valueOf(tagName)));
     }
   }
 
@@ -301,6 +302,7 @@ public class HtmlCompiler {
     CssTree.DeclarationGroup decls;
     try {
       decls = parseStyleAttrib(attrib);
+      if (decls == null) { return; }
     } catch (ParseException ex) {
       throw new GxpCompiler.BadContentException(ex.getCajaMessage(), ex);
     }
@@ -343,7 +345,7 @@ public class HtmlCompiler {
     DomTree.Value value = t.getAttribValueNode();
     // use the raw value so that the file positions come out right in
     // CssValidator error messages.
-    String cssAsHtml = HtmlCompiler.deQuote(value.getToken().text);
+    String cssAsHtml = deQuote(value.getToken().text);
     // the raw value is html so we wrap it in an html unescaper
     CharProducer cp = CharProducer.Factory.fromHtmlAttribute(
         CharProducer.Factory.create(
@@ -355,9 +357,11 @@ public class HtmlCompiler {
         new Criterion<Token<CssTokenType>>() {
           public boolean accept(Token<CssTokenType> t) {
             return CssTokenType.SPACE != t.type
-              && CssTokenType.COMMENT != t.type;
+                && CssTokenType.COMMENT != t.type;
           }
         });
+    if (tq.isEmpty()) { return null; }
+    tq.setInputRange(value.getFilePosition());
     CssParser p = new CssParser(tq);
     CssTree.DeclarationGroup decls = p.parseDeclarationGroup();
     tq.expectEmpty();
@@ -383,11 +387,12 @@ public class HtmlCompiler {
   private Block asBlock(DomTree stmt) {
     // parse as a javascript expression.
     String src = deQuote(stmt.getToken().text);
-    CharProducer cp =
-      CharProducer.Factory.fromHtmlAttribute(CharProducer.Factory.create(
-          new StringReader(src), stmt.getFilePosition()));
+    FilePosition pos = stmt.getToken().pos;
+    CharProducer cp = CharProducer.Factory.fromHtmlAttribute(
+        CharProducer.Factory.create(new StringReader(src), pos));
     JsLexer lexer = new JsLexer(cp);
-    JsTokenQueue tq = new JsTokenQueue(lexer, stmt.getFilePosition().source());
+    JsTokenQueue tq = new JsTokenQueue(lexer, pos.source());
+    tq.setInputRange(pos);
     Parser p = new Parser(tq, mq);
     List<Statement> statements = new ArrayList<Statement>();
     try {
@@ -513,6 +518,7 @@ public class HtmlCompiler {
         DomTree.Attrib t = tChain.node;
         // Extract the handler into a function so that it can be analyzed.
         Block handler = htmlc.asBlock(t.getAttribValueNode());
+        if (handler.children().isEmpty()) { return; }
         rewriteEventHandlerReferences(handler);
 
         String handlerFnName = htmlc.syntheticId();

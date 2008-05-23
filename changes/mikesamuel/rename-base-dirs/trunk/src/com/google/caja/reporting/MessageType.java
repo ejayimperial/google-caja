@@ -47,8 +47,8 @@ public enum MessageType implements MessageTypeInt {
   MALFORMED_STRING("%s: Illegal char in string '%s'", MessageLevel.FATAL_ERROR),
   MALFORMED_URI("%s: Not a valid uri: '%s'", MessageLevel.FATAL_ERROR),
   MALFORMED_XHTML("%s: malformed xhtml: %s", MessageLevel.FATAL_ERROR),
-  MISSING_ENDTAG("%s: missing end tag %s, saw %s instead",
-                 MessageLevel.FATAL_ERROR),
+  MISSING_ENDTAG(
+      "%s: missing end tag %s, saw %s instead", MessageLevel.FATAL_ERROR),
 
   // parsing
   END_OF_FILE("Unexpected end of input in %s", MessageLevel.ERROR),
@@ -66,6 +66,11 @@ public enum MessageType implements MessageTypeInt {
       "%s: Unrecognized regular expression modifiers %s", MessageLevel.ERROR),
   PARSE_ERROR("%s: Parse error in %s", MessageLevel.ERROR),
   ILLEGAL_NAME("%s: Illegal name: %s", MessageLevel.ERROR),
+  AMBIGUOUS_ATTRIBUTE_VALUE(
+      "%s: attribute %s has ambiguous value \"%s\"", MessageLevel.WARNING),
+  MISSING_ATTRIBUTE_VALUE(
+      "%s: missing value for attribute %s", MessageLevel.FATAL_ERROR),
+
 
   // platform context
   NOT_IE("%s: Will not work in IE", MessageLevel.WARNING),
@@ -123,6 +128,8 @@ public enum MessageType implements MessageTypeInt {
       "Break statement at %s outside loop", MessageLevel.ERROR),
   CONTINUE_OUTSIDE_LOOP(
       "Continue statement at %s outside loop", MessageLevel.ERROR),
+  ASSIGN_TO_NON_LVALUE(
+      "%s: Assignment to non lvalue: %s", MessageLevel.ERROR),
 
   // caught to decide whether to treat a directive comment as a declaration or
   // a type for a variable declaration

@@ -38,6 +38,7 @@ import com.google.caja.parser.css.CssParserTest;
 import com.google.caja.parser.css.CssTreeTest;
 import com.google.caja.parser.html.DomParserTest;
 import com.google.caja.parser.html.JsHtmlParserTest;
+import com.google.caja.parser.js.FuzzedParserTest;
 import com.google.caja.parser.js.NumberLiteralTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
@@ -56,6 +57,7 @@ import com.google.caja.plugin.ExpressionSanitizerTest;
 import com.google.caja.plugin.GxpCompilerTest;
 import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
+import com.google.caja.plugin.HtmlCompilerTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
 import com.google.caja.plugin.JsHtmlSanitizerTest;
 import com.google.caja.plugin.stages.DebuggingSymbolsStageTest;
@@ -66,6 +68,7 @@ import com.google.caja.render.JsPrettyPrinterTest;
 import com.google.caja.render.SideBySideRendererTest;
 import com.google.caja.reporting.BuildInfoTest;
 import com.google.caja.reporting.SnippetProducerTest;
+import com.google.caja.reporting.AbstractMessageQueueTest;
 import com.google.caja.util.JoinTest;
 import com.google.caja.util.SparseBitSetTest;
 
@@ -84,6 +87,7 @@ public class AllTests {
   public static Test suite() {
     TestSuite suite = new TestSuite("Caja Tests");
     Class<? extends TestCase>[] testClasses = new Class[] {
+          AbstractMessageQueueTest.class,
           BuildInfoTest.class,
           CharProducerTest.class,
           CommentLexerTest.class,
@@ -110,6 +114,7 @@ public class AllTests {
           GxpValidatorTest.class,
           HcalTest.class,
           HtmlCompiledPluginTest.class,
+          HtmlCompilerTest.class,
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
           HtmlSchemaTest.class,
@@ -128,6 +133,7 @@ public class AllTests {
           ParseTreeNodeTest.class,
           ParserBaseTest.class,
           ParserTest.class,
+          FuzzedParserTest.class,
           PunctuationTrieTest.class,
           QuasiBuilderTest.class,
           RRuleTest.class,

@@ -58,6 +58,7 @@
     <pathelement path="${third_party}/java/jakarta_commons/commons-cli.jar"/>
     <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
     <pathelement path="${third_party}/java/glassfish/mail.jar"/>
+    <pathelement path="${third_party}/java/jdom/jdom.jar"/>
     <pathelement path="${java.home}/lib/rt.jar"/>
   </path>
   <path id="classpath.run">
@@ -319,8 +320,6 @@
       - that builds a symlink tree? -->
     <copy todir="${lib}">
       <fileset dir="${src}">
-        <include name="**/caja/caja.js"/>
-        <include name="**/caja/caja-debugmode.js"/>
         <include name="**/caja/plugin/domita.js"/>
         <include name="**/caja/plugin/html4-defs.js"/>
         <include name="**/caja/plugin/html-emitter.js"/>
@@ -337,6 +336,10 @@
         <include name="**/caja/**/*.js"/>
         <include name="**/caja/**/*.txt"/>
         <include name="**/caja/**/*.xml"/>
+      </fileset>
+      <fileset dir="${src}">
+        <include name="**/caja/caja.js"/>
+        <include name="**/caja/caja-debugmode.js"/>
       </fileset>
       <fileset dir="${third_party}">
         <include name="js/jqueryjs/runtest/env.js"/>
@@ -389,9 +392,9 @@
 
   <!-- Builds the cajoling service. -->
   <target name="CajolingService" 
-	 depends="CssParser,HtmlParser,Quasiliterals,Rendering,Schemas">
+   depends="CssParser,HtmlParser,Quasiliterals,Rendering,Schemas">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
-          <src path="${src}"/>
+      <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/opensocial/service/*.java"/>
       <compilerarg line="-Xlint:unchecked"/>
