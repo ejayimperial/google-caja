@@ -1667,20 +1667,17 @@ var ___;
   ]);
   allowRead(Object.prototype, 'length');
   useGetAndCallHandlers(Object.prototype, 'hasOwnProperty', xo4a(function(name){
-      name = String(name);
-      return canReadPub(this, name) && hasOwnProp(this, name);
+    name = String(name);
+    return canReadPub(this, name) && hasOwnProp(this, name);
   }));
-  (function(){
-    var original = Object.prototype.propertyIsEnumerable;
-    var func = xo4a(function(name) {
-      name = String(name);
-      return canReadPub(this, name) && original.call(this, name);
-    });
-    useGetHandler(Object.prototype, 'propertyIsEnumerable', function () {
-      return func;
-    });
-    useCallHandler(Object.prototype, 'propertyIsEnumerable', func);
-  })(); 
+  useGetAndCallHandlers(
+      Object.prototype, 
+      'propertyIsEnumerable', 
+      xo4a(function(name) {
+        name = String(name);
+        return canReadPub(this, name) && 
+            Object.prototype.propertyIsEnumerable.call(this, name);
+  }));
 
   /**
    * A method of a constructed object can freeze its object by saying
@@ -1714,23 +1711,16 @@ var ___;
   all2(allowMutator, Array, [
     'pop', 'push', 'reverse', 'shift', 'splice', 'unshift'
   ]);
-  (function(){
-    var original = Array.prototype.sort;
-    var func = xo4a(function(comparator) {
-      if (isFrozen(this)) {
-        fail("Can't sort a frozen array.");
-      }
-      if (comparator) {
-        return original.call(this, ___.asSimpleFunc(comparator));
-      } else {
-        return original.call(this);
-      }
-    });
-    useGetHandler(Array.prototype, 'sort', function () {
-      return func;
-    });
-    useCallHandler(Array.prototype, 'sort', func);
-  })();
+  useGetAndCallHandlers(Array.prototype, 'sort', xo4a(function(comparator) {
+    if (isFrozen(this)) {
+      fail("Can't sort a frozen array.");
+    }
+    if (comparator) {
+      return Array.prototype.sort.call(this, ___.asSimpleFunc(comparator));
+    } else {
+      return Array.prototype.sort.call(this);
+    }
+  }));
 
   ctor(String, Object, 'String');
   allowSimpleFunc(String, 'fromCharCode');
@@ -1744,14 +1734,16 @@ var ___;
     enforceMatchable(regexp);
     return this.match(regexp);
   }));
-  useGetAndCallHandlers(String.prototype, 'replace', xo4a(function(searchValue,
-                                                       replaceValue) {
-    enforceMatchable(searchValue);
-    return this.replace(
-        searchValue,
-        (typeof replaceValue === 'function'
-         ? ___.asSimpleFunc(replaceValue)
-         : '' + replaceValue));
+  useGetAndCallHandlers(
+      String.prototype, 
+      'replace', 
+      xo4a(function(searchValue, replaceValue) {
+        enforceMatchable(searchValue);
+        return this.replace(
+            searchValue,
+            (typeof replaceValue === 'function'
+             ? ___.asSimpleFunc(replaceValue)
+             : '' + replaceValue));
   }));
   useGetAndCallHandlers(String.prototype, 'search', xo4a(function(regexp) {
     enforceMatchable(regexp);
