@@ -68,6 +68,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "var p = new Point();" +
         "var passed = false;" +
         "try { p.add3.call({}, 4); } catch (e) { passed = true; }" +
+        "if (!passed) { fail('Attached methods can be called on other objects.'); }" +
         "</script>",
         "");
     execGadget(
@@ -77,6 +78,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "var p = new Point();" +
         "var passed = false;" +
         "try { p.add3.apply({}, [4]); } catch (e) { passed = true; }" +
+        "if (!passed) { fail('Attached methods can be applied to other objects.'); }" +
         "</script>",
         "");
   }
