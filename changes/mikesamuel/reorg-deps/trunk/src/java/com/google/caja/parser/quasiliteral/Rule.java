@@ -635,7 +635,6 @@ public abstract class Rule implements MessagePart {
   /** True iff e is a reference to the global object. */
   private static boolean isImportsReference(Expression e) {
     if (!(e instanceof Reference)) { return false; }
-    // TODO(mikesamuel): move ReservedNames into this package and use it here.
     return ReservedNames.IMPORTS.equals(((Reference) e).getIdentifierName());
   }
 
