@@ -120,6 +120,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     assertConsistent(
         "[].push.apply([], [5, 6]);");
     assertConsistent(
+        "[].sort.apply([6,5]).join('');");
+    assertConsistent(
         "function Point() {}" +
         "Point.prototype.add3 = function(x){return x+3;};" +
         "var p = new Point();" +

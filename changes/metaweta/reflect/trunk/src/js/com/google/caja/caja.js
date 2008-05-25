@@ -1687,7 +1687,7 @@ var ___;
    * of a constructed object (a non-JSON container) cannot freeze it
    * without its cooperation.
    */
-  useGetAndCallHandlers(Object.prototype, 'freeze_', xo4a(function() {
+  useGetAndCallHandlers(Object.prototype, 'freeze_', method(function() {
     return primFreeze(this);
   }));
   
