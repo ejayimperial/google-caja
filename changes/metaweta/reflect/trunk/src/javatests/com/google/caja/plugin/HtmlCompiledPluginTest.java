@@ -81,6 +81,28 @@ public class HtmlCompiledPluginTest extends TestCase {
         "if (!passed) { fail('Attached methods can be applied to other objects.'); }" +
         "</script>",
         "");
+    execGadget(
+        "<script>" +
+        "function Point() {}" +
+        "Point.prototype.freeze = function(){this.freeze_();};" +
+        "Point.prototype.addXProperty = function(x){this.x=1;};" +
+        "var p = new Point();" +
+        "p.freeze();" +
+        "var passed = false;" +
+        "try { p.addXProperty(1); } catch (e) { passed = true; }" +
+        "if (!passed) { fail('Frozen objects can be mutated.'); }" +
+        "</script>",
+        "");
+    execGadget(
+        "<script>" +
+        "function Point() {}" +
+        "Point.prototype.freeze = function(){this.freeze_.call();};" +
+        "var p = new Point();" +
+        "var passed = false;" +
+        "try { p.freeze(); } catch (e) { passed = true; }" +
+        "if (!passed) { fail('Methods can be invoked on other objects.'); }" +
+        "</script>",
+        "");
   }
   
   public void testPrimordialObjectExtension() throws Exception {
