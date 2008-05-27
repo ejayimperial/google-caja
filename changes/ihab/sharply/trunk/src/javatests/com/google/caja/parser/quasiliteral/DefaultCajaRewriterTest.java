@@ -307,9 +307,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   // Specific rules
   ////////////////////////////////////////////////////////////////////////
 
-  // TODO(ihab.awad): Ensure we allow declarations in the global context, such
-  // as "var foo_", ending in a single underscore.
-
   // TODO(ihab.awad): SECURITY: Ensure we disallow references to free variables
   // that end in a single underscore.
 
@@ -2254,7 +2251,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     mq.getMessages().clear();
 
     Statement cajaTree = replaceLastStatementWithEmit(
-        js(fromString(caja, is)), "unittestResult___.value;");
+        js(fromString(caja, is)), "unittestResult___;");
     String cajoledJs = render(
         cajole(js(fromResource("../../plugin/asserts.js")), cajaTree));
 
@@ -2281,7 +2278,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
             "___.loadModule(function (___, IMPORTS___) {" + cajoledJs + "\n});",
             getName() + "-cajoled"),
         // Return the output field as the value of the run.
-        new RhinoTestBed.Input("testImports.unittestResult___.value;", getName()));
+        new RhinoTestBed.Input("unittestResult___;", getName()));
 
     assertNoErrors();
     return result;
