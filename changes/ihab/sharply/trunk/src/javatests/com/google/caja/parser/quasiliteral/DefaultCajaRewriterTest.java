@@ -893,9 +893,12 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   // TODO(ihab.awad): Move this to the proper order of rules
   public void testBadGlobalThis() throws Exception {
-    checkFails(
-        "this = 3;",
-        "\"this\" cannot be used in the global context");
+    checkAddsMessage(js(fromString(
+        "this = 3;")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_THIS);
+    checkAddsMessage(js(fromString(
+        "var x = this;")),
+        RewriterMessageType.THIS_IN_GLOBAL_CONTEXT);
   }
 
   public void testSetBadSuffix() throws Exception {
