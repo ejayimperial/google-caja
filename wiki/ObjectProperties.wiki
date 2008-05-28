@@ -68,7 +68,7 @@ their constructor and methods.  Private properties have names that end
 in {{{_}}}, so {{{foo_}}} is a private property name, but {{{foo}}} is
 a public property name.
 
-A constructed objects properties are not deletable via its public API,
+A constructed object's properties are not deletable via its public API,
 but can be created, set, or deleted via constructors and methods which
 can access its private API.
 
@@ -77,7 +77,7 @@ Private properties are not enumerable except via the private API.
 The private API is accessed via {{{this}}}, so {{{for (var k in this)}}}
 will enumerate over both public and private properties, but
 {{{for (var k in o)}}} will not include private properties.  Caja
-does not allow that functions that reference {{{this}}} to be called
+does not allow functions that reference {{{this}}} to be called
 cross-class.
 
 
@@ -91,17 +91,14 @@ attributes.  Both constructed objects and JSON objects can be frozen.
 
 == Granting Access ==
 
-The container can grant access to certain code.  For example, caja.js
-grants access to the length property of arrays via
+The container can grant access to certain code.  For example, {{{caja.js}}}
+grants access to the length property of arrays and array-like objects via
 {{{___.allowRead(Object.prototype, 'length')}}}.
 
-We allow granting of any of the Caja attributes above.  Access to a
-constructed object's private API cannot be granted to public
-accessors.
+Other {{{caja.js}}} methods set the above property attributes.  Public clients cannot be granted access to a constructed object's private API.
 
 Granting read access does not guarantee that the property value will
-be read unchanged -- unattached methods will be wrapped before
-reading.
+be read unchanged -- unattached methods will be bound when read.
 
 
 == Fasttrack Attributes ==
