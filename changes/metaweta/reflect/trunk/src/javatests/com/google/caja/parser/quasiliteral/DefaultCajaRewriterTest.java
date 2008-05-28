@@ -2009,12 +2009,12 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "function (x) { return this.x; };",
         "___.xo4a(" +
         "    function (x) {" +
-        "       var t___ = this;" +
-        "       var t___ = this;" +
-        "       return " + weldReadPub(
-                               "t___",
-                               "x",
-                               "x0___") + ";" +
+        "      var t___ = this;" +
+        "      var x0___;" +
+        "      return " + weldReadPub(
+                              "t___",
+                              "x",
+                              "x0___") + ";" +
         "});");
     checkFails(
         "function (k) { return this[k]; }",
@@ -2032,7 +2032,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "function () { 'foo' in this; }",
         "___.xo4a(" +
         "    function () {" +
-        "      var t___ = this;" +
         "      var t___ = this;" +
         "      'foo' in t___;" +
         "    })");
