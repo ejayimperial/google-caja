@@ -589,8 +589,8 @@ public class Scope {
     private void visitOperation(Operation node) {
       if (node.getOperator() == Operator.MEMBER_ACCESS) {
         if (node.children().get(0) instanceof Reference) {
-          if (!node.getAttributes().is(SyntheticNodes.SYNTHETIC)) {
-            Reference ref = (Reference) node.children().get(0);
+          Reference ref = (Reference) node.children().get(0);
+          if (!ref.getAttributes().is(SyntheticNodes.SYNTHETIC)) {
             references.add(ref.getIdentifierName());
           }
         } else {
