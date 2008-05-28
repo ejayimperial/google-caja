@@ -559,8 +559,15 @@ public class Scope {
     }
 
     private void visitFunctionConstructor(FunctionConstructor node) {
-      // Stuff inside a nested function is not part of this scope,
-      // so stop the traversal.
+      if (node.getAttributes().is(SyntheticNodes.SYNTHETIC)) {
+        // Synthetic function definitions are treated as "transparent"; our
+        // scope analysis should "see through" them as though they were just
+        // part of the surrounding code.
+        visitChildren(node);
+      } else {
+        // Stuff inside a nested function is not part of this scope,
+        // so stop the traversal.
+      }
     }
 
     private void visitCatchStmt(CatchStmt node) {
