@@ -55,56 +55,11 @@ public class HtmlCompiledPluginTest extends TestCase {
   }
 
   // TODO(metaweta): Move as many of these as possible to DefaultCajaRewriterTest
-  // using assertConsistent
+  // using assertConsistent and the rest to DebuggingSymbolsStageTest
   public void testEmptyGadget() throws Exception {
     execGadget("", "");
   }
 
-  public void testAttachedMethodReflection() throws Exception {
-    execGadget(
-        "<script>" +
-        "function Point() {}" +
-        "Point.prototype.add3 = function(x){return x+3;};" +
-        "var p = new Point();" +
-        "var passed = false;" +
-        "try { p.add3.call({}, 4); } catch (e) { passed = true; }" +
-        "if (!passed) { fail('Attached methods can be called on other objects.'); }" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Point() {}" +
-        "Point.prototype.add3 = function(x){return x+3;};" +
-        "var p = new Point();" +
-        "var passed = false;" +
-        "try { p.add3.apply({}, [4]); } catch (e) { passed = true; }" +
-        "if (!passed) { fail('Attached methods can be applied to other objects.'); }" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Point() {}" +
-        "Point.prototype.freeze = function(){this.freeze_();};" +
-        "Point.prototype.addXProperty = function(x){this.x=1;};" +
-        "var p = new Point();" +
-        "p.freeze();" +
-        "var passed = false;" +
-        "try { p.addXProperty(1); } catch (e) { passed = true; }" +
-        "if (!passed) { fail('Frozen objects can be mutated.'); }" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Point() {}" +
-        "Point.prototype.freeze = function(){this.freeze_.call();};" +
-        "var p = new Point();" +
-        "var passed = false;" +
-        "try { p.freeze(); } catch (e) { passed = true; }" +
-        "if (!passed) { fail('Methods can be invoked on other objects.'); }" +
-        "</script>",
-        "");
-  }
-  
   public void testPrimordialObjectExtension() throws Exception {
     execGadget(
         "var passed = false;" +

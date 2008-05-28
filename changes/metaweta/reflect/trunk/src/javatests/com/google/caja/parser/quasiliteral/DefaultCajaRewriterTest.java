@@ -112,13 +112,13 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   public void testReflectiveMethodInvocation() throws Exception {
     assertConsistent(
-        "(function (){this;}).call([],8,9);");
+        "(function (first, second){this; return 'a'+first+'b'+second;}).call([],8,9);");
     assertConsistent(
-        "[].push.call([], 5, 6);");
+        "var a=[]; [].push.call(a, 5, 6); a.join(',');");
     assertConsistent(
-        "(function (){this;}).apply([],[8,9]);");
+        "(function (a,b){this;return 'a'+a+'b'+b;}).apply([],[8,9]);");
     assertConsistent(
-        "[].push.apply([], [5, 6]);");
+        "var a=[]; [].push.apply(a, [5, 6]); a.join(',');");
     assertConsistent(
         "[].sort.apply([6,5]).join('');");
     assertConsistent(
@@ -2007,7 +2007,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   public void testFuncExophoricFunction() throws Exception {
     checkSucceeds(
         "function (x) { return this.x; };",
-        "var x0___;" +
         "___.xo4a(" +
         "    function (x) {" +
         "       var t___ = this;" +

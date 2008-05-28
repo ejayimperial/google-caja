@@ -1612,7 +1612,7 @@ var ___;
    */
   function allowMutator(constr, name) {
     var original = constr.prototype[name];
-    useGetAndCallHandlers(constr.prototype, name, xo4a(function(args) {
+    useGetAndCallHandlers(constr.prototype, name, xo4a(function(var_args) {
       if (isFrozen(this)) {
         fail("Can't .", name, ' a frozen object');
       }
@@ -1701,7 +1701,7 @@ var ___;
     return asXo4aFunc(this).apply(that, realArgs);
   }));
   useGetAndCallHandlers(Object.prototype, 'call', xo4a(function(that, realArgs) {
-    return asXo4aFunc(this).apply(that, [].slice.call(arguments, 1));
+    return asXo4aFunc(this).apply(that, Array.prototype.slice.call(arguments, 1));
   }));
 
   ctor(Array, Object, 'Array');
