@@ -25,6 +25,8 @@ import com.google.caja.reporting.MessageQueue;
  *
  * @author metaweta@gmail.com (Mike Stay)
  */
+
+// TODO(metaweta): Rewrite this and IllegalReferenceCheckRewriter using Visitor instead.
 @RulesetDescription(
     name="NonAsciiCheckRewriter",
     synopsis="Check that all references containing non-ASCII characters are synthetic.")
