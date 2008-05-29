@@ -115,7 +115,7 @@ public enum RewriterMessageType implements MessageTypeInt {
       MessageLevel.ERROR),
 
   NONASCII_IDENTIFIER(
-      "%s: identifier contains non-ASCII characters",
+      "%s: identifier contains non-ASCII characters: %s",
       MessageLevel.FATAL_ERROR),
 
   ILLEGAL_IDENTIFIER_LEFT_OVER(
