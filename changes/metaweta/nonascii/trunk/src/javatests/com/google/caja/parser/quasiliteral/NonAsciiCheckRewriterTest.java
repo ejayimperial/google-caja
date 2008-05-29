@@ -19,7 +19,7 @@ import com.google.caja.reporting.MessageLevel;
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 
 /**
- * @author ihab.awad@gmail.com
+ * @author metaweta@gmail.com (Mike Stay)
  */
 public class NonAsciiCheckRewriterTest extends RewriterTestCase {
   public void testIllegalRefs() throws Exception {
