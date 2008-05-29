@@ -245,8 +245,14 @@ public abstract class Operation extends AbstractExpression<Expression> {
         return false;
       }
       if (isDividend) {
-        return childOp != Operator.FUNCTION_CALL
-            && childOp != Operator.MEMBER_ACCESS;
+        // By inspection of the grammar, a slash after a function call
+        // or a member access is a division op, so no chance of
+        // lexical ambiguity here.  These are also common enough that
+        // unecessarily parenthesizing them things less readable. 
+        if (childOp != Operator.FUNCTION_CALL
+            && childOp != Operator.MEMBER_ACCESS) {
+          return true;
+        }
       }
     }
 
