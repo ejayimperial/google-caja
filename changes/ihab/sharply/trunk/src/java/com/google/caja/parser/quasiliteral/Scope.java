@@ -15,9 +15,7 @@
 package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.lexer.FilePosition;
-import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.Visitor;
 import com.google.caja.parser.js.CatchStmt;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.FunctionConstructor;
@@ -197,7 +195,10 @@ public class Scope {
       = new HashMap<String, Pair<LocalType, FilePosition>>();
   private final List<Statement> startStatements
       = new ArrayList<Statement>();
-  private final Set<String> freeVariables =
+  // TODO(ihab.awad): importedVariables is only used by the root-most scope; it is
+  // empty everywhere else. Define subclasses of Scope so that this confusing
+  // overlapping of instance variables does not occur.
+  private final Set<String> importedVariables =
       new HashSet<String>();
 
   public static Scope fromProgram(Block root, MessageQueue mq) {
@@ -442,15 +443,15 @@ public class Scope {
   }
 
   /**
-   * Is a given symbol global?
+   * Is a given symbol imported by this module?
    *
    * @param name an identifier.
-   * @return whether 'name' is a free variable of the enclosing program.
+   * @return whether 'name' is a free variable of the enclosing module.
    */
-  public boolean isFreeVariable(String name) {
+  public boolean isImported(String name) {
     if (locals.containsKey(name)) return false;
-    if (parent == null) return freeVariables.contains(name);
-    return parent.isFreeVariable(name);
+    if (parent == null) { return importedVariables.contains(name); }
+    return parent.isImported(name);
   }
 
   private LocalType getType(String name) {
@@ -475,17 +476,19 @@ public class Scope {
     this.mq = parent.mq;
   }
 
-  private static void addFreeVariable(Scope s, String name) {
+  private static void addImportedVariable(Scope s, String name) {
     Scope target = s;
     while (target.getParent() != null) { target = target.getParent(); }
-    // TODO(ihab.awad): This is a hack; clean up 'free variables' tracking
-    if (target.freeVariables.contains(name)) { return; }
-    target.freeVariables.add(name);
+    // TODO(ihab.awad): Imported variables are remembered in 2 places: in the
+    // 'importedVariables' member and by adding start of block statements.
+    // This should be done more cleanly. 
+    if (target.importedVariables.contains(name)) { return; }
+    target.importedVariables.add(name);
     Identifier identifier = s(new Identifier(name));
     target.addStartOfBlockStatement((Statement)QuasiBuilder.substV(
-        "var @vIdent = IMPORTS___.@vRef;",
+        "var @vIdent = ___.readPub(IMPORTS___, @vName);",
         "vIdent", identifier,
-        "vRef", s(new Reference(identifier))));
+        "vName", Rule.toStringLiteral(identifier)));
   }
 
   private static LocalType computeDeclarationType(Scope s, Declaration decl) {
@@ -503,7 +506,6 @@ public class Scope {
     // Record in this scope all the declarations that have been harvested
     // by the visitor.
     for (Declaration decl : v.getDeclarations()) {
-      System.err.println("Recording declaration: "+ decl.getIdentifier());
       declare(s, decl.getIdentifier(), computeDeclarationType(s, decl));      
     }
 
@@ -511,13 +513,12 @@ public class Scope {
     // not been defined in the scope chain (including the declarations we just
     // harvested), then they must be free variables, so record them as such. 
     for (String name : v.getReferences()) {
-      System.err.println("Recording reference: "+ name);
       if (ReservedNames.ARGUMENTS.equals(name)) {
         s.containsArguments = true;
       } else if (ReservedNames.THIS.equals(name)) {
         s.containsThis = true;
       } else if (!s.isDefined(name)) {
-        addFreeVariable(s, name);
+        addImportedVariable(s, name);
       }
     }
   }
@@ -532,7 +533,8 @@ public class Scope {
   private static class SymbolHarvestVisitor {
     private final SortedSet<String> references = new TreeSet<String>();
     private final List<Declaration> declarations = new ArrayList<Declaration>();
-
+    private final List<String> exceptionVariables = new ArrayList<String>();
+    
     public SortedSet<String> getReferences() { return references; }
 
     public List<Declaration> getDeclarations() { return declarations; }    
@@ -555,7 +557,7 @@ public class Scope {
     }
 
     private void visitChildren(ParseTreeNode node) {
-      for (ParseTreeNode c : node.children()) visit(c);
+      for (ParseTreeNode c : node.children()) { visit(c); }
     }
 
     private void visitFunctionConstructor(FunctionConstructor node) {
@@ -574,7 +576,9 @@ public class Scope {
       // Skip the CatchStmt's exception variable -- that is only defined
       // within the CatchStmt's body -- but dig into the body itself to grab
       // all the declarations within it, which *are* hoisted into this scope.
+      exceptionVariables.add(node.getException().getIdentifierName());
       visit(node.getBody());
+      exceptionVariables.remove(exceptionVariables.size() - 1);
     }
 
     private void visitDeclaration(Declaration node) {
@@ -586,23 +590,21 @@ public class Scope {
       }
     }
 
+    // TODO(ihab.awad): Change the ParseTreeNode type for the right hand sides
+    // of a member access to be a StringLiteral, so we can eliminate the special
+    // case here. Also collapse MEMBER_ACCESS and SQUARE_BRACKET and make the
+    // form of the output a rendering decision.
     private void visitOperation(Operation node) {
       if (node.getOperator() == Operator.MEMBER_ACCESS) {
-        if (node.children().get(0) instanceof Reference) {
-          Reference ref = (Reference) node.children().get(0);
-          if (!ref.getAttributes().is(SyntheticNodes.SYNTHETIC)) {
-            references.add(ref.getIdentifierName());
-          }
-        } else {
-          visit(node.children().get(0));
-        }
+        visit(node.children().get(0));
       } else {
         visitChildren(node);
       }
     }
 
     private void visitReference(Reference node) {
-      if (!node.getAttributes().is(SyntheticNodes.SYNTHETIC)) {
+      if (!node.getAttributes().is(SyntheticNodes.SYNTHETIC) &&
+          !exceptionVariables.contains(node.getIdentifierName())) {
         references.add(node.getIdentifierName());
       }
     }
@@ -615,6 +617,13 @@ public class Scope {
    */
   private static void declare(Scope s, Identifier ident, LocalType type) {
     String name = ident.getName();
+
+    if ("caja".equals(name)) {
+      s.mq.getMessages().add(new Message(
+          RewriterMessageType.CANNOT_REDECLARE_CAJA,
+          ident.getFilePosition()));
+    }
+
     Pair<LocalType, FilePosition> oldDefinition = s.locals.get(name);
     if (oldDefinition != null) {
       LocalType oldType = oldDefinition.a;

@@ -2329,6 +2329,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   @Override
   protected Rewriter newRewriter() {
-    return new DefaultCajaRewriter(true, true);
+    return new DefaultCajaRewriter(true, false);
   }
 }

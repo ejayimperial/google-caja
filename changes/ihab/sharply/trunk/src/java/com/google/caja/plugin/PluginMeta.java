@@ -49,12 +49,12 @@ public final class PluginMeta {
   public PluginEnvironment getPluginEnvironment() { return env; }
 
   /** True iff the output should include debugging info. */
-  public boolean debugMode() { return debugMode; }
+  public boolean isDebugMode() { return debugMode; }
 
   public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
 
   /** True iff the Cajoler should enable cajoling "warts". */
-  public boolean wartsMode() { return wartsMode; }
+  public boolean isWartsMode() { return wartsMode; }
 
   public void setWartsMode(boolean wartsMode) { this.wartsMode = wartsMode; }
 }

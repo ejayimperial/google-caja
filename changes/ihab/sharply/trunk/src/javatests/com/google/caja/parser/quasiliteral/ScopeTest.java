@@ -27,11 +27,9 @@ import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.Message;
-import com.google.caja.reporting.MessageContext;
 import com.google.caja.util.CajaTestCase;
 
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 
 /**
  *
@@ -49,49 +47,49 @@ public class ScopeTest extends CajaTestCase {
     Scope s1 = Scope.fromFunctionConstructor(s0, findFunctionConstructor(n, "foo"));
 
     assertTrue(s0.isDefined("x"));
-    assertFalse(s0.isFreeVariable("x"));
+    assertFalse(s0.isImported("x"));
     assertFalse(s0.isFunction("x"));
     assertFalse(s0.isDeclaredFunction("x"));
     assertFalse(s0.isConstructor("x"));
 
     assertTrue(s0.isDefined("foo"));
-    assertFalse(s0.isFreeVariable("foo"));
+    assertFalse(s0.isImported("foo"));
     assertTrue(s0.isFunction("foo"));
     assertTrue(s0.isDeclaredFunction("foo"));
     assertFalse(s0.isConstructor("foo"));
 
     assertFalse(s0.isDefined("y"));
-    assertFalse(s0.isFreeVariable("y"));
+    assertFalse(s0.isImported("y"));
     assertFalse(s0.isFunction("y"));
     assertFalse(s0.isDeclaredFunction("y"));
     assertFalse(s0.isConstructor("y"));
 
     assertFalse(s0.isDefined("z"));
-    assertTrue(s0.isFreeVariable("z"));
+    assertTrue(s0.isImported("z"));
     assertFalse(s0.isFunction("z"));
     assertFalse(s0.isDeclaredFunction("z"));
     assertFalse(s0.isConstructor("z"));
 
     assertTrue(s1.isDefined("x"));
-    assertFalse(s1.isFreeVariable("x"));
+    assertFalse(s1.isImported("x"));
     assertFalse(s1.isFunction("x"));
     assertFalse(s1.isDeclaredFunction("x"));
     assertFalse(s1.isConstructor("x"));
 
     assertTrue(s1.isDefined("foo"));
-    assertFalse(s1.isFreeVariable("foo"));
+    assertFalse(s1.isImported("foo"));
     assertTrue(s1.isFunction("foo"));
     assertFalse(s1.isDeclaredFunction("foo"));
     assertFalse(s1.isConstructor("foo"));
 
     assertTrue(s1.isDefined("y"));
-    assertFalse(s1.isFreeVariable("y"));
+    assertFalse(s1.isImported("y"));
     assertFalse(s1.isFunction("y"));
     assertFalse(s1.isDeclaredFunction("y"));
     assertFalse(s1.isConstructor("y"));
 
     assertFalse(s1.isDefined("z"));
-    assertTrue(s1.isFreeVariable("z"));
+    assertTrue(s1.isImported("z"));
     assertFalse(s1.isFunction("z"));
     assertFalse(s1.isDeclaredFunction("z"));
     assertFalse(s1.isConstructor("z"));
@@ -137,6 +135,47 @@ public class ScopeTest extends CajaTestCase {
     assertFreeVariables("var a = b, c = d;", "b,d", "a,c");  
   }
 
+  public void testFreeVariableCatchStmt() throws Exception {
+    assertFreeVariables(
+        "   try {"
+        + "   a;"
+        + " } catch (e) {"
+        + "   b;"
+        + "   e;"
+        + " }",
+        "a,b",
+        "e");
+    assertFreeVariables(
+        "   try {"
+        + "   a;"
+        + " } catch (e0) {"
+        + "   b;"
+        + "   try {"
+        + "     c;"
+        + "   } catch (e1) {"
+        + "     d;"
+        + "     e0;"
+        + "   }"
+        + " }",
+        "a,b,c,d",
+        "e0,e1");
+    assertFreeVariables(
+        "   try {"
+        + "   a;"
+        + " } catch (e0) {"
+        + "   b;"
+        + "   try {"
+        + "     c;"
+        + "   } catch (e1) {"
+        + "     d;"
+        + "     e0;"
+        + "   }"
+        + "   e1;"
+        + " }",
+        "a,b,c,d,e1",
+        "e0");
+  }
+
   private void assertFreeVariables(String code,
                                    String freeVariables,
                                    String notFreeVariables)
@@ -146,12 +185,12 @@ public class ScopeTest extends CajaTestCase {
     for (String v : freeVariables.split(",")) {
       assertTrue(
           "<" + v + "> should be a free variable in <" + code + ">",
-          s.isFreeVariable(v));
+          s.isImported(v));
     }
     for (String v : notFreeVariables.split(",")) {
       assertFalse(
           "<" + v + "> should not be a free variable in <" + code + ">",
-          s.isFreeVariable(v));
+          s.isImported(v));
     }
   }
 
@@ -161,12 +200,12 @@ public class ScopeTest extends CajaTestCase {
     Scope s1 = Scope.fromFunctionConstructor(s0, findFunctionConstructor(n, null));
 
     assertTrue(s0.isDefined("x"));
-    assertFalse(s0.isFreeVariable("x"));
+    assertFalse(s0.isImported("x"));
     assertFalse(s0.isFunction("x"));
     assertFalse(s0.isDeclaredFunction("x"));
 
     assertTrue(s1.isDefined("x"));
-    assertFalse(s1.isFreeVariable("x"));
+    assertFalse(s1.isImported("x"));
     assertFalse(s1.isFunction("x"));
     assertFalse(s1.isDeclaredFunction("x"));
   }
@@ -177,22 +216,22 @@ public class ScopeTest extends CajaTestCase {
     Scope s1 = Scope.fromFunctionConstructor(s0, findFunctionConstructor(n, "foo"));
 
     assertTrue(s0.isDefined("x"));
-    assertFalse(s0.isFreeVariable("x"));
+    assertFalse(s0.isImported("x"));
     assertFalse(s0.isFunction("x"));
     assertFalse(s0.isDeclaredFunction("x"));
 
     assertFalse(s0.isDefined("foo"));
-    assertFalse(s0.isFreeVariable("foo"));
+    assertFalse(s0.isImported("foo"));
     assertFalse(s0.isFunction("foo"));
     assertFalse(s0.isDeclaredFunction("foo"));
 
     assertTrue(s1.isDefined("x"));
-    assertFalse(s1.isFreeVariable("x"));
+    assertFalse(s1.isImported("x"));
     assertFalse(s1.isFunction("x"));
     assertFalse(s1.isDeclaredFunction("x"));
 
     assertTrue(s1.isDefined("foo"));
-    assertFalse(s1.isFreeVariable("foo"));
+    assertFalse(s1.isImported("foo"));
     assertTrue(s1.isFunction("foo"));
     assertFalse(s1.isDeclaredFunction("foo"));
   }
@@ -203,12 +242,12 @@ public class ScopeTest extends CajaTestCase {
     Scope s1 = Scope.fromFunctionConstructor(s0, findFunctionConstructor(n, "x"));
 
     assertTrue(s0.isDefined("x"));
-    assertFalse(s0.isFreeVariable("x"));
+    assertFalse(s0.isImported("x"));
     assertFalse(s0.isFunction("x"));
     assertFalse(s0.isDeclaredFunction("x"));
 
     assertTrue(s1.isDefined("x"));
-    assertFalse(s1.isFreeVariable("x"));
+    assertFalse(s1.isImported("x"));
     assertTrue(s1.isFunction("x"));
     assertFalse(s1.isDeclaredFunction("x"));
   }
@@ -471,7 +510,7 @@ public class ScopeTest extends CajaTestCase {
 
   private void assertDefinedGlobalValue(Scope s, String name) {
     assertTrue(s.isDefined(name));
-    assertTrue(s.isFreeVariable(name));
+    assertTrue(s.isImported(name));
     assertFalse(s.isConstructor(name));
     assertFalse(s.isDeclaredFunction(name));
     assertFalse(s.isFunction(name));
@@ -479,7 +518,7 @@ public class ScopeTest extends CajaTestCase {
 
   private void assertDefinedGlobalCtor(Scope s, String name) {
     assertTrue(s.isDefined(name));
-    assertTrue(s.isFreeVariable(name));
+    assertTrue(s.isImported(name));
     assertTrue(s.isConstructor(name));
     assertTrue(s.isDeclaredFunction(name));
     assertTrue(s.isFunction(name));

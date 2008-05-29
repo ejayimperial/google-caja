@@ -86,8 +86,8 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Member key may not end in \"__\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
-  CAJA_DEF_ON_NON_CTOR(
-      "%s: caja.def called with non-constructor: %s, %s",
+  CAJA_DEF_ON_NON_FUNCTION(
+      "%s: caja.def called with non-function: %s, %s",
       MessageLevel.FATAL_ERROR),
 
   DUPLICATE_DEFINITION_OF_LOCAL_VARIABLE(
@@ -132,6 +132,22 @@ public enum RewriterMessageType implements MessageTypeInt {
 
   CANNOT_ASSIGN_TO_FREE_VARIABLE(
       "%s: Cannot assign to a free module variable: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  CANNOT_REDECLARE_CAJA(
+      "%s: Cannot re-declare the \"caja\" variable name",
+      MessageLevel.FATAL_ERROR),
+
+  IMPLICIT_XO4A_ONLY_ALLOWED_IN_WARTS_MODE(
+      "%s: Implicit xo4a only allowed in warts mode: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  SUPER_CALL_OUT_OF_CONTEXT(
+      "%s: Can only call \"super\" on the enclosing constructor: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  SUPER_CALL_ON_NON_REFERENCE(
+      "%s: Can only call \"super\" on a function reference: %s, %s",
       MessageLevel.FATAL_ERROR),
   ;
 

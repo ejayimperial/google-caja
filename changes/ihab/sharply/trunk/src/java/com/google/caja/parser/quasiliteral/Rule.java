@@ -14,16 +14,13 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.Keyword;
 import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.js.BooleanLiteral;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.Expression;
-import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FormalParam;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.Identifier;
@@ -348,13 +345,6 @@ public abstract class Rule implements MessagePart {
     return memberMap;
   }
 
-  protected ParseTreeNode expandReferenceToImports(
-      ParseTreeNode ref,
-      Scope scope,
-      MessageQueue mq) {
-    return ref;
-  }
-
   protected boolean checkMapExpression(
       ParseTreeNode node,
       Rule rule,
@@ -464,7 +454,7 @@ public abstract class Rule implements MessagePart {
   ReadAssignOperands deconstructReadAssignOperand(
       Expression operand, Scope scope, MessageQueue mq) {
     if (operand instanceof Reference) {
-      if (scope.isFreeVariable(((Reference) operand).getIdentifierName())) {
+      if (scope.isImported(((Reference) operand).getIdentifierName())) {
         mq.addMessage(
             RewriterMessageType.CANNOT_ASSIGN_TO_FREE_VARIABLE,
             operand.getFilePosition(), this, operand);
@@ -582,7 +572,7 @@ public abstract class Rule implements MessagePart {
    */
   private static boolean isLocalReference(Expression e, Scope scope) {
     return e instanceof Reference
-        && !scope.isFreeVariable(((Reference) e).getIdentifierName());
+        && !scope.isImported(((Reference) e).getIdentifierName());
   }
 
   /** True iff e is a reference to the global object. */

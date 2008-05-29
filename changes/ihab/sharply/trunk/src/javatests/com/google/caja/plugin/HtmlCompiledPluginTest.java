@@ -75,7 +75,16 @@ public class HtmlCompiledPluginTest extends TestCase {
         "if (!passed) { fail('Able to extend arbitrary classes.'); }",
         "");
   }
-  
+
+  public void testVariableRefInHandlerFunction() throws Exception {
+    execGadget(
+        "  <script type='text/javascript'>"
+        + "var foo;"
+        + "</script>"
+        + "<a onclick='foo + bar;'>foo</a>",
+        "");
+  }
+
   /**
    * Tests that the container can get access to
    * "virtual globals" defined in cajoled code.

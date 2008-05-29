@@ -87,13 +87,17 @@ if (Date.prototype.toISOString === (void 0)) {
   };
 }
 
-Function.prototype.bind = function(anObject) {
+Function.prototype.bind = function(thisObject, var_args) {
   var self = this;
-  return function() {
-    self.apply(anObject, arguments);
-  };
+  var args = Array.prototype.slice.call(arguments, 1);
+  return primFreeze(simpleFunc(function(var_args) {
+    self.apply(thisObject, args.concat(args(arguments)));
+  }));
 }
 
+Function.prototype.super = function() {
+  caja.fail('"super" may only be called at the beginning of a Caja constructor.');
+}
 
 // caja.js exports the following names to the Javascript global
 // namespace. Caja code can only use the "caja" object. The "___"
@@ -690,8 +694,8 @@ var ___;
   /**
    * Mark <tt>constr</tt> as a constructor.
    * <p>
-   * If <tt>opt_Sup</tt> is provided, set
-   * <pre>constr.Super = opt_Sup</pre>.
+   * If <tt>opt_Sup</tt> is provided, set constr.super to a function which
+   * calls the super constructor to do its part in initializing the object.
    * <p>
    * A function is tamed and classified by calling one of
    * <tt>ctor()</tt>, <tt>method()</tt>, or <tt>simpleFunc()</tt>. Each
@@ -717,15 +721,15 @@ var ___;
     constr.___CONSTRUCTOR___ = true;
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
-      if (hasOwnProp(constr, 'Super')) {
-        if (constr.Super !== opt_Sup) {
-          fail("Can't inherit twice: ", constr, ',', opt_Sup);
-        }
+      if (hasOwnProp(constr, 'super')) {
+        fail("Can't inherit twice: ", constr, ',', opt_Sup);
       } else {
         if (isFrozen(constr)) {
           fail('Derived constructor already frozen: ', constr);
         }
-        constr.Super = opt_Sup;
+        constr.super = function(thisObj, var_args) {
+          opt_Sup.apply(thisObj, Array.prototype.slice(arguments, 1));
+        }
       }
     }
     if (opt_name) {
@@ -1295,6 +1299,38 @@ var ___;
   }
 
   /**
+   * Can a client of func directly assign to its name property?
+   * <p>
+   * Enforce that func is a function.
+   * If this property is Internal (i.e., ends with a '_') or if this
+   * function is frozen, then no.
+   * If this property was already defined, then no.
+   * Otherwise, allow.
+   * <p>
+   * The non-obvious implication of this rule is that the Function members call,
+   * bind and apply may not be overridden by Caja code.
+   */
+  function canSetStatic(func, name) {
+    name = String(name);
+    enforceType(func, 'function', 'canSetStatic');
+    if (endsWith(name, '_')) { return false; }
+    if (name in func) { return false; }
+    return !isFrozen(func);
+  }
+
+  /** A client of func attempts to assign to one of its properties. */
+  function setStatic(func, name, val) {
+    name = String(name);
+    if (canSetStatic(func, name)) {
+      allowEnum(func, name);  // grant
+      func[name] = val;
+      return val;
+    } else {
+      return func.handleSet___(name, val);
+    }
+  }
+
+  /**
    * Can a Caja constructed object delete the named property?
    */
   function canDeleteProp(obj, name) {
@@ -1487,7 +1523,7 @@ var ___;
     
     setMemberMap(sub, members);
     each(statics, simpleFunc(function(sname, staticMember) {
-      setPub(sub, sname, staticMember);
+      setStatic(sub, sname, staticMember);
     }));
     
     // translator freezes sub and sub.prototype later.
@@ -2255,6 +2291,7 @@ var ___;
     canEnumProp: canEnumProp,
     canCallProp: canCallProp,     callProp: callProp,
     canSetProp: canSetProp,       setProp: setProp,
+    canSetStatic: canSetStatic,   setStatic: setStatic,
     canDeleteProp: canDeleteProp, deleteProp: deleteProp,
 
     // Other
