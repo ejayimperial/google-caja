@@ -24,7 +24,6 @@ import com.google.caja.reporting.MessageQueue;
  * Non-ASCII characters can change the semantics of a program depending on how
  * they're rendered, so we forbid them outside of strings.
  *
- * @author mikesamuel@gmail.com
  * @author metaweta@gmail.com (Mike Stay)
  */
 public final class NonAsciiCheckVisitor implements Visitor {
