@@ -20,10 +20,10 @@ import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.MessageQueue;
 
 /**
- * Checks for non-{@link SyntheticNodes#SYNTHETIC synthetic} identifiers in the
- * reserved namespace.
+ * Checks for non-{@link SyntheticNodes#SYNTHETIC synthetic} identifiers
+ * containing non-ASCII characters.
  *
- * @author ihab.awad@gmail.com (Ihab Awad)
+ * @author metaweta@gmail.com (Mike Stay)
  */
 @RulesetDescription(
     name="NonAsciiCheckRewriter",
