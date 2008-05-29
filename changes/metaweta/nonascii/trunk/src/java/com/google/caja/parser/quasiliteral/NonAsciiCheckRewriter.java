@@ -41,7 +41,7 @@ public class NonAsciiCheckRewriter extends Rewriter {
           String name = ((Identifier)node).getValue();
           if (name != null && !name.matches("^[a-zA-Z_$][a-zA-Z0-9_$]*$")) {
             mq.addMessage(
-                RewriterMessageType.ILLEGAL_IDENTIFIER_LEFT_OVER,
+                RewriterMessageType.NONASCII_IDENTIFIER,
                 node.getFilePosition(), node);
             return node;
           }

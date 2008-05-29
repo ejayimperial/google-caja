@@ -47,6 +47,7 @@ import com.google.caja.parser.quasiliteral.MatchTest;
 import com.google.caja.parser.quasiliteral.QuasiBuilderTest;
 import com.google.caja.parser.quasiliteral.ScopeTest;
 import com.google.caja.parser.quasiliteral.IllegalReferenceCheckRewriterTest;
+import com.google.caja.parser.quasiliteral.NonAsciiCheckRewriterTest;
 import com.google.caja.parser.quasiliteral.RewriterTest;
 import com.google.caja.plugin.CompiledPluginTest;
 import com.google.caja.plugin.CssRewriterTest;
@@ -129,6 +130,7 @@ public class AllTests {
           LookaheadCharProducerTest.class,
           MatchTest.class,
           NumberLiteralTest.class,
+          NonAsciiCheckRewriterTest.class,
           OpenTemplateStageTest.class,
           ParseTreeNodeTest.class,
           ParserBaseTest.class,

@@ -38,13 +38,14 @@ public class ExpressionSanitizerCaja {
 
   public boolean sanitize(AncestorChain<?> toSanitize) {
     MutableParseTreeNode input = (MutableParseTreeNode) toSanitize.node;
-    ParseTreeNode result = newRewriter()
+    ParseTreeNode result = new NonAsciiCheckRewriter(false)
         .expand(input, this.mq);
     if (!this.mq.hasMessageAtLevel(MessageLevel.ERROR)) {
-      result = new IllegalReferenceCheckRewriter(false)
+      result = newRewriter().expand(result, this.mq);
+      if (!this.mq.hasMessageAtLevel(MessageLevel.ERROR)) {
+        result = new IllegalReferenceCheckRewriter(false)
           .expand(result, this.mq);
-      result = new NonAsciiCheckRewriter(false)
-          .expand(result, this.mq);
+      }
     }
 
     MutableParseTreeNode.Mutation mut = input.createMutation();

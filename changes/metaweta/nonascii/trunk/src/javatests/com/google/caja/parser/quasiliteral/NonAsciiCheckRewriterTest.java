@@ -43,7 +43,7 @@ public class NonAsciiCheckRewriterTest extends RewriterTestCase {
   private void testIllegal(String code) throws Exception {
     checkAddsMessage(
         js(fromString(code)),
-        RewriterMessageType.ILLEGAL_IDENTIFIER_LEFT_OVER,
+        RewriterMessageType.NONASCII_IDENTIFIER,
         MessageLevel.FATAL_ERROR);
     // substV(...) produces synthetic nodes
     checkSucceeds(substV(code), null);
