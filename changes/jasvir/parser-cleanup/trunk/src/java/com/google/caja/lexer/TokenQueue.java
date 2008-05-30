@@ -80,6 +80,15 @@ public class TokenQueue<T extends TokenType> {
    * @see MessageType#END_OF_FILE
    */
   private void fetch(boolean failOnEof) throws ParseException {
+    System.out.println ("fetch("+failOnEof+")");
+    // A previous fetch(false) may have resulted in eof
+    // If this is a call to fetch(true) we want to make such that a previous
+    // eof throws a ParseException
+    if (eof && failOnEof) {
+      throw new ParseException(
+          new Message(MessageType.END_OF_FILE,
+                      (null != inputRange ? this.inputRange : this.file)));      
+    }
     if (null != current) { return; }
 
     List<Token<T>> filtered = null;
@@ -101,6 +110,8 @@ public class TokenQueue<T extends TokenType> {
         throw new ParseException(
             new Message(MessageType.END_OF_FILE,
                         (null != inputRange ? this.inputRange : this.file)));
+      } else {
+        System.out.println("EOF but failOnEof=" + failOnEof);
       }
     }
 
@@ -230,22 +241,14 @@ public class TokenQueue<T extends TokenType> {
    */
   public void expectToken(String text) throws ParseException {
     Token<T> t = peek();
-    if (null != t && t.text.equals(text)) {
+    if (t.text.equals(text)) {
       advance();
       return;
     }
-
-    if (null == t) {
-      throw new ParseException(
-          new Message(MessageType.EXPECTED_TOKEN, lastPosition(),
-                      MessagePart.Factory.valueOf(text),
-                      MessagePart.Factory.valueOf("EOF")));      
-    } else {
-      throw new ParseException(
-          new Message(MessageType.EXPECTED_TOKEN, t.pos,
-                      MessagePart.Factory.valueOf(text),
-                      MessagePart.Factory.valueOf(t.text)));
-    }
+    throw new ParseException(
+        new Message(MessageType.EXPECTED_TOKEN, t.pos,
+                    MessagePart.Factory.valueOf(text),
+                    MessagePart.Factory.valueOf(t.text)));
   }
 
   /**
@@ -267,17 +270,10 @@ public class TokenQueue<T extends TokenType> {
       advance();
       return t;
     }
-    if (null == t) {
-      throw new ParseException(
-          new Message(MessageType.EXPECTED_TOKEN, lastPosition(),
-                      MessagePart.Factory.valueOf(tt.toString()),
-                      MessagePart.Factory.valueOf("")));      
-    } else {
-      throw new ParseException(
-          new Message(MessageType.EXPECTED_TOKEN, t.pos,
-                      MessagePart.Factory.valueOf(tt.toString()),
-                      MessagePart.Factory.valueOf(t.text)));
-    }
+    throw new ParseException(
+        new Message(MessageType.EXPECTED_TOKEN, t.pos,
+                    MessagePart.Factory.valueOf(tt.toString()),
+                    MessagePart.Factory.valueOf(t.text)));
   }
 
   /**
