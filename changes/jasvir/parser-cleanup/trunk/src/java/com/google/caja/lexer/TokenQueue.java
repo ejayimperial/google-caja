@@ -263,7 +263,7 @@ public class TokenQueue<T extends TokenType> {
    */
   public Token<T> expectTokenOfType(T tt) throws ParseException {
     Token<T> t = peek();
-    if (null != t && t.type == tt) {
+    if (t.type == tt) {
       advance();
       return t;
     }
