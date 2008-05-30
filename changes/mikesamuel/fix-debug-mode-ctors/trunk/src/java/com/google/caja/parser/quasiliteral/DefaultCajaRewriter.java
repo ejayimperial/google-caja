@@ -142,7 +142,7 @@ public class DefaultCajaRewriter extends Rewriter {
         return NONE;
       }
     },
-      
+
     ////////////////////////////////////////////////////////////////////////
     // with - disallow the 'with' construct
     ////////////////////////////////////////////////////////////////////////
@@ -1765,9 +1765,10 @@ public class DefaultCajaRewriter extends Rewriter {
               "___.xo4a(" +
               "    function (@formals*) { @fh*; @stmts*; @body*; })",
               "formals", bindings.get("formals"),
-              "localThis", s(new Identifier(ReservedNames.LOCAL_THIS)),
-              // It's important that body is expanded before computing fh and stmts.
+              // It's important that body is expanded before computing
+              // fh and stmts.
               "body", expand(rewrittenBody, s2, mq),
+              // fh will contain a declaration for ReservedNames.LOCAL_THIS
               "fh", getFunctionHeadDeclarations(this, s2, mq),
               "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
         }
@@ -1793,7 +1794,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 node.getFilePosition(),
                 this,
                 node);
-            return node;            
+            return node;
           }
           Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
           if (s2.hasFreeThis()) {
