@@ -64,6 +64,8 @@ public class CssPropertyPatternsTest extends CajaTestCase {
 
   public void testConcatenations() throws Exception {
     assertPattern("foo bar", "/^\\s*foo\\s+bar\\s+$/i");
+    // Fail if cannot handle a member of a concatenation
+    assertPattern("[ a b [ c || d ] ]", null);
     assertMatches("foo bar", "foo bar", "foo  bar");
     assertDoesNotMatch("foo bar", "foo", "bar", "bar foo", "");
   }
