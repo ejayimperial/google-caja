@@ -17,7 +17,9 @@ package com.google.caja.parser.css;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.CssTokenType;
 import com.google.caja.lexer.FilePosition;
+import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
+import com.google.caja.parser.css.CssTree.StyleSheet;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.TestUtil;
@@ -27,6 +29,10 @@ import com.google.caja.util.TestUtil;
  * @author mikesamuel@gmail.com
  */
 public class CssParserTest extends CajaTestCase {
+
+  public void testBadHashValue() throws Exception {
+    throwsParseException("h1 { color: #OOOOOO}");
+  }
 
   public void testUnescape() throws Exception {
     FilePosition pos = FilePosition.instance(is, 1, 1, 1, 1);
@@ -85,5 +91,22 @@ public class CssParserTest extends CajaTestCase {
     StringBuilder sb = new StringBuilder();
     stylesheet.format(new MessageContext(), sb);
     assertEquals(golden.trim(), sb.toString().trim());
+  }
+
+  private void throwsParseException(String fuzzString) {
+    try {
+      parseString(fuzzString);
+    } catch (ParseException e) {
+      // ParseException thrown - parser worked
+      return;
+    } catch (Throwable e) {
+      // any other kind of exception means the parser broke
+      e.printStackTrace();
+      fail();
+    }
+  }
+
+  private StyleSheet parseString(String fuzzString) throws Exception {
+    return css(fromString(fuzzString));
   }
 }
