@@ -122,9 +122,9 @@ public class ScopeTest extends CajaTestCase {
 
   public void testFreeVariableFunctionWithMember() throws Exception {
     assertFreeVariables("a();", "a", "");
-    assertFreeVariables("a().b;", "a", "");
-    assertFreeVariables("a().b.c;", "a", "");
-    assertFreeVariables("a().b.c.d;", "a", "");
+    assertFreeVariables("a().b;", "a", "b");
+    assertFreeVariables("a().b.c;", "a", "b,c");
+    assertFreeVariables("a().b.c.d;", "a", "b,c,d");
   }
 
   public void testFreeVariableFunctionParams() throws Exception {

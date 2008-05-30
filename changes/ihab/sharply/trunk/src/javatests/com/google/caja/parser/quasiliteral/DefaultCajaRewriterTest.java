@@ -94,10 +94,15 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         ")";
   }
 
-  // TODO(ihab): SECURITY: Test for whether references to global 'this' are rejected statically.
-
   public static String weldPrelude(String name) {
     return "var " + name + " = ___.readImports(IMPORTS___, '" + name + "');";
+  }
+
+  public void testAssertionsWorkCajoled() throws Exception {
+    try {
+      rewriteAndExecute("assertEquals(1, 2);");
+      fail("Assertions do not work in cajoled mode");
+    } catch (Throwable t) { }
   }
 
   public void testFreeVariables() throws Exception {
@@ -463,14 +468,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "}")),
         MessageType.MASKING_SYMBOL,
         MessageLevel.ERROR);
-      checkAddsMessage(js(fromString(
-          "var e;" +
-          "try {" +
-          "  throw 2;" +
-          "} catch (e) {" +
-          "}")),
-          MessageType.MASKING_SYMBOL,
-          MessageLevel.ERROR);
+    checkAddsMessage(js(fromString(
+        "var e;" +
+        "try {" +
+        "  throw 2;" +
+        "} catch (e) {" +
+        "}")),
+        MessageType.MASKING_SYMBOL,
+        MessageLevel.ERROR);
     checkAddsMessage(js(fromString(
         "try {} catch (x__) { }")),
         RewriterMessageType.VARIABLES_CANNOT_END_IN_DOUBLE_UNDERSCORE);
@@ -759,7 +764,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     // We can assign a dotted property of a variable
     rewriteAndExecute(
         "var foo = {};" +
-        "foo.x = 3;");
+        "foo.x = 3;" +
+        "assertEquals(foo.x, 3);");
     // We cannot assign to a function variable
     rewriteAndExecute(
         "function foo() {};" +
@@ -864,8 +870,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "p = " + weldReadPub("foo", "p", "x0___") + ";");
   }
 
-  // iok
-
   public void testReadIndexInternal() throws Exception {
     checkSucceeds(
         "var p;" +
@@ -894,8 +898,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var p, q;" +
         "p = ___.readPub(q, 3);");
   }
-
-  // iok
 
   public void testSetBadThis() throws Exception {
     checkFails(
@@ -938,8 +940,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "})();" +
         ";");
   }
-
-  // iok
 
   public void testSetMember() throws Exception {
     checkSucceeds(
@@ -998,8 +998,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "___.setStatic(foo, 'p', x);");
   }
 
-  // iok
-
   public void testSetPublic() throws Exception {
     checkSucceeds(
         "var x = {};" +
@@ -1010,8 +1008,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var x = {};" +
         weldSetPub("x", "p", "___.readPub(g, 0)", "x0___", "x1___") + ";");
   }
-
-  // iok
 
   public void testSetIndexInternal() throws Exception {
     checkSucceeds(
@@ -1034,8 +1030,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         ";");
   }
 
-  // iok
-
   public void testSetIndexPublic() throws Exception {
     checkSucceeds(
         "g[0][g[1]] = g[2];",
@@ -1043,15 +1037,11 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "___.setPub(___.readPub(g, 0), ___.readPub(g, 1), ___.readPub(g, 2));");
   }
 
-  // iok
-
   public void testSetBadInitialize() throws Exception {
     checkFails(
         "var x__ = 3",
         "Variables cannot end in \"__\"");
   }
-
-  // iok
 
   public void testSetInitialize() throws Exception {
     checkSucceeds(
@@ -1066,8 +1056,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "Variables cannot end in \"__\"");
   }
 
-  // iok
-  
   public  void testSetDeclare() throws Exception {
     checkSucceeds(
         "var v;",
@@ -1084,8 +1072,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "}");
   }
 
-  // iok
-
   public void testSetVar() throws Exception {
     checkAddsMessage(
         js(fromString("try {} catch (x__) { x__ = 3; }")),
@@ -1099,11 +1085,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public void testSetReadModifyWriteLocalVar() throws Exception {
-    // TODO(ihab.awad): The below fails for assignment to a free module
-    // variable. If we declared a 'var', it would fail on the 'var' rather
-    // than in setReadModifyWriteLocalVar. This test is disabled for now.
-    // checkFails("x__ *= 2;", "Variables cannot end in \"__\"");
-
+    checkFails("x__ *= 2;", "");
     checkSucceeds(
         "var x; x += g[0];",
         weldPrelude("g")
@@ -1162,11 +1144,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     }
   }
 
-  // iok
-
   public void testSetIncrDecr() throws Exception {
-    // checkFails("x__--;", "Variables cannot end in \"__\"");
-
+    checkFails("x__--;", "");
     checkSucceeds(
         "g[0]++;",
         weldPrelude("g") +
@@ -1199,14 +1178,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "arr.join(',');");
   }
 
-  public void testFoo() throws Exception {
-    assertConsistent("2;");
-  }
-
   public void testSetIncrDecrOnLocals() throws Exception {
-    // TODO(ihab.awad): Refactor or remove. Currently catching "cannot assign
-    // to a free module variable" case.
-    // checkFails("++x__;", "Variables cannot end in \"__\"");
+    checkFails("++x__;", "");
     checkSucceeds(
         "(function (x, y) { return [x--, --x, y++, ++y]; })",
         "___.primFreeze(___.simpleFunc(" +
@@ -1280,8 +1253,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         + "new (___.asCtor(Date))();");
   }
 
-  // iok
-
   public void testNewCtor() throws Exception {
     checkSucceeds(
         "function foo() { this.p = 3; }" +
@@ -1339,8 +1310,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  new (___.asCtor(___.readPub(g, 0)))(___.readPub(g, 1), ___.readPub(g, 2));" +
         "}));");
   }
-
-  // iok
 
   public void testDeleteProp() throws Exception {
     checkFails(
@@ -1486,13 +1455,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "status");
   }
 
-  // iok
-
   public void testDeleteNonLvalue() throws Exception {
     checkFails("delete 4", "Invalid operand to delete");
   }
-
-  // iok
 
   public void testCallInternal() throws Exception {
     checkSucceeds(
@@ -1531,8 +1496,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "Public selectors cannot end in \"_\"");
   }
 
-  // iok
-
   public void testCallCajaDef2() throws Exception {
     checkSucceeds(
         "function Point() {}" +
@@ -1550,8 +1513,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         ";" +
         "caja.def(WigglyPoint, ___.primFreeze(Point));");
   }
-
-  // iok
 
   public void testCallCajaDef3Plus() throws Exception {
     checkSucceeds(
@@ -1624,8 +1585,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "Public properties cannot end in \"_\"");
   }
 
-  // iok
-
   public void testCallPublic() throws Exception {
     checkSucceeds(
         "g[0].m(g[1], g[2]);",
@@ -1665,8 +1624,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "}));");
   }
 
-  // iok
-
   public void testCallIndexPublic() throws Exception {
     checkSucceeds(
         "g[0][g[1]](g[2], g[3]);",
@@ -1677,8 +1634,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    [___.readPub(g, 2), ___.readPub(g, 3)]);");
   }
 
-  // iok
-
   public void testCallFunc() throws Exception {
     checkSucceeds(
         "g(g[1], g[2]);",
@@ -1687,8 +1642,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "     (___.readPub(g, 1), ___.readPub(g, 2));");
   }
 
-  // iok
-  
   public void testFuncAnonSimple() throws Exception {
     // TODO(ihab.awad): The below test is not as complete as it should be
     // since it does not test the "@stmts*" substitution in the rule
@@ -1701,8 +1654,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  y = ___.readPub(g, 0);" +
         "}));");
   }
-
-  // iok
 
   public void testFuncNamedSimpleDecl() throws Exception {
     checkSucceeds(
@@ -1735,8 +1686,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         ";");
   }
 
-  // iok
-
   public void testFuncNamedSimpleValue() throws Exception {
     checkSucceeds(
         "var f = function foo(x, y) {" +
@@ -1760,8 +1709,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
          "  return ___.asSimpleFunc(___.primFreeze(foo_))(x - 1, y - 1);" +
          "}));");
   }
-
-  // iok
 
   public void testFuncExophoricFunction() throws Exception {
     wartsMode = true;
@@ -1827,8 +1774,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "function Goo() { this.x = 1; }",
         MessageType.MASKING_SYMBOL );
   }
-
-  // iok
 
   public void testFuncCtor() throws Exception {
     checkSucceeds(
@@ -1910,8 +1855,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var f = {};");
   }
 
-  // iok
-
   public void testMapBadKeySuffix() throws Exception {
     checkFails(
         "var o = { x_: 3 };",
@@ -1989,8 +1932,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "}" +
         "k;");
   }
-
-  // iok
 
   public void testOtherSpecialOp() throws Exception {
     checkSucceeds("void 0;", "void 0;");
@@ -2082,6 +2023,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  var a = arr[++k], b = arr[++k], c = arr[++k];" +
         "  return [a, b, c].join(',');" +
         "})()");
+    // Check exceptions on read of uninitialized variables.
     assertConsistent(
         "(function () {" +
         "  var a = [];" +
@@ -2122,8 +2064,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "switch (___.readPub(g, 0)) { case 1: break; }");
   }
 
-  // iok
-
   public void testRecurseConditional() throws Exception {
     checkSucceeds(
         "if (g[0] === g[1]) {" +
@@ -2142,8 +2082,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  ___.readPub(g, 6);" +
         "}");
   }
-
-  // iok
 
   public void testRecurseContinueStmt() throws Exception {
     checkSucceeds(
@@ -2171,8 +2109,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "3;",
         "3;");
   }
-
-  // iok
 
   public void testRecurseLoop() throws Exception {
     checkSucceeds(
@@ -2210,8 +2146,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var x, y;" +
         "x = y = ___.readPub(g, 0);");
   }
-
-  // iok
 
   public void testRecurseReturnStmt() throws Exception {
     checkSucceeds(

@@ -87,17 +87,22 @@ if (Date.prototype.toISOString === (void 0)) {
   };
 }
 
+/**
+ * Bind this function object to <tt>thisObject</tt>, which will serve as the
+ * value of <tt>this</tt> during invocation. Curry on a partial set of arguments
+ * in <tt>var_args</tt>. Return the curried result as a new function object.
+ */
 Function.prototype.bind = function(thisObject, var_args) {
   var self = this;
   var args = Array.prototype.slice.call(arguments, 1);
   return ___.primFreeze(___.simpleFunc(function(var_args) {
     self.apply(thisObject, args.concat(___.args(arguments)));
   }));
-}
+};
 
 Function.prototype['super'] = function() {
   caja.fail('"super" may only be called at the beginning of a Caja constructor.');
-}
+};
 
 // caja.js exports the following names to the Javascript global
 // namespace. Caja code can only use the "caja" object. The "___"

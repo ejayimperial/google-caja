@@ -77,7 +77,7 @@ public abstract class RewriterTestCase extends CajaTestCase {
       messageText.append("\n");
     }
     assertTrue(
-        "Messages do not contain \"" + error + "\":\n" + messageText.toString(),
+        "Messages do not contain \"" + error + "\": " + messageText.toString(),
         messageText.toString().contains(error));
   }
 
