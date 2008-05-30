@@ -50,12 +50,12 @@ var ENGINE_JAVASCRIPTCORE = 2;
 
 var engine = ENGINE_UNKNOWN;
 var jsshell = (typeof window == "undefined");
-var isRhino = true;
-if(isRhino) {
-	dump = function() {};
-	dumpln = dump;
-	printImportant = dump;
-	quit = function() {};  
+var isRhinoTestBed = ('stderr' in this );
+if (isRhinoTestBed) {
+  dump = function() {};
+  dumpln = dump;
+  printImportant = dump;
+  quit = function() {};  
 } else if (jsshell) {
   dump = print;
   dumpln = print;
