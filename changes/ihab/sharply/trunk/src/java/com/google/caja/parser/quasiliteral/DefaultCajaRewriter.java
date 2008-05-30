@@ -190,10 +190,10 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
         if (QuasiBuilder.match("for (var @k in @o) @ss;", node, bindings)) {
-          bindings.put("k", new Reference((Identifier)bindings.get("k")));
           scope.addStartOfScopeStatement((Statement) substV(
               "var @k;",
               "k", bindings.get("k")));
+          bindings.put("k", new Reference((Identifier)bindings.get("k")));
         } else if (QuasiBuilder.match("for (@k in @o) @ss;", node, bindings)) {
           ExpressionStmt es = (ExpressionStmt)bindings.get("k");
           bindings.put("k", es.getExpression());
@@ -1787,6 +1787,14 @@ public class DefaultCajaRewriter extends Rewriter {
         ParseTreeNode constructorNode = declaration ? node.children().get(1) : node;
         if (QuasiBuilder.match(
                 "function @f(@ps*) { @b; @bs*; }", constructorNode, bindings)) {
+          if (bindings.get("f").getValue() == null) {
+            mq.addMessage(
+                RewriterMessageType.ANONYMOUS_FUNCTION_REFERENCES_THIS,
+                node.getFilePosition(),
+                this,
+                node);
+            return node;            
+          }
           Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
           if (s2.hasFreeThis()) {
             checkFormals(bindings.get("ps"), mq);

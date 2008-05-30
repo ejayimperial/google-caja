@@ -218,6 +218,10 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
               + "}                                                    "
               + "stack                                                ",
               getName()));
+
+      System.err.println("==========================");
+      System.err.println(mc.inputSources);
+
       assertEquals(golden, stack);
     } catch (Exception ex) {
       System.err.println(render(block));

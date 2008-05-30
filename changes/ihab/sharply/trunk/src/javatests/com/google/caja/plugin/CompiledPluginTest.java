@@ -73,6 +73,8 @@ public class CompiledPluginTest extends TestCase {
     } catch (AssertionFailedError e) {
       // pass
     } catch (Exception e) {
+      System.err.println("====================================");
+      e.printStackTrace(System.err);
       fail("javascript asserts are borked: " + e.toString());
     }
   }

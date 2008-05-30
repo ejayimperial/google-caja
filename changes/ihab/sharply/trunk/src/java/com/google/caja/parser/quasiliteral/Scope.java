@@ -193,13 +193,11 @@ public class Scope {
   private int tempVariableCounter = 0;
   private final Map<String, Pair<LocalType, FilePosition>> locals
       = new HashMap<String, Pair<LocalType, FilePosition>>();
-  private final List<Statement> startStatements
-      = new ArrayList<Statement>();
+  private final List<Statement> startStatements = new ArrayList<Statement>();
   // TODO(ihab.awad): importedVariables is only used by the root-most scope; it is
   // empty everywhere else. Define subclasses of Scope so that this confusing
   // overlapping of instance variables does not occur.
-  private final Set<String> importedVariables =
-      new HashSet<String>();
+  private final Set<String> importedVariables = new HashSet<String>();
 
   public static Scope fromProgram(Block root, MessageQueue mq) {
     Scope s = new Scope(ScopeType.PROGRAM, mq);
@@ -486,7 +484,7 @@ public class Scope {
     target.importedVariables.add(name);
     Identifier identifier = s(new Identifier(name));
     target.addStartOfBlockStatement((Statement)QuasiBuilder.substV(
-        "var @vIdent = ___.readPub(IMPORTS___, @vName);",
+        "var @vIdent = ___.readImports(IMPORTS___, @vName);",
         "vIdent", identifier,
         "vName", Rule.toStringLiteral(identifier)));
   }

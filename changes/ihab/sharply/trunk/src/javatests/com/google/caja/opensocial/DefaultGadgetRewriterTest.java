@@ -168,9 +168,6 @@ public class DefaultGadgetRewriterTest extends CajaTestCase {
     rewriter.rewrite(gadgetUri, cp, uriCallback, "canvas", sb);
     String actual = normalXml(sb.toString()).trim();
 
-    System.err.println(file + " rewritten to:");
-    System.err.println(actual);
-
     checkMessages(failLevel);
 
     String expected

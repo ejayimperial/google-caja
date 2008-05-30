@@ -378,7 +378,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "<script>" +
         "function Foo(x){ this.x = x; }" +
         "var foo = new Foo(2);" +
-        "if (!foo) fail('Failed to construct a global object.')" +
+        "if (!foo) fail('Failed to construct a global object.');" +
         "assertEquals(foo.x, 2);" +
         "</script>",
         ""
@@ -387,17 +387,27 @@ public class HtmlCompiledPluginTest extends TestCase {
         "<script>(function(){" +
         "function Foo(x){ this.x = x; }" +
         "var foo = new Foo(2);" +
-        "if (!foo) fail('Failed to construct a local object.')" +
+        "if (!foo) fail('Failed to construct a local object.');" +
         "assertEquals(foo.x, 2);" +
-        "})()</script>",
+        "})();</script>",
         ""
         );
     execGadget(
         "<script>" +
-        "function Foo(x){ this.x = x; }" +
-        "function Bar(y){ Foo.call(this,5); this.y = y; }" +
+        "function Foo(x){" +
+        "  console.log('called Foo(' + x + ')');" +
+        "  this.x = x;" +
+        "}" +
+        "function Bar(y){" +
+        "  Bar.super(this,5);" +
+        "  console.log('called Bar(' + y + ')');" +
+        "  this.y = y;" +
+        "}" +
+        "console.log('defined Foo and Bar');" +
+        "caja.def(Bar, Foo);" +
+        "var foo = new Foo(3);" +
         "var bar = new Bar(2);" +
-        "if (!bar) fail('Failed to construct a derived object.')" +
+        "if (!bar) fail('Failed to construct a derived object.');" +
         "assertEquals(bar.x, 5);" +
         "assertEquals(bar.y, 2);" +
         "</script>",
@@ -407,7 +417,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "<script>" +
         "function Foo(){ }" +
         "var foo = new Foo();" +
-        "if (!foo) fail('Failed to use a simple named function as a constructor.')" +
+        "if (!foo) fail('Failed to use a simple named function as a constructor.');" +
         "</script>",
         ""
         );
@@ -418,7 +428,7 @@ public class HtmlCompiledPluginTest extends TestCase {
         "<script>" +
         "function Foo(y) { this.y = y; }" +
         "function Bar(x) {" +
-        "  Foo.call(this, 3);" +
+        "  Bar.super(this, 3);" +
         "  this.x_ = x;" +
         "}" +
         "caja.def(Bar, Foo, {getX:function () { return this.x_; }});" +
@@ -500,28 +510,29 @@ public class HtmlCompiledPluginTest extends TestCase {
   public void testAttachedMethod() throws Exception {
     // The cases that succeed are tested in DefaultCajaRewriterTest
     execGadget(
-        "<script>" +
-        "function Foo() { this.f = function(){ this.x_ = 1; }.bind(this); };" +
-        "var foo = new Foo();" +
-        "var g=foo.f;" +
-        "var passed=false;" +
-        "try { g(); } catch (e) { passed = true; }" +
-        "if (!passed) {" +
-        "  fail('Attached method should not be able to be called as a simple function.');" +
-        "}" +
-        "</script>",
-        "");
-    execGadget(
-        "<script>" +
-        "function Foo() { this.f = (function(){ this.x_ = 1; }).bind(this); };" +
-        "var foo = new Foo();" +
-        "var h={f:foo.f};" +
-        "var passed=false;" +
-        "try { h.f(); } catch (e) { passed = true; }" +
-        "if (!passed) {" +
-        "  fail('Attached method should not be able to be called on a different object.');" +
-        "}" +
-        "</script>",
+        "<script>"
+        + "var called = false;"
+        + "var thisWhenCalled = undefined;"
+        + "function Foo() {"
+        + "  this.f = (function() {"
+        + "    called = true;"
+        + "    thisWhenCalled = this;"
+        + "    this.x_ = 1;"
+        + "  }).bind(this);"
+        + "}"
+        + "var foo = new Foo();"
+        + "foo.f();"
+        + "assertTrue(called); assertTrue(thisWhenCalled === foo);"
+        + "called = false; thisWhenCalled = undefined;"
+        + "var g = foo.f;"
+        + "g();"
+        + "assertTrue(called); assertTrue(thisWhenCalled === foo);"
+        + "called = false; thisWhenCalled = undefined;"
+        + "var x = {}; x.f = foo.f;"
+        + "x.f();"
+        + "assertTrue(called); assertTrue(thisWhenCalled === foo);"
+        + "called = false; thisWhenCalled = undefined;"
+        + "</script>",
         "");
     execGadget(
         "<script>" +
@@ -553,10 +564,10 @@ public class HtmlCompiledPluginTest extends TestCase {
         "<script>" +
         "function Foo() { this.gogo(); }" +
         "Foo.prototype.gogo = function () { " +
-        "  this.Bar = (function Bar(x){ " +
+        "  this.Bar = function Bar(x) { " +
         "    this.x_ = x; " +
         "    this.getX = (function() { return this.x_; }).bind(this);" +
-        "  }).bind(this); " +
+        "  };" +
         "};" +
         "var foo = new Foo;" +
         "var passed = false;" +

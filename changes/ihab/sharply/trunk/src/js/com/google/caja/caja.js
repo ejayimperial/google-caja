@@ -90,12 +90,12 @@ if (Date.prototype.toISOString === (void 0)) {
 Function.prototype.bind = function(thisObject, var_args) {
   var self = this;
   var args = Array.prototype.slice.call(arguments, 1);
-  return primFreeze(simpleFunc(function(var_args) {
-    self.apply(thisObject, args.concat(args(arguments)));
+  return ___.primFreeze(___.simpleFunc(function(var_args) {
+    self.apply(thisObject, args.concat(___.args(arguments)));
   }));
 }
 
-Function.prototype.super = function() {
+Function.prototype['super'] = function() {
   caja.fail('"super" may only be called at the beginning of a Caja constructor.');
 }
 
@@ -727,8 +727,8 @@ var ___;
         if (isFrozen(constr)) {
           fail('Derived constructor already frozen: ', constr);
         }
-        constr.super = function(thisObj, var_args) {
-          opt_Sup.apply(thisObj, Array.prototype.slice(arguments, 1));
+        constr['super'] = function(thisObj, var_args) {
+          opt_Sup.init___.apply(thisObj, Array.prototype.slice.call(arguments, 1));
         }
       }
     }
@@ -1013,8 +1013,8 @@ var ___;
     if (canCall(that, name)) { return this.attach(that, that[name]); }
     return that.handleRead___(name, false);
   }
-  
-  /** 
+
+  /**
    * Can a Caja client of <tt>obj</tt> read its <name> property? 
    * <p>
    * If the property is Internal (i.e. ends in an '_'), then no.
@@ -1053,6 +1053,20 @@ var ___;
     return obj.handleRead___(name, opt_shouldThrow);
   }
   
+  /**
+   * Privileged code attempting to read an imported value from a module's
+   * <tt>IMPORTS___</tt>.
+   * <p>
+   * This delegates to <tt>readPub</tt>.
+   * TODO(ihab.awad): Make this throw a "module linkage error" so as to be
+   * more informative, rather than just whatever readPub throws.
+   */
+  function readImports(module_imports, name) {
+    java.lang.System.err.println('readImports(' + module_imports + ',' + name + ')');
+    // return readPub(module_imports, name);
+    return module_imports[name];
+  }
+
   /**
    * Can "innocent" code enumerate the named property on this object?
    * <p>
@@ -2190,7 +2204,7 @@ var ___;
     canCallPub: canCallPub,       callPub: callPub,
     canSetPub: canSetPub,         setPub: setPub,
     canDeletePub: canDeletePub,   deletePub: deletePub,
-    
+
     // Trademarking
     hasTrademark: hasTrademark,
     guard: guard,
@@ -2270,6 +2284,9 @@ var ___;
     canCall: canCall,             allowCall: allowCall,
     canSet: canSet,               allowSet: allowSet,
     canDelete: canDelete,         allowDelete: allowDelete,
+
+    // Module linkage
+    readImports: readImports,
 
     // Classifying functions
     isCtor: isCtor,

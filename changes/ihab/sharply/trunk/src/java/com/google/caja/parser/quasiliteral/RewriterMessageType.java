@@ -63,7 +63,7 @@ public enum RewriterMessageType implements MessageTypeInt {
       MessageLevel.FATAL_ERROR),
 
   ANONYMOUS_FUNCTION_REFERENCES_THIS(
-      "%s: Anonymous function references \"this\" but isn't part of a class definition: %s, %s",
+      "%s: Anonymous function references \"this\" but is not part of a class definition: %s, %s",
       MessageLevel.FATAL_ERROR),
 
   CONSTRUCTOR_CANNOT_ESCAPE(
