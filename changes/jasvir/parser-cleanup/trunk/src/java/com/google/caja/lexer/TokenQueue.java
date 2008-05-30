@@ -80,7 +80,6 @@ public class TokenQueue<T extends TokenType> {
    * @see MessageType#END_OF_FILE
    */
   private void fetch(boolean failOnEof) throws ParseException {
-    System.out.println ("fetch("+failOnEof+")");
     // A previous fetch(false) may have resulted in eof
     // If this is a call to fetch(true) we want to make such that a previous
     // eof throws a ParseException
@@ -110,8 +109,6 @@ public class TokenQueue<T extends TokenType> {
         throw new ParseException(
             new Message(MessageType.END_OF_FILE,
                         (null != inputRange ? this.inputRange : this.file)));
-      } else {
-        System.out.println("EOF but failOnEof=" + failOnEof);
       }
     }
 

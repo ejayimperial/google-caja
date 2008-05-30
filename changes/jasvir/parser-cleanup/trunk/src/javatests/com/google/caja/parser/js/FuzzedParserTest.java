@@ -130,7 +130,6 @@ public class FuzzedParserTest extends CajaTestCase {
       return;
     } catch (Throwable e) {
       // any other kind of exception means the parser broke
-      e.printStackTrace();
       fail();
     }
   }
