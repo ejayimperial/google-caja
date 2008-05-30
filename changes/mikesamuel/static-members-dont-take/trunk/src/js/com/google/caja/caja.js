@@ -1308,10 +1308,10 @@ var ___;
     }
     staticMemberName = '' + staticMemberName;
     if (staticMemberName in ctor) {  // disallows prototype, call, apply, bind
-      fail('Can\'t override static member', staticMemberName);
+      fail('Can\'t override static member ', staticMemberName);
     }
     if (endsWith(staticMemberName, '_')) {  // statics are public
-      fail('Illegal static member name', staticMemberName);
+      fail('Illegal static member name ', staticMemberName);
     }
     ctor[staticMemberName] = staticMemberValue;
     allowRead(ctor, staticMemberName);
