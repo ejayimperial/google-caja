@@ -960,6 +960,7 @@ var ___;
     } else if (isSimpleFunc(member)) {
       allowCall(proto, name);  // grant
       allowSet(proto, name);  // grant
+      primFreeze(member);
     } else {
       allowSet(proto, name);  // grant
     }
