@@ -308,7 +308,7 @@
   // Extend to output the source file position with the message.
   var origLog = caja.log;
   function log(msg) {
-    if (!stackInvalid && stack.length) {
+    if (!stackInvalid && stack.length > 0) {
       msg = stack[stack.length - 1] + ': ' + msg;
     }
     return origLog(msg);

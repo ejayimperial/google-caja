@@ -29,6 +29,43 @@ import com.google.caja.util.RhinoTestBed;
  */
 public class DebuggingSymbolsStageTest extends CajaTestCase {
 
+  public void testAttachedMethodReflection() throws Exception {
+    assertStackTrace(
+          "function Point() {}\n"
+        + "Point.prototype.add3 = function(x){return x+3;};\n"
+        + "var p = new Point();\n"
+        + "p.add3.call({}, 4);\n",
+        //        ^^^^ 4+8 - 12
+        "testAttachedMethodReflection:4+8 - 12");
+    assertStackTrace(
+          "function Point() {}\n"
+        + "Point.prototype.add3 = function(x){return x+3;};\n"
+        + "var p = new Point();\n"
+        + "p.add3.apply({}, [4]);\n",
+        //        ^^^^^ 4+8 - 13
+        "testAttachedMethodReflection:4+8 - 13");
+    assertStackTrace(
+          "function Point() { this; }\n"
+        + "Point.prototype.freezeMe = function(){this.freeze_();};\n"
+        + "Point.prototype.addXProperty = function(x){this.x = 1;};\n"
+        //                                                 ^ 3+49 - 50
+        + "var p = new Point();\n"
+        + "p.freezeMe();\n"
+        + "p.addXProperty(1);\n",
+        //   ^^^^^^^^^^^^ 6+3 - 15
+          "testAttachedMethodReflection:6+3 - 15\n"
+        + "testAttachedMethodReflection:3+49 - 50");
+    assertStackTrace(
+          "function Point() { this; }\n"
+        + "Point.prototype.freeze = function(){this.freeze_.call();};\n"
+        //                                                 ^^^^^ 2+50 - 54
+        + "var p = new Point();\n"
+        + "p.freeze();\n",
+        //   ^^^^^^ 4+3 - 9
+          "testAttachedMethodReflection:4+3 - 9\n"
+        + "testAttachedMethodReflection:2+50 - 54");
+  }
+
   public void testDereferenceNull() throws Exception {
     assertStackTrace(
         "var x = null;\n"
@@ -231,10 +268,13 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
   }
 
   private void assertConsistent(String js) throws Exception {
+    // Execute js in the presence of caja so it can use caja.def.
     Object golden = RhinoTestBed.runJs(
         null,
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(js, getName()));
+    // Use the caja.result function so that we can sneak the result of
+    // evaluating js out of the ___.loadModule envelope.
     runCajoled("caja.result(" + js + ");", golden,
                "var output = '<no-output>';"
                + "caja.result = function (x) { output = x; };"
