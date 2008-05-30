@@ -19,6 +19,7 @@ import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.RhinoTestBed;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * Fuzzer for testing JS parsing using jsfunfuzz 
@@ -29,7 +30,12 @@ public class JsFunFuzz extends CajaTestCase {
   /**
    * Number of fuzzed cases to generate
    */
-  private final int MAX_NUMBER_OF_TESTS = 10;
+  private final long seed = System.currentTimeMillis();
+
+  /**
+   * Number of fuzzed cases to generate
+   */
+  private final int MAX_NUMBER_OF_TESTS = 1000;
   
   /**
    * Generate and return a new javascript string
