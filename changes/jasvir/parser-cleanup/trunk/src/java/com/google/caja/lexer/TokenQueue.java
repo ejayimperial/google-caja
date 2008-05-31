@@ -80,14 +80,6 @@ public class TokenQueue<T extends TokenType> {
    * @see MessageType#END_OF_FILE
    */
   private void fetch(boolean failOnEof) throws ParseException {
-    // A previous fetch(false) may have resulted in eof
-    // If this is a call to fetch(true) we want to make such that a previous
-    // eof throws a ParseException
-    if (eof && failOnEof) {
-      throw new ParseException(
-          new Message(MessageType.END_OF_FILE,
-                      (null != inputRange ? this.inputRange : this.file)));      
-    }
     if (null != current) { return; }
 
     List<Token<T>> filtered = null;
@@ -110,6 +102,7 @@ public class TokenQueue<T extends TokenType> {
             new Message(MessageType.END_OF_FILE,
                         (null != inputRange ? this.inputRange : this.file)));
       }
+      return;
     }
 
     TokenList<T> tl = new TokenList<T>();
@@ -242,6 +235,7 @@ public class TokenQueue<T extends TokenType> {
       advance();
       return;
     }
+
     throw new ParseException(
         new Message(MessageType.EXPECTED_TOKEN, t.pos,
                     MessagePart.Factory.valueOf(text),
