@@ -41,7 +41,7 @@ public class ParseTreeNodeContainer extends AbstractParseTreeNode<ParseTreeNode>
 
   @Override
   public Object getValue() { return null; }
-  
+
   public void render(RenderContext rc) {
     // TODO(mikesamuel): this should never be rendered since rendering a group
     // of statements with it will not output semicolons.
