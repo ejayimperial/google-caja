@@ -10,16 +10,16 @@ specifies the {{{foo}}} property of the object referenced by {{{o}}}.
 Some properties can be read and set, some can only be read, and some
 don't show up when enumerated via a {{{for (... in ...)}}} loops.
 
-!EcmaScript 262 defines "property attributes" in section 8.6.1.  
+[http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf !EcmaScript 262 Edition 3] (hereafter ES3) defines "property attributes" in section 8.6.1.  
     8.6.1 Property Attributes
     A property can have zero or more attributes from the following set:
 
 || *Attribute* || *Description* ||
-|| !ReadOnly || The property is a read-only property. Attempts by ECMAScript code to write to the property will be ignored. (Note, however, that in some cases the value of a property with the !ReadOnly attribute may change over time because of actions taken by the host environment; therefore "!ReadOnly" does not mean "constant and unchanging"!) ||
+|| !ReadOnly || The property is a read-only property. Attempts by ES3 code to write to the property will be ignored. (Note, however, that in some cases the value of a property with the !ReadOnly attribute may change over time because of actions taken by the host environment; therefore "!ReadOnly" does not mean "constant and unchanging"!) ||
 || !DontEnum || The property is not to be enumerated by a for-in enumeration (section 12.6.4). ||
 || !DontDelete || Attempts to delete the property will be ignored. See the description of the delete operator in section 11.4.1. ||
 
-ES262 defines no way for user code to manipulate these attributes, but
+ES3 defines no way for user code to manipulate these attributes, but
 Caja whitelists access to object properties, and so some properites
 (e.g. the "eval" property of all objects in Firefox) are inaccessible
 from Caja.  Containers can choose to expose properties to Caja code by
@@ -27,7 +27,7 @@ granting access on a property-by-property basis.
 
 === Methods as Properties ===
 
-!EcmaScript methods are simply properties containing function objects.
+ES3 methods are simply properties containing function objects.
 These functions are not bound to the object they are called on, until
 the time the function is called using the special
 {{{obj.method(<params>)}}} or equivalent
