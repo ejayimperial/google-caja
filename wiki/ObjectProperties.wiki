@@ -10,7 +10,7 @@ specifies the {{{foo}}} property of the object referenced by {{{o}}}.
 Some properties can be read and set, some can only be read, and some
 don't show up when enumerated via a {{{for (... in ...)}}} loops.
 
-[http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf !EcmaScript 262 Edition 3] (hereafter ES3) defines "property attributes" in section 8.6.1.  
+[http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf ECMAScript 262 Edition 3] (hereafter ES3) defines "property attributes" in section 8.6.1.  
     8.6.1 Property Attributes
     A property can have zero or more attributes from the following set:
 
