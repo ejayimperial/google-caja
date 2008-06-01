@@ -15,7 +15,10 @@
 package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.lexer.FilePosition;
+import com.google.caja.lexer.Keyword;
 import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.parser.ParseTreeNodeContainer;
+import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.parser.js.CatchStmt;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.FunctionConstructor;
@@ -26,8 +29,6 @@ import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
-import com.google.caja.plugin.ReservedNames;
-import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
@@ -35,8 +36,8 @@ import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.util.Pair;
 
+import static com.google.caja.parser.SyntheticNodes.s;
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
-import static com.google.caja.plugin.SyntheticNodes.s;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -184,10 +185,6 @@ public class Scope {
   private final Scope parent;
   private final MessageQueue mq;
   private final ScopeType type;
-  // TODO(metaweta): functionName should really be a member of a derived class.
-  // It gets set in a named function to the name of the function.
-  // (Though we may remove it entirely if we adopt Brando.)
-  private String functionName = null;
   private boolean containsThis = false;
   private boolean containsArguments = false;
   private int tempVariableCounter = 0;
@@ -225,7 +222,6 @@ public class Scope {
     //    typeof f === 'undefined' && g === g()
     if (root.getIdentifierName() != null) {
       declare(s, root.getIdentifier(), LocalType.FUNCTION);
-      s.functionName = root.getIdentifierName();
     }
 
     for (ParseTreeNode n : root.getParams()) {
@@ -479,7 +475,7 @@ public class Scope {
     while (target.getParent() != null) { target = target.getParent(); }
     // TODO(ihab.awad): Imported variables are remembered in 2 places: in the
     // 'importedVariables' member and by adding start of block statements.
-    // This should be done more cleanly. 
+    // This should be done more cleanly.
     if (target.importedVariables.contains(name)) { return; }
     target.importedVariables.add(name);
     Identifier identifier = s(new Identifier(name));
@@ -504,16 +500,16 @@ public class Scope {
     // Record in this scope all the declarations that have been harvested
     // by the visitor.
     for (Declaration decl : v.getDeclarations()) {
-      declare(s, decl.getIdentifier(), computeDeclarationType(s, decl));      
+      declare(s, decl.getIdentifier(), computeDeclarationType(s, decl));
     }
 
     // Now resolve all the references harvested by the visitor. If they have
     // not been defined in the scope chain (including the declarations we just
-    // harvested), then they must be free variables, so record them as such. 
+    // harvested), then they must be free variables, so record them as such.
     for (String name : v.getReferences()) {
       if (ReservedNames.ARGUMENTS.equals(name)) {
         s.containsArguments = true;
-      } else if (ReservedNames.THIS.equals(name)) {
+      } else if (Keyword.THIS.toString().equals(name)) {
         s.containsThis = true;
       } else if (!s.isDefined(name)) {
         addImportedVariable(s, name);
@@ -532,10 +528,10 @@ public class Scope {
     private final SortedSet<String> references = new TreeSet<String>();
     private final List<Declaration> declarations = new ArrayList<Declaration>();
     private final List<String> exceptionVariables = new ArrayList<String>();
-    
+
     public SortedSet<String> getReferences() { return references; }
 
-    public List<Declaration> getDeclarations() { return declarations; }    
+    public List<Declaration> getDeclarations() { return declarations; }
 
     public void visit(ParseTreeNode node) {
       // Dispatch to methods for specific node types of interest

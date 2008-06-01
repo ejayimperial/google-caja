@@ -16,6 +16,7 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.parser.ParseTreeNodeContainer;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.CatchStmt;
@@ -132,7 +133,7 @@ public class ScopeTest extends CajaTestCase {
   }
 
   public void testFreeVariableDeclaration() throws Exception {
-    assertFreeVariables("var a = b, c = d;", "b,d", "a,c");  
+    assertFreeVariables("var a = b, c = d;", "b,d", "a,c");
   }
 
   public void testFreeVariableCatchStmt() throws Exception {
@@ -506,22 +507,6 @@ public class ScopeTest extends CajaTestCase {
     assertTrue(sc0.isGlobal());
     assertFalse(sfoo.isGlobal());
     assertFalse(sc1.isGlobal());
-  }
-
-  private void assertDefinedGlobalValue(Scope s, String name) {
-    assertTrue(s.isDefined(name));
-    assertTrue(s.isImported(name));
-    assertFalse(s.isConstructor(name));
-    assertFalse(s.isDeclaredFunction(name));
-    assertFalse(s.isFunction(name));
-  }
-
-  private void assertDefinedGlobalCtor(Scope s, String name) {
-    assertTrue(s.isDefined(name));
-    assertTrue(s.isImported(name));
-    assertTrue(s.isConstructor(name));
-    assertTrue(s.isDeclaredFunction(name));
-    assertTrue(s.isFunction(name));
   }
 
   private FunctionConstructor findFunctionConstructor(ParseTreeNode root, String name) {
