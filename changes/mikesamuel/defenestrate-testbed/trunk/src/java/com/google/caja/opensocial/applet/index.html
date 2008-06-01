@@ -124,7 +124,7 @@
 
     (function () {
       testImports = ___.copy(___.sharedImports);
-      caja.result = ___.simpleFunc(function (o) {
+      testImports.caja.result = ___.primFreeze(___.simpleFunc(function (o) {
         var type = document.createElement('span');
         type.className = 'type';
         type.appendChild(document.createTextNode(typeString(o)));
@@ -135,7 +135,7 @@
         entry.appendChild(document.createTextNode(repr(o)));
 
         document.getElementById('eval-results').appendChild(entry);
-      });
+      }));
 
       function typeString(o) {
         if (typeof o === 'object') {
