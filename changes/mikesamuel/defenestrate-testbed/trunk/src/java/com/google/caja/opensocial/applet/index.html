@@ -153,6 +153,7 @@
         return typeof o;
       }
 
+      // Escape one character by javascript string literal rules
       function escapeOne(ch) {
         var i = ch.charCodeAt(0);
         if (i < 0x80) {
@@ -170,34 +171,38 @@
         return '\\u' + hex;
       }
 
-      function reprKeyValuePair(elsRepr) {
+      // Builds part of the repr of a JSON map.
+      function reprKeyValuePair(els) {
         return ___.simpleFunc(function (k, v) {
-          elsRepr.push(repr(k) + ':' + repr(v));
+          els.push(repr(k) + ': ' + repr(v));
         });
       }
 
+      // Like the python function, but produces a debugging string instead of
+      // one that can be evaled.
       function repr(o) {
         switch (typeof o) {
           case 'string':
             return ('"'
                     + o.replace(/[^\x20\x21\x23-\x5b\x5d-\x7f]/g, escapeOne)
                     + '"');
-          case 'object':
+          case 'object': case 'function':
             if (o === null) { break; }
             if (caja.isJSONContainer(o)) {
-              var elsRepr = [];
+              var els = [];
               if ('length' in o
                   && !(Object.prototype.propertyIsEnumerable.call(o, 'length'))
                   ) {
-                for (var i = o.length; --i >= 0;) {
-                  elsRepr.push(repr(o[i]));
+                for (var i = 0; i < o.length; ++i) {
+                  els.push(repr(o[i]));
                 }
-                return '[' + elsRepr.join(', ') + ']';
+                return '[' + els.join(', ') + ']';
               } else {
-                caja.each(o, reprKeyValuePair(elsRepr));
-                return '{' + elsRepr.join(', ') + '}';
+                caja.each(o, reprKeyValuePair(els));
+                return els.length ? '{ ' + els.join(', ') + ' }' : '{}';
               }
             }
+            return '\u00ab' + o + '\u00bb';
         }
         return String(o);
       }
