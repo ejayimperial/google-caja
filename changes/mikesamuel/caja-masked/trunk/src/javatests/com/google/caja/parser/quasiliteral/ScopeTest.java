@@ -475,40 +475,6 @@ public class ScopeTest extends CajaTestCase {
     assertEquals(1, s1.getStartStatements().size());
   }
 
-  public void testIsGlobal() throws Exception {
-    Block b = js(fromString(
-        "try {" +
-        "} catch (e0) {" +
-        "  function foo() {" +
-        "    try {" +
-        "    } catch (e1) {" +
-        "    }" +
-        "  }" +
-        "}"));
-
-    Scope sg = Scope.fromProgram(b, mq);
-    Scope sc0 = null;
-    Scope sfoo = null;
-    Scope sc1 = null;
-
-    {
-      TryStmt try0 = (TryStmt)b.children().get(0);
-      CatchStmt catch0 = try0.getCatchClause();
-      sc0 = Scope.fromCatchStmt(sg, catch0);
-      FunctionDeclaration foo = (FunctionDeclaration)catch0.getBody().children().get(0);
-      FunctionConstructor fooCtor = foo.getInitializer();
-      sfoo = Scope.fromFunctionConstructor(sc0, fooCtor);
-      TryStmt try1 = (TryStmt)fooCtor.getBody().children().get(0);
-      CatchStmt catch1 = try1.getCatchClause();
-      sc1 = Scope.fromCatchStmt(sfoo, catch1);
-    }
-
-    assertTrue(sg.isGlobal());
-    assertTrue(sc0.isGlobal());
-    assertFalse(sfoo.isGlobal());
-    assertFalse(sc1.isGlobal());
-  }
-
   private FunctionConstructor findFunctionConstructor(ParseTreeNode root, String name) {
     return findNodeWithIdentifier(root, FunctionConstructor.class, name);
   }
