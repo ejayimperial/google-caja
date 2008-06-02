@@ -1029,8 +1029,7 @@ var ___;
   function readProp(that, name) {
     name = String(name);
     if (canReadProp(that, name)) { return that[name]; }
-    // "this" is bound to the local ___
-    if (canCall(that, name)) { return this.attach(that, that[name]); }
+    if (canCall(that, name)) { return attach(that, that[name]); }
     return that.handleRead___(name, false);
   }
 
@@ -1066,11 +1065,7 @@ var ___;
     if ((typeof name) === 'number') { return obj[name]; }
     name = String(name);
     if (canReadPub(obj, name)) { return obj[name]; }
-    // "this" is bound to the local ___
-    if (canCall(obj, name)) { return this.attach(obj, obj[name]); }
-    var ext = this.getExtension(obj, name);
-    if (!ext) { fail("Internal: getExtension returned falsey"); }
-    if (ext.length) { return ext[0]; }
+    if (canCall(obj, name)) { return attach(obj, obj[name]); }
     return obj.handleRead___(name, opt_shouldThrow);
   }
 
@@ -1274,10 +1269,6 @@ var ___;
       var meth = obj[name];
       return meth.apply(obj, args);
     }
-    // "this" is bound to the local ___
-    var ext = this.getExtension(obj, name);
-    if (!ext) { fail("Internal: getExtension returned falsey"); }
-    if (ext.length) { return ext[0].apply(obj, args); } 
     if (obj.handleCall___) { return obj.handleCall___(name, args); }
     fail('not callable %o %s', debugReference(obj), name);
   }
@@ -1959,13 +1950,8 @@ var ___;
       getImports: simpleFunc(function() { return imports; }),
       setImports: simpleFunc(function(newImports) { imports = newImports; }),
       handle: simpleFunc(function(newModule) {
-        var map = begetCajaObjects();
-        map.___.POE = {};
-        map.caja.extend = safeExtend(map.___.POE);
-        simpleFunc(map.caja.extend);
-        allowCall(map.caja, "extend");
-        imports.caja = map.caja;
-        newModule(map.___, imports);
+        imports.caja = caja;
+        newModule(___, imports);
       })
     });
   }
@@ -2054,106 +2040,6 @@ var ___;
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // Primordial object extension
-  ////////////////////////////////////////////////////////////////////////
-
-  // The POE table is a map of entries indexed by property name.
-  // An entry is a map with two fields, 'clazz' and 'value'.
-  // The code
-  //   caja.extend{Boolean, {x:1, y:2});
-  //   caja.extend{Array, {x:3});
-  // results in a POE table that looks like
-  //   { x:[ { clazz: Boolean, value: 1 },
-  //         { clazz: Array, value: 3} ],
-  //     y:[ { clazz: Boolean, value: 2 } ] }
-
-  function validatePOE(POE, clazz, properties) {
-    if (directConstructor(properties) !== Object) {
-      throw new Error("The property map must be an object literal.");
-    }
-
-    // We'll want to add the tamed DOMado classes to this list.
-    var primordials = [Array, Boolean, Date, Number, String, Object];
-    
-    // Check whether the given class is in the list.
-    var extensible = false;
-    each(primordials, simpleFunc(function (i, value) {
-      if (value === clazz) { extensible = true; return BREAK; }
-    }));
-    if (!extensible) { 
-      throw new Error("The class " + clazz +
-          " is not extensible."); 
-    }
-    
-    // Check whether some super- or subclass has already been extended
-    // with the same name.
-    each(properties, simpleFunc(function (name, value){
-      var entry = POE[name];
-      if (entry) {
-        for (var i=0; i<entry.length; ++i) {
-          if (entry.clazz instanceof clazz) {
-            throw new Error("The subclass " + entry.clazz +
-                ' of the class ' + clazz + ' has already been extended' +
-                ' with the property ' + name);
-          }
-          if (clazz instanceof entry.clazz) {
-            throw new Error("The superclass " + entry.clazz +
-                ' of the class ' + clazz + ' has already been extended' +
-                ' with the property ' + name);
-          }
-        }
-      }
-    }));
-  }
-  
-  /*
-   * Creates a closure with the given primordial object extension table (POE).
-   * The resulting closure allows to extend primordial objects with
-   * the given map of members.
-   */
-  function safeExtend(POE) {
-    return function(clazz, members) {
-      validatePOE(POE, clazz, members);
-      each(members, simpleFunc(function (m, value){
-        if (!POE[m]) { POE[m] = []; }
-        POE[m].push({clazz:clazz, value:value});
-      }));
-    };
-    }
-  
-  function unsafeExtend(clazz, members) {
-    validatePOE({}, clazz, members);
-    each(members, simpleFunc(function (m, value){
-      clazz.prototype[m] = value;
-    }));
-  }
-  
-  /**
-   * Return a zero- or one-element array with the result.
-   * [To distinguish between (exists and undefined) and (doesn't exist).]
-   *
-   * "constructor" GIVES AN ERROR!@&
-   */
-  function getExtension(value, name) {
-    // If it already has one of these and made it here, it shouldn't
-    // be reading it. Like "constructor" or "prototype".
-    if (value[name]) { return []; }
-    var classes = this.POE[name];
-    if (!classes) { return []; }
-    switch (typeof value) {
-      case 'boolean': value = new Boolean(value); break;
-      case 'number':  value = new Number(value); break;
-      case 'string':  value = new String(value); break;
-    }
-    for (var i = 0; i < classes.length; ++i) {
-      var entry = classes[i];
-      if (value instanceof entry.clazz) {
-        return [entry.value];
-      }
-    }
-    return [];
-  }
   
   ////////////////////////////////////////////////////////////////////////
   // Trademarking
@@ -2331,9 +2217,6 @@ var ___;
   primFreeze(sharedImports);
 
   ___ = {
-    // POE
-    getExtension: getExtension,
-
     // Privileged fault handlers
     getKeeper: getKeeper,
     setKeeper: setKeeper,
@@ -2421,14 +2304,5 @@ var ___;
     }
     ___[k] = v;
   }));
-  
-  // DO NOT WHITELIST--for uncajoled code's use only.
-  caja.extend = unsafeExtend;
-  primFreeze(caja);
   setNewModuleHandler(makeNormalNewModuleHandler());
-
-  function begetCajaObjects() {
-    function beget(obj) { function F(){} F.prototype=obj; return new F; }
-    return { caja: beget(caja), ___: copy(___) };
-  }
 })(this);
