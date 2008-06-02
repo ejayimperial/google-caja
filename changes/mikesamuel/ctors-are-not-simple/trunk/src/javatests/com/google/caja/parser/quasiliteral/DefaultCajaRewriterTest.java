@@ -1097,6 +1097,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  }" +
         "  fail('Bad static member name');" +
         "})();");
+    rewriteAndExecute(
+        "(function() {" +
+        "  function Ctor() { this; }" +
+        "  function foo() {}" +
+        "  Ctor.prototype.f = foo;" +  // foo should be frozen now
+        "  try { foo.x = 3; } catch (e) { return true; }" +
+        "  fail('Static member was not frozen');" +
+        "})();");
   }
 
   public void testSetPublic() throws Exception {

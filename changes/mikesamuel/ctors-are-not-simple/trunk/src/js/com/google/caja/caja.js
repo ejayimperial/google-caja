@@ -240,7 +240,7 @@ var ___;
     }
     return specimen;
   }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Privileged fault handlers
   ////////////////////////////////////////////////////////////////////////
@@ -735,7 +735,7 @@ var ___;
         }
         constr['super'] = function(thisObj, var_args) {
           opt_Sup.init___.apply(thisObj, Array.prototype.slice.call(arguments, 1));
-        }
+        };
       }
     }
   }
@@ -1147,14 +1147,25 @@ var ___;
     name = String(name);
     return hasOwnProp(obj, name) && canEnumPub(obj, name);
   }
-  
+
+  /**
+   * Returns a new object whose only utility is its identity and (for
+   * diagnostic purposes only) its name.
+   */
+  function Token(name) {
+    return primFreeze({
+          toString: primFreeze(simpleFunc(function() { return name; }))
+        });
+  }
+  primFreeze(simpleFunc(Token));
+
   /**
    * Inside a <tt>caja.each()</tt>, the body function can terminate
    * early, as if with a conventional <tt>break;</tt>, by doing a
    * <pre>return caja.BREAK;</pre>
    */
-  var BREAK = {};
-  
+  var BREAK = Token('BREAK');
+
   /**
    * For each sensible key/value pair in obj, call fn with that
    * pair.
@@ -1468,6 +1479,12 @@ var ___;
   function args(original) {
     return primFreeze(Array.prototype.slice.call(original, 0));
   }
+
+  /**
+   * When a <tt>this</tt> value must be provided but nothing is
+   * suitable, provide this useless object instead.
+   */
+  var USELESS = Token('USELESS');
 
   /** Sealer for call stacks as from {@code (new Error).stack}. */
   var callStackSealer = makeSealerUnsealerPair();
@@ -2263,7 +2280,8 @@ var ___;
     makeSealerUnsealerPair: makeSealerUnsealerPair,
 
     // Other
-    def: def
+    def: def,
+    USELESS: USELESS
   };
 
   sharedImports = {
