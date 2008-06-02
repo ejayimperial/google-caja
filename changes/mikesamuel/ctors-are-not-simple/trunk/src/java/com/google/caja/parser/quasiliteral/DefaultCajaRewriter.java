@@ -14,9 +14,12 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.lexer.Keyword;
 import com.google.caja.parser.AbstractParseTreeNode;
+import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.parser.ParseTreeNodeContainer;
+import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.parser.js.AssignOperation;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.BreakStmt;
@@ -24,6 +27,7 @@ import com.google.caja.parser.js.CaseStmt;
 import com.google.caja.parser.js.Conditional;
 import com.google.caja.parser.js.ContinueStmt;
 import com.google.caja.parser.js.ControlOperation;
+import com.google.caja.parser.js.DebuggerStmt;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.DefaultCaseStmt;
 import com.google.caja.parser.js.Expression;
@@ -47,19 +51,17 @@ import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.parser.js.TryStmt;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.ArrayConstructor;
-import com.google.caja.plugin.ReservedNames;
-import com.google.caja.plugin.SyntheticNodes;
-import static com.google.caja.plugin.SyntheticNodes.s;
 import com.google.caja.util.Pair;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 
+import static com.google.caja.parser.SyntheticNodes.s;
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Rewrites a JavaScript parse tree to comply with default Caja rules.
@@ -142,7 +144,7 @@ public class DefaultCajaRewriter extends Rewriter {
         return NONE;
       }
     },
-      
+
     ////////////////////////////////////////////////////////////////////////
     // with - disallow the 'with' construct
     ////////////////////////////////////////////////////////////////////////
@@ -375,7 +377,7 @@ public class DefaultCajaRewriter extends Rewriter {
           reason="")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (QuasiBuilder.match(ReservedNames.THIS, node, bindings)) {
+        if (QuasiBuilder.match(Keyword.THIS.toString(), node, bindings)) {
           return newReference(ReservedNames.LOCAL_THIS);
         }
         return NONE;
@@ -1620,12 +1622,13 @@ public class DefaultCajaRewriter extends Rewriter {
           if (!s2.hasFreeThis()) {
             checkFormals(bindings.get("ps"), mq);
             return substV(
-                "___.simpleFunc(" +
-                "  function (@ps*) {" +
-                "    @fh*;" +
-                "    @stmts*;" +
-                "    @bs*;" +
-                "})",
+                "___.primFreeze(" +
+                "  ___.simpleFunc(" +
+                "    function (@ps*) {" +
+                "      @fh*;" +
+                "      @stmts*;" +
+                "      @bs*;" +
+                "}))",
                 "ps", bindings.get("ps"),
                 // It's important to expand bs before computing fh and stmts.
                 "bs", expand(bindings.get("bs"), s2, mq),
@@ -1691,16 +1694,17 @@ public class DefaultCajaRewriter extends Rewriter {
         if (QuasiBuilder.match("function @f(@ps*) { @bs*; }", node, bindings)) {
           Scope s2 = Scope.fromFunctionConstructor(
               scope,
-              (FunctionConstructor) node);
+              (FunctionConstructor)node);
           if (!s2.hasFreeThis()) {
             checkFormals(bindings.get("ps"), mq);
             return substV(
-                "___.simpleFunc(" +
-                "  function @f(@ps*) {" +
-                "    @fh*;" +
-                "    @stmts*;" +
-                "    @bs*;" +
-                "})",
+                "___.primFreeze(" +
+                "  ___.simpleFunc(" +
+                "    function @f(@ps*) {" +
+                "      @fh*;" +
+                "      @stmts*;" +
+                "      @bs*;" +
+                "  }));",
                 "f", bindings.get("f"),
                 "ps", bindings.get("ps"),
                 // It's important to expand bs before computing fh and stmts.
@@ -1763,9 +1767,10 @@ public class DefaultCajaRewriter extends Rewriter {
               "___.xo4a(" +
               "    function (@formals*) { @fh*; @stmts*; @body*; })",
               "formals", bindings.get("formals"),
-              "localThis", s(new Identifier(ReservedNames.LOCAL_THIS)),
-              // It's important that body is expanded before computing fh and stmts.
+              // It's important that body is expanded before computing
+              // fh and stmts.
               "body", expand(rewrittenBody, s2, mq),
+              // fh will contain a declaration for ReservedNames.LOCAL_THIS
               "fh", getFunctionHeadDeclarations(this, s2, mq),
               "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
         }
@@ -1791,7 +1796,7 @@ public class DefaultCajaRewriter extends Rewriter {
                 node.getFilePosition(),
                 this,
                 node);
-            return node;            
+            return node;
           }
           Scope s2 = Scope.fromFunctionConstructor(scope, (FunctionConstructor)constructorNode);
           if (s2.hasFreeThis()) {
@@ -2125,6 +2130,7 @@ public class DefaultCajaRewriter extends Rewriter {
             node instanceof CaseStmt ||
             node instanceof Conditional ||
             node instanceof ContinueStmt ||
+            node instanceof DebuggerStmt ||
             node instanceof DefaultCaseStmt ||
             node instanceof ExpressionStmt ||
             node instanceof Identifier ||

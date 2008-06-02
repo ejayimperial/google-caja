@@ -991,7 +991,6 @@ var ___;
     } else if (isSimpleFunc(member)) {
       allowCall(proto, name);  // grant
       allowSet(proto, name);  // grant
-      primFreeze(member);
     } else {
       allowSet(proto, name);  // grant
     }
@@ -1377,8 +1376,7 @@ var ___;
       ctor[staticMemberName] = staticMemberValue;
       allowRead(ctor, staticMemberName);
     } else {
-      fail('cannot set static member %o %s',
-           debugReference(obj), staticMemberName);
+      func.handleSet___(staticMemberName, staticMemberValue);
     }
   }
 

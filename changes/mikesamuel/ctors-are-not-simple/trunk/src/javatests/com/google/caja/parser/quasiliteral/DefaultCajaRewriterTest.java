@@ -18,13 +18,13 @@ import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Statement;
-import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.util.RhinoTestBed;
@@ -44,6 +44,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   private boolean wartsMode = false;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     wartsMode = false;
@@ -144,9 +145,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkSucceeds(
         "function() { var y = x; };",
         weldPrelude("x") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var y = x;" +
-        "});");
+        "}));");
   }
 
   public void testReflectiveMethodInvocation() throws Exception {
@@ -745,10 +746,10 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  p = arguments;" +
         "};",
         "var p;" +
-        "var foo = ___.simpleFunc(function() {" +
+        "var foo = ___.primFreeze(___.simpleFunc(function() {" +
         "  var a___ = ___.args(arguments);" +
         "  p = a___;" +
-        "});");
+        "}));");
   }
 
   public void testVarThis() throws Exception {
@@ -781,7 +782,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     // Make sure *single* underscore is okay
     checkSucceeds(
         "function() { var foo_ = 3; }",
-        "___.simpleFunc(function() { var foo_ = 3; })");
+        "___.primFreeze(___.simpleFunc(function() { var foo_ = 3; }))");
   }
 
   public void testVarBadSuffixDeclaration() throws Exception {
@@ -849,18 +850,18 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  foo;" +
         "}",
         weldPrelude("foo") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  foo;" +
-        "});");
+        "}));");
     checkSucceeds(
         "function() {" +
         "  var foo;" +
         "  foo;" +
         "}",
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var foo;" +
         "  foo;" +
-        "});");
+        "}));");
   }
 
   public void testVarDefault() throws Exception {
@@ -873,9 +874,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "function() {" +
         "  " + unchanged +
         "};",
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  " + unchanged +
-        "});");
+        "}));");
   }
 
   public void testReadBadSuffix() throws Exception {
@@ -892,7 +893,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    p = this.x;" +
         "  }" +
         "};",
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var foo;" +
         "  foo = (function () {" +
         "      ___.splitCtor(foo, foo_init___);" +
@@ -909,7 +910,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    })();" +
         "  var p;" +
         "  ;" +
-        "});");
+        "}));");
   }
 
   public void testReadBadInternal() throws Exception {
@@ -1210,12 +1211,12 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkSucceeds(  // Local reference need not be assigned to a temp.
         "(function (myKey) { myArray()[myKey] += 1; });",
         weldPrelude("myArray")
-        + "___.simpleFunc(function (myKey) {"
+        + "___.primFreeze(___.simpleFunc(function (myKey) {"
         + "  var x0___;"
         + "  x0___ = ___.asSimpleFunc(myArray)(),"
         + "  ___.setPub(x0___, myKey,"
         + "             ___.readPub(x0___, myKey) + 1);"
-        + "})");
+        + "}))");
 
     assertConsistent("var x = 3; x *= 2;");
     assertConsistent("var x = 1; x += 7;");
@@ -1282,7 +1283,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkFails("++x__;", "");
     checkSucceeds(
         "(function (x, y) { return [x--, --x, y++, ++y]; })",
-        "___.simpleFunc(function (x, y) { return [x--, --x, y++, ++y]; })");
+        "___.primFreeze(___.simpleFunc(" +
+        "  function (x, y) { return [x--, --x, y++, ++y]; }))");
 
     assertConsistent(
         "(function () {" +
@@ -1405,9 +1407,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  new g[0](g[1], g[2]);" +
         "};",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  new (___.asCtor(___.readPub(g, 0)))(___.readPub(g, 1), ___.readPub(g, 2));" +
-        "});");
+        "}));");
   }
 
   public void testDeleteProp() throws Exception {
@@ -1566,7 +1568,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  }" +
         "};",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var foo;" +
         "  foo = (function () {" +
         "    ___.splitCtor(foo, foo_init___);" +
@@ -1586,7 +1588,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    return foo;" +
         "  })();" +
         "  ;" +
-        "});");
+        "}));");
   }
 
   public void testCallBadInternal() throws Exception {
@@ -1661,7 +1663,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "                   })" +
         "}, {" +
         "    s0: ___.readPub(g, 1)," +
-        "    s1: ___.simpleFunc(function() { return 3; })" +
+        "    s1: ___.primFreeze(___.simpleFunc(function() { return 3; }))" +
         "});");
     checkFails(
         "function() {" +
@@ -1710,7 +1712,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  }" +
         "};",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var foo;" +
         "  foo = (function () {" +
         "    ___.splitCtor(foo, foo_init___);" +
@@ -1724,7 +1726,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    return foo;" +
         "  })();" +
         "  ;" +
-        "});");
+        "}));");
   }
 
   public void testCallIndexPublic() throws Exception {
@@ -1751,11 +1753,11 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkSucceeds(
         "function(x, y) { x = arguments; y = g[0]; };",
         weldPrelude("g") +
-        "___.simpleFunc(function(x, y) {" +
+        "___.primFreeze(___.simpleFunc(function(x, y) {" +
         "  var a___ = ___.args(arguments);" +
         "  x = a___;" +
         "  y = ___.readPub(g, 0);" +
-        "});");
+        "}));");
     rewriteAndExecute(
         "(function () {" +
         "  var foo = function () {};" +
@@ -1764,10 +1766,13 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    foo.x = 3;" +
         "  } catch (e) { return; }" +
         "  fail('mutate frozen function');" +
-        "})()");
+        "})();");
     assertConsistent(
-        "var foo = function () {};" +
-        "foo.x = 3;" +
+        "var foo = (function () {" +
+        "             function foo() {};" +
+        "             foo.x = 3;" +
+        "             return foo;" +
+        "           })();" +
         "foo();" +
         "foo.x");
   }
@@ -1782,7 +1787,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  }" +
         "};",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var foo;" +
         "  foo = ___.simpleFunc(function foo(x, y) {" +
         "      var a___ = ___.args(arguments);" +
@@ -1791,7 +1796,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "      return ___.asSimpleFunc(___.primFreeze(foo))(x - 1, y - 1);" +
         "  });" +
         "  ;"+
-        "});");
+        "}));");
     checkSucceeds(
         "function foo(x, y ) {" +
         "  return foo(x - 1, y - 1);" +
@@ -1809,14 +1814,12 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "    foo.x = 3;" +
         "  } catch (e) { return; }" +
         "  fail('mutated frozen function');" +
-        "})()");
+        "})();");
     assertConsistent(
-        "(function () {" +
-        "  function foo() {}" +
-        "  foo.x = 3;" +
-        "  foo();" +
-        "  return foo.x;" +
-        "})()");
+        "function foo() {}" +
+        "foo.x = 3;" +
+        "foo();" +
+        "foo.x;");
   }
 
   public void testFuncNamedSimpleValue() throws Exception {
@@ -1827,20 +1830,20 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  return foo(x - 1, y - 1);" +
         "};",
         weldPrelude("z") +
-        "  var f = ___.simpleFunc(" +
+        "  var f = ___.primFreeze(___.simpleFunc(" +
         "    function foo(x, y) {" +
         "      var a___ = ___.args(arguments);" +
         "      x = a___;" +
         "      y = z;" +
         "      return ___.asSimpleFunc(___.primFreeze(foo))(x - 1, y - 1);" +
-        "    });");
+        "    }));");
     checkSucceeds(
         "var bar = function foo_(x, y ) {" +
         "  return foo_(x - 1, y - 1);" +
         "};",
-        "var bar = ___.simpleFunc(function foo_(x, y) {" +
+        "var bar = ___.primFreeze(___.simpleFunc(function foo_(x, y) {" +
         "  return ___.asSimpleFunc(___.primFreeze(foo_))(x - 1, y - 1);" +
-        "});");
+        "}));");
   }
 
   public void testFuncExophoricFunction() throws Exception {
@@ -1883,6 +1886,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "\"this\" in an exophoric function exposes only public fields");
     assertConsistent(
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7()");
+    assertConsistent(
+        "({ f: function (y) { return this.x * y; }, x: 4 }).f(2)");
   }
 
   public void testFuncBadMethod() throws Exception {
@@ -1925,7 +1930,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         ";");
     checkSucceeds(
         "(function(){ function Foo(x) { this.x_ = x; } })();",
-        "___.asSimpleFunc(___.simpleFunc(function () {" +
+        "___.asSimpleFunc(___.primFreeze(___.simpleFunc(function () {" +
         "    var Foo;" +
         "    Foo = (function () {" +
         "        ___.splitCtor(Foo, Foo_init___);" +
@@ -1940,7 +1945,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "        return Foo;" +
         "      })();" +
         "    ;" +
-        "  }))();");
+        "  })))();");
     checkSucceeds(
         "function Foo(x) { this.x_ = x; }" +
         "function Bar(y) {" +
@@ -2104,50 +2109,50 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "function() {" +
         "  var x, y;" +
         "}",
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var x, y;" +
-        "});");
+        "}));");
     checkSucceeds(
         "function() {" +
         "  var x = g[0], y = g[1];" +
         "}",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var x = ___.readPub(g, 0), y = ___.readPub(g, 1);" +
-        "});");
+        "}));");
     checkSucceeds(
         "function() {" +
         "  var x, y = g[0];" +
         "}",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var x, y = ___.readPub(g, 0);" +
-        "});");
+        "}));");
     // 'var' in global scope, 'for' statement
     checkSucceeds(
         "function() {" +
         "  for (var x, y; ; ) {}" +
         "}",
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  for (var x, y; ; ) {}" +
-        "});");
+        "}));");
     checkSucceeds(
         "function() {" +
         "  for (var x = g[0], y = g[1]; ; ) {}" +
         "}",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  for (var x = ___.readPub(g, 0), " +
         "           y = ___.readPub(g, 1); ; ) {}" +
-        "});");
+        "}));");
     checkSucceeds(
         "function() {" +
         "  for (var x, y = g[0]; ; ) {}" +
         "}",
         weldPrelude("g") +
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  for (var x, y = ___.readPub(g, 0); ; ) {}" +
-        "});");
+        "}));");
     assertConsistent(
         "var arr = [1, 2, 3], k = -1;" +
         "(function () {" +
@@ -2218,6 +2223,10 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkSucceeds(
         "while (true) { continue; }",
         "while (true) { continue; }");
+  }
+
+  public void testRecurseDebuggerStmt() throws Exception {
+    checkSucceeds("debugger;", "debugger;");
   }
 
   public void testRecurseDefaultCaseStmt() throws Exception {
@@ -2302,10 +2311,10 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  var x;" +
         "  throw x;" +
         "}",
-        "___.simpleFunc(function() {" +
+        "___.primFreeze(___.simpleFunc(function() {" +
         "  var x;" +
         "  throw x;" +
-        "});");
+        "}));");
   }
 
   public void testSpecimenClickme() throws Exception {
