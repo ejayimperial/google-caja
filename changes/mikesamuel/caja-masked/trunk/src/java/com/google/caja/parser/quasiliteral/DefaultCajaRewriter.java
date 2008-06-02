@@ -1351,8 +1351,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("caja.def(@fname, @base)", node, bindings)
             && bindings.get("fname") instanceof Reference
-            && scope.isFunction(getReferenceName(bindings.get("fname")))
-            && scope.isImported("caja")) {
+            && scope.isFunction(getReferenceName(bindings.get("fname")))) {
           return substV(
               "caja.def(@fname, @base)",
               "fname", bindings.get("fname"),
@@ -1370,8 +1369,7 @@ public class DefaultCajaRewriter extends Rewriter {
           reason="")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (QuasiBuilder.match("caja.def(@fname, @base)", node, bindings)
-            && scope.isImported("caja")) {
+        if (QuasiBuilder.match("caja.def(@fname, @base)", node, bindings)) {
           mq.addMessage(
               RewriterMessageType.CAJA_DEF_ON_NON_FUNCTION,
               node.getFilePosition(), this, node);
@@ -1392,8 +1390,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (QuasiBuilder.match(
                 "caja.def(@fname, @base, @mm, @ss?)", node, bindings)
             && bindings.get("fname") instanceof Reference
-            && scope.isFunction(getReferenceName(bindings.get("fname")))
-            && scope.isImported("caja")) {
+            && scope.isFunction(getReferenceName(bindings.get("fname")))) {
           if (!checkMapExpression(bindings.get("mm"), this, scope, mq)) {
             return node;
           }
@@ -1423,8 +1420,7 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match(
-                "caja.def(@fname, @base, @mm, @ss?)", node, bindings)
-            && scope.isImported("caja")) {
+                "caja.def(@fname, @base, @mm, @ss?)", node, bindings)) {
           mq.addMessage(
               RewriterMessageType.CAJA_DEF_ON_NON_FUNCTION,
               node.getFilePosition(), this, node);
