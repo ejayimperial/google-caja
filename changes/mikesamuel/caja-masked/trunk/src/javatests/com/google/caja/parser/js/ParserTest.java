@@ -135,6 +135,66 @@ public class ParserTest extends CajaTestCase {
     }
   }
 
+  public void testDebuggerKeyword() throws Exception {
+    // The debugger keyword can appear in a statement context
+    assertParseSucceeds("{ debugger; }");
+    // but not in an expression context
+    assertParseFails("(debugger);");
+    assertParseFails("debugger();");
+    // or as an identifier.
+    assertParseFails("var debugger;");
+    assertParseFails("debugger: foo();");
+  }
+
+  public void testOctalLiterals() throws Exception {
+    assertEquals("10", render(jsExpr(fromString("012"))));
+    assertMessage(MessageType.OCTAL_LITERAL, MessageLevel.LINT);
+
+    mq.getMessages().clear();
+    assertEquals("12", render(jsExpr(fromString("12"))));
+    assertTrue("" + mq.getMessages(), mq.getMessages().isEmpty());
+
+    mq.getMessages().clear();
+    assertEquals("18.0", render(jsExpr(fromString("018"))));
+    assertMessage(MessageType.OCTAL_LITERAL, MessageLevel.ERROR);
+
+    mq.getMessages().clear();
+    assertEquals("018i", render(jsExpr(fromString("018i"))));
+    assertMessage(MessageType.INVALID_IDENTIFIER, MessageLevel.ERROR);
+
+    mq.getMessages().clear();
+    assertEquals("-10", render(jsExpr(fromString("-012"))));
+    assertMessage(MessageType.OCTAL_LITERAL, MessageLevel.LINT);
+
+    mq.getMessages().clear();
+    try {
+      assertEquals("12.34", render(jsExpr(fromString("012.34"))));
+      fail("012.34 is not legal javascript.");
+    } catch (ParseException ex) {
+      // pass
+    }
+
+    mq.getMessages().clear();
+    assertEquals("(10).toString()",
+                 // If . is treated as part of 012 then semicolon insertion
+                 // treats a method call as a function call.
+                 render(jsExpr(fromString("012.\ntoString()"))));
+    assertMessage(MessageType.OCTAL_LITERAL, MessageLevel.LINT);
+  }
+
+  public void testIntegerPartIsOctal() throws Exception {
+    assertTrue(Parser.integerPartIsOctal("012"));
+    assertTrue(Parser.integerPartIsOctal("0012"));
+    assertTrue(Parser.integerPartIsOctal("012.34"));
+    assertFalse(Parser.integerPartIsOctal("12"));
+    assertFalse(Parser.integerPartIsOctal("12.34"));
+    assertFalse(Parser.integerPartIsOctal("0x12"));
+    assertFalse(Parser.integerPartIsOctal("0"));
+    assertFalse(Parser.integerPartIsOctal("00"));
+    assertFalse(Parser.integerPartIsOctal("0.01"));
+    assertFalse(Parser.integerPartIsOctal("0.12"));
+  }
+
   private void assertParseKeywordAsIdentifier(Keyword k) throws Exception {
     assertAllowKeywordPropertyAccessor(k);
     assertAllowKeywordPropertyDeclaration(k);
@@ -171,8 +231,11 @@ public class ParserTest extends CajaTestCase {
 
   private void assertParse(String code, boolean shouldSucceed)
       throws Exception {
-    if (shouldSucceed) assertParseSucceeds(code);
-    else assertParseFails(code);
+    if (shouldSucceed) {
+      assertParseSucceeds(code);
+    } else {
+      assertParseFails(code);
+    }
   }
 
   private void assertParseSucceeds(String code) throws Exception {
@@ -198,22 +261,22 @@ public class ParserTest extends CajaTestCase {
     }
   }
 
-  private boolean isValidLvalue(Keyword k) {
+  private static boolean isValidLvalue(Keyword k) {
     return Keyword.THIS == k;
   }
 
-  private boolean isValidRvalue(Keyword k) {
+  private static boolean isValidRvalue(Keyword k) {
     return Keyword.THIS == k
         || Keyword.TRUE == k
         || Keyword.FALSE == k
         || Keyword.NULL == k;
   }
 
-  private String asLvalue(String expr) {
+  private static String asLvalue(String expr) {
     return expr + " = 42;";
   }
 
-  private String asRvalue(String expr) {
+  private static String asRvalue(String expr) {
     return "x = " + expr + ";";
   }
 
