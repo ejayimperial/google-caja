@@ -734,7 +734,7 @@ var ___;
         }
         constr['super'] = function(thisObj, var_args) {
           opt_Sup.init___.apply(thisObj, Array.prototype.slice.call(arguments, 1));
-        }
+        };
       }
     }
     if (opt_name) {
