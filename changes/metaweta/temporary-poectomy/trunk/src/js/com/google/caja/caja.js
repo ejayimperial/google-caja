@@ -1917,7 +1917,7 @@ var ___;
       getImports: simpleFunc(function() { return imports; }),
       setImports: simpleFunc(function(newImports) { imports = newImports; }),
       handle: simpleFunc(function(newModule) {
-        imports.caja = copy(caja);
+        imports.caja = caja;
         newModule(___, imports);
       })
     });
