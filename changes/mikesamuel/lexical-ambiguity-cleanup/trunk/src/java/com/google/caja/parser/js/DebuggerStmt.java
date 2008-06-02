@@ -1,4 +1,4 @@
-// Copyright (C) 2005 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,29 +15,28 @@
 package com.google.caja.parser.js;
 
 import com.google.caja.reporting.RenderContext;
+import com.google.caja.lexer.TokenConsumer;
+import com.google.caja.parser.ParseTreeNode;
+
+import java.util.List;
 
 /**
- * A literal expression whose value does not depend on the environment, and
- * whose evaluation has no side-effect.
+ * A statement that is a noop in normal execution, but will trigger a breakpoint
+ * if a debugger is attached.
  *
  * @author mikesamuel@gmail.com
  */
-public abstract class Literal extends AbstractExpression<Expression> {
-  protected Literal() {}
+public final class DebuggerStmt extends AbstractStatement<Statement> {
+  public DebuggerStmt(Void value, List<? extends ParseTreeNode> children) {}
+
+  public DebuggerStmt() {}
 
   @Override
-  public abstract Object getValue();
-
-  public abstract boolean getValueInBooleanContext();
-
-  @Override
-  protected final void childrenChanged() {
-    super.childrenChanged();
-    if (!children().isEmpty()) { throw new IllegalStateException(); }
-  }
+  public Object getValue() { return null; }
 
   public void render(RenderContext rc) {
-    rc.getOut().mark(getFilePosition());
-    rc.getOut().consume(getValue().toString());
+    TokenConsumer out = rc.getOut();
+    out.mark(getFilePosition());
+    out.consume("debugger");
   }
 }

@@ -18,13 +18,13 @@ import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Statement;
-import com.google.caja.plugin.SyntheticNodes;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.util.RhinoTestBed;
@@ -44,6 +44,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   private boolean wartsMode = false;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     wartsMode = false;
@@ -172,7 +173,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var p = new Point();" +
         "p.add3.apply(p, [4]);");
   }
-  
+
   public void testPrimordialObjectExtension() throws Exception {
     wartsMode = true;
     assertConsistent(
@@ -908,7 +909,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "      return foo;" +
         "    })();" +
         "  var p;" +
-        "  ;" +            
+        "  ;" +
         "}));");
   }
 
@@ -1054,6 +1055,48 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "foo = ___.simpleFunc(function foo() {});" +
         ";" +
         "___.setStatic(foo, 'p', x);");
+    assertConsistent(
+        "function C() { this; }" +
+        "caja.def(C, Object, {}, { f: function () { return 4; } });" +
+        "C.f();");
+    assertConsistent(
+        "function C() { this; }" +
+        "C.f = function () { return 4; };" +
+        "C.f();");
+    checkFails(
+        "function C() { this; }" +
+        "caja.def(C, Object, {}, { f_: function () {} });",
+        "Key may not end in \"_\"");
+    rewriteAndExecute(
+        "(function () {" +
+        "  try {" +
+        "    function C() { this; }" +
+        "    caja.def(C, Object, {}, { call: function () {} });" +
+        "  } catch (e) {" +
+        "    return true;" +
+        "  }" +
+        "  fail('Static member overrides call');" +
+        "})();");
+    rewriteAndExecute(
+        "(function () {" +
+        "  try {" +
+        "    function C() { this; }" +
+        "    caja.def(C, Object, {}, { prototype: {} });" +
+        "  } catch (e) {" +
+        "    return true;" +
+        "  }" +
+        "  fail('Static member overrides prototype');" +
+        "})();");
+    rewriteAndExecute(
+        "(function () {" +
+        "  try {" +
+        "    function C() { this; }" +
+        "    C['f_'] = function () { return 4; };" +
+        "  } catch (e) {" +
+        "    return true;" +
+        "  }" +
+        "  fail('Bad static member name');" +
+        "})();");
   }
 
   public void testSetPublic() throws Exception {
@@ -1808,6 +1851,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "\"this\" in an exophoric function exposes only public fields");
     assertConsistent(
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7()");
+    assertConsistent(
+        "({ f: function (y) { return this.x * y; }, x: 4 }).f(2)");
   }
 
   public void testFuncBadMethod() throws Exception {
@@ -1922,7 +1967,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var o = { k0: g.x, k1: g.y };",
         weldPrelude("g") +
         "var x0___;" +
-        "var x1___;" +            
+        "var x1___;" +
         "var o = { k0: " + weldReadPub("g", "x", "x0___") + ", " +
         "          k1: " + weldReadPub("g", "y", "x1___") + " };");
   }
@@ -2159,6 +2204,10 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "while (true) { continue; }");
   }
 
+  public void testRecurseDebuggerStmt() throws Exception {
+    checkSucceeds("debugger;", "debugger;");
+  }
+  
   public void testRecurseDefaultCaseStmt() throws Exception {
     checkSucceeds(
         "switch (g[0]) { default: break; }",
