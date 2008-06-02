@@ -240,7 +240,7 @@ var ___;
     }
     return specimen;
   }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Privileged fault handlers
   ////////////////////////////////////////////////////////////////////////
@@ -734,7 +734,7 @@ var ___;
         }
         constr['super'] = function(thisObj, var_args) {
           opt_Sup.init___.apply(thisObj, Array.prototype.slice.call(arguments, 1));
-        }
+        };
       }
     }
     if (opt_name) {
@@ -1150,14 +1150,25 @@ var ___;
     name = String(name);
     return hasOwnProp(obj, name) && canEnumPub(obj, name);
   }
-  
+
+  /**
+   * Returns a new object whose only utility is its identity and (for
+   * diagnostic purposes only) its name.
+   */
+  function Token(name) {
+    return primFreeze({
+          toString: primFreeze(simpleFunc(function() { return name; }))
+        });
+  }
+  primFreeze(simpleFunc(Token));
+
   /**
    * Inside a <tt>caja.each()</tt>, the body function can terminate
    * early, as if with a conventional <tt>break;</tt>, by doing a
    * <pre>return caja.BREAK;</pre>
    */
-  var BREAK = {};
-  
+  var BREAK = Token('BREAK');
+
   /**
    * For each sensible key/value pair in obj, call fn with that
    * pair.
@@ -1329,40 +1340,56 @@ var ___;
       allowSet(obj, name);  // grant
       obj[name] = val;
       return val;
+    } else if (isCtor(obj) && !isFrozen(obj)) {
+      // Handles
+      //    ctor.staticMemberName = val;
+      setStatic(obj, name, val);
     } else {
       return obj.handleSet___(name, val);
     }
   }
 
   /**
-   * Can a client of func directly assign to its name property?
-   * <p>
-   * Enforce that func is a function.
-   * If this property is Internal (i.e., ends with a '_') or if this
-   * function is frozen, then no.
-   * If this property was already defined, then no.
-   * Otherwise, allow.
-   * <p>
-   * The non-obvious implication of this rule is that the Function members call,
-   * bind and apply may not be overridden by Caja code.
+   * Can the given constructor have the given static method attached to it.
+   * @param {Function} ctor
+   * @param {string} staticMemberName an identifier in the public namespace.
    */
-  function canSetStatic(func, name) {
-    name = String(name);
-    enforceType(func, 'function', 'canSetStatic');
-    if (endsWith(name, '_')) { return false; }
-    if (name in func) { return false; }
-    return !isFrozen(func);
+  function canSetStatic(ctor, staticMemberName) {
+    staticMemberName = '' + staticMemberName;
+    if (typeof ctor !== 'function') {
+      log('Cannot set static member of non function', ctor);
+      return false;
+    }
+    if (isFrozen(ctor)) {
+      log('Cannot set static member of frozen function', ctor);
+      return false;
+    }
+    if (staticMemberName in ctor) {  // disallows prototype, call, apply, bind
+      log('Cannot override static member ', staticMemberName);
+      return false;
+    }
+    if (endsWith(staticMemberName, '_')) {  // statics are public
+      log('Illegal static member name ', staticMemberName);
+      return false;
+    }
+    return true;
   }
 
-  /** A client of func attempts to assign to one of its properties. */
-  function setStatic(func, name, val) {
-    name = String(name);
-    if (canSetStatic(func, name)) {
-      allowEnum(func, name);  // grant
-      func[name] = val;
-      return val;
+  /**
+   * Sets a static member of a ctor, making sure that it cannot be used to
+   * override call/apply/bind and other builtin members of function.
+   * @param {Function} ctor
+   * @param {string} staticMemberName an identifier in the public namespace.
+   * @param staticMemberValue the value of the static member.
+   */
+  function setStatic(ctor, staticMemberName, staticMemberValue) {
+    staticMemberName = '' + staticMemberName;
+    if (canSetStatic(ctor, staticMemberName)) {
+      ctor[staticMemberName] = staticMemberValue;
+      allowRead(ctor, staticMemberName);
     } else {
-      return func.handleSet___(name, val);
+      fail('cannot set static member %o %s',
+           debugReference(obj), staticMemberName);
     }
   }
 
@@ -1455,6 +1482,12 @@ var ___;
     return primFreeze(Array.prototype.slice.call(original, 0));
   }
 
+  /**
+   * When a <tt>this</tt> value must be provided but nothing is
+   * suitable, provide this useless object instead.
+   */
+  var USELESS = Token('USELESS');
+
   /** Sealer for call stacks as from {@code (new Error).stack}. */
   var callStackSealer = makeSealerUnsealerPair();
 
@@ -1544,7 +1577,7 @@ var ___;
     var sup = opt_Sup || Object;
     var members = opt_members || {};
     var statics = opt_statics || {};
-    
+
     ctor(sub, sup);
     function PseudoSuper() {}
     PseudoSuper.prototype = sup.prototype;
@@ -1556,15 +1589,15 @@ var ___;
       sub.make___.prototype = sub.prototype;
     }
     sub.prototype.constructor = sub;
-    
+
     setMemberMap(sub, members);
     each(statics, simpleFunc(function(sname, staticMember) {
       setStatic(sub, sname, staticMember);
     }));
-    
+
     // translator freezes sub and sub.prototype later.
   }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Taming mechanism
   ////////////////////////////////////////////////////////////////////////
@@ -2245,7 +2278,8 @@ var ___;
     makeSealerUnsealerPair: makeSealerUnsealerPair,
 
     // Other
-    def: def
+    def: def,
+    USELESS: USELESS
   };
 
   sharedImports = {

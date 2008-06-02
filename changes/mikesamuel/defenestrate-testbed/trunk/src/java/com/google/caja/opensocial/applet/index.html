@@ -140,19 +140,66 @@
       function typeString(o) {
         if (typeof o === 'object') {
           if (o === null) { return 'null'; }
-          if (o.constructor.name) { return o.constructor.name; }
+          var ctor = ___.directConstructor(o);
+          var name;
+          if (ctor) {
+            name = ctor.NAME___;
+            if (!name && ('name' in ctor) && !___.hasOwnProp(ctor, 'name')) {
+              name = ctor.name;
+            }
+            if (name) { return String(name); }
+          }
         }
         return typeof o;
       }
 
-      function repr(o) {
-        if ((typeof 'uneval') != 'undefined') { return uneval(o); }
-        switch (typeof o) {
-          case 'boolean': case 'number': case 'undefined':
-            return String(o);
-          default:
-            return o && o.toSource() ? o.toSource() : String(o);
+      function escapeOne(ch) {
+        var i = ch.charCodeAt(0);
+        if (i < 0x80) {
+          switch (i) {
+            case 9: return '\t';
+            case 0x0a: return '\\n';
+            case 0x0d: return '\\r';
+            case 0x22: return '\\"';
+            case 0x5c: return '\\\\';
+            default: return (i < 0x10 ? '\\x0' : '\\x') + i.toString(16);
+          }
         }
+        var hex = i.toString(16);
+        while (hex.length < 4) { hex = '0' + hex; }
+        return '\\u' + hex;
+      }
+
+      function reprKeyValuePair(elsRepr) {
+        return ___.simpleFunc(function (k, v) {
+          elsRepr.push(repr(k) + ':' + repr(v));
+        });
+      }
+
+      function repr(o) {
+        switch (typeof o) {
+          case 'string':
+            return ('"'
+                    + o.replace(/[^\x20\x21\x23-\x5b\x5d-\x7f]/g, escapeOne)
+                    + '"');
+          case 'object':
+            if (o === null) { break; }
+            if (caja.isJSONContainer(o)) {
+              var elsRepr = [];
+              if ('length' in o
+                  && !(Object.prototype.propertyIsEnumerable.call(o, 'length'))
+                  ) {
+                for (var i = o.length; --i >= 0;) {
+                  elsRepr.push(repr(o[i]));
+                }
+                return '[' + elsRepr.join(', ') + ']';
+              } else {
+                caja.each(o, reprKeyValuePair(elsRepr));
+                return '{' + elsRepr.join(', ') + '}';
+              }
+            }
+        }
+        return String(o);
       }
 
       ___.getNewModuleHandler().setImports(testImports);

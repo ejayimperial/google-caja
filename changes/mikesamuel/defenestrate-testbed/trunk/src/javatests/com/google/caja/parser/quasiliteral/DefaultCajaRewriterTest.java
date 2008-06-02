@@ -1055,6 +1055,48 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "foo = ___.simpleFunc(function foo() {});" +
         ";" +
         "___.setStatic(foo, 'p', x);");
+    assertConsistent(
+        "function C() { this; }" +
+        "caja.def(C, Object, {}, { f: function () { return 4; } });" +
+        "C.f();");
+    assertConsistent(
+        "function C() { this; }" +
+        "C.f = function () { return 4; };" +
+        "C.f();");
+    checkFails(
+        "function C() { this; }" +
+        "caja.def(C, Object, {}, { f_: function () {} });",
+        "Key may not end in \"_\"");
+    rewriteAndExecute(
+        "(function () {" +
+        "  try {" +
+        "    function C() { this; }" +
+        "    caja.def(C, Object, {}, { call: function () {} });" +
+        "  } catch (e) {" +
+        "    return true;" +
+        "  }" +
+        "  fail('Static member overrides call');" +
+        "})();");
+    rewriteAndExecute(
+        "(function () {" +
+        "  try {" +
+        "    function C() { this; }" +
+        "    caja.def(C, Object, {}, { prototype: {} });" +
+        "  } catch (e) {" +
+        "    return true;" +
+        "  }" +
+        "  fail('Static member overrides prototype');" +
+        "})();");
+    rewriteAndExecute(
+        "(function () {" +
+        "  try {" +
+        "    function C() { this; }" +
+        "    C['f_'] = function () { return 4; };" +
+        "  } catch (e) {" +
+        "    return true;" +
+        "  }" +
+        "  fail('Bad static member name');" +
+        "})();");
   }
 
   public void testSetPublic() throws Exception {
@@ -1809,6 +1851,8 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "\"this\" in an exophoric function exposes only public fields");
     assertConsistent(
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7()");
+    assertConsistent(
+        "({ f: function (y) { return this.x * y; }, x: 4 }).f(2)");
   }
 
   public void testFuncBadMethod() throws Exception {
@@ -2146,6 +2190,10 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "while (true) { continue; }");
   }
 
+  public void testRecurseDebuggerStmt() throws Exception {
+    checkSucceeds("debugger;", "debugger;");
+  }
+  
   public void testRecurseDefaultCaseStmt() throws Exception {
     checkSucceeds(
         "switch (g[0]) { default: break; }",
