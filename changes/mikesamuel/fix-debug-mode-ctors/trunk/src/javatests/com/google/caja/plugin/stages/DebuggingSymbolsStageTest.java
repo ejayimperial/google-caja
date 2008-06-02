@@ -290,6 +290,7 @@ public class DebuggingSymbolsStageTest extends CajaTestCase {
 
     PluginMeta meta = new PluginMeta();
     meta.setDebugMode(true);
+    meta.setWartsMode(true);
 
     Jobs jobs = new Jobs(mc, mq, meta);
     jobs.getJobs().add(new Job(AncestorChain.instance(block)));

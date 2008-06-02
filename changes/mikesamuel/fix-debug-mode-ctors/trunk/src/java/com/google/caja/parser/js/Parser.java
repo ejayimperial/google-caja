@@ -102,6 +102,7 @@ import java.util.Set;
  *                          | <With>
  *   SimpleStatementAtom   => <Break>
  *                          | <Continue>
+ *                          | <Debugger>
  *                          // Do-While loops are simple because, unlike other
  *                          // loops their body isn't last, so they aren't
  *                          // guaranteed to end with a right-curly or semi.
@@ -146,6 +147,7 @@ import java.util.Set;
  * Do                      => 'do' <Body> 'while' '(' <Expression> ')'
  * Break                   => 'break' <StatementLabel>?
  * Continue                => 'continue' <StatementLabel>?
+ * Debugger                => 'debugger'
  * Return                  => 'return' <Expression>?
  * Throw                   => 'throw' <Expression>
  * ExprStatement           => <Expression>
@@ -230,9 +232,6 @@ import java.util.Set;
  * @author mikesamuel@gmail.com
  */
 public final class Parser extends ParserBase {
-  // TODO(mikesamuel): make sure we warn on DecimalLiterals that have leading
-  // zeroes.  Those are disallowed under EcmaScript.  Make sure that RealLiteral
-  // always renders without leading zeroes.
   private boolean recoverFromFailure;
 
   public Parser(JsTokenQueue tq, MessageQueue mq) {
@@ -579,6 +578,12 @@ public final class Parser extends ParserBase {
             targetLabel = parseIdentifier(false);
           }
           s = new ContinueStmt(targetLabel);
+          break;
+        }
+        case DEBUGGER:
+        {
+          tq.advance();
+          s = new DebuggerStmt();
           break;
         }
         case THROW:
@@ -931,9 +936,19 @@ public final class Parser extends ParserBase {
         e = new StringLiteral(t.text);
         break;
       case INTEGER:
+        if (integerPartIsOctal(t.text)) {
+          mq.addMessage(
+              MessageType.OCTAL_LITERAL, MessageLevel.LINT,
+              t.pos, MessagePart.Factory.valueOf(t.text));
+        }
         e = toIntegerLiteral(t);
         break;
       case FLOAT:
+        if (integerPartIsOctal(t.text)) {
+          mq.addMessage(
+              MessageType.OCTAL_LITERAL, MessageLevel.ERROR,
+              t.pos, MessagePart.Factory.valueOf(t.text));
+        }
         e = toNumberLiteral(t);
         break;
       case REGEXP:
@@ -1217,6 +1232,16 @@ public final class Parser extends ParserBase {
       return true;
     }
     return tq.lookaheadToken(Punctuation.RCURLY);
+  }
+
+  // Visible for testing.
+  static boolean integerPartIsOctal(String numberLiteral) {
+    for (int i = 0, n = numberLiteral.length(); i < n; ++i) {
+      char ch = numberLiteral.charAt(i);
+      if (ch == '.') { return false; }
+      if (ch != '0') { return i != 0 && ch >= '1' && ch <= '9'; }
+    }
+    return false;
   }
 
   private AbstractStatement<?> parseDeclarationsOrExpression(
