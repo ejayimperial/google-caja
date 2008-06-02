@@ -1029,8 +1029,7 @@ var ___;
   function readProp(that, name) {
     name = String(name);
     if (canReadProp(that, name)) { return that[name]; }
-    // "this" is bound to the local ___
-    if (canCall(that, name)) { return this.attach(that, that[name]); }
+    if (canCall(that, name)) { return attach(that, that[name]); }
     return that.handleRead___(name, false);
   }
 
@@ -1066,8 +1065,7 @@ var ___;
     if ((typeof name) === 'number') { return obj[name]; }
     name = String(name);
     if (canReadPub(obj, name)) { return obj[name]; }
-    // "this" is bound to the local ___
-    if (canCall(obj, name)) { return this.attach(obj, obj[name]); }
+    if (canCall(obj, name)) { return attach(obj, obj[name]); }
     return obj.handleRead___(name, opt_shouldThrow);
   }
 
