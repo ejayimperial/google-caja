@@ -78,6 +78,12 @@ function myvn() {
   local current_cl="$(perl -e 'print $1 if $ENV{PWD}=~m|/svn-changes/([^/]+)|')"
   local gvn=/opt/googlesvn/bin/gvn
   local svn=/opt/googlesvn/bin/svn
+  local username="$(
+      perl -ne 'print $1 if m/^username\s*=\s*(\S.*)$/' "$HOME"/.gvn/config)"
+  if [ -z "$username" ]; then
+    echo "Cannot determine username.  Check $HOME/.gvn/config."
+    exit -1
+  fi
 
   shift
   case "$verb" in
@@ -110,7 +116,7 @@ function myvn() {
       ;;
     describe )
       if [ 0 = $# ] && [ -n "$current_cl" ]; then
-        "$gvn" "$verb" "mikesamuel/$current_cl"
+        "$gvn" "$verb" "$username/$current_cl"
       else
         "$gvn" "$verb" "$@"
       fi
@@ -123,7 +129,7 @@ function myvn() {
       ;;
     change|snapshot )
       if [ -n "$current_cl" ] && ! grep -q ' -c ' <(echo -- $*); then
-        "$gvn" "$verb" -c "mikesamuel/$current_cl" "$@"
+        "$gvn" "$verb" -c "$username/$current_cl" "$@"
       else
         "$gvn" "$verb" "$@"
       fi
@@ -131,7 +137,7 @@ function myvn() {
     mail )
       local implied=""
       if [ -n "$current_cl" ] && ! grep -q ' -c ' <(echo -- $*); then
-        implied="$implied -c mikesamuel/$current_cl"
+        implied="$implied -c $username/$current_cl"
       fi
       if ! grep -q ' --cc ' <(echo -- $*); then
         implied="$implied --cc google-caja-discuss@googlegroups.com"
@@ -153,7 +159,7 @@ function myvn() {
       done
       ;;
     eclipse )
-      makeEclipseProject $current_cl > .project
+      makeEclipseProject "$current_cl" > .project
       makeEclipseClasspath > .classpath
       mkdir -p ant-eclipse-lib
       ;;
