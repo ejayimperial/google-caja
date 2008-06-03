@@ -51,8 +51,7 @@ var cajole = (function () {
    * DefaultGadgetRewriter.rewriteContent(String).
    */
   function loadCaja(htmlText) {
-    var m = htmlText.match(
-        /^\s*<script[^\076]*>([\s\S]*?)<\/script[^\076]*>/i);
+    var m = htmlText.match(/^\s*<script[^>]*>([\s\S]*)<\/script[^>]*>\s*$/i);
     if (m) {
       var script = m[1];
 
