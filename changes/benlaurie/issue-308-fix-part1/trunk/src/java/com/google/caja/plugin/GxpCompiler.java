@@ -32,17 +32,17 @@ import com.google.caja.lexer.TokenQueue;
 import com.google.caja.lexer.escaping.Escaping;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.parser.ParseTreeNodeContainer;
+import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.parser.css.CssParser;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Conditional;
-import com.google.caja.parser.js.ContinueStmt;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
-import com.google.caja.parser.js.ForEachLoop;
 import com.google.caja.parser.js.FormalParam;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.Identifier;
@@ -52,8 +52,8 @@ import com.google.caja.parser.js.Parser;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
-import com.google.caja.parser.quasiliteral.ParseTreeNodeContainer;
 import com.google.caja.parser.quasiliteral.QuasiBuilder;
+import com.google.caja.parser.quasiliteral.ReservedNames;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
@@ -75,7 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import static com.google.caja.plugin.SyntheticNodes.s;
+import static com.google.caja.parser.SyntheticNodes.s;
 
 /**
  * Compiles a subset of gxp to javascript.
@@ -727,68 +727,39 @@ public final class GxpCompiler {
       }
       return;
     }
-    String variableName = variable.getValue();
+    String variableName = assertSafeJsIdentifier(variable.getValue(), variable);
 
-    // Generate code like
-    // var <autogen> = <expr>;
-    // if (<autogen>) {
-    //   for (var <autogen2> in <autogen>) {
-    //     var <var> = <autogen>[k];
-    //     <body>
-    //   }
-    // }
     String iteratorId = syntheticId(),
               keyName = syntheticId();
-    b.appendChild(s(new Declaration(s(new Identifier(iteratorId)),
-                                    asExpression(iterator))));
 
-    // TODO(mikesamuel): use the proper rewriting rule for this when ihab
-    // gets around to implementing foreach loops.
-    Block forEachBody = s(new Block(Collections.<Statement>emptyList()));
-    forEachBody.createMutation().appendChild(
-        s(new Conditional(Collections.singletonList(
-              new Pair<Expression, Statement>(
-              s(Operation.create(
-                    Operator.NOT,
-                    TreeConstruction.call(
-                        TreeConstruction.memberAccess("___", "canEnumPub"),
-                        s(new Reference(s(new Identifier(iteratorId)))),
-                        s(new Reference(s(new Identifier(keyName))))
-                        )
-                    )),
-              s(new ContinueStmt(null)))),
-              null)))
-          .appendChild(
-              s(new Declaration(
-                    new Identifier(variableName),
-                    s(Operation.create(
-                          Operator.SQUARE_BRACKET,
-                          s(new Reference(s(new Identifier(iteratorId)))),
-                          s(new Reference(s(new Identifier(keyName))))
-                          ))
-                    )))
-          .execute();
-
-    Block ifBody = s(new Block(Arrays.asList(
-        s(new ForEachLoop(
-              null,
-              s(new Declaration(s(new Identifier(keyName)), null)),
-              s(new Reference(s(new Identifier(iteratorId)))),
-              forEachBody)))));
-
-    Conditional iteratorCheck = s(new Conditional(
-        Collections.singletonList(
-            new Pair<Expression, Statement>(
-                s(new Reference(s(new Identifier(iteratorId)))),
-                ifBody)
-            ), null));
-    b.appendChild(iteratorCheck);
-
+    Block forEachBody = new Block();
     List<? extends DomTree> children = t.children();
     for (DomTree child : children.subList(attribEnd, children.size())) {
       compileDom(new AncestorChain<DomTree>(tChain, child),
                  tgtChain, inAttrib, escaping, forEachBody);
     }
+
+    b.createMutation().appendChildren(
+        QuasiBuilder.substV(
+            "var @tmp0 = @iterator;"
+            + "if (@tmp0Ref) {"
+            + "  for (var @tmp1 in @tmp0Ref) {"
+            + "    if (___.canEnumPub(@tmp0Ref, @tmp1Ref)) {"
+            + "      var @var = @tmp0Ref[@tmp1Ref];"
+            + "      @body*;"
+            + "    }"
+            + "  }"
+            + "}",
+
+            "iterator", asExpression(iterator),
+            "tmp0", s(new Identifier(iteratorId)),
+            "tmp0Ref", s(new Reference(s(new Identifier(iteratorId)))),
+            "tmp1", s(new Identifier(keyName)),
+            "tmp1Ref", s(new Reference(s(new Identifier(keyName)))),
+            "var", new Identifier(variableName),
+            "body", forEachBody)
+        .children())
+        .execute();
   }
 
   private void handleAbbr(AncestorChain<DomTree.Tag> tChain, Block b)
