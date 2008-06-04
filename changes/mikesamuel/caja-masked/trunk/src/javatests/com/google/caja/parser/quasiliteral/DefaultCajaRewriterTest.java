@@ -136,6 +136,21 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     }
     fail("Assertions do not work in cajoled mode");
   }
+  
+  public void testCallAndSet() throws Exception {
+      rewriteAndExecute("function Point(x){ this.x_ = x; }"
+          + "caja.def(Point,Object,{"
+          + "  toString: function(){ return \"<\"+this.x_+\">\"; },"
+          + "  getX: function(){ return this.x_; },"
+          + "  setGetX: function(newGetX) { this.getX = newGetX; }"
+          + "});"
+          + "var pt = new Point(3);"
+          + "pt.getX();"
+          + "pt.setGetX(4);"
+          + "pt.setGetX(Date);"
+          + "assertThrows(function() { pt.getX(); });"
+          );
+  }
 
   public void testFreeVariables() throws Exception {
     checkSucceeds(
@@ -176,26 +191,29 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   public void testPrimordialObjectExtension() throws Exception {
     wartsMode = true;
-    assertConsistent(
-        "caja.extend(Object, {x:1});" +
-        "({}).x;");
-    assertConsistent(
-        "caja.extend(Number, {inc: function(){return this.valueOf() + 1;}});" +
-        "(2).inc();");
-    assertConsistent(
-        "caja.extend(Array, {size: function(){return this.length + 1;}});" +
-        "([5, 6]).size();");
-    assertConsistent(
-        "caja.extend(Boolean, {not: function(){return !this.valueOf();}});" +
-        "(true).not();");
-    assertConsistent(
-        "function foo() {this;}" +
-        "caja.def(foo, Object);" +
-        "function bar() {this;}" +
-        "caja.def(bar, foo);" +
-        "var b=new bar;" +
-        "caja.extend(Object, {x:1});" +
-        "b.x;");
+    // TODO(metaweta): Reenable once POE is part of warts mode.
+    if (false) {
+      assertConsistent(
+          "caja.extend(Object, {x:1});" +
+          "({}).x;");
+      assertConsistent(
+          "caja.extend(Number, {inc: function(){return this.valueOf() + 1;}});" +
+          "(2).inc();");
+      assertConsistent(
+          "caja.extend(Array, {size: function(){return this.length + 1;}});" +
+          "([5, 6]).size();");
+      assertConsistent(
+          "caja.extend(Boolean, {not: function(){return !this.valueOf();}});" +
+          "(true).not();");
+      assertConsistent(
+          "function foo() {this;}" +
+          "caja.def(foo, Object);" +
+          "function bar() {this;}" +
+          "caja.def(bar, foo);" +
+          "var b=new bar;" +
+          "caja.extend(Object, {x:1});" +
+          "b.x;");
+    }
   }
 
   public void testConstructorProperty() throws Exception {
@@ -1613,19 +1631,17 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "caja.def(Point, Object);" +
         ";" +
         "caja.def(WigglyPoint, ___.primFreeze(Point));");
-    checkFails(
-        "(function (caja) {" +
-        "  function C() { this; }" +
-        "  return caja.def(C, Object);" +
-        "})({ def: function () { return 123; } });",
-
-        "Cannot re-declare the \"caja\" variable name");
-    checkFails(
-        "var caja = { def: function () { return 123; } };" +
-        "function C() {}" +
-        "caja.def(C, Object, {}, {});",
-
-        "Cannot re-declare the \"caja\" variable name");
+    checkAddsMessage(
+        js(fromString("(function (caja) {" +
+                      "  function C() { this; }" +
+                      "  return caja.def(C, Object);" +
+                      "})({ def: function () { return 123; } });")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("var caja = { def: function () { return 123; } };" +
+                      "function C() {}" +
+                      "caja.def(C, Object, {}, {});")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
   }
 
   public void testCallCajaDef3Plus() throws Exception {
@@ -1697,44 +1713,29 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "           { bar: function() { this.x_ = 3; } });\n" +
         "};",
         "Public properties cannot end in \"_\"");
-    checkFails(
-        "(function (caja) {" +
-        "  function C() { this; }" +
-        "  return caja.def(C, Object, {});" +
-        "})({ def: function () { return 123; } })",
-
-        "Cannot re-declare the \"caja\" variable name");
-    checkFails(
-        "var result;" +
-        "try {" +
-        "  throw { def: function () { return 123; } };" +
-        "} catch (caja) {" +
-        "  function C() { this; }" +
-        "  result = caja.def(C, Object, {}, {});" +
-        "}" +
-        "result;",
-
-        "Cannot re-declare the \"caja\" variable name");
-    checkFails(
-        "function caja() { this; }" +
-        "caja.def = function () { return 123; };" +
-        "function C() {}" +
-        "caja.def(C, Object, {});",
-
-        "Cannot re-declare the \"caja\" variable name");
-    checkFails(
-        "var result;" +
-        "for (var caja = { def: function () { return 123; } }" +
-        "     ; caja; caja = null) {" +
-        "  function C() {}" +
-        "  result = caja.def(C, Object, {});" +
-        "}" +
-        "result;",
-
-        "Cannot re-declare the \"caja\" variable name");
-    checkFails(
-        "for (var caja in { BREAK: 0 }) {}",
-        "Cannot re-declare the \"caja\" variable name");
+    checkAddsMessage(
+        js(fromString("(function (caja) {" +
+                      "})({ def: function () { return 123; } })")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("try {" +
+                      "  throw { def: function () { return 123; } };" +
+                      "} catch (caja) {" +
+                      "}" +
+                      "result;")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("function caja() { this; }" +
+                      "caja.def = function () { return 123; };")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("for (var caja = { def: function () { return 123; } }" +
+                      "     ; caja; caja = null) {" +
+                      "}")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("for (var caja in { x: 0 }) {}")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
   }
 
   public void testCallPublic() throws Exception {
@@ -2085,6 +2086,20 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "k;");
   }
 
+  public void testRegexLiteral() throws Exception {
+    // Regex literals create a new instance each time expression is evaluated.
+    // Some browsers pool literals, but ES3.1&ES4 mandates separate instances
+    // since regexs are mutable and share state across matches.
+    rewriteAndExecute(
+        "var regexs = [];" +
+        "for (var i = 2; --i >= 0;) { regexs[i] = /x/; }" +
+        "assertTrue(regexs[0] !== regexs[1]);");
+    assertConsistent("/x/.test('x')");
+    assertConsistent("/x/.test('X')");
+    assertConsistent("/x/i.test('X')");
+    assertConsistent("var RegExp = null; /x/.test('x')");
+  }
+
   public void testOtherSpecialOp() throws Exception {
     checkSucceeds("void 0;", "void 0;");
     checkSucceeds("void g();",
@@ -2331,6 +2346,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  var x;" +
         "  throw x;" +
         "}));");
+  }
+  
+  public void testCantReadProto() throws Exception {
+    rewriteAndExecute(
+        "function foo(){}" +
+        "foo.prototype.getX = function(){};" +
+        "assertTrue(foo.prototype === undefined);" +
+        "assertThrows(function(){foo.prototype.getX;});");
   }
 
   public void testSpecimenClickme() throws Exception {
