@@ -1,4 +1,6 @@
+#summary special arguments array maskable
 #labels Attack-Vector
+
 =function arguments array masked by var arguments on Opera=
 
 See [http://my.opera.com/hallvors/blog/?tag=javascript&startidx=24&nodaylimit=1].
