@@ -1,4 +1,6 @@
+#summary myFn.arguments[0] changes local variables while call in progress
 #labels Attack-Vector
+
 =function object's arguments array expose arguments while call in progress=
 
 ==Effect==
