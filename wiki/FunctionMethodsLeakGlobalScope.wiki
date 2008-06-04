@@ -1,4 +1,6 @@
+#summary myFunction.call(null) causes `this` to bind to the global object
 #labels Attack-Vector
+
 =Function.call or Function.apply can leak window with certain this-values.=
 
 ==Effect==
