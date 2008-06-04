@@ -1,4 +1,4 @@
-#summary {{{delete}}} defeats masking of globals via {{{with}}}
+#summary `delete` defeats masking of globals via `with`
 #labels Attack-Vector
 
 =Delete can unmask globals=
