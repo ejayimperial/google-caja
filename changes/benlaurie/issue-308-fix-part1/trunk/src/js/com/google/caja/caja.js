@@ -606,8 +606,13 @@ var ___;
   function canRead(obj, name)   { return !!obj[name + '_canRead___']; }
   /** Tests whether the fast-path canEnum flag is set. */
   function canEnum(obj, name)   { return !!obj[name + '_canEnum___']; }
-  /** Tests whether the fast-path canCall flag is set. */
-  function canCall(obj, name)   { return !!obj[name + '_canCall___']; }
+  /**
+   * Tests whether the fast-path canCall flag is set, or grantCall() has been
+   * called.
+   */
+  function canCall(obj, name)   {
+    return !!(obj[name + '_canCall___'] || obj[name + '_grantCall___']);
+  }
   /**
    * Tests whether the fast-path canSet flag is set, or grantSet() has been
    * called.
@@ -648,8 +653,14 @@ var ___;
   function fastpathCall(obj, name) {
     enforce(obj != null, 'Cannot grant call of ', name, ' on null');
     obj[name + '_canCall___'] = true; 
+    if (obj[name + '_canSet___']) {
+      obj[name + '_canSet___'] = false;
+    }
+    if (obj[name + '_grantSet___']) {
+      obj[name + '_grantSet___'] = false;
+    }
   }
-  
+
   /**
    * allowSet implies allowEnum and allowRead. It also disables the ability
    * to call.
@@ -661,8 +672,11 @@ var ___;
     }
     fastpathEnum(obj, name);
     obj[name + '_canSet___'] = true;
-    if(obj[name + '_canCall___']) {
+    if (obj[name + '_canCall___']) {
       obj[name + '_canCall___'] = false;
+    }
+    if (obj[name + '_grantCall___']) {
+      obj[name + '_grantCall___'] = false;
     }
   }
   
@@ -695,12 +709,13 @@ var ___;
   }
   
   function grantCall(obj, name) {
-    fastpathCall(obj, name);
+//    fastpathCall(obj, name);
+    obj[name + '_grantCall___'] = true;
   }
   
   function grantSet(obj, name) {
 //    fastpathSet(obj, name);
-  obj[name + '_grantSet___'] = true;
+    obj[name + '_grantSet___'] = true;
   }
   
   function grantDelete(obj, name) {
