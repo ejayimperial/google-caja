@@ -25,7 +25,7 @@ According to [http://devedge-temp.mozilla.org/viewsource/2003/venkman/01/index_e
 
 
 ==Assumptions==
-Rewritten source code includes comments or conditional compilation is supported outside comments without being rewritten into equivalent javascript control structures.
+Rewritten source code includes comments without sanitizing them to remove conditioal compilation code OR verified code allows comments with conditional compilation commands OR conditional compilation is supported outside comments without being rewritten into equivalent javascript control structures.
 
 
 ==Versions==
