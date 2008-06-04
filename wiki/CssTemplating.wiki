@@ -1,4 +1,4 @@
-#summary CSS Templating
+#summary Dynamic CSS factories compiled from templates to javascript
 #labels Phase-Design
 
 =CSS Templates=
@@ -48,14 +48,15 @@ ContentTypeProperty (e.g. left), and a ContentType (e.g. LENGTH).
 The CSSRewriter compiles the template into a javascript function:
 {{{
   function myTemplate(x0, y0, x1, y1) {
-    var out___ = [];
-    out___.push('position: absolute; left: ', cssNumber___(x0),
-                'px; top: ', cssNumber___(y0), 'px; width: ',
-                cssNumber___(x1 - x0), 'px; height: ',
-                cssNumber___(y1 - y0), 'px');
-    return blessCss___(out___.join(''));  // Mark as known safe CSS
+    return blessCss___(
+        'position', 'absolute', 'left', cssNumber___(x0) + 'px',
+        'top', cssNumber___(y0) + 'px', 'width',
+        cssNumber___(x1 - x0) + 'px', 'height: ',
+        cssNumber___(y1 - y0) + 'px']);
   }
 }}}
+that returns an immutable set of property keys and values that can be treated soecially by privileged DOM manipulation code, thus moving runtime checks to the compiler.
+
 
 
 ==Updated Syntax==
@@ -74,41 +75,14 @@ and rewrite the following syntax:
       "position: absolute; left: ${x0}px; top: ${y0}px;"
       + " width: ${x1-x0}px; height: ${y1-y0}px", content_type.CSS)));
 }}}
-to something that binds x0, y0, x1, and y1 in the local scope:
-{{{
-  element.setAttribute('style', cssTemplate0___(x0, y0, x1, y1));
-  ...
-  function cssTemplate0___(x0, y0, x1, y1) {
-    var out___ = [];
-    out___.push('position: absolute; left: ', cssNumber___(x0),
-                'px; top: ', cssNumber___(y0), 'px; width: ',
-                cssNumber___(x1 - x0), 'px; height: ',
-                cssNumber___(y1 - y0), 'px');
-    return blessCss___(out___.join(''));  // Mark as known safe CSS
-  }
-}}}
-We still create functions for each template, so we can pool identical
-interpolated strings.
+to something that binds x0, y0, x1, and y1 in the local scope.
 
 
 ==Differential Styles==
 
 Many users will want to make incremental changes to style.  We can
-compile the function to one that modifies only the style properties
-mentioned, so compile to:
-{{{
-  function cssTemplate0___(x0, y0, x1, y1) {
-    var props___ = {};
-    props___.position = 'absolute';
-    props___.left = cssNumber___(x0) + 'px';
-    props___.top = cssNumber___(y0) + 'px';
-    props___.width = cssNumber___(x1 - x0) + 'px';
-    props___.height = cssNumber___(x1 - x0) + 'px';
-    return blessCss___(props___);  // Mark as known safe CSS
-  }
-}}}
-which can be unpacked by {{{TamedElement.setStyle}}} which is the
-setter invoked when someone does
+use he list of key value pairs above to modify only the style properties
+mentioned when caja code does
 {{{
 myHtmlElement.style = ...;
 }}}
