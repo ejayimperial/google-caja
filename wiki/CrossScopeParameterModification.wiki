@@ -1,4 +1,6 @@
+#summary function parameters can be changed without assignment via {{{arguments}}}
 #labels Attack-Vector
+
 =arguments array allows modification of parameters=
 
 ==Effect==
@@ -32,4 +34,10 @@ All
   arguments[0] = 1;
   alert('a=' + a);
 })(0);
+}}}
+
+{{{
+function f(x) { g(); alert(x); }
+function g() { f.arguments[0] = 1; }
+f(0);  // alerts 1
 }}}
