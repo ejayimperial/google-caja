@@ -49,10 +49,11 @@ The CSSRewriter compiles the template into a javascript function:
 {{{
   function myTemplate(x0, y0, x1, y1) {
     return blessCss___(
-        'position', 'absolute', 'left', cssNumber___(x0) + 'px',
-        'top', cssNumber___(y0) + 'px', 'width',
-        cssNumber___(x1 - x0) + 'px', 'height: ',
-        cssNumber___(y1 - y0) + 'px']);
+        'position', 'absolute',
+        'left', cssNumber___(x0) + 'px',
+        'top', cssNumber___(y0) + 'px',
+        'width', cssNumber___(x1 - x0) + 'px',
+        'height: ', cssNumber___(y1 - y0) + 'px');
   }
 }}}
 that returns an immutable set of property keys and values that can be treated soecially by privileged DOM manipulation code, thus moving runtime checks to the compiler.
@@ -71,18 +72,18 @@ parentheses:
 }}}
 and rewrite the following syntax:
 {{{
-  element.setAttribute('style', eval(Template(
+  myHtmlElement.setStyle(eval(Template(
       "position: absolute; left: ${x0}px; top: ${y0}px;"
       + " width: ${x1-x0}px; height: ${y1-y0}px", content_type.CSS)));
 }}}
 to something that binds x0, y0, x1, and y1 in the local scope.
 
 
-==Differential Styles==
+==Style Deltas==
 
 Many users will want to make incremental changes to style.  We can
 use he list of key value pairs above to modify only the style properties
 mentioned when caja code does
 {{{
-myHtmlElement.style = ...;
+myHtmlElement.updateStyle(...);
 }}}
