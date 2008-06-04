@@ -1,18 +1,16 @@
-#summary "Cajoling" is what we call the process of turning Caja input into javascript.
+#summary "Cajoling" is what we call the process of turning Caja input into !JavaScript.
 
 =Decide what you want to cajole=
 
-Caja turns a piece of Web content -- roughly, a snippet of HTML, CSS and JavaScript that you would see within the `body` tag of an HTML page -- into a Caja _module_. This module is represented as a single JavaScript _module function_ that can be run within a Caja container. (The module function builds the supplied HTML and CSS dynamically.)
+Caja turns a piece of Web content -- roughly, a snippet of HTML, CSS and !JavaScript that you would see within the `body` tag of an HTML page -- into a Caja _module_. This module is represented as a single !JavaScript _module function_ that can be run within a Caja container. (The module function builds the supplied HTML and CSS dynamically.) Caja supports two popular input sources:
 
-We support two popular input sources:
+*!OpenSocial.* Caja accepts an [http://code.google.com/apis/opensocial/ OpenSocial] [http://code.google.com/apis/gadgets/docs/spec.html gadget], producing as its output a similar gadget with a single `script` tag containing the module function.
 
-*OpenSocial.* Caja accepts an [http://code.google.com/apis/opensocial/ OpenSocial] [http://code.google.com/apis/gadgets/docs/spec.html gadget], producing as its output a similar gadget with a single `script` tag containing the module function.
-
-*Plain HTML.* When given a bare snippet of HTML content (including CSS, and JavaScript `script` tags), Caja will produce a single JavaScript file containing the module function.
+*Plain HTML.* When given a bare snippet of HTML content (including CSS, and !JavaScript `script` tags), Caja will produce a single !JavaScript file containing the module function.
 
 =Obtain a Caja build=
 
-To cajole your input, first build Caja from source. We do not currently provide binary distributions.
+To cajole your input, first build Caja from source.
 
 *Download.* The source is in [http://code.google.com/p/google-caja/source SVN]. We assume you have downloaded it to a directory called:
 {{{
@@ -31,14 +29,10 @@ cd ..
 
 =Cajole your input=
 
-Assuming you are back in your `google-caja` directory
-
+*!OpenSocial.* To cajole an !OpenSocial gadget, do the following:
 
 {{{
-java -cp ant-jars/pluginc.jar \
-  com.google.caja.opensocial.GadgetRewriterMain \
-  -i <sourceGadgetUrl>  \
-  -o <targetGadgetFile>
+bin/cajole_gadget -i <sourceGadgetUrl> -o <targetGadgetFile>
 }}}
 
 where:
@@ -46,3 +40,15 @@ where:
   _<sourceGadgetUrl>_ - The absolute URL of a gadget spec, such as `http://example.com/listfriends.xml` or `file:/Users/example/listfriends.xml`.
 
   _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./output/listfriends-caja.xml`.
+
+*!Plain HTML.* To cajole a plain HTML snippet, do the following:
+
+{{{
+bin/cajole_html -i <inputHtmlUrl> -o <targetJsFile>
+}}}
+
+where:
+
+  _<inputHtmlFile>_ - The absolute URL of the input HTML snippet, such as `file:/Users/example/test.html`.
+
+  _<targetJsFile>_ - The file path where you want your JavaScript module function to be stored, such as `./output/test.js`.
