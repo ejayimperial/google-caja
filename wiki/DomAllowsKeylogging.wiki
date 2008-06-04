@@ -31,7 +31,7 @@ All
 
 ==Example==
 {{{
-// For firefox, but similar code will work elsewhere
+Date.now = Date.now || function () { return (new Date).getTime(); };
 var log = [];
 var lastSend = Date.now();
 document.body.onkeypress = function (event) {
