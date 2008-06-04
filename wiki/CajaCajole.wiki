@@ -39,7 +39,7 @@ where:
 
   _<sourceGadgetUrl>_ - The absolute URL of a gadget spec, such as `http://example.com/listfriends.xml` or `file:/Users/example/listfriends.xml`.
 
-  _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./output/listfriends-caja.xml`.
+  _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./listfriends-cajoled.xml`.
 
 *!Plain HTML.* To cajole a plain HTML snippet, do the following:
 
@@ -51,4 +51,4 @@ where:
 
   _<inputHtmlFile>_ - The absolute URL of the input HTML snippet, such as `file:/Users/example/test.html`.
 
-  _<targetJsFile>_ - The file path where you want your JavaScript module function to be stored, such as `./output/test.js`.
+  _<targetJsFile>_ - The file path where you want your JavaScript module function to be stored, such as `./test-cajoled.js`.
