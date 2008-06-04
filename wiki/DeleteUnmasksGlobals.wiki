@@ -14,7 +14,7 @@ The with construct takes an expression, and any reference R in its body not sati
 
 
 ==Assumptions==
-Global references are prevented by using the `with` construct and Deletes of globals are not prevented, or the global object is aliased by `this` or some other reference that can have properties deleted from it.
+Globals are hidden by using the `with` construct and {{{delete}}}s of unqualified references are not prevented, or the masking object is aliased by `this` or some other reference that can have properties deleted from it.
 
 
 
