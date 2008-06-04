@@ -1,4 +1,4 @@
-#summary "Cajoling" is what we call the process of turning Caja input into !JavaScript.
+#summary "Cajoling" is what we call the process of turning Caja input into JavaScript.
 
 =Decide what you want to cajole=
 
