@@ -1,4 +1,6 @@
+#summary Reflective call stack traversal leaks references.
 #labels Attack-Vector
+
 =arguments Array and function object expose caller=
 
 ==Effect==
