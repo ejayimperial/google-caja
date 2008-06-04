@@ -1,4 +1,6 @@
+#summary catch blocks don't always introduce a new scope.
 #labels Attack-Vector
+
 =catch blocks may cause global assignment, or local scope creep=
 
 ==Effect==
