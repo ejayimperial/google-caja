@@ -1,4 +1,6 @@
+#summary CSS allows binding of properties to arbitrary javascript expressions
 #labels Attack-Vector
+
 =CSS allows execution of unsanitized javascript?=
 
 ==Effect==
