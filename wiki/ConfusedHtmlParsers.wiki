@@ -1,4 +1,6 @@
+#summary malformed HTML can obfuscate tags and tag and attribute names.
 #labels Attack-Vector
+
 =Malformed HTML Can Hide Scripts=
 
 ==Effect==
