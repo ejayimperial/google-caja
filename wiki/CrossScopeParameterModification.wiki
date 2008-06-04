@@ -1,4 +1,4 @@
-#summary function parameters can be changed without assignment via {{{arguments}}}
+#summary function parameters can be changed without assignment via `arguments`
 #labels Attack-Vector
 
 =arguments array allows modification of parameters=
