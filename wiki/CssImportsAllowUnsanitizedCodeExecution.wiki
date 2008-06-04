@@ -8,7 +8,7 @@ Allows import of arbitrary CSS which can execute arbitrary javascript.
 
 
 ==Background==
-In a CSS file {{{<style>}}} tag, an {{{@import}}} declaration can be used to import styles from an external source specified by a URL relative to the URL of the CSS or HTML file containing.the {{{@import}}}.
+In a CSS file {{{<style>}}} tag, an {{{@import}}} declaration can be used to import styles from an external source specified by a URL relative to the URL of the CSS or HTML file containing the {{{@import}}}.
 
 The {{{data:}}} protocol can be used to specify inline content in some browsers.
 
