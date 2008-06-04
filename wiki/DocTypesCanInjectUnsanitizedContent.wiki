@@ -1,4 +1,6 @@
+#summary HTML suffers from XXE which can inject scripts
 #labels Attack-Vector
+
 Reported by Gareth
 
 ={{{DOCTYPES}}} allow injection of unsanitized markup=
