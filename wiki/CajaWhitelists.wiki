@@ -54,7 +54,7 @@ We use JSON, because, unlike XML, parsing it cannot open arbitrary network conne
 
 == Elements of a WhiteList ==
 
-The example above includes four elements, {{{inherits}}}, {{{allowed}}}, and {{{denied}}}, and {{{types}}}.
+The example above includes four elements, {{{inherits}}}, {{{allowed}}}, {{{denied}}}, and {{{types}}}.
 
 The cajoler examines the {{{inherits}}} and loads those.  The {{{inherits}}} {{{src}}} can be either a {{{file://...}}} URL, or a special {{{resource://...} URL which is resolved relative to the Cajoler's class-path.
 
@@ -122,5 +122,13 @@ For CSS Properties, we need the following type information:
 
 
 
-== Specifying WhiteLists at the Command Line==
-TBD
+== Specifying WhiteLists at the Command Line ==
+From usage:
+{{{
+ --css_prop_schema         A file: or resource: URI
+                           of the CSS Property Whitelist to use.
+ --html_attrib_schema      A file: or resource: URI
+                           of the HTML attribute Whitelist to use.
+ --html_property_schema    A file: or resource: URI
+                           of the HTML element Whitelist to use.
+}}}
