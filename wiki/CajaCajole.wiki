@@ -41,7 +41,7 @@ where:
 
   _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./listfriends-cajoled.xml`.
 
-*!Plain HTML.* To cajole a plain HTML snippet, do the following:
+*Plain HTML.* To cajole a plain HTML snippet, do the following:
 
 {{{
 bin/cajole_html -i <inputHtmlUrl> -o <targetJsFile>
