@@ -145,7 +145,7 @@ function test()\ \{
 \caption[Caja Functions]{Caja Functions. \code{F} is a \emph{constructor}. It 
 can only be initialized and used with \code{new} and \code{instanceof}. 
 The function \code{F.prototype.getX} is a \emph{method}. It can only be called as a 
-method. \code{F.make} and \code{test} are \emph{simple-functions}. They are
+method. \code{F.make} and \code{test} are \emph{simple functions}. They are
 not restricted. \\ } \hrule
 \label{fig:func-obj}
 \end{figure}
@@ -215,7 +215,7 @@ function Cell(value)\ \{
     \})).value()
 \end{alltt}
   evaluates to the secret value.  Therefore, Caja divides functions into three 
-  categories: \emph{simple-functions} are those which do not mention 
+  categories: \emph{simple functions} are those which do not mention 
   ``\code{this}''. They are first-class and can be used without further 
   restriction. \emph{Constructors} are named functions which mention 
   ``\code{this}''. \emph{Methods} are anonymous function which mention 
@@ -229,13 +229,13 @@ function Cell(value)\ \{
   be called as methods of \emph{that} object, even when calling the method 
   reflectively using \code{call}, \code{apply}, or \code{bind}.
  
-  \item[Sharp knives removed.] \label{knives} The semantics of ``\code{with}'' are even
+  \item[Sharp knives removed.] The semantics of ``\code{with}'' are even
   stranger than those of ``\code{this}''.  For example,
 \begin{alltt}
 var o = \{ x: 4, f: 2 \};
 with(o)\ \{
   function f()\ \{\ \}
-  print(f); // This prints 2!
+  alert(f); // This displays 2 !
   var x = 3;
 \}
 // Now o.x === 3 !
@@ -441,7 +441,7 @@ function Counter()\ \{
 
 \caption[A Cajita Counter.]{A Cajita Counter. Each call to \code{Counter()} 
 produces a new counter object. Access to a counter provides the authority to 
-read, invoke, or enumerate its properties, all of which are simple-functions 
+read, invoke, or enumerate its properties, all of which are simple functions 
 serving the role of methods. Caja functions are implicitly frozen; the 
 returned object is explicitly frozen; and the instance-state of the 
 object---the count variable---is accessible only as encapsulated state 
@@ -811,8 +811,8 @@ To explain the restrictions Cajita imposes, we need some definitions.
     \item \emph{reflectively} (by calling its \code{call}, \code{apply}, or \code{bind} methods).
   \end{itemize}
 
-  \item[Simple-functions.] A function whose body does not mention ``\code{this}'' is a \emph{simple-function}. A 
-  simple-function can be either named or anonymous. Simple-functions are first-class---they can be stored in 
+  \item[Simple functions.] A function whose body does not mention ``\code{this}'' is a \emph{simple function}. A 
+  simple function can be either named or anonymous. Simple functions are first-class---they can be stored in 
   variables and passed around freely, just like any other value.
   
   \item[Frozen.] If an object is \emph{frozen}, any attempt to directly assign to its properties, add new properties 
@@ -844,14 +844,14 @@ To explain the restrictions Cajita imposes, we need some definitions.
   \code{\{{\ldots}\}}             & \equiv & \code{(function()\{return\ {\ldots\}})()} \label{eq:sf-thunk}
 \end{eqnarray}
 
-\caption[Cajita Regularities.]{Cajita Regularities. Given that \code{F} is a simple-function, \code{x.m} holds a 
-simple-function, and \code{v} is an expression with no effects and stable value (such as a variable reference), then 
+\caption[Cajita Regularities.]{Cajita Regularities. Given that \code{F} is a simple function, \code{x.m} holds a 
+simple function, and \code{v} is an expression with no effects and stable value (such as a variable reference), then 
 most of these equivalences hold in Caja as well as Cajita. Equation~(\ref{eq:sf-thunk}) holds in general only in 
 Cajita. \TODO{erights}{split this up into statement and expression context.} See section~\ref{subsec:cajita-reg} for further qualifying conditions. \\ } \hrule
 \label{eqn:simple-func}
 \end{figure}
 
-The regularities in Figure~\ref{eqn:simple-func} apply when calling simple-functions, whether the 
+The regularities in Figure~\ref{eqn:simple-func} apply when calling simple functions, whether the 
 calling code is in Cajita or Caja. When calling other functions, only the 
 weaker \emph{Caja regularities} shown in Figure~\ref{eqn:caja-regularities} apply. The 
 regularities in both sections are often stronger than ES3, but are all within 
@@ -859,16 +859,16 @@ a fail-stop subset of ES3.
 
 \begin{itemize}
   \item Equation~(\ref{eq:sf-new}) of Figure~\ref{eqn:simple-func} states that the \code{new} keyword does not change 
-  the meaning of calling a simple-function. This holds only for simple-functions that explicitly \code{return} a 
-  value. As in uncajoled JavaScript, if a simple-function instead implicitly returns, it will return \code{undefined}
+  the meaning of calling a simple function. This holds only for simple functions that explicitly \code{return} a 
+  value. As in uncajoled JavaScript, if a simple function instead implicitly returns, it will return \code{undefined}
   when called without \code{new}, but will return a useless object when called with \code{new}.
   
-  \item When calling the \code{call}, \code{apply}, or \code{bind} method of a simple-function, the first argument is 
+  \item When calling the \code{call}, \code{apply}, or \code{bind} method of a simple function, the first argument is 
   ignored: a simple function cannot contain the keyword \code{this} and thus has no way to refer to that argument.
   
   \item The \code{apply} method differs from \code{call} only in packaging all arguments together into a list.
   
-  \item A single-argument \code{bind} of a simple-function returns a function with equivalent invocation behavior---a 
+  \item A single-argument \code{bind} of a simple function returns a function with equivalent invocation behavior---a 
   function that behaves the same, whether called as a function, as a constructor, as a method, or reflectively.
   
   \item When \code{bind} has additional arguments, it returns a new function representing \code{F} curried over these 
@@ -878,14 +878,14 @@ a fail-stop subset of ES3.
   any value \code{x} such that \code{Boolean(x) === true}---the \code{\&\&} 
   expression as a whole evaluates to the value of its right operand. Therefore, you might expect 
   Equation~(\ref{eq:sf-true}) to hold in general. The next item sheds light on why it does not hold when the value of 
-  the right operand is a non-simple-function.
+  the right operand is a non-simple function.
 
   \item When the value of a property \code{x.m} is a function, the expression \code{(x.m)(...)} binds \code{this} to \code{x}, 
   whereas \code{(true && x.m)(...)} binds \code{this} to the global scope. In a web browser, the global scope is reified as
   the object \code{window}, so the browser calls \code{m} as a method on \code{window} instead of on \code{x}.  
-  Fortunately, when \code{m} is a simple-function, these two forms of invocation have the same meaning.
+  Fortunately, when \code{m} is a simple function, these two forms of invocation have the same meaning.
 
-  \item In Cajita only, a simple-function correctly abstracts over the code it contains, given that this code makes 
+  \item In Cajita only, a simple function correctly abstracts over the code it contains, given that this code makes 
   no reference to \code{arguments}.
   
 \end{itemize}
@@ -1118,17 +1118,57 @@ The following restrictions apply to both Caja and Cajita.
 \subsection{Modules}
 \label{subsec:outer-env}
 
-A \emph{module} is a function taking a container-provided object 
+The output of the Caja sanitizer is a JavaScript function called a \emph{module}.
+The \emph{bound} variables of a module are those that appear as the names of
+functions declared in the Caja code or in a \code{var} declaration.  The \emph{free}
+variables are the variables that are not bound.  
 
+One of the arguments of every module function is named \code{IMPORTS\_\_\_}, and the 
+Caja sanitizer rewrites all free variables to be properties of \code{IMPORTS\_\_\_}.  
+For example, one step of the cajoling process rewrites
+\begin{alltt}
+var list = new Array(6);
+\end{alltt}
+to
+\begin{alltt}
+var list = new (IMPORTS\_\_\_.Array)(6);
+\end{alltt}
+From the container's perspective, this effectively reifies the module's global scope.
+Note that the module itself does not necessarily have a means of obtaining a reference 
+to \code{IMPORTS\_\_\_}.
+
+If a container wants to allow communication between two modules, it can provide
+a mutable object as a property of \code{IMPORTS\_\_\_}, say, 
+\begin{alltt}
+IMPORTS\_\_\_.channel = \{\};
+\end{alltt}
+Then if one module sets a property of \code{channel} in its code, the other can read
+the property and vice-versa:
+\begin{altt}
+// In module 1:\\
+channel.message = "Hi there!";\\
+\\
+// In module 2:\\
+alert(channel.message);\\
+// Displays "Hi there"
+\end{alltt}
+
+Similarly, if the container wishes to grant a module reified access to its \code{IMPORTS\_\_\_},
+it can set, for instance, \code{IMPORTS\_\_\_.global = IMPORTS\_\_\_}.
+
+\emph{Claim: Two separate module instances, even if they instantiate the same module, 
+are isolated from each other unless they have been granted references to the same mutable object.}
+
+Here are some restrictions that the \code{IMPORTS\_\_\_} object must have in order
+to preserve Caja's security properties.
 \begin{description}
 
-    \item[eval] The Caja global environment has no ``\code{eval}'' function. 
+    \item[eval] The module's \code{IMPORTS\_\_\_} object has no ``\code{eval}'' function. 
     Instead, ``\code{caja.cajitaEval}'' will evaluate Cajita source code (text or 
     AST) with an explicitly provided set of variable bindings to serve as its 
     initial outer environment.
     
-    \item[Function] The JavaScript \code{Function} constructor is absent from 
-    the default Caja outer environment, and must not be available in Caja.
+    \item[Function] The JavaScript \code{Function} constructor is also absent.
     
     \item[Restricted reflection] $\mbox{~~~~~~~~~~~~~~~~The JavaScript}$ \code{constructor} property of 
     prototypical objects and functions is absent from Caja. The \code{prototype} property of functions can only be
@@ -1157,7 +1197,7 @@ A \emph{module} is a function taking a container-provided object
     provides the JavaScript \code{Math.random} method to Caja programs. We
     recommend that JavaScript platform providers provide good enough
     randomness that this method doesn't serve as an information channel
-    between otherwise-isolated plugins.
+    between otherwise-isolated modules.
     
 \end{description}
 
@@ -1214,9 +1254,9 @@ definitions.
   ``\code{new}'' on a function other than \code{Array} or \code{Object}.
 
   \item[Prototypical objects.] As in ES3, a constructed object's implicit \emph{prototype}---the object it directly 
-  inherits from---is the value of the ``\code{.prototype}'' property of the function which constructed it (which must 
+  inherits from---is the value of the \code{prototype} property of the function which constructed it (which must 
   have been called with ``\code{new}''). In Caja, these \emph{prototypical objects} are not first-class. When a 
-  function is implicitly frozen, so is its \code{.prototype}. Until then, both it and its \code{.prototype} may be 
+  function is implicitly frozen, so is its \code{prototype}. Until then, both it and its \code{prototype} may be 
   initialized.
 
   \item[Constructors.] A named function whose body mentions ``\code{this}'' 
@@ -1245,7 +1285,7 @@ definitions.
 \end{eqnarray}
 
 \caption[Caja Regularities.]{Caja Regularities. In Caja, given that \code{x.m} is associated with either a 
-simple-function or a method, then these equivalences hold. Equation~(\ref{eq:caja-thunk}) holds only in the absence 
+simple function or a method, then these equivalences hold. Equation~(\ref{eq:caja-thunk}) holds only in the absence 
 of variable name conflicts. \TODO{erights}{Split up \ref{eq:caja-thunk} into equation and statement context rules.}
 See section~\ref{subsec:caja-reg} for further qualifying conditions. \\ } \hrule
 \label{eqn:caja-regularities}
@@ -1265,7 +1305,7 @@ ES3, but are all within a fail-stop subset of ES3.
   
   \item The \code{apply} method differs from \code{call} only in packaging all arguments together into a list.
   
-  \item Binding an attached method to its attachment yields a conventional bound method---a simple-function of the 
+  \item Binding an attached method to its attachment yields a conventional bound method---a simple function of the 
   remaining arguments which calls the original method as a method on its attachment.
   
   \item When \code{bind} has additional arguments, it returns a new function representing \code{F} curried over these 
@@ -1328,9 +1368,10 @@ Caja program}. The following syntactic explains why a program may instead be sta
   first argument and no \code{this} appearing elsewhere in the argument list. 
   This use of \emph{call} is exempt from the normal translation rules.
   
-  Like a named simple-function, a constructor and its ``\code{.prototype}'' 
-  may be initialized, but are implicitly frozen on first use. A constructor 
-  must not contain an explicit \code{return}.
+  Like a named simple function, a constructor and its \code{prototype} property
+  may be initialized---that is, Caja code may add or modify the properties of
+  a constructor and its \code{prototype}---but are implicitly frozen on first 
+  use. A constructor must not contain an explicit \code{return}.
   
   \item[Methods.] To avoid the confusions regarding ``\code{this}'', Caja 
   methods may only appear in the positions marked ``\code{member}'' in 
@@ -1384,11 +1425,11 @@ The following additional dynamic restrictions are relevant to Caja code.
 \begin{description}
 
   \item[Frozen prototypes.] In Caja, until a function is frozen, both it and 
-  the value of its ``\code{.prototype}'' property may be initialized. When a 
-  function is frozen, so is the value of its ``\code{.prototype}'' property. 
+  the value of its \code{prototype} property may be initialized. When a 
+  function is frozen, so is the value of its \code{prototype} property. 
   Therefore, only the instances at the leaves of the JavaScript inheritance 
   tree may remain unfrozen. Initializing 
-  assignments to a function's ``\code{.prototype}'' can thus be considered declarative initializations rather than 
+  assignments to a function's \code{prototype} can thus be considered declarative initializations rather than 
   mutations.
   
   \emph{Claim: No Caja program can cause a Caja-observable mutation of a 
@@ -1682,7 +1723,7 @@ same order as in the original.}
   \code{function(a\ldots)\ \{{\ldots}this{\ldots}\}}         
              & \label{member:method}  & \code{\_\_\_.method(C,function(a\ldots)\ \{{\ldots}this{\ldots}\})} \\
   \hline
-   \nonumber & \lefteqn{\mathrm{Simple-functions}} & \\
+   \nonumber & \lefteqn{\mathrm{Simple functions}} & \\
   \code{function\ F(a\ldots)\ \{{\ldots}\};} 
              & \label{func:named-decl} & \code{function\ F(a\ldots)\ \{{\ldots}\}} \\
              & \nonumber               & \code{\_\_\_.simpleFunc(F);} /*move\ to\ function\ start*/ \\
