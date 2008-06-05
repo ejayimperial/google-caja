@@ -1,4 +1,4 @@
-#summary eval reachable from any Object
+#summary eval reachable from any Object on some browsers
 #labels Attack-Vector
 
 =Object.eval allows execution of unsanitized code on Firefox.=
