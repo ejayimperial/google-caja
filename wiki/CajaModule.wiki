@@ -2,7 +2,7 @@
 
 = Caja Modules =
 
-A [http://code.google.com/p/google-caja/ Caja] module is the output of [CajaCajole Cajole], a javascript function of the form 
+A [http://code.google.com/p/google-caja/ Caja] module is the output of the Caja sanitizer, or [CajaCajole cajoler].  It is a javascript function of the form 
 {{{
   function(___, IMPORTS___) {
     // ...   
