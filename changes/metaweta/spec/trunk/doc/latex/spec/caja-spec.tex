@@ -652,7 +652,9 @@ conventional \code{super} for the other functions defined within this scope.
   leak or be changed:
 \begin{alltt}
 function makePointFunction(secret)\ \{
-  return function(value) { return value === secret; }
+  return function(value)\ \{ 
+    return value === secret;
+  \}
 \}  
 \end{alltt}
   However, using this as the sole 
@@ -667,7 +669,7 @@ function makePointFunction(secret)\ \{
   global environment.
 
   \item[Foreign for/in loops.] Caja has a stated goal of supporting as much legacy code as possible, where it
-  is safe to do so.  Many popular Javascript libraries use JavaScript's \code{for}/\code{in} loop to enumerate the names of all an object's 
+  is safe to do so.  Nearly all Javascript libraries use JavaScript's \code{for}/\code{in} loop to enumerate the names of all an object's 
   properties, whether inherited or not\footnote{
   %
   ... unless the property is DontEnum, but the JavaScript programmer has no way to express that in his own code.
@@ -770,18 +772,21 @@ To explain the restrictions Cajita imposes, we need some definitions.
 
 \begin{description}
 
-  \item[Record] An object whose prototype's ``\code{constructor}'' property is \code{Object}, i.e., under normal 
+  \item[Record.] An object whose prototype's ``\code{constructor}'' property is \code{Object}, i.e., under normal 
   conditions, an object inheriting directly from \code{Object.prototype}. Records are normally created using the 
   \code{\{\ldots\}} syntax.
 
-  \item[Array] An object whose prototype's ``\code{constructor}'' property is \code{Array}, i.e., under normal 
+  \item[Array.] An object whose prototype's ``\code{constructor}'' property is \code{Array}, i.e., under normal 
   conditions, an object inheriting directly from \code{Array.prototype}. Arrays are normally created using the 
   \code{[\ldots]} syntax.
 
   \item[JSON Container.] A record or array. These are the non-primitive objects that can be directly expressed in 
   JSON syntax.
   
-  \item[Invocation] A function can be invoked
+  \item[Function.prototype.bind.] Cajita adds the \code{bind} method to all functions, defined in equation
+  \ref{eq:sf-bind-n} of figure \ref{eqn:simple-func}.
+  
+  \item[Invocation.] A function can be invoked
   \begin{itemize}
     \item \emph{as a function} (\code{foo(a\ldots)}),
     \item \emph{as a method} (\code{foo.m(a\ldots)}),
@@ -819,14 +824,13 @@ To explain the restrictions Cajita imposes, we need some definitions.
   \code{F({\ldots}_1,{\ldots}_2)} & \equiv & \code{F.bind(v,{\ldots}_1)({\ldots}_2)}   \label{eq:sf-bind-n} \\
   \code{x.m}                      & \equiv & \code{true\ \&\&\ x.m}                    \label{eq:sf-true} \\
   \code{(x.m)(\ldots)}            & \equiv & \code{(true\ \&\&\ x.m)(\ldots)}          \label{eq:sf-true-call} \\
-  \mbox{\TODO{erights}{split this up into statement and expression context}}\\
   \code{\{{\ldots}\}}             & \equiv & \code{(function()\{return\ {\ldots\}})()} \label{eq:sf-thunk}
 \end{eqnarray}
 
 \caption[Cajita Regularities.]{Cajita Regularities. Given that \code{F} is a simple-function, \code{x.m} holds a 
 simple-function, and \code{v} is an expression with no effects and stable value (such as a variable reference), then 
 most of these equivalences hold in Caja as well as Cajita. Equation~(\ref{eq:sf-thunk}) holds in general only in 
-Cajita. See section~\ref{subsec:cajita-reg} for further qualifying conditions. \\ } \hrule
+Cajita. \TODO{erights}{split this up into statement and expression context.} See section~\ref{subsec:cajita-reg} for further qualifying conditions. \\ } \hrule
 \label{eqn:simple-func}
 \end{figure}
 
@@ -843,7 +847,7 @@ a fail-stop subset of ES3.
   when called without \code{new}, but will return a useless object when called with \code{new}.
   
   \item When calling the \code{call}, \code{apply}, or \code{bind} method of a simple-function, the first argument is 
-  ignored.
+  ignored: a simple function cannot contain the keyword \code{this} and thus has no way to refer to that argument.
   
   \item The \code{apply} method differs from \code{call} only in packaging all arguments together into a list.
   
@@ -873,12 +877,13 @@ a fail-stop subset of ES3.
 \begin{figure}[t!]
 \begin{alltt}
 function Brand()\ \{
-  var flag = false, squirrel = null;
+  var flag = false, sealedPayload = null;
 
   return caja.freeze(\{
     seal: function(payload)\ \{
       function box()\ \{
-        flag = true; squirrel = payload;
+        flag = true; 
+        sealedPayload = payload;
       \}
       box.toString = function()\ \{
         return "(box)";
@@ -886,13 +891,15 @@ function Brand()\ \{
       return box;
     \},
     unseal: function(box)\ \{
-      flag = false; squirrel = null;
-      box();
-      if (!flag) \{ throw {\ldots}; \}
+      flag = false; 
+      sealedPayload = null;
       try \{
-        return squirrel;
+        box();
+        if (!flag) \{ throw {\ldots}; \}
+        return sealedPayload;
       \} finally \{
-        flag = false; squirrel = null;
+        flag = false; 
+        sealedPayload = null;
       \}
     \}
   \});
@@ -1046,7 +1053,13 @@ Cajita. Code containing these features is not legal Cajita.
     non-inherited publicly Caja-visible property value / property name associations of \code{obj}. If 
     \code{caja.isArray(obj)}, then \code{k} will enumerate successive indexes into the array.
     
-    \item[Semicolon insertion.] Code which would provoke semicolon insertion is not legal Cajita.
+    \item[Semicolon insertion.] Code which parses correctly but differently if semicolons are inserted is not 
+    legal Cajita.  For example, 
+\begin{alltt}
+x = a // Note the newline! \\
+      + b
+\end{alltt}
+    has two different correct parses: \code{x = a + b;} and \code{x = a; +b;}
     
     \item[Block-breaking scopes.] Cajita variable names are visible only according to the intersection of ES3's 
     scoping rules and conventional Java-like block-level lexical scoping. This is essentially lexical scoping from 
@@ -1069,8 +1082,8 @@ The following restrictions apply to both Caja and Cajita.
 
 \begin{description}
 
-  \item[Frozen Functions.] An anonymous simple-function is implicitly frozen. 
-  A named simple-function may be initialized, but is implicitly frozen 
+  \item[Frozen Functions.] An anonymous simple function is implicitly frozen. 
+  A named simple function may be initialized, but is implicitly frozen 
   immediately before its first non-initializing use or escaping occurrence. 
   For example, the assignment to \code{box.toString} in 
   Figure~\ref{fig:rights-amp} will succeed, because it occurs before box is 
@@ -1121,7 +1134,7 @@ are isolated from each other.}
     \item[Function] The JavaScript \code{Function} constructor is absent from 
     the default Caja outer environment, and must not be available in Caja.
     
-    \item[Restricted reflection] The JavaScript \code{constructor} property of 
+    \item[Restricted reflection] $\mbox{~~~~~~~~~~~~~~~~The JavaScript}$ \code{constructor} property of 
     prototypical objects and functions is absent from Caja. The \code{prototype} property of functions can only be
     used in the limited ways shown in Figure~\ref{tab:special-cases}. And the \code{call}, \code{apply}, and
     \code{bind} methods of functions cannot be replaced or overridden.
@@ -1129,7 +1142,8 @@ are isolated from each other.}
     \emph{Claim: The restrictions stated in this document together make the 
     \code{Function} object unreachable from Caja programs.}
 
-    \item[new Date()] In JavaScript, ``\code{new Date()}''  gives ambient 
+    \item[new Date()] Nearly all of the members of the global environment
+    are immutable.  However, in JavaScript, ``\code{new Date()}''  gives ambient 
     access to the current date and time, in violation of object-capability 
     rules as well as dependency injection discipline. \code{Date} is 
     therefore a member of the global environment which is not actually 
