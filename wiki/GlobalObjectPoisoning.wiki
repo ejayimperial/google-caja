@@ -1,4 +1,6 @@
+#summary passing any object cross-frame gives access to global definitions.
 #labels Attack-Vector
+
 =Global Object Poisoning=
 
 ==Effect==
@@ -51,4 +53,29 @@ Object.prototype.toString = function () {
 var o = { name: 'Bingo' };
 alert('' + o);
 alert('Your name is now ' + o.name);
+}}}
+
+(3) Cross-frame poisoning
+{{{
+// Frame 1
+var stolen;
+function fromOtherFrame(o) {
+  o.constructor.prototype.valueOf = function () {
+    stolen = this;
+    return '[Object]';
+  };
+}
+// Frame 1 uses some mechanism like document.domain juggling
+// to pass a function to another.
+
+
+// Frame 2
+var secretObject = ...;
+fromOtherFrame({ x: 4 });
+if (secretObject == '');  // implicitly calls Object.prototype.valueOf
+// Frame 2 passes an object containing no sensitive information.
+// Frame 1 changes the definition of Frame 2's object, so it can
+// steal access to secretObject even though secretObject is never
+// explicitly passed to any function, and never has any of its methods
+// explicitly called.
 }}}
