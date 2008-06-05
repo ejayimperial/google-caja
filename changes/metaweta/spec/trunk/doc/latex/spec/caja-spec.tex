@@ -744,23 +744,22 @@ A \emph{Caja-compliant} JavaScript program is one which
   \item does not provoke Caja-induced failures when run cajoled, and
   \item avoids these gotchas.
 \end{enumerate}
-Such a program should have the same semantics whether run cajoled or not.
+Such a program should has the same semantics whether run cajoled or not.
 
 
 \section{Cajita Specification}
 \label{sec:cajita-spec}
-
-Most of the complexity of Caja is needed to defend against JavaScript's rules 
-regarding the binding of ``\code{this}''. The subset of Caja without 
-``\code{this}'' is a perfectly reasonable and expressive programming 
+Before describing Caja and all the Rube-Goldbergian complexity of the
+semantics of ``\code{this}'', we'll describe the subset of Caja without 
+``\code{this}''---a perfectly reasonable and expressive programming 
 language. Caja supports ``\code{this}'' in order to ease the porting of old 
 code. For new code, we recommend sticking to the thisless subset of Caja, 
 which we refer to as \emph{Cajita}, the diminutive, meaning ``small 
-box''.\footnote{
+box''\footnote{
 %
 The design of Cajita was inspired by Doug Crockford's \emph{ADsafe}.
 %
-}
+}.
 
 The Caja runtime will provide a safe \emph{eval} operation, \code{caja.cajitaEval}. For 
 this operation to accept Caja code, the Caja sanitizer would need to be 
@@ -796,9 +795,9 @@ To explain the restrictions Cajita imposes, we need some definitions.
   
   \item[Frozen.] If an object is \emph{frozen}, any attempt to directly assign to its properties, add new properties 
   to it, or delete its properties causes an exception to be thrown. Frozen is a shallow restriction: Frozen objects 
-  can retain and provide non-frozen objects. (Imagine a frozen surface covering a liquid lake.) Once initialized, 
-  Caja functions are implicitly frozen. The Caja runtime library additionally provides an explicit operation for 
-  freezing JSON containers: ``\code{caja.freeze(obj)}''.
+  can retain and provide non-frozen objects. (Imagine a frozen surface covering a liquid lake.) In Caja, functions  
+  are implicitly frozen once they've been intitialized. The Caja runtime library additionally provides an explicit 
+  operation for freezing JSON containers: ``\code{caja.freeze(obj)}''.
   
   \item[Immutable.] If an object is \emph{immutable}, then it is frozen, and all objects it has access to are 
   themselves immutable. Shared access to an immutable object does not provide a communication channel, and so does 
@@ -820,6 +819,7 @@ To explain the restrictions Cajita imposes, we need some definitions.
   \code{F({\ldots}_1,{\ldots}_2)} & \equiv & \code{F.bind(v,{\ldots}_1)({\ldots}_2)}   \label{eq:sf-bind-n} \\
   \code{x.m}                      & \equiv & \code{true\ \&\&\ x.m}                    \label{eq:sf-true} \\
   \code{(x.m)(\ldots)}            & \equiv & \code{(true\ \&\&\ x.m)(\ldots)}          \label{eq:sf-true-call} \\
+  \mbox{\TODO{erights}{split this up into statement and expression context}}\\
   \code{\{{\ldots}\}}             & \equiv & \code{(function()\{return\ {\ldots\}})()} \label{eq:sf-thunk}
 \end{eqnarray}
 
