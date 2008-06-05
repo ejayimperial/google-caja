@@ -4,7 +4,7 @@
 
 A [http://code.google.com/p/google-caja/ Caja] module is the output of [CajaCajole Cajole], a javascript function of the form 
 {{{
-  function(___OUTERS___) {
+  function(___, IMPORTS___) {
     // ...   
   }
 }}}
