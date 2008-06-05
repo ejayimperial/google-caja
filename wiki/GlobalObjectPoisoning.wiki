@@ -18,6 +18,8 @@ Many javascript operators, when applied to objects, invoke special methods to co
 
 This combination of implicit constructors, and implicitly called methods makes it non-obvious when a constructor is called, and when a method might be invoked, making javascript code subject to [http://en.wikipedia.org/wiki/Confused_Deputy confused deputy attacks] where a piece of attached code can be attached to a {{{prototype}}} and later run on an object the attacker cannot directly reference.
 
+[http://www2007.org/papers/paper801.pdf Subspace] may have found a way to launder a function or object using discardable iframes and carefully choregraphed {{{document.domain}}} tricks to allow a function or object to be passed to another frame, but that only allows passing of primitive data since returning an object would reopen the attack vector.
+
 
 ==Assumptions==
 An attacker can modify the prototype of {{{Object}}} or {{{Array}}}.
