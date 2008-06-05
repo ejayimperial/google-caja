@@ -881,7 +881,7 @@ a fail-stop subset of ES3.
   the right operand is a non-simple function.
 
   \item When the value of a property \code{x.m} is a function, the expression \code{(x.m)(...)} binds \code{this} to \code{x}, 
-  whereas \code{(true && x.m)(...)} binds \code{this} to the global scope. In a web browser, the global scope is reified as
+  whereas \code{(true \&\& x.m)(...)} binds \code{this} to the global scope. In a web browser, the global scope is reified as
   the object \code{window}, so the browser calls \code{m} as a method on \code{window} instead of on \code{x}.  
   Fortunately, when \code{m} is a simple function, these two forms of invocation have the same meaning.
 
@@ -1074,7 +1074,8 @@ Cajita. Code containing these features is not legal Cajita.
     \item[Semicolon insertion.] Code which parses correctly but differently if semicolons are inserted is not 
     legal Cajita.  For example, 
 \begin{alltt}
-x = a // Note the newline! \\
+// Note the newline!
+x = a 
       + b
 \end{alltt}
     has two different correct parses: \code{x = a + b;} and \code{x = a; +b;}
@@ -1144,12 +1145,12 @@ IMPORTS\_\_\_.channel = \{\};
 \end{alltt}
 Then if one module sets a property of \code{channel} in its code, the other can read
 the property and vice-versa:
-\begin{altt}
-// In module 1:\\
-channel.message = "Hi there!";\\
-\\
-// In module 2:\\
-alert(channel.message);\\
+\begin{alltt}
+// In module 1:
+channel.message = "Hi there!";
+
+// In module 2:
+alert(channel.message);
 // Displays "Hi there"
 \end{alltt}
 
