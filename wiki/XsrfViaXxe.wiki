@@ -1,4 +1,6 @@
+#summary parsing XML can cause the browser to fetch arbitrary URLs
 #labels Attack-Vector
+
 =XMLHttpRequest and DOMParser parsing allow arbitrary XSRF via XXE=
 
 ==Effect==
