@@ -20,8 +20,8 @@ According to section 11.4.3 of EcmaScript 262
 || Boolean || "boolean" ||
 || Number || "number" ||
 || String || "string" ||
-|| Object (native and doesn’t implement [[Call]]) || "object" ||
-|| Object (native and implements [[Call]])        || "function" ||
+|| Object (native and doesn’t implement {{{[[Call]]}}}) || "object" ||
+|| Object (native and implements {{{[[Call]]}}})        || "function" ||
 || Object (host)                                  || Implementation-dependent ||
 so an callable object is a {{{"function"}}} and a "host object" can have any type it desires.
 
