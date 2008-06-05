@@ -1,4 +1,6 @@
+#summary regular expressions cannot match bad code without unacceptable false positives
 #labels Attack-Vector
+
 =String Obfuscation is Easy=
 
 ==Effect==
