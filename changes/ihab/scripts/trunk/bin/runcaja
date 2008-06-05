@@ -16,14 +16,8 @@
 
 export LANG=c
 
-jars="commons-cli.jar htmlparser.jar json_simple.jar pluginc.jar"
+scriptdir=$(dirname "$0")
+jardir="${scriptdir}/../src/ant-jars"
+classpath=$(find "$jardir" -name '*.jar' -print0 | tr '\0' ':')
 
-scriptdir=$(dirname ${0})
-classname=${1}
-shift
-
-jardir=${scriptdir}/../src/ant-jars
-classpath=$(for jar in ${jars} ; do echo ${jardir}/${jar}; done)
-classpath=$(echo ${classpath} | tr ' ' ':')
-
-java -cp ${classpath} ${classname} ${*}
+java -cp ${classpath} "$@"
