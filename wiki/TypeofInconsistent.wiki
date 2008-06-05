@@ -1,5 +1,7 @@
+#summary ES3 allows for arbitrary behavior around typeof
 #labels Attack-Vector
-=typeof inconsistent for regular expressions=
+
+=typeof inconsistent for regular expressions and other intrinsics=
 
 ==Effect==
 See [http://javascript.crockford.com/remedial.html].
