@@ -785,7 +785,8 @@ var ___;
           fail('Derived constructor already frozen: ', constr);
         }
         constr['super'] = function(thisObj, var_args) {
-          opt_Sup.init___.apply(thisObj, Array.prototype.slice.call(arguments, 1));
+          opt_Sup.init___.apply(
+              thisObj, Array.prototype.slice.call(arguments, 1));
         };
       }
     }
@@ -1380,12 +1381,6 @@ var ___;
       fastpathSet(obj, name);
       obj[name] = val;
       return val;
-    } else if ('function' === (typeof obj)
-               && (isCtor(obj) || isSimpleFunc(obj))
-               && !isFrozen(obj)) {
-      // Handles
-      //    ctor.staticMemberName = val;
-      setStatic(obj, name, val);
     } else {
       return obj.handleSet___(name, val);
     }
@@ -1407,7 +1402,7 @@ var ___;
       return false;
     }
     if (staticMemberName in ctor) {  // disallows prototype, call, apply, bind
-      log('Can\'t override static member ', staticMemberName);
+      log('Cannot override static member ', staticMemberName);
       return false;
     }
     if (endsWith(staticMemberName, '_')) {  // statics are public
@@ -1430,7 +1425,7 @@ var ___;
       ctor[staticMemberName] = staticMemberValue;
       fastpathRead(ctor, staticMemberName);
     } else {
-      func.handleSet___(staticMemberName, staticMemberValue);
+      ctor.handleSet___(staticMemberName, staticMemberValue);
     }
   }
 
