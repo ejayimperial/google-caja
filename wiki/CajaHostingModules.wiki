@@ -1,7 +1,7 @@
 #summary How to host Caja modules
 = How to host a Caja module =
 
-This document is intended for those who want to host [CajaModule Caja modules] within pages that they serve.  If you simply want to write Caja modules for someone else to host, check out the [CajaCajole Cajole] docs (which don't yet exist, sorry!)
+This document is intended for those who want to host [CajaModule Caja modules] within pages that they serve.  If you simply want to write Caja modules for someone else to host, check out the [CajaCajole Cajoler] docs.
 
 Here's a sample Caja module container; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text.
 
