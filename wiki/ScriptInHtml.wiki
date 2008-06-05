@@ -1,4 +1,6 @@
+#summary inlined JS can break out of script tags to execute code hidden in strings or comments
 #labels Attack-Vector
+
 =HTML Tags in Javascript Strings can allow Unsanitized Script Execution=
 
 ==Effect==
@@ -44,7 +46,7 @@ External entities can be used in XHTML to perform javascript imports:
 ==Assumptions==
 Rewritten javascript allows any of the operators {{{<}}}, {{{<<}}}, {{{<<<}}}, {{{&}}}, or {{{&&}}} to be followed immediately by an identifier, a slash ({{{/}}}), an open square bracket ({{{[}}}), or a bang {{{!}}}.
 
-Or
+OR
 
 The characters {{{<}}} and {{{&}}} in string literals are output without escaping, and string literals are not split into a concatenation after these characters.
 
@@ -62,8 +64,10 @@ when embedded in an HTML page naively.
 {{{
 "]]]>&quot;; alert('hello world');//<script>//"
 }}}
-when embedded in an XHTML as
-{{{<script><![CDATA["]]]>&quot;; alert('hello world');//<script>//"]]></script>}}}
+when embedded in an XHTML page as
+{{{
+<script><![CDATA["]]]>&quot;; alert('hello world');//<script>//"]]></script>
+}}}
 
 {{{
 var script;
