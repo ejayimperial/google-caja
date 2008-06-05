@@ -33,3 +33,10 @@ Other problems arise with entity references.  If malicious code can escape a scr
 If malicious code can escape a CDATA section in XHTML then it might be able to insert tags into the page.
 
 All of these problems are avoided if the {{{<}}}, {{{<<}}}, {{{<<<}}}, {{{&}}}, and {{{&&}}} operators are always followed by space, and if the characters {{{<}}} and {{{&}}} are replaced with their octal equivalents ({{{\074}}} and {{{\046}}}) in string literals.
+
+
+
+== ASCII identifiers ==
+We should disallow non-ASCII identifiers until we understand browser support for identifiers, and identifier normalization.
+
+We should also produce ASCII only output until we have an idea of the ways in which containers inline cajoled output and the encodings they use.  Ideally, we will always ship cajoled output in UTF-8 and recommend that containers only inline cajoled code in pages that are UTF-8 encoded.
