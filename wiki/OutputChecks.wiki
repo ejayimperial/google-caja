@@ -1,3 +1,5 @@
+#summary sanity checks on cajoler output
+
 = Output Checks =
 
 The HTML, CSS, and Javascript that we output should be as clear as simple as possible to make sure that browsers produce the same parse tree.
