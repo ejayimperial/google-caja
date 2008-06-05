@@ -1,4 +1,6 @@
+#summary cannot match protocol of an absolute URL via String.startsWith.
 #labels Attack-Vector
+
 =Null characters in URL can disguise protocols such as {{{javascript:}}}.=
 
 ==Effect==
@@ -26,7 +28,11 @@ The last 4 code points in 32b unicode are:
 
 
 ==Assumptions==
-URL html attribute not stripped of null characters, or urls not restricted to absolute urls with a whitelisted protocol.
+URL html attribute not stripped of null characters,
+    OR
+URLs not restricted to absolute urls with a whitelisted protocol
+    OR
+URLs not normalized.
 
 
 ==Versions==
