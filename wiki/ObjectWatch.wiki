@@ -1,4 +1,6 @@
+#summary watch and unwatch intercept gets and sets to object properties
 #labels Attack-Vector
+
 =Object.watch allows stealing and poisoning of otherwise restricted data=
 
 ==Effect==
@@ -10,7 +12,7 @@ If static or runtime checks prevent access to certain properties, then on Firefo
 
 
 ==Assumptions==
-Object.watch is callable by client code.
+{{{Object.watch}}} is callable by client code.
 
 
 ==Versions==
