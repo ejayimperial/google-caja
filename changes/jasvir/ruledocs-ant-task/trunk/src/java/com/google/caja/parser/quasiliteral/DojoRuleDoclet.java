@@ -14,6 +14,7 @@
 
 package com.google.caja.parser.quasiliteral;
 
+import com.google.caja.lexer.escaping.Escaping;
 import com.google.caja.util.Join;
 import com.google.caja.util.Json;
 
@@ -61,7 +62,10 @@ public class DojoRuleDoclet extends RuleDoclet {
   }
 
   private String escape(String js) {
-    return js.replace('\n', ' ').replaceAll("\\'", "\\\\'");
+    StringBuilder result = new StringBuilder();
+    Escaping.escapeJsString(js, /* asciiOnly */ true, /* paranoid */ false, 
+        result);
+    return result.toString();
   }
   
   private String quote(String js) {
