@@ -98,8 +98,23 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public static String weldPrelude(String name) {
-    return "var " + name + " = ___.readImports(IMPORTS___, '" + name + "');";
+    return "var " + name + " = ___.readImport(IMPORTS___, '" + name + "');";
   }
+
+  public void testFunctionDoesNotMaskVariable() throws Exception {
+    // Regress http://code.google.com/p/google-caja/issues/detail?id=370
+    // TODO(ihab.awad): Enhance test framework to allow "before" and "after"
+    // un-cajoled code to be executed, then change this to a functional test.
+    checkSucceeds(
+        "  function boo() { return x; }"
+        + "var x;",
+        "  var boo;"
+        + "boo = ___.simpleFunc(function boo() { return x; });"
+        + ";"
+        + "var x;");
+  }
+
+
 
   public void testAssertEqualsCajoled() throws Exception {
     try {
@@ -136,7 +151,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     }
     fail("Assertions do not work in cajoled mode");
   }
-  
+
   public void testCallAndSet() throws Exception {
       rewriteAndExecute("function Point(x){ this.x_ = x; }"
           + "caja.def(Point,Object,{"
@@ -825,9 +840,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public void testVarBadGlobalSuffix() throws Exception {
-    checkFails(
-        "foo_;",
-        "Globals cannot end in \"_\"");
+    checkAddsMessage(
+        js(fromString("foo_;")),
+        RewriterMessageType.IMPORTED_SYMBOLS_CANNOT_END_IN_UNDERSCORE);
   }
 
   public void testVarFuncFreeze() throws Exception {
@@ -976,6 +991,36 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "p = ___.readPub(q, 3);");
   }
 
+  public void testSetBadAssignToFunctionName() throws Exception {
+    checkAddsMessage(js(fromString(
+        "  function foo() {};"
+        + "foo = 3;")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_FUNCTION_NAME);
+    checkAddsMessage(js(fromString(
+        "  function foo() {};"
+        + "foo += 3;")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_FUNCTION_NAME);
+    checkAddsMessage(js(fromString(
+        "  function foo() {};"
+        + "foo++;")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_FUNCTION_NAME);
+    checkAddsMessage(js(fromString(
+        "  var x = function foo() {"
+        + "  foo = 3;"
+        + "};")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_FUNCTION_NAME);
+    checkAddsMessage(js(fromString(
+        "  var x = function foo() {"
+        + "  foo += 3;"
+        + "};")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_FUNCTION_NAME);
+    checkAddsMessage(js(fromString(
+        "  var x = function foo() {"
+        + "  foo++;"
+        + "};")),
+        RewriterMessageType.CANNOT_ASSIGN_TO_FUNCTION_NAME);
+  }
+
   public void testSetBadThis() throws Exception {
     checkFails(
         "function f() { this = 3; }",
@@ -1056,6 +1101,24 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
             "boo",
             "x0___",
             "x1___") + ";");
+    rewriteAndExecute(
+        "  function Point(x,y) {"
+        + "  this.x_ = x;"
+        + "  this.y_ = y;"
+        + "}"
+        + "Point.prototype.toString = function() {"
+        + "  return '<' + this.x_ + ',' + this.y_ + '>';"
+        + "};"
+        + "Point.prototype.getX = function() { return this.x_; };"
+        + "Point.prototype.getY = function() { return this.y_; };"
+        + "Point.area = function(pt) {"
+        + "  return pt.getX() * pt.getY();"
+        + "};"
+        + "var pt1 = new Point(3, 4);"
+        + "assertEquals(3, pt1.getX());"
+        + "assertEquals(4, pt1.getY());"
+        + "assertEquals('<3,4>', pt1.toString());"
+        + "assertEquals(12, Point.area(pt1));");
   }
 
   public void testSetBadInternal() throws Exception {
@@ -1115,6 +1178,23 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  }" +
         "  fail('Bad static member name');" +
         "})();");
+    rewriteAndExecute(
+        "(function() {" +
+        "  function Ctor() { this; }" +
+        "  function foo() {}" +
+        "  Ctor.prototype.f = foo;" +  // foo should be frozen now
+        "  try { foo.x = 3; } catch (e) { return true; }" +
+        "  fail('Static member was not frozen');" +
+        "})();");
+    rewriteAndExecute(
+        "  (function() {"
+        + "  function foo() {}"
+        + "  var x = foo;"
+        + "  var thrown = false;"
+        + "  try { foo.x = 3; } catch (e) { thrown = true; }"
+        + "  if (!thrown) { fail('Allowed static write on frozen'); }"
+        + "  return true;"
+        + "})();");
   }
 
   public void testSetPublic() throws Exception {
@@ -1631,6 +1711,64 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "caja.def(Point, Object);" +
         ";" +
         "caja.def(WigglyPoint, ___.primFreeze(Point));");
+    // Test subclassing of constructors which mention 'this' explicitly
+    rewriteAndExecute(
+        "  function Point(x) { this.x = x; }"
+        + "caja.def(Point, Object);"
+        + "var p = new Point(31415);"
+        + "caja.log('p = ' + p);"
+        + "assertEquals(31415, p.x);"
+        + "function WigglyPoint(x) {"
+        + "  WigglyPoint.super(this, x + 1);"
+        + "  this.y = x;"
+        + "}"
+        + "caja.def(WigglyPoint, Point);"
+        + "var wp = new WigglyPoint(92654);"
+        + "assertEquals(wp.y, 92654);"
+        + "assertEquals(wp.x, 92655);");
+    // Test subclassing of simple functions
+    rewriteAndExecute(
+        "  var shared = 0;"
+        + "function Point(x) { shared = x; }"
+        + "caja.def(Point, Object);"
+        + "var p = new Point(31415);"
+        + "assertEquals(31415, shared);"
+        + "function WigglyPoint(x) { WigglyPoint.super(this, x + 1); }"
+        + "caja.def(WigglyPoint, Point);"
+        + "var wp = new WigglyPoint(92654);"
+        + "assertEquals(shared, 92655);");
+    checkAddsMessage(
+        js(fromString("(function (caja) {" +
+                      "  function C() { this; }" +
+                      "  return caja.def(C, Object);" +
+                      "})({ def: function () { return 123; } });")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("var caja = { def: function () { return 123; } };" +
+                      "function C() {}" +
+                      "caja.def(C, Object, {}, {});")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    assertConsistent(
+        "function foo() {}" +
+        "caja.def(foo, Object, { f: function () { return 3; }});" +
+        "(new foo).f()");
+  }
+
+  public void testCallCajaDef2BadFunction() throws Exception {
+    checkAddsMessage(
+        js(fromString(
+            "  var f = function Point() {"
+            + "  caja.def(Point, Object);"
+            + "};")),
+        RewriterMessageType.CAJA_DEF_ON_FROZEN_FUNCTION);
+  }
+
+  public void testCallCajaDef2Bad() throws Exception {
+    checkAddsMessage(
+        js(fromString(
+            "  var Point = 3;"
+            + "caja.def(Point, Object);")),
+        RewriterMessageType.CAJA_DEF_ON_NON_FUNCTION);
   }
 
   public void testCallCajaDef3Plus() throws Exception {
@@ -1702,6 +1840,78 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "           { bar: function() { this.x_ = 3; } });\n" +
         "};",
         "Public properties cannot end in \"_\"");
+    rewriteAndExecute(
+        "  function Point(x,y) {"
+        + "  this.x_ = x;"
+        + "  this.y_ = y;"
+        + "}"
+        + "caja.def(Point, Object, {"
+        + "  toString: function() {"
+        + "    return '<' + this.x_ + ',' + this.y_ + '>';"
+        + "  },"
+        + "  getX: function() { return this.x_; },"
+        + "  getY: function() { return this.y_; }"
+        + "}, {"
+        + "  area: function(pt) {"
+        + "    return pt.getX() * pt.getY();"
+        + "  }"
+        + "});"
+        + "var pt1 = new Point(3, 4);"
+        + "assertEquals(3, pt1.getX());"
+        + "assertEquals(4, pt1.getY());"
+        + "assertEquals('<3,4>', pt1.toString());"
+        + "assertEquals(12, Point.area(pt1));");
+    checkAddsMessage(
+        js(fromString("(function (caja) {" +
+                      "})({ def: function () { return 123; } })")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("try {" +
+                      "  throw { def: function () { return 123; } };" +
+                      "} catch (caja) {" +
+                      "}" +
+                      "result;")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("function caja() { this; }" +
+                      "caja.def = function () { return 123; };")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("for (var caja = { def: function () { return 123; } }" +
+                      "     ; caja; caja = null) {" +
+                      "}")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+    checkAddsMessage(
+        js(fromString("for (var caja in { x: 0 }) {}")),
+        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+  }
+
+  public void testCallCajaDef3PlusBadFunction() throws Exception {
+    checkAddsMessage(
+        js(fromString(
+            "  var f = function Point() {"
+            + "  caja.def(Point, Object, {});"
+            + "};")),
+        RewriterMessageType.CAJA_DEF_ON_FROZEN_FUNCTION);
+    checkAddsMessage(
+        js(fromString(
+            "  var f = function Point() {"
+            + "  caja.def(Point, Object, {}, {});"
+            + "};")),
+        RewriterMessageType.CAJA_DEF_ON_FROZEN_FUNCTION);
+  }
+
+  public void testCallCajaDef3PlusBad() throws Exception {
+    checkAddsMessage(
+        js(fromString(
+            "  var Point = 3;"
+            + "caja.def(Point, Object, {});")),
+        RewriterMessageType.CAJA_DEF_ON_NON_FUNCTION);
+    checkAddsMessage(
+        js(fromString(
+            "  var Point = 3;"
+            + "caja.def(Point, Object, {}, {});")),
+        RewriterMessageType.CAJA_DEF_ON_NON_FUNCTION);
   }
 
   public void testCallPublic() throws Exception {
@@ -1772,6 +1982,23 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  x = a___;" +
         "  y = ___.readPub(g, 0);" +
         "}));");
+    rewriteAndExecute(
+        "(function () {" +
+        "  var foo = function () {};" +
+        "  foo();" +
+        "  try {" +
+        "    foo.x = 3;" +
+        "  } catch (e) { return; }" +
+        "  fail('mutate frozen function');" +
+        "})();");
+    assertConsistent(
+        "var foo = (function () {" +
+        "             function foo() {};" +
+        "             foo.x = 3;" +
+        "             return foo;" +
+        "           })();" +
+        "foo();" +
+        "foo.x");
   }
 
   public void testFuncNamedSimpleDecl() throws Exception {
@@ -1803,6 +2030,24 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  return ___.asSimpleFunc(___.primFreeze(foo))(x - 1, y - 1);" +
          "});" +
         ";");
+    rewriteAndExecute(
+        "(function () {" +
+        "  function foo() {}" +
+        "  foo();" +
+        "  try {" +
+        "    foo.x = 3;" +
+        "  } catch (e) { return; }" +
+        "  fail('mutated frozen function');" +
+        "})();");
+    assertConsistent(
+        "function foo() {}" +
+        "foo.x = 3;" +
+        "foo();" +
+        "foo.x;");
+    rewriteAndExecute(
+        "  function f_() { return 31415; }"
+        + "var x = f_();"
+        + "assertEquals(x, 31415);");
   }
 
   public void testFuncNamedSimpleValue() throws Exception {
@@ -1819,14 +2064,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "      x = a___;" +
         "      y = z;" +
         "      return ___.asSimpleFunc(___.primFreeze(foo))(x - 1, y - 1);" +
-        "  }));");
+        "    }));");
     checkSucceeds(
         "var bar = function foo_(x, y ) {" +
         "  return foo_(x - 1, y - 1);" +
         "};",
-         "var bar = ___.primFreeze(___.simpleFunc(function foo_(x, y) {" +
-         "  return ___.asSimpleFunc(___.primFreeze(foo_))(x - 1, y - 1);" +
-         "}));");
+        "var bar = ___.primFreeze(___.simpleFunc(function foo_(x, y) {" +
+        "  return ___.asSimpleFunc(___.primFreeze(foo_))(x - 1, y - 1);" +
+        "}));");
   }
 
   public void testFuncExophoricFunction() throws Exception {
@@ -2225,7 +2470,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   public void testRecurseDebuggerStmt() throws Exception {
     checkSucceeds("debugger;", "debugger;");
   }
-  
+
   public void testRecurseDefaultCaseStmt() throws Exception {
     checkSucceeds(
         "switch (g[0]) { default: break; }",
@@ -2313,7 +2558,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  throw x;" +
         "}));");
   }
-  
+
   public void testCantReadProto() throws Exception {
     rewriteAndExecute(
         "function foo(){}" +
@@ -2358,6 +2603,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
+        new RhinoTestBed.Input(getClass(), "/com/google/caja/log-to-console.js"),
         new RhinoTestBed.Input(
             // Initialize the output field to something containing a unique
             // object value that will not compare identically across runs.

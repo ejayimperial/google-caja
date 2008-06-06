@@ -622,37 +622,37 @@ var ___;
   }
   /** Tests whether the fast-path canDelete flag is set. */
   function canDelete(obj, name) { return !!obj[name + '_canDelete___']; }
-  
-  /** 
+
+  /**
    * Sets the fast-path canRead flag.
    * <p>
    * These are called internally to memoize decisions arrived at by
-   * other means. 
+   * other means.
    */
   function fastpathRead(obj, name) {
     enforce(obj != null, 'Cannot grant read of ', name, ' on null');
-    obj[name + '_canRead___'] = true; 
+    obj[name + '_canRead___'] = true;
   }
-  
+
   /** allowEnum implies allowRead */
   function fastpathEnum(obj, name) {
     enforce(obj != null, 'Cannot grant enum of ', name, ' on null');
     fastpathRead(obj, name);
     obj[name + '_canEnum___'] = true;
   }
-  
+
   /** allowEnum for members */
-  function fastpathEnumOnly(obj, name) { 
+  function fastpathEnumOnly(obj, name) {
     obj[name + '_canEnum___'] = true;
   }
-  
-  /** 
+
+  /**
    * Simple functions should callable and readable, but methods
    * should only be callable.
    */
   function fastpathCall(obj, name) {
     enforce(obj != null, 'Cannot grant call of ', name, ' on null');
-    obj[name + '_canCall___'] = true; 
+    obj[name + '_canCall___'] = true;
     if (obj[name + '_canSet___']) {
       obj[name + '_canSet___'] = false;
     }
@@ -679,10 +679,10 @@ var ___;
       obj[name + '_grantCall___'] = false;
     }
   }
-  
+
   /**
-   * BUG TODO(erights): allowDelete is not yet specified or
-   * implemented. 
+   * allowDelete allows delete of a member on a constructed object via
+   * the private API.
    */
   function fastpathDelete(obj, name) {
     enforce(obj != null, 'Cannot allow delete of member ', name, ' on null');
@@ -691,60 +691,53 @@ var ___;
     }
     obj[name + '_canDelete___'] = true;
   }
-  
+
   /**
    * The various <tt>grant*</tt> functions are called externally by
-   * Javascript code to express whitelisting taming decisions. 
+   * Javascript code to express whitelisting taming decisions.
    */
   function grantRead(obj, name) {
     fastpathRead(obj, name);
   }
-  
+
   function grantEnum(obj, name) {
     fastpathEnum(obj, name);
   }
-  
+
   function grantEnumOnly(obj, name) {
     fastpathEnumOnly(obj, name);
   }
-  
+
   function grantCall(obj, name) {
 //    fastpathCall(obj, name);
     obj[name + '_grantCall___'] = true;
   }
-  
+
   function grantSet(obj, name) {
 //    fastpathSet(obj, name);
     obj[name + '_grantSet___'] = true;
   }
-  
+
   function grantDelete(obj, name) {
     fastpathDelete(obj, name);
   }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Classifying functions
   ////////////////////////////////////////////////////////////////////////
 
   function isCtor(constr)    {
-    return (typeof(constr) === 'function') ?
-        !!constr.___CONSTRUCTOR___ :
-        false; 
+    return (typeof(constr) === 'function') && !!constr.___CONSTRUCTOR___;
   }
-  function isMethod(meth)    { 
-    return (typeof meth === 'function') ? 
-        !!meth.___METHOD___ : 
-        false; 
+  function isMethod(meth)    {
+    return (typeof meth === 'function') && !!meth.___METHOD___;
   }
-  function isSimpleFunc(fun) { 
-    return (typeof fun === 'function') ?
-        !!fun.___SIMPLE_FUNC___ :
-        false; 
+  function isSimpleFunc(fun) {
+    return (typeof fun === 'function')  && !!fun.___SIMPLE_FUNC___;
   }
   function isXo4aFunc(func) {
-    return (typeof func === 'function') ?
-        (!!func.___XO4A___ || isSimpleFunc(func)) :
-        false;
+    return (typeof func === 'function')
+        && !!(func.___XO4A___ || func.___SIMPLE_FUNC___);
   }
 
   /**
@@ -768,13 +761,21 @@ var ___;
     if (isMethod(constr)) {
       fail("Methods can't be constructors: ", constr);
     }
-    // TODO(erights): We shouldn't be able to mark simple functions
-    // as constructors, but we should be able to use simple functions
-    // in caja.def().
-    /* if (isSimpleFunc(constr)) {
-      fail("Simple functions can't be constructors:", constr);
-    } */
+    if (isSimpleFunc(constr)) {
+      fail("Simple functions can't be constructors: ", constr);
+    }
+    if (isXo4aFunc(constr)) {
+      fail("Exophoric functions can't be constructors: ", constr);
+    }
     constr.___CONSTRUCTOR___ = true;
+    derive(constr, opt_Sup);
+    if (opt_name) {
+      constr.NAME___ = String(opt_name);
+    }
+    return constr;  // translator freezes constructor later
+  }
+
+  function derive(constr, opt_Sup) {
     if (opt_Sup) {
       opt_Sup = asCtor(opt_Sup);
       if (hasOwnProp(constr, 'super')) {
@@ -784,14 +785,11 @@ var ___;
           fail('Derived constructor already frozen: ', constr);
         }
         constr['super'] = function(thisObj, var_args) {
-          opt_Sup.init___.apply(thisObj, Array.prototype.slice.call(arguments, 1));
+          return opt_Sup.apply(
+              thisObj, Array.prototype.slice.call(arguments, 1));
         };
       }
     }
-    if (opt_name) {
-      constr.NAME___ = String(opt_name);
-    }
-    return constr;  // translator freezes constructor later
   }
 
   /**
@@ -822,7 +820,7 @@ var ___;
    *     return Point;
    *   })();
    * </pre>
-   * The result assigned to a variable of the same name (as above) if translating a 
+   * The result assigned to a variable of the same name (as above) if translating a
    * declaration; the result is frozen instead if the function is in expression context.
    */
   function splitCtor(constr, initer, opt_Sup, opt_name) {
@@ -842,8 +840,8 @@ var ___;
     // <tt>.prototype</tt> property might be assigned to, we must
     // assign to the other as well.
     constr.make___.prototype = constr.prototype;
-    constr.call = function(that, var_args) {
-      constr.init___.apply(that, Array.prototype.slice.call(arguments, 1));
+    constr.apply = function(that, args) {
+      return constr.init___.apply(that, args);
     };
     return constr;
   }
@@ -890,7 +888,7 @@ var ___;
     return primFreeze(func);
   }
 
-  /** 
+  /**
    * Mark meth as a method.
    * <p>
    * @param opt_name if provided, should be the message name associated
@@ -912,10 +910,10 @@ var ___;
     return primFreeze(meth);
   }
 
-  /** 
+  /**
    * Mark fun as a simple function.
    * <p>
-   * opt_name, if provided, should be the name of the 
+   * opt_name, if provided, should be the name of the
    * function. Currently, this is used only to generate friendlier
    * error messages.
    */
@@ -932,47 +930,47 @@ var ___;
     fun.call_canCall___ = true;
     return fun;  // translator freezes fun later
   }
-  
+
   /** This "Only" form doesn't freeze */
   function asCtorOnly(constr) {
-    if (isCtor(constr) || isSimpleFunc(constr)) { 
-      return constr; 
+    if (isCtor(constr) || isSimpleFunc(constr)) {
+      return constr;
     }
-    
+
     enforceType(constr, 'function');
     if (isMethod(constr)) {
       fail("Methods can't be called as constructors: ", constr);
     }
     fail("Untamed functions can't be called as constructors: ", constr);
   }
-  
+
   /** Only constructors and simple functions can be called as constructors */
   function asCtor(constr) {
-    return primFreeze(asCtorOnly(constr)); 
+    return primFreeze(asCtorOnly(constr));
   }
-  
+
   /** Only methods and simple functions can be called as methods */
   function asMethod(meth) {
-    if (isSimpleFunc(meth) || isMethod(meth)) { 
+    if (isSimpleFunc(meth) || isMethod(meth)) {
       if (!isFrozen(meth)) {
         fail('internal: non-frozen func stored as method: ', meth);
       }
-      return meth; 
+      return meth;
     }
-    
+
     enforceType(meth, 'function');
     if (isCtor(meth)) {
       fail("Constructors can't be called as methods: ", meth);
     }
     fail("Untamed functions can't be called as methods: ", meth);
   }
-  
+
   /** Only simple functions can be called as simple functions */
   function asSimpleFunc(fun) {
-    if (isSimpleFunc(fun)) { 
-      return primFreeze(fun); 
+    if (isSimpleFunc(fun)) {
+      return primFreeze(fun);
     }
-    
+
     enforceType(fun, 'function');
     if (isCtor(fun)) {
       if (fun === Number || fun === String || fun === Boolean) {
@@ -1013,16 +1011,16 @@ var ___;
     }
     fail("Untamed functions can't be called as simple functions: ", fun);
   }
-  
+
   /** Only simple and exophoric functions can be called as exophoric functions */
   function asXo4aFunc(fun) {
-    if (isXo4aFunc(fun)) { 
-      return fun; 
+    if (isXo4aFunc(fun)) {
+      return fun;
     }
     return asSimpleFunc(fun);
   }
-  
-  /** 
+
+  /**
    * Sets constr.prototype[name] = member.
    * <p>
    * If member is a method of constr, make it callable.
@@ -1052,13 +1050,13 @@ var ___;
     }
     proto[name] = member;
   }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Accessing properties
   ////////////////////////////////////////////////////////////////////////
-  
-  /** 
-   * Can a constructed Caja object read this property on itself? 
+
+  /**
+   * Can a constructed Caja object read this property on itself?
    * <p>
    * Can a Caja method whose <tt>this</tt> is bound to <tt>that</tt>
    * read its own <tt>name</tt> property? For properties added to
@@ -1072,8 +1070,8 @@ var ___;
     if (endsWith(name, '__')) { return false; }
     return canRead(that, name);
   }
-  
-  /** 
+
+  /**
    * A constructed Caja object's attempt to read this property on
    * itself.
    * <p>
@@ -1087,7 +1085,7 @@ var ___;
   }
 
   /**
-   * Can a Caja client of <tt>obj</tt> read its <name> property? 
+   * Can a Caja client of <tt>obj</tt> read its <name> property?
    * <p>
    * If the property is Internal (i.e. ends in an '_'), then no.
    * If the property was defined by Caja code, then yes. If it was
@@ -1108,7 +1106,7 @@ var ___;
    * Caja code attempting to read a property on something besides
    * <tt>this</tt>.
    * <p>
-   * If it can't and <tt>opt_shouldThrow</tt> is absent or 
+   * If it can't and <tt>opt_shouldThrow</tt> is absent or
    * false-ish, then <ttreadPub</tt> returns <tt>undefined</tt>
    * instead. But if <tt>opt_shouldThrow</tt> is true-ish, then
    * <tt>readPub</tt> throws <tt>ReferenceError</tt>, in order to
@@ -1130,11 +1128,8 @@ var ___;
    * TODO(ihab.awad): Make this throw a "module linkage error" so as to be
    * more informative, rather than just whatever readPub throws.
    */
-  function readImports(module_imports, name) {
-    java.lang.System.err.println('readImports(' + module_imports + ',' + name + ')');
-    // TODO(ihab.awad): using readPub here throws an error; fix!!
-    // return readPub(module_imports, name);
-    return module_imports[name];
+  function readImport(module_imports, name) {
+    return readPub(module_imports, name);
   }
 
   /**
@@ -1162,9 +1157,9 @@ var ___;
     if (endsWith(name, '___')) { return false; }
     return true;
   }
-  
-  /** 
-   * Would a Caja for/in loop on <tt>this</tt> see this name? 
+
+  /**
+   * Would a Caja for/in loop on <tt>this</tt> see this name?
    * <p>
    * For properties defined in Caja, this is generally the same as
    * canReadProp. Otherwise according to whitelisting.
@@ -1174,9 +1169,9 @@ var ___;
     if (endsWith(name, '__')) { return false; }
     return canEnum(that, name);
   }
-  
-  /** 
-   * Would a Caja for/in loop by a client of obj see this name? 
+
+  /**
+   * Would a Caja for/in loop by a client of obj see this name?
    * <p>
    * For properties defined in Caja, this is generally the same as
    * canReadProp. Otherwise according to whitelisting.
@@ -1190,7 +1185,7 @@ var ___;
     fastpathEnum(obj, name);
     return true;
   }
-  
+
   /**
    * Like canEnumPub, but allows only non-inherited properties.
    */
@@ -1243,7 +1238,7 @@ var ___;
       }
     }
   }
-  
+
   /**
    * Can this be called as an internal method?
    * <p>
@@ -1253,7 +1248,7 @@ var ___;
    * which we can memoize.
    * <p>
    * SECURITY HAZARD TODO(erights): If a settable property is
-   * first set to a 
+   * first set to a
    * simple function, which is then called, memoizing canCall, and
    * then set to some other kind of function which leaked (such as
    * an untamed function), then that other function can be
@@ -1272,7 +1267,7 @@ var ___;
    * after a set will re-check the value to be called.
    * <p>
    * This plan will need to be thought through again when we
-   * implement property deletion. 
+   * implement property deletion.
    */
   function canCallProp(that, name) {
     name = String(name);
@@ -1284,7 +1279,7 @@ var ___;
     fastpathCall(that, name);
     return true;
   }
-  
+
   /**
    * A Caja method tries to call one of its Internal methods.
    */
@@ -1297,7 +1292,7 @@ var ___;
       return that.handleCall___(name, args);
     }
   }
-  
+
   /**
    * Like canCallProp(), with differences that parallel the
    * differences between canReadProp vs canReadPub.
@@ -1312,7 +1307,7 @@ var ___;
     fastpathCall(obj, name);
     return true;
   }
-  
+
   /**
    * A client of obj tries to call one of its methods.
    */
@@ -1354,12 +1349,12 @@ var ___;
       return that.handleSet___(name, val);
     }
   }
-  
+
   /**
    * Can a client of obj directly assign to its name property?
    * <p>
    * If this property is Internal (i.e., ends with a '_') or if this
-   * object is frozen, then no. 
+   * object is frozen, then no.
    * If this property is not Internal and was defined by Caja code,
    * then yes. If the object is a JSON container, then
    * yes. Otherwise according to whitelisting decisions.
@@ -1384,10 +1379,6 @@ var ___;
       fastpathSet(obj, name);
       obj[name] = val;
       return val;
-    } else if (isCtor(obj) && !isFrozen(obj)) {
-      // Handles
-      //    ctor.staticMemberName = val;
-      setStatic(obj, name, val);
     } else {
       return obj.handleSet___(name, val);
     }
@@ -1420,7 +1411,7 @@ var ___;
   }
 
   /**
-   * Sets a static member of a ctor, making sure that it cannot be used to
+   * Sets a static members of a ctor, making sure that it can't be used to
    * override call/apply/bind and other builtin members of function.
    * @param {Function} ctor
    * @param {string} staticMemberName an identifier in the public namespace.
@@ -1432,8 +1423,7 @@ var ___;
       ctor[staticMemberName] = staticMemberValue;
       fastpathRead(ctor, staticMemberName);
     } else {
-      fail('cannot set static member %o %s',
-           debugReference(obj), staticMemberName);
+      ctor.handleSet___(staticMemberName, staticMemberValue);
     }
   }
 
@@ -1622,7 +1612,11 @@ var ___;
     var members = opt_members || {};
     var statics = opt_statics || {};
 
-    ctor(sub, sup);
+    if (isSimpleFunc(sub)) {
+      derive(sub, sup);
+    } else {
+      ctor(sub, sup);
+    }
     function PseudoSuper() {}
     PseudoSuper.prototype = sup.prototype;
     sub.prototype = new PseudoSuper();
@@ -1649,7 +1643,7 @@ var ___;
   /**
    * Arrange to handle read-faults on <tt>obj[name]</tt>
    * by calling <tt>getHandler(opt_shouldThrow)</tt> as a method on
-   * the faulted object. 
+   * the faulted object.
    * <p>
    * In order for this fault-handler to get control, it's important
    * that no one does a conflicting <tt>allowRead()</tt>.
@@ -1661,7 +1655,7 @@ var ___;
   /**
    * Arrange to handle call-faults on <tt>obj[name](args...)</tt> by
    * calling <tt>applyHandler(args)</tt> as a method on the faulted
-   * object. 
+   * object.
    * <p>
    * Note that <tt>applyHandler</tt> is called with a single argument,
    * which is the list of arguments in the original call.
@@ -1677,10 +1671,10 @@ var ___;
   /**
    * Arrange to handle call-faults on <tt>obj[name](args...)</tt> by
    * calling <tt>callHandler(args...)</tt> as a method on the faulted
-   * object. 
+   * object.
    * <p>
    * Note that <tt>callHandler</tt> is called with the same arguments
-   * as the original call. 
+   * as the original call.
    * <p>
    * In order for this fault-handler to get control, it's important
    * that no one does a conflicting allowCall(), allowSimpleFunc(), or
@@ -1695,7 +1689,7 @@ var ___;
   /**
    * Arrange to handle set-faults on <tt>obj[name] = newValue</tt> by
    * calling <tt>setHandler(newValue)</tt> as a method on the faulted
-   * object.  
+   * object.
    * <p>
    * In order for this fault-handler to get control, it's important
    * that no one does a conflicting allowSet().
@@ -1706,7 +1700,7 @@ var ___;
 
   /**
    * Arrange to handle delete-faults on <tt>delete obj[name]</tt> by
-   * calling <tt>deleteHandler()</tt> as a method on the faulted object. 
+   * calling <tt>deleteHandler()</tt> as a method on the faulted object.
    * <p>
    * In order for this fault-handler to get control, it's important
    * that no one does a conflicting allowDelete().
@@ -1724,7 +1718,7 @@ var ___;
     grantCall(obj, name);
     grantRead(obj, name);
   }
-  
+
   /**
    * Whitelist constr.prototype[name] as a method that can be called
    * on instances of constr.
@@ -1733,12 +1727,12 @@ var ___;
     method(constr.prototype[name], name);
     grantCall(constr.prototype, name);
   }
-  
+
   function useGetAndCallHandlers(constr, name, func) {
     useGetHandler(constr, name, function() { return func; });
     useCallHandler(constr, name, func);
   }
-  
+
   /**
    * Virtually replace constr.prototype[name] with a fault-handler
    * wrapper that first verifies that <tt>this</tt> isn't frozen.
@@ -1748,7 +1742,7 @@ var ___;
    * mutation from violating Caja semantics. In order for this fault
    * handler to get control, it's important that no one does an
    * allowCall(), allowSimpleFunc(), or allowMethod() on the
-   * original method. 
+   * original method.
    */
   function grantMutator(constr, name) {
     var original = constr.prototype[name];
@@ -1759,7 +1753,7 @@ var ___;
       return original.apply(this, arguments);
     }));
   }
-  
+
   /**
    * Verifies that regexp is something that can appear as a
    * parameter to a Javascript method that would use it in a match.
@@ -1774,7 +1768,7 @@ var ___;
       }
     }
   }
-  
+
   /**
    * A shorthand that happens to be useful here.
    * <p>
@@ -1786,7 +1780,7 @@ var ___;
       func2(arg1, arg2s[i]);
     }
   }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Taming decisions
   ////////////////////////////////////////////////////////////////////////
@@ -1810,11 +1804,11 @@ var ___;
     return canReadPub(this, name) && hasOwnProp(this, name);
   }));
   useGetAndCallHandlers(
-      Object.prototype, 
-      'propertyIsEnumerable', 
+      Object.prototype,
+      'propertyIsEnumerable',
       xo4a(function(name) {
         name = String(name);
-        return canReadPub(this, name) && 
+        return canReadPub(this, name) &&
             Object.prototype.propertyIsEnumerable.call(this, name);
   }));
 
@@ -1829,7 +1823,7 @@ var ___;
   useGetAndCallHandlers(Object.prototype, 'freeze_', method(function() {
     return primFreeze(this);
   }));
-  
+
   useGetAndCallHandlers(Object.prototype, 'apply', xo4a(function(that, realArgs) {
     return asXo4aFunc(this).apply(that, realArgs);
   }));
@@ -1862,14 +1856,14 @@ var ___;
     'localeCompare', 'slice', 'substr', 'substring',
     'toLowerCase', 'toLocaleLowerCase', 'toUpperCase', 'toLocaleUpperCase'
   ]);
-  
+
   useGetAndCallHandlers(String.prototype, 'match', xo4a(function(regexp) {
     enforceMatchable(regexp);
     return this.match(regexp);
   }));
   useGetAndCallHandlers(
-      String.prototype, 
-      'replace', 
+      String.prototype,
+      'replace',
       xo4a(function(searchValue, replaceValue) {
         enforceMatchable(searchValue);
         return this.replace(
@@ -1886,11 +1880,11 @@ var ___;
     enforceMatchable(separator);
     return this.split(separator, limit);
   }));
-  
-  
+
+
   ctor(Boolean, Object, 'Boolean');
-  
-  
+
+
   ctor(Number, Object, 'Number');
   all2(grantRead, Number, [
     'MAX_VALUE', 'MIN_VALUE', 'NaN',
@@ -1899,18 +1893,18 @@ var ___;
   all2(grantMethod, Number, [
     'toFixed', 'toExponential', 'toPrecision'
   ]);
-  
-  
+
+
   ctor(Date, Object, 'Date');
   grantSimpleFunc(Date, 'parse');
   grantSimpleFunc(Date, 'UTC');
-  
+
   all2(grantMethod, Date, [
     'toDateString', 'toTimeString', 'toUTCString',
     'toLocaleString', 'toLocaleDateString', 'toLocaleTimeString',
     'toISOString',
     'getDay', 'getUTCDay', 'getTimezoneOffset',
-    
+
     'getTime', 'getFullYear', 'getUTCFullYear', 'getMonth', 'getUTCMonth',
     'getDate', 'getUTCDate', 'getHours', 'getUTCHours',
     'getMinutes', 'getUTCMinutes', 'getSeconds', 'getUTCSeconds',
@@ -1922,18 +1916,18 @@ var ___;
     'setMinutes', 'setUTCMinutes', 'setSeconds', 'setUTCSeconds',
     'setMilliseconds', 'setUTCMilliseconds'
   ]);
-  
-  
+
+
   ctor(RegExp, Object, 'RegExp');
   grantMutator(RegExp, 'exec');
   grantMutator(RegExp, 'test');
-  
+
   all2(grantRead, RegExp, [
     'source', 'global', 'ignoreCase', 'multiline', 'lastIndex'
   ]);
 
-  grantMethod(Function, 'bind');  
-  
+  grantMethod(Function, 'bind');
+
   ctor(Error, Object, 'Error');
   grantRead(Error, 'name');
   grantRead(Error, 'message');
@@ -1943,23 +1937,23 @@ var ___;
   ctor(SyntaxError, Error, 'SyntaxError');
   ctor(TypeError, Error, 'TypeError');
   ctor(URIError, Error, 'URIError');
-  
-  
+
+
   var sharedImports;
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Module loading
   ////////////////////////////////////////////////////////////////////////
-  
+
   var myNewModuleHandler;
-  
+
   /**
    * Gets the current module handler.
    */
   function getNewModuleHandler() {
     return myNewModuleHandler;
   }
-  
+
   /**
    * Registers a new-module-handler, to be called back when a new
    * module is loaded.
@@ -1973,14 +1967,14 @@ var ___;
   function setNewModuleHandler(newModuleHandler) {
     myNewModuleHandler = newModuleHandler;
   }
-  
+
   /**
    * A new-module-handler which does nothing.
    */
   var ignoreNewModule = freeze({
     handle: simpleFunc(function(newModule){})
   });
-  
+
   /**
    * Makes and returns a fresh "normal" module handler whose imports
    * are initialized to a copy of the sharedImports.
@@ -2001,13 +1995,13 @@ var ___;
       })
     });
   }
-  
+
   /**
    * A module is a plugin-maker function.
    * <p>
    * loadModule(module) marks module as a simpleFunc, freezes it,
    * asks the current new-module-handler to handle it (thereby
-   * notifying the handler), and returns the new module.  
+   * notifying the handler), and returns the new module.
    */
   function loadModule(module) {
     callPub(myNewModuleHandler, 'handle', [primFreeze(simpleFunc(module))]);
@@ -2018,7 +2012,7 @@ var ___;
 
   /**
    * Gets or assigns the id associated with this (assumed to be)
-   * imports object, registering it so that 
+   * imports object, registering it so that
    * <tt>getImports(getId(imports)) ==== imports</tt>.
    * <p>
    * This system of registration and identification allows us to
@@ -2086,7 +2080,7 @@ var ___;
     }
   }
 
-  
+
   ////////////////////////////////////////////////////////////////////////
   // Trademarking
   ////////////////////////////////////////////////////////////////////////
@@ -2123,7 +2117,7 @@ var ___;
    */
   function audit(trademark, obj) {
     enforce (typeof trademark === 'object',
-        'The supplied trademark is not an object.'); 
+        'The supplied trademark is not an object.');
     var list = obj.underConstruction___ ?
         "delayedTrademarks___" : "trademarks___";
     if (!obj[list]) { obj[list] = []; }
@@ -2173,10 +2167,10 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
   // Exports
   ////////////////////////////////////////////////////////////////////////
-  
+
   caja = {
     // Diagnostics and condition enforcement
-    getLogFunc: getLogFunc, 
+    getLogFunc: getLogFunc,
     setLogFunc: setLogFunc,
     log: log,
 
@@ -2184,19 +2178,19 @@ var ___;
     enforce: enforce,
     enforceType: enforceType,
     enforceNat: enforceNat,
-    
+
     // walking prototype chain, checking JSON containers
     isJSONContainer: isJSONContainer,
     freeze: freeze,
     copy: copy,
     snapshot: snapshot,
-    
+
     // Accessing properties
     canReadPub: canReadPub,       readPub: readPub,
     canEnumPub: canEnumPub,
-    canEnumOwn: canEnumOwn,       
+    canEnumOwn: canEnumOwn,
     canInnocentEnum: canInnocentEnum,
-    BREAK: BREAK,                 each: each,                   
+    BREAK: BREAK,                 each: each,
     canCallPub: canCallPub,       callPub: callPub,
     canSetPub: canSetPub,         setPub: setPub,
     canDeletePub: canDeletePub,   deletePub: deletePub,
@@ -2280,7 +2274,7 @@ var ___;
     canDelete: canDelete,    allowDelete: grantDelete, grantDelete: grantDelete,
 
     // Module linkage
-    readImports: readImports,
+    readImport: readImport,
 
     // Classifying functions
     isCtor: isCtor,
@@ -2325,7 +2319,7 @@ var ___;
     grantSimpleFunc: grantSimpleFunc,
     grantMethod: grantMethod,
     grantMutator: grantMutator,
-    
+
     enforceMatchable: enforceMatchable,
     all2: all2,
 
