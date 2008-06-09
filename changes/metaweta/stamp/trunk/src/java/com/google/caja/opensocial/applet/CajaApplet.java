@@ -69,17 +69,57 @@ public class CajaApplet extends Applet {
   /**
    * Invoked by javascript in the embedding page.
    * @param cajaInput as an HTML gadget.
-   * @param featureNames names of {@link Feature} values.
+   * @param features {@link Feature} values and other configuration parameters
+   *   as a comma separated list.
+   *   We use a comma separated string instead of an array since IE 6's
+   *   version of liveconnect does not convert javascript Arrays to java
+   *   arrays.
+   *   See discussion of IE applet/JS communication at
+   *   http://www.rohitab.com/discuss/index.php?showtopic=28868&st=0&p=10029410
    * @return a tuple of {@code [ cajoledHtml, messageHtml ]}.
-   *     If the cajoledHtml is non-null then cajoling succeeded.
+   *   If the cajoledHtml is non-null then cajoling succeeded.
    */
-  public Object[] cajole(String cajaInput, String[] featureNames) {
+  public Object[] cajole(String cajaInput, String featureNames) {
     try {
       Set<Feature> features = EnumSet.noneOf(Feature.class);
-      for (String featureName : featureNames) {
-        features.add(Feature.valueOf(featureName));
+      String testbedServer = null;
+      if (!"".equals(featureNames)) {
+        for (String featureName : featureNames.split(",")) {
+          if (featureName.startsWith("testbedServer=")) {
+            testbedServer = featureName.substring(featureName.indexOf('=') + 1);
+          } else {
+            features.add(Feature.valueOf(featureName));
+          }
+        }
       }
-      return runCajoler(cajaInput, features);
+
+      final String uriCallbackProxyServer = testbedServer;
+
+      UriCallback uriCallback = new UriCallback() {
+          public UriCallbackOption getOption(
+              ExternalReference extRef, String mimeType) {
+            return UriCallbackOption.REWRITE;
+          }
+
+          public Reader retrieve(ExternalReference extref, String mimeType) {
+            // If we do retreive content, make sure to stick the original source
+            // in originalSources.
+            return null;
+          }
+
+          public URI rewrite(ExternalReference extref, String mimeType) {
+            try {
+              return URI.create(
+                  uriCallbackProxyServer + "/proxy?url="
+                  + URLEncoder.encode(extref.getUri().toString(), "UTF-8")
+                  + "&mimeType=" + URLEncoder.encode(mimeType, "UTF-8"));
+            } catch (UnsupportedEncodingException ex) {
+              throw new RuntimeException("UTF-8 should be supported.", ex);
+            }
+          }
+        };
+
+      return runCajoler(cajaInput, uriCallback, features);
     } catch (RuntimeException ex) {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
@@ -93,7 +133,8 @@ public class CajaApplet extends Applet {
     return BuildInfo.getInstance().getBuildInfo();
   }
 
-  private Object[] runCajoler(String cajaInput, final Set<Feature> features) {
+  private Object[] runCajoler(String cajaInput, UriCallback uriCallback,
+                              final Set<Feature> features) {
     // TODO(mikesamuel): If the text starts with a <base> tag, maybe use that
     // and white it out to preserve file positions.
     URI src = URI.create(getDocumentBase().toString());
@@ -136,31 +177,9 @@ public class CajaApplet extends Applet {
         }
       };
     rw.setDebugMode(features.contains(Feature.DEBUG_SYMBOLS));
+    rw.setWartsMode(features.contains(Feature.WARTS_MODE));
 
     StringBuilder cajoledOutput = new StringBuilder();
-    UriCallback uriCallback = new UriCallback() {
-        public UriCallbackOption getOption(
-            ExternalReference extRef, String mimeType) {
-          return UriCallbackOption.REWRITE;
-        }
-
-        public Reader retrieve(ExternalReference extref, String mimeType) {
-          // If we do retreive content, make sure to stick the original source
-          // in originalSources.
-          return null;
-        }
-
-        public URI rewrite(ExternalReference extref, String mimeType) {
-          try {
-            return URI.create(
-                "http://secure-proxy.google.com/?url="
-                + URLEncoder.encode(extref.getUri().toString(), "UTF-8")
-                + "&mimeType=" + URLEncoder.encode(mimeType, "UTF-8"));
-          } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException("UTF-8 should be supported.", ex);
-          }
-        }
-      };
 
     try {
       rw.rewriteContent(src, cp, uriCallback, cajoledOutput);
@@ -210,6 +229,7 @@ public class CajaApplet extends Applet {
   private static enum Feature {
     EMBEDDABLE,
     DEBUG_SYMBOLS,
+    WARTS_MODE,
     ;
   }
 }

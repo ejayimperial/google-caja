@@ -58,7 +58,16 @@
 var testbeds = [];
 
 /** A registry of the public APIs of each of the testbed applets. */
-var gadgetPublicApis = {};
+var gadgetPublicApis = {
+  // Predefine a honeypot so we can try to exploit confused deputies
+  'keystoneKop': ___.primFreeze({
+        // Not marked simple.  It is a breach if a gadget can get the container
+        // to call this on their behalf.
+        f: function() {
+          alert('You get a cookie ' + [].join.call(arguments, ', '));
+        }
+      })
+};
 
 if ('undefined' === typeof prettyPrintOne) {
   // So it works without prettyprinting when disconnected from the network.
@@ -74,6 +83,42 @@ if ('undefined' === typeof prettyPrintOne) {
 function getCajoler() {
   return document.applets.cajoler;
 }
+
+
+/** Get the protocol, host, and port of a <tt>bin/testbed-proxy.py</tt>. */
+var getTestbedServer = (function () {
+  /** Parses the URL to pick out CGI parameters. */
+  function getCgiParams() {
+    var parts = (location.search || '').split(/[\?&]/g);
+    var params = {};
+    for (var i = parts.length; --i >= 0;) {
+      var part = parts[i];
+      var eq = part.indexOf('=');
+      var key, val;
+      if (eq < 0) {
+        key = decodeURIComponent(part);
+        val = '';
+      } else {
+        key = decodeURIComponent(part.substring(0, eq));
+        val = decodeURIComponent(part.substring(eq + 1));
+      }
+      (params[key] || (params[key] = [])).push(val);
+    }
+    return params;
+  }
+
+  var testbedServer;
+  return function getTestbedServer() {
+    if (testbedServer === undefined) {
+      var backend = getCgiParams().backend;
+      testbedServer = (backend && backend.length === 1)
+          ? backend[0]
+          : 'http://bogus-proxy.google.com';
+    }
+    return testbedServer;
+  }
+})();
+
 
 /**
  * Reads caja code and configuration from the testbed form, cajoles it, and
@@ -135,21 +180,51 @@ var cajole = (function () {
     }
   }
 
+  /** Log to a logging service running on localhost. See bin/testbed-proxy.py */
+  function logToServer(msg) {
+    var logForm = document.getElementById('logForm');
+    if (!logForm) {
+      var testbedServer = getTestbedServer();
+      logForm = document.createElement('FORM');
+      logForm.id = 'logForm';
+      logForm.method = 'POST';
+      logForm.action = testbedServer + '/log';
+      var msgInput = document.createElement('INPUT');
+      msgInput.type = 'hidden';
+      msgInput.name = 'msg';
+      logForm.target = 'logFrame';
+
+      var logFrame = document.createElement('IFRAME');
+      logFrame.name = logForm.target;
+      logFrame.style.visibility = 'hidden';
+      logFrame.width = logFrame.height = '1';
+      document.body.appendChild(logFrame);
+      document.body.appendChild(logForm);
+      logForm.appendChild(msgInput);
+    }
+    logForm.elements.msg.value = msg;
+    logForm.submit();
+  }
+
   function cajole(form) {
     var uiSuffix = form.id.replace(/^[^\.]+/, '');
 
     var inputs = form.elements;
-    var features = [];
+    var features = ['testbedServer=' + getTestbedServer().replace(/,/g, '%2C')];
     // See CajaApplet.Feature
-    caja.each({ EMBEDDABLE: true, DEBUG_SYMBOLS: true },
+    caja.each({ EMBEDDABLE: true, DEBUG_SYMBOLS: true, WARTS_MODE: true },
               ___.simpleFunc(function (featureName) {
                 if (inputs[featureName + uiSuffix].checked) {
                   features.push(featureName);
                 }
               }));
+    features = features.join(',');
 
-    var result = getCajoler().cajole(
-        inputs.src.value.replace(/^\s+|\s+$/g, ''), features);
+    var src = inputs.src.value.replace(/^\s+|\s+$/g, '');
+
+    logToServer('features:' + features + '\nsrc:' + src);
+
+    var result = getCajoler().cajole(src, features);
     var cajoledOutput = result[0];
     var messages = String(result[1]);
 
@@ -318,8 +393,10 @@ var getImports = (function () {
            rewrite:
                function (uri, mimeType) {
                  if (!/^https?:\/\//i.test(uri)) { return null; }
-                 return 'http://gadget-proxy/?url=' + encodeURIComponent(uri)
-                     + '&mimeType=' + encodeURIComponent(mimeType);
+                 var testbedServer = getTestbedServer();
+                 return (testbedServer + '/proxy?url='
+                         + encodeURIComponent(uri)
+                         + '&mimeType=' + encodeURIComponent(mimeType));
                }
          },
          testImports);
@@ -357,20 +434,22 @@ var getImports = (function () {
  * @return {Node}
  */
 function renderTemplate(domTree, domSuffix) {
+  function suffixAttrib(node, attribName) {
+    // IE is flaky around hasAttribute and setAttribute.  Using the attributes
+    // NodeList directly works reliably.
+    if (node.attributes[attribName] && node.attributes[attribName].value) {
+      node.attributes[attribName].value += domSuffix;
+    }
+  }
+
   function fixNamesAndIds(node, inForm) {
     if (node.nodeType === 1) {
-      if (node.hasAttribute('id')) {
-        node.setAttribute('id', node.getAttribute('id') + domSuffix);
-      }
-      if (node.hasAttribute('for')) {
-        node.setAttribute('for', node.getAttribute('for') + domSuffix);
-      }
+      suffixAttrib(node, 'id');
+      suffixAttrib(node, 'for');
       if (!inForm) {
-        if (node.hasAttribute('name')) {
-          node.setAttribute('name', node.getAttribute('name') + domSuffix);
-        }
+        suffixAttrib(node, 'name');
+        inForm = 'FORM' === node.nodeName;
       }
-      inForm = 'FORM' === node.nodeName;
     }
     for (var child = node.firstChild; child; child = child.nextSibling) {
       fixNamesAndIds(child, inForm);
@@ -393,4 +472,8 @@ function initTestbeds() {
   for (var i = 0; i < testbeds.length; ++i) {
     getImports(testbeds[i]).clearHtml___();
   }
+}
+
+function loadExampleInto(containerNode, form) {
+  form.elements.src.value = innerText(containerNode);
 }

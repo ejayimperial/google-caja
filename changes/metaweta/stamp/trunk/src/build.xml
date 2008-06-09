@@ -51,6 +51,7 @@
   <property name="instr"       location="ant-instr"/>  <!-- instrumented src -->
   <property name="lib"         location="ant-lib"/>
   <property name="docs"        location="ant-docs"/>
+  <property name="ruledocs"    location="${docs}/rules"/>
   <property name="javadocs"    location="${docs}/java"/>
   <property name="jsdocs"      location="${docs}/js"/>
   <property name="jars"        location="ant-jars"/>
@@ -188,7 +189,7 @@
   </target>
 
   <target name="docs" description="Builds all Caja documentation."
-   depends="javadocs,jsdocs">
+   depends="javadocs,jsdocs,ruledocs">
   </target>
   
   <target name="javadocs" description="Builds javadoc documentation.">
@@ -205,12 +206,36 @@
      <!-- overview="${src}/overview.html" -->
   </target>
 
+  <target name="ruledocs" description="Builds Caja rule documentation."
+   depends="RuleDoclet">
+    <mkdir dir="${ruledocs}"/>
+    <ruledoclet output="html" outputdir="${ruledocs}"
+     rewriter="com.google.caja.parser.quasiliteral.DefaultCajaRewriter"/>
+  </target>
+
   <target name="jsdocs" description="Builds jsdoc documentation.">
     <mkdir dir="${jsdocs}"/>
     <jsdoctoolkit jsdochome="${third_party}/java/jsdoctoolkit/" 
      encoding="utf-8" template="jsdoc" 
      includeundocumented="true" includeprivate="true" includeunderscored="true"
-     outputdir="${jsdocs}" inputdir="${javascript}"/>
+     outputdir="${jsdocs}">
+      <source file="${src}/com/google/caja/plugin/html4-defs.js"/>
+      <source file="${src}/com/google/caja/plugin/html-sanitizer.js"/>
+      <source file="${src}/com/google/caja/plugin/html-emitter.js"/>
+      <source file="${src}/com/google/caja/plugin/domita.js"/>
+      <source file="${src}/com/google/caja/plugin/unicode.js"/>
+      
+      <source file="${javascript}/com/google/caja/permissive.js"/>
+      <source file="${javascript}/com/google/caja/caja-debugmode.js"/>
+      <source file="${javascript}/com/google/caja/JSON.js"/>
+      <source file="${javascript}/com/google/caja/Q-caja.js"/>
+      <source file="${javascript}/com/google/caja/caja.js"/>
+      <source file="${javascript}/com/google/caja/Brand-cajita.js"/>
+      <source file="${javascript}/com/google/caja/Mint-cajita.js"/>
+      <source file="${javascript}/com/google/caja/log-to-console.js"/>
+      <source file="${javascript}/com/google/caja/triv-logger.js"/>
+      <source file="${javascript}/com/google/caja/caja-prototype.js"/>
+    </jsdoctoolkit>
   </target>
   
   <target name="pluginc" depends="dirs,PluginCompiler,build.info"
@@ -391,6 +416,19 @@
     <echo append="true"
      file="${lib}/com/google/caja/reporting/buildInfo.properties"
      message="timestamp: ${build.timestamp}${line.separator}"/>
+  </target>
+
+  <target name="RuleDoclet" depends="Quasiliterals">
+    <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
+      <src path="${src}"/>
+      <classpath refid="classpath.compile"/>
+      <include name="**/caja/quasiliteral/*Doclet.java"/>
+      <include name="**/caja/tools/DocletAntTask.java"/>
+
+      <compilerarg line="-Xlint:unchecked"/>
+    </javac>
+    <taskdef name="ruledoclet" classname="com.google.caja.tools.DocletAntTask"
+     classpathref="classpath.run" onerror="ignore"/>
   </target>
 
   <target name="PluginCompiler"
@@ -627,7 +665,7 @@
     </copy>
   </target>
 
-  <target name="testbed" depends="dirs,pluginc"
+  <target name="testbed" depends="dirs,jars"
    description="Produce an Applet that interactively cajoles in the browser.">
     <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
@@ -663,6 +701,8 @@
       </fileset>
       <fileset dir="${jars}">
         <include name="testbed.jar"/>
+        <include name="htmlparser.jar"/>
+        <include name="json_simple.jar"/>
       </fileset>
     </copy>
   </target>
