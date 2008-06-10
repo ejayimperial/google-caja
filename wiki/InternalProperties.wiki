@@ -4,9 +4,9 @@
 
 These are the properties on JavaScript objects that are used internally by the Caja implementation.
 
-|| *Object* || *Property* || *Meaning_and_invariants* || *Writes* || *Reads* ||
+|| *Object* || *Property* || *Meaning_and_invariants* || *Written_by* || *Read_by* ||
 || Object, Array || {{{typeTag___}}} || name of the built-in type || caja.js:38-39 || {{{isJSONContainer()}}} uses this to check whether an object's direct constructor is Object or Array. {{{copy()}}} and {{{each()}}} use this to decide whether the given object is an Array. ||
-|| anything || _name_{{{_getter___}}} || method for handling get-faults on x[_name_] || {{{useGetHandler()}}} || {{{handleRead___}}} ||
-|| anything || _name_{{{_handler___}}} || method for handling call-faults on x[_name_](args) || {{{useApplyHandler()}}} || {{{handleCall___}}} ||
-|| anything || _name_{{{_setter___}}} || method for handling set-faults on x[_name_] = value || {{{useSetHandler()}}} || {{{handleSet___}}} ||
-|| anything || _name_{{{_deleter___}}} || method for handling delete-faults on delete x[_name_] || {{{useSetHandler()}}} || {{{handleDelete___}}} ||
+|| anything || _name_{{{_getter___}}} || method for handling get-faults on {{{x[}}}_name_{{{]}}} || {{{useGetHandler()}}} || {{{handleRead___}}} ||
+|| anything || _name_{{{_handler___}}} || method for handling call-faults on {{{x[}}}_name_{{{]()}}} || {{{useApplyHandler()}}} || {{{handleCall___}}} ||
+|| anything || _name_{{{_setter___}}} || method for handling set-faults on {{{x[}}}_name_{{{] = }}}_value_ || {{{useSetHandler()}}} || {{{handleSet___}}} ||
+|| anything || _name_{{{_deleter___}}} || method for handling delete-faults on {{{delete x[}}}_name_{{{]}}} || {{{useSetHandler()}}} || {{{handleDelete___}}} ||
