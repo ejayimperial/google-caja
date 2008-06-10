@@ -12,4 +12,4 @@ In the table below, {{{x}}} stands for "any object".
 || {{{x}}} || _name_{{{_deleter___}}} || method for handling delete-faults on {{{delete x[}}}_name_{{{]}}} || {{{useSetHandler()}}} || {{{handleDelete___}}} ||
 || {{{x}}} || {{{__proto__}}} || if present, the object that x directly inherits from || {{{directConstructor()}}} caches the direct  || {{{directConstructor()}}} ||
 || {{{x}}} || {{{__FROZEN__}}} || if present as an _own_ (a non-inherited) property of x, x is considered frozen. A frozen object must not contain any settable or deletable properties. All prototypical objects must be frozen. All functions must be frozen before their first call. || {{{primFreeze()}}} || {{{isFrozen()}}} ||
-|| {{{x}}} || _name_{{{_canRead___}}} || if truthy, x._name_ can be read || {{{fastpathRead()}}} || {{{canRead()}}} ||
+|| {{{x}}} || _name_{{{_canRead___}}} || if truthy, {{{x.}}}_name_ can be read directly. If {{{x.}}}_name_ is an unattached method, {{{x.}}}_name_{{{_canRead___}}} must not be truthy, since an attempt to read {{{x.}}}_name_ must return instead this method as attached to {{{x}}} || {{{fastpathRead()}}} || {{{canRead()}}} ||
