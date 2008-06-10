@@ -11,5 +11,5 @@ In the table below, {{{x}}} stands for "any object".
 || {{{x}}} || _name_{{{_setter___}}} || method for handling set-faults on {{{x[}}}_name_{{{] = }}}_value_ || {{{useSetHandler()}}} || {{{handleSet___}}} ||
 || {{{x}}} || _name_{{{_deleter___}}} || method for handling delete-faults on {{{delete x[}}}_name_{{{]}}} || {{{useSetHandler()}}} || {{{handleDelete___}}} ||
 || {{{x}}} || {{{__proto__}}} || if present, the object that x directly inherits from || {{{directConstructor()}}} caches the direct  || {{{directConstructor()}}} ||
-|| {{{x}}} || {{{__FROZEN__}}} || if present, x is considered frozen || {{{primFreeze()}}} || {{{isFrozen()}}} ||
+|| {{{x}}} || {{{__FROZEN__}}} || if present as an _own_ (a non-inherited) property of x, x is considered frozen. A frozen object must not contain any settable or deletable properties. All prototypical objects must be frozen. All functions must be frozen before their first call. || {{{primFreeze()}}} || {{{isFrozen()}}} ||
 || {{{x}}} || _name_{{{_canRead___}}} || if truthy, x._name_ can be read || {{{fastpathRead()}}} || {{{canRead()}}} ||
