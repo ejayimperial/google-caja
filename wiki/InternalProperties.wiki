@@ -1,0 +1,11 @@
+#summary List of properties internal to the Caja implementation and their semantics.
+
+= Introduction =
+
+These are the properties on JavaScript objects that are used internally by the Caja implementation.
+
+|| *Object* || *Property* || *Meaning_and_invariants* || *Writes* || *Reads* ||
+|| Object, Array || {{{typeTag___}}} || name of the built-in type || caja.js:38-39 || {{{isJSONContainer()}}} uses this to check whether an object's direct constructor is Object or Array. {{{copy()}}} and {{{each()}}} use this to decide whether the given object is an Array. ||
+|| anything || _name_{{{_getter___}}} || method for handling read-faults on x[_name_] || {{{useGetHandler()}}} || {{{handleRead___}}} ||
+|| anything || _name_{{{_handler___}}} || method for handling read-faults on x[_name_] || {{{useApplyHandler()}}} || {{{handleCall___}}} ||
+|| anything || _name_{{{_setter___}}} || method for handling read-faults on x[_name_] || {{{useSetHandler()}}} || {{{handleSet___}}} ||
