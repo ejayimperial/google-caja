@@ -12,3 +12,4 @@ In the table below, {{{x}}} stands for "any object".
 || {{{x}}} || _name_{{{_deleter___}}} || method for handling delete-faults on {{{delete x[}}}_name_{{{]}}} || {{{useSetHandler()}}} || {{{handleDelete___}}} ||
 || {{{x}}} || {{{__proto__}}} || if present, the object that x directly inherits from || {{{directConstructor()}}} caches the direct  || {{{directConstructor()}}} ||
 || {{{x}}} || {{{__FROZEN__}}} || if present, x is considered frozen || {{{primFreeze()}}} || {{{isFrozen()}}} ||
+|| {{{x}}} || _name_{{{_canRead___}}} || if truthy, x._name_ can be read || {{{fastpathRead()}}} || {{{canRead()}}} ||
