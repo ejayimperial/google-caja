@@ -119,3 +119,5 @@ oval mean that that transition can start from any oval in the box.
 Since the whole purpose of a fasttrack attribute is to let us skip
 runtime checks, if an oval has {{{fx}}} set, then there will be no
 outbound {{{X}}} transition since that transition will never be set.
+
+Note that a read of an unattached method never sets a fasttrack bit since reading an unattached method involves returning a bound version of the method.
