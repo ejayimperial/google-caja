@@ -170,7 +170,7 @@ attachDocumentStub = (function () {
   var timeoutIdTrademark = {};
   function tameSetTimeout(timeout, delayMillis) {
     var timeoutId = setTimeout(___.asSimpleFunc(timeout), delayMillis | 0);
-    return ___.audit(timeoutIdTrademark,
+    return ___.stamp(timeoutIdTrademark,
                      ___.freeze({ timeoutId___: timeoutId }));
   }
   ___.simpleFunc(tameSetTimeout);
@@ -182,7 +182,7 @@ attachDocumentStub = (function () {
   var intervalIdTrademark = {};
   function tameSetInterval(interval, delayMillis) {
     var intervalId = setInterval(___.asSimpleFunc(interval), delayMillis | 0);
-    return ___.audit(intervalIdTrademark,
+    return ___.stamp(intervalIdTrademark,
                      ___.freeze({ intervalId___: intervalId }));
   }
   ___.simpleFunc(tameSetInterval);
@@ -431,7 +431,7 @@ attachDocumentStub = (function () {
     function TameNode(node, editable) {
       this.node___ = node;
       this.editable___ = editable;
-      caja.audit(tameNodeTrademark, this);
+      ___.stamp(tameNodeTrademark, this);
     }
     TameNode.prototype.getNodeType = function () {
       return this.node___.nodeType;
