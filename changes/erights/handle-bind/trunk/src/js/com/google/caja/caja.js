@@ -1802,20 +1802,6 @@ var ___;
       }));
     }));
 
-/**
- * Bind this function object to <tt>thisObject</tt>, which will serve as the
- * value of <tt>this</tt> during invocation. Curry on a partial set of arguments
- * in <tt>var_args</tt>. Return the curried result as a new function object.
- */
-Function.prototype.bind = function(thisObject, var_args) {
-  var self = this;
-  var args = Array.prototype.slice.call(arguments, 1);
-  return ___.primFreeze(___.simpleFunc(function(var_args) {
-      var newArgs = Array.prototype.slice.call(arguments, 0);
-      return self.apply(thisObject, args.concat(newArgs));
-  }));
-};
-
   ctor(Array, Object, 'Array');
   all2(grantMethod, Array, [
     'concat', 'join', 'slice', 'indexOf', 'lastIndexOf'
