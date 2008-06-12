@@ -217,21 +217,20 @@ var cajole = (function () {
 
     var messages = '';
     document.getElementById('output' + uiSuffix).innerHTML = '';
-    try {
-      var result = eval(String(getCajoler().cajole(src, features)));
-      var cajoledOutput = result[0];
-      messages = String(result[1]);
 
-      if (cajoledOutput !== null) {
-        cajoledOutput = String(cajoledOutput);
-        document.getElementById('output' + uiSuffix).innerHTML = prettyPrintOne(
-            indentAndWrapCode(cajoledOutput));
+    var result = eval(String(getCajoler().cajole(src, features)));
+    var cajoledOutput = result[0];
+    messages = String(result[1]);
 
-        loadCaja(cajoledOutput, uiSuffix);
-      }
-    } finally {
-      document.getElementById('messages' + uiSuffix).innerHTML = (
+    document.getElementById('messages' + uiSuffix).innerHTML = (
         messages || '<center><i>No Messages</i></center>');
+
+    if (cajoledOutput !== null) {
+      cajoledOutput = String(cajoledOutput);
+      document.getElementById('output' + uiSuffix).innerHTML = prettyPrintOne(
+          indentAndWrapCode(cajoledOutput));
+
+      loadCaja(cajoledOutput, uiSuffix);
     }
   }
 
