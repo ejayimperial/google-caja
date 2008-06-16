@@ -250,10 +250,7 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
 
-        boolean isVar = false;
-
         if (QuasiBuilder.match("for (var @k in @o) @ss;", node, bindings)) {
-          isVar = true;
           scope.addStartOfScopeStatement((Statement) substV(
               "var @k;",
               "k", bindings.get("k")));
