@@ -142,17 +142,17 @@ Let's put that "Rewrite Macros" box in between the parsed JS inputs and the
 
 The part of the old configuration file into which we want to inject
 "Rewrite Macros" looks like:
+The part of the old configuration file into which we want to inject
+"Rewrite Macros" looks like:
     {{{
     ...
 
-    jsInputs = new com.google.caja.parser.JsParser('*.js');
+    htmlInputs = new com.google.caja.parser.JsParser('*.html');
+    parseTrees = new com.google.caja.plugin.HtmlExtractor(htmlInputs);
+    safeHtml = new com.google.caja.plugin.HtmlValidator(
+        filter(parseTrees, '*.html'));
 
-    cajoledJs = new com.google.caja.plugin.stages.CajoleJS(
-        jsInputs,
-        htmlExtractor,
-        htmlToDocumentDotWrite,
-        htmlTemplateCompiler,
-        cssTemplateCompiler);
+    ...
 
     outputJs = new com.google.caja.plugin.Emitter(cajoledJs);
 
@@ -163,17 +163,12 @@ Let's rewrite that thusly:
     {{{
     ...
 
-    jsInputs = new com.google.caja.parser.JsParser('*.js');
+    htmlInputs = new com.google.caja.parser.JsParser('*.html');
+    parseTrees = new com.google.caja.plugin.HtmlExtractor(htmlInputs);
+    html = new com.foo.RewriteEmbeds(filter(parseTrees, '*.html'));     // ADDED
+    safeHtml = new com.google.caja.plugin.HtmlValidator(html);          // CHANGED
 
-    rewrittenMacros = new com.foo.RewriteMacros(               // ADDED
-        jsInputs,                                              // ADDED
-        htmlExtractor);                                        // ADDED
-
-    cajoledJs = new com.google.caja.plugin.stages.CajoleJS(
-        rewrittenMacros,                                       // CHANGED
-        htmlToDocumentDotWrite,
-        htmlTemplateCompiler,
-        cssTemplateCompiler);
+    ...
 
     outputJs = new com.google.caja.plugin.Emitter(cajoledJs);
 
