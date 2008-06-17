@@ -820,7 +820,7 @@ public class DefaultCajaRewriter extends Rewriter {
     new Rule () {
       @Override
       @RuleDescription(
-          name="setBadValueOf ",
+          name="setBadValueOf",
           synopsis="Statically reject if assigning to valueOf.",
           reason="We cannot prevent valueOf from being invoked.",
           matches="@x.valueOf = @z",
