@@ -2,6 +2,7 @@
 #labels Attack-Vector
 
 =Regular Expressions leak matched text=
+Reported by Jasvir
 
 ==Effect==
 Secrets can be stolen by untrusted code.
