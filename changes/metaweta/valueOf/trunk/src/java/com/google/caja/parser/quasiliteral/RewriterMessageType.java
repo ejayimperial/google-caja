@@ -38,8 +38,8 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Variables cannot end in \"__\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
-  VALUEOF_PROPERTY_MUST_NOT_BE_REFERENCED(
-      "%s: The valueOf property must not be referenced: %s, %s",
+  VALUEOF_PROPERTY_MUST_NOT_BE_SET(
+      "%s: The valueOf property must not be set: %s, %s",
       MessageLevel.FATAL_ERROR),
 
   PROPERTIES_CANNOT_END_IN_DOUBLE_UNDERSCORE(

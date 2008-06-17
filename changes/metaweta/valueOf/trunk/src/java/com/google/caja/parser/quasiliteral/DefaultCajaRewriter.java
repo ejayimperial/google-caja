@@ -829,7 +829,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("@x.valueOf = @z", node, bindings)) {
           mq.addMessage(
-              RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_REFERENCED,
+              RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_SET,
               node.getFilePosition(), this, node);
           return node;
         }
@@ -2300,7 +2300,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (QuasiBuilder.match("({@keys*: @vals*})", node, bindings) &&
             literalsContain(bindings.get("keys"), "valueOf")) {
           mq.addMessage(
-              RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_REFERENCED,
+              RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_SET,
               node.getFilePosition(), this, node);
           return node;
         }
@@ -2523,76 +2523,6 @@ public class DefaultCajaRewriter extends Rewriter {
           reason="So that every use of a regex literal creates a new instance"
                + " to prevent state from leaking via interned literals.  This"
                + " is consistent with the way ES4 treates regex literals.",
-          substitutes="new ___.RegExp(@pattern, @modifiers?)")
-      public ParseTreeNode fire(
-          ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (node instanceof RegexpLiteral) {
-          RegexpLiteral re = (RegexpLiteral) node;
-          StringLiteral pattern = StringLiteral.valueOf(re.getMatchText());
-          StringLiteral modifiers = !"".equals(re.getModifiers())
-              ? StringLiteral.valueOf(re.getModifiers())
-              : null;
-          return QuasiBuilder.substV(
-              "new ___.RegExp(@pattern, @modifiers?)",
-              "pattern", pattern,
-              "modifiers", modifiers);
-        }
-        return NONE;
-      }
-    },
-
-    ////////////////////////////////////////////////////////////////////////
-    // recurse - automatically recurse into some structures
-    ////////////////////////////////////////////////////////////////////////
-
-    new Rule () {
-      @Override
-      @RuleDescription(
-          name="recurse",
-          synopsis="Automatically recurse into some structures",
-          reason="")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (node instanceof ParseTreeNodeContainer ||
-            node instanceof ArrayConstructor ||
-            node instanceof BreakStmt ||
-            node instanceof CaseStmt ||
-            node instanceof Conditional ||
-            node instanceof ContinueStmt ||
-            node instanceof DebuggerStmt ||
-            node instanceof DefaultCaseStmt ||
-            node instanceof ExpressionStmt ||
-            node instanceof Identifier ||
-            node instanceof Literal ||
-            node instanceof Loop ||
-            node instanceof Noop ||
-            node instanceof SimpleOperation ||
-            node instanceof ControlOperation ||
-            node instanceof ReturnStmt ||
-            node instanceof SwitchStmt ||
-            node instanceof ThrowStmt) {
-          return expandAll(node, scope, mq);
-        }
-        return NONE;
-      }
-    }
-  };
-
-  private final boolean wartsMode;
-
-  /**
-   * Creates a default caja rewriter with wartsMode off
-   */
-  public DefaultCajaRewriter() {
-    this(false);
-  }
-
-  public DefaultCajaRewriter(boolean wartsMode) {
-    this(true, wartsMode);
-  }
-
-  public DefaultCajaRewriter(boolean logging, boolean wartsMode) {
-    super(logging);
-    this.wartsMode = wartsMode;
-    addRules(cajaRules);
-  }
-}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ˇ (ö j%C—
+Å@Îˇ (ö j'@ÎÅ@ÂÅ@ÂÅ@ÂÅ@“Å@Âˇ (ö j.I€@âBJ¨LJˇ (ö jÇI€@âBJ¨LJƒSI€@âBJ¨LJˇ (ö k3Ai6@OC@A@è@©A±@Kˇ (ö k9B	@Y@j@è@@@√
+AÃAA	ˇ (ö k:D°-@GA,Cˇ (õ kH@·@`Ö@·@`ˇ (õ kUA@dáA@dÖA@e@¶ÖA@e@¶ÜA@e@ßÖA@e@ßÜA@e@ßÖA@e@ßˇ (õ k}I€@âBJ¨LJˇ (õ k‚I€@âB@xJyLJˇ (õ l6J!B@xJyLJÅ@lÅ@lÅ@lÅ@lÅ@lÅ@lÅ@lÅ@lÅ@lÅ@lÉ@lÇ@lÅÅˇ (É N‡@nˇ (É N‚ÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅˇ (É NÚÅÅÅÅÅˇ (É N¯@lÇ@lÇ@lÇ@lˇ (É O @nÇ@nˇ (É O@lˇ (Ñ OÅÅÅÅ@lÇ@lˇ (Ñ O@lÇ@nÇ@nÇ@nÇ@nÇÅˇ (Ñ O@nÇ@nÇ@nÇ@nÇ@nÇÅÅÅˇ (Ñ O)@nÇÅÅÅÅÅÅÅÅ@nÇ@nÇ@nˇ (Ñ O9@nÇ@lÇ@nÇ@nˇ (Ñ OA@nÇ@nÇÅÅ@nÇ@nÇ@nÇ@nÇ@lˇ (Ñ OQ@nÇ@nÇ@nˇ (Ñ OW@nÇ@nˇ (á Ob@lÇ@lÇÅÅÅˇ (á

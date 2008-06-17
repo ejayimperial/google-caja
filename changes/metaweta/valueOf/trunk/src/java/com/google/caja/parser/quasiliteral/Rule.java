@@ -363,7 +363,7 @@ public abstract class Rule implements MessagePart {
       return false;
     } else if (literalsContain(bindings.get("keys"), "valueOf")) {
       mq.addMessage(
-          RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_REFERENCED,
+          RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_SET,
           node.getFilePosition(), rule, node);
       return false;
     }
@@ -604,36 +604,8 @@ public abstract class Rule implements MessagePart {
    * setting.
    * <p>
    * This encapsulates any temporary variables created to prevent multiple
-   * execution, and the cajoled lvalue and rvalue.
-   */
-  protected static abstract class ReadAssignOperands {
-    private final List<Expression> temporaries;
-    private final Expression rvalue;
-
-    ReadAssignOperands(
-        List<Expression> temporaries, Expression rvalue) {
-      this.temporaries = temporaries;
-      this.rvalue = rvalue;
-    }
-
-    /**
-     * The temporaries required by lvalue and rvalue in order of
-     * initialization.
-     */
-    public List<Expression> getTemporaries() { return temporaries; }
-    public ParseTreeNodeContainer getTemporariesAsContainer() {
-      return new ParseTreeNodeContainer(temporaries);
-    }
-    /** Produce an assignment of the given rvalue to the cajoled lvalue. */
-    public abstract Expression makeAssignment(Expression rvalue);
-    /** The Cajoled RValue. */
-    public Expression getRValue() { return rvalue; }
-    /**
-     * Can the assignment be performed using the rvalue as an lvalue without
-     * the need for temporaries?
-     */
-    public boolean isSimpleLValue() {
-      return temporaries.isEmpty() && rvalue.isLeftHandSide();
-    }
-  }
-}
+   * execution, and the cajoled lvalue and  (s &7
+Ä@D‘B6FAü@¯E~BÍ‚AYC8D‘B6FAü@¯E~BÍ…@ıAR7?Ä)
+ÄBÿ (t 'BEM@YAÒAåC'AÓA¦@@@oÿ (t '#AÂB½AÂB½ÿ (t '%JF$AóA…CÆÄ@î‰D‘B6FAü@¯E~BÍÿ (t ']AÒB½ÿ (u '^@`@š@šÿ (u '_@`@š@š@`@š@š@`@š@š@^@e/..@Ë@`@š@š@`@š@šÿ (u 'e@¶Ad@XBy@¶Ad@XByÿ (w 'l@¤B;@ŒAì@î@¬B;@ŒAì@îÿ (w 'J+F$AçA…(L(F$AçA…‹BIÄ@Ì@jB©‚+@jDB6FAü@¯E~BÍ‰AYC8ÿ (w 'à+@jÄ~
+Ä
+Ä‡ÿ (w (ºD*@äBîA¢;CÄI]SKÿ (w (¿JˆLRA#CDHÿ (w (ÀBWI7@½@NAá@çB_I7@½@NAá@çÿ (w (ÂE/A­@OA‹F"A-A:G6B”E7A­@OA‹F"A-A:G6B”ÿ (w (ÄD¢B6FAü@¯E~BÍÿ (w (ÆD©B6FAü@¯E~BÍ‚D©B6FAü@¯E~BÍ‚D©B6FAü@¯E~BÍÿ (w (ÌD©B6FAü@¯E~BÍÿ (w (ÎD©B6FAü@¯E~BÍ‚D³B6FAü@¯E~BÍÿ (w (ÔD´B6FAü@¯E~BÍ‚D±B6FAü@¯E~BÍ‚D±B6FAü@¯E~BÍ‚D½B6FAü@¯E~BÍÿ (w (ÜDÂB6FAü@¯E~BÍ‚DÂB6FAü@¯E~BÍ‚DÂB6FAü@¯E~BÍ‚DÂB6FAü@¯E~BÍ‚DÄB6FAü@¯E~BÍÿ (w (ìDÂB6FAü@¯E~BÍ„DÍB6FAü@¯E~BÍÿ (w (òAvC8ÿ (w (øDÍB6FAü@¯E~BÍ‚DÍB6FAü@¯E~BÍÿ (w (üDåB6FAü@¯E~BÍ‚DıB6FAü@¯E~BÍ‚DÍB6FAü@¯E~BÍÿ (x )J+F$AçA…(L(F$AçA…JF$AóA…CÆÄBI@îÄA»@Ì@jB©ƒ+@j‚DB6FAü@¯E~BÍ‰AYC8Ä&A»
