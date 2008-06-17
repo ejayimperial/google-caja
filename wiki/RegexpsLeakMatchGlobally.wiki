@@ -27,10 +27,14 @@ Works in IE 6 and Firefox 2.  Others not tested.
 {{{
 // Privileged code
 (function () {
-  var queryString = document.location.query;  // Assume it's "?password=1234"
+  var queryString = document.location.search;  // Assume it's "?password=1234"
 
-  function inDebugMode() {
-    return /[&?]deb=1/.test(queryString);
+  function params() {
+    return queryString.split(/[&?]/g);
+  }
+
+  if (params()[0] === 'debug=on') {
+    // ...
   }
 })();
 
@@ -42,11 +46,11 @@ Works in IE 6 and Firefox 2.  Others not tested.
 
 But regexps can be laundered as long as no untrusted code is executed while a match is in progress.
 {{{
-function inDebugMode() {
+function params() {
   try {
-    return /[&?]deb=1/.test(queryString);
+    return queryString.split(/[&?]/g);
   } finally {
-    /.{0}/.exec('NOTHING TO SEE HERE.  MOVE ALONG.');
+    /^/.exec('NOTHING TO SEE HERE.  MOVE ALONG.');
   }
 }
 }}}
