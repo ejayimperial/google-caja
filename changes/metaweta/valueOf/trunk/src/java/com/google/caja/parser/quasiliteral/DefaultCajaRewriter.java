@@ -2290,27 +2290,6 @@ public class DefaultCajaRewriter extends Rewriter {
     new Rule () {
       @Override
       @RuleDescription(
-          name="mapBadKeyValueOf",
-          synopsis="Statically reject 'valueOf' as a key",
-          reason="We can't prevent valueOf from being called.",
-          matches="<approx> ({valueOf: @val})",
-          substitutes="<reject>")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (QuasiBuilder.match("({@keys*: @vals*})", node, bindings) &&
-            literalsContain(bindings.get("keys"), "valueOf")) {
-          mq.addMessage(
-              RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_SET,
-              node.getFilePosition(), this, node);
-          return node;
-        }
-        return NONE;
-      }
-    },
-
-    new Rule () {
-      @Override
-      @RuleDescription(
           name="mapBadKeySuffix",
           synopsis="Statically reject if a key with `_` suffix is found",
           reason="",
