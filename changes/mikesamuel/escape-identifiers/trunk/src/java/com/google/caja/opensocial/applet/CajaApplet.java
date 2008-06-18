@@ -163,8 +163,8 @@ public class CajaApplet extends Applet {
         protected RenderContext createRenderContext(
             TokenConsumer out, MessageContext mc) {
           return new RenderContext(
-              mc, features.contains(Feature.EMBEDDABLE),
-              features.contains(Feature.ASCII_ONLY), false, out);
+              mc, features.contains(Feature.ASCII_ONLY),
+              features.contains(Feature.EMBEDDABLE), out);
         }
         @Override
         protected PluginCompiler createPluginCompiler(
@@ -247,7 +247,7 @@ public class CajaApplet extends Applet {
     StringBuilder sb = new StringBuilder();
     JsMinimalPrinter pp = new JsMinimalPrinter(sb, null);
     (new ArrayConstructor(valueExprs)).render(
-        new RenderContext(new MessageContext(), false, pp));
+        new RenderContext(new MessageContext(), true, true, pp));
     pp.noMoreTokens();
     return sb.toString();
   }

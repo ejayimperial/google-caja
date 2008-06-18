@@ -34,7 +34,7 @@ public class RenderContext {
   }
 
   public RenderContext(
-      MessageContext msgContext, boolean paranoid, boolean asciiOnly,
+      MessageContext msgContext, boolean asciiOnly, boolean paranoid,
       TokenConsumer out) {
     if (null == msgContext || null == out) { throw new NullPointerException(); }
     this.msgContext = msgContext;

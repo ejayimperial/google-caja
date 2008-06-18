@@ -90,22 +90,22 @@ public class ParserTest extends CajaTestCase {
   }
 
   public void testParseTreeRendering1() throws Exception {
-    runRenderTest("parsertest1.js", "rendergolden1.txt", false);
+    runRenderTest("parsertest1.js", "rendergolden1.txt", false, false);
   }
   public void testParseTreeRendering2() throws Exception {
-    runRenderTest("parsertest2.js", "rendergolden2.txt", false);
+    runRenderTest("parsertest2.js", "rendergolden2.txt", false, false);
   }
   public void testParseTreeRendering3() throws Exception {
-    runRenderTest("parsertest3.js", "rendergolden3.txt", false);
+    runRenderTest("parsertest3.js", "rendergolden3.txt", false, false);
   }
   public void testParseTreeRendering4() throws Exception {
-    runRenderTest("parsertest4.js", "rendergolden4.txt", false);
+    runRenderTest("parsertest4.js", "rendergolden4.txt", false, false);
   }
   public void testParseTreeRendering5() throws Exception {
-    runRenderTest("parsertest5.js", "rendergolden5.txt", false);
+    runRenderTest("parsertest5.js", "rendergolden5.txt", false, true);
   }
   public void testSecureParseTreeRendering6() throws Exception {
-    runRenderTest("parsertest6.js", "rendergolden6.txt", true);
+    runRenderTest("parsertest6.js", "rendergolden6.txt", true, false);
 
     // Since we're doing these checks for security, double check that someone
     // hasn't adjusted the golden file.
@@ -117,10 +117,10 @@ public class ParserTest extends CajaTestCase {
     assertFalse(golden.contains("</script"));
   }
   public void testParseTreeRendering7() throws Exception {
-    runRenderTest("parsertest7.js", "rendergolden7.txt", false);
+    runRenderTest("parsertest7.js", "rendergolden7.txt", false, false);
   }
   public void testParseTreeRendering8() throws Exception {
-    runRenderTest("parsertest8.js", "rendergolden8.txt", true);
+    runRenderTest("parsertest8.js", "rendergolden8.txt", true, false);
   }
 
   public void testRenderKeywordsAsIdentifiers() throws Exception {
@@ -315,7 +315,7 @@ public class ParserTest extends CajaTestCase {
     log("assertRender", code);
     StringBuilder sb = new StringBuilder();
     TokenConsumer tc = new JsPrettyPrinter(sb, null);
-    RenderContext rc = new RenderContext(mc, true, false, tc);
+    RenderContext rc = new RenderContext(mc, true, true, tc);
     js(fromString(code)).children().get(0).render(rc);
     assertEquals(expectedRendering, sb.toString());
   }
@@ -326,19 +326,22 @@ public class ParserTest extends CajaTestCase {
   }
 
   private void runRenderTest(
-      String testFile, String goldenFile, boolean paranoid)
+      String testFile, String goldenFile, boolean paranoid, boolean asciiOnly)
       throws Exception {
     Statement parseTree = js(fromResource(testFile));
     checkFilePositionInvariants(parseTree);
 
     StringBuilder sb = new StringBuilder();
     TokenConsumer tc = new JsPrettyPrinter(sb, null);
-    RenderContext rc = new RenderContext(mc, paranoid, false, tc);
+    RenderContext rc = new RenderContext(mc, asciiOnly, paranoid, tc);
     parseTree.render(rc);
     sb.append('\n');
 
     String golden = TestUtil.readResource(getClass(), goldenFile);
     String actual = sb.toString();
+    if (!actual.equals(golden)) {
+      System.err.println("asciiOnly=" + asciiOnly);
+    }
     assertEquals(actual, golden, actual);
   }
 
@@ -358,6 +361,7 @@ public class ParserTest extends CajaTestCase {
 
     StringBuilder output = new StringBuilder();
     parseTree.format(mc, output);
+    output.append('\n');
 
     // Check that parse tree matches.
     String golden = TestUtil.readResource(getClass(), goldenFile);
@@ -367,6 +371,7 @@ public class ParserTest extends CajaTestCase {
     Statement cloneParseTree = (Statement)parseTree.clone();
     StringBuilder cloneOutput = new StringBuilder();
     cloneParseTree.format(mc, cloneOutput);
+    cloneOutput.append('\n');
     assertEquals(golden, cloneOutput.toString());
 
     List<String> actualErrors = new ArrayList<String>();

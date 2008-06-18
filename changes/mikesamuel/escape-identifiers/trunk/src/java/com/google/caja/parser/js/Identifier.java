@@ -51,14 +51,10 @@ public final class Identifier extends AbstractParseTreeNode<ParseTreeNode> {
 
   public void render(RenderContext r) {
     if (name != null) {
+      StringBuilder escapedName = new StringBuilder();
+      Escaping.escapeJsIdentifier(name, r.isAsciiOnly(), escapedName);
       r.getOut().mark(getFilePosition());
-      if (r.isAsciiOnly()) {
-        StringBuilder escapedName = new StringBuilder();
-        Escaping.escapeJsString(name, true, r.isParanoid(), escapedName);
-        r.getOut().consume(escapedName.toString());
-      } else {
-        r.getOut().consume(name);
-      }
+      r.getOut().consume(escapedName.toString());
     }
   }
 
