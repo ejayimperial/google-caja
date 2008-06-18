@@ -46,8 +46,8 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Selectors cannot end in \"__\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
-  GLOBALS_CANNOT_END_IN_UNDERSCORE(
-      "%s: Globals cannot end in \"_\": %s, %s",
+  IMPORTED_SYMBOLS_CANNOT_END_IN_UNDERSCORE(
+      "%s: Imported symbols cannot end in \"_\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
   LABELS_CANNOT_END_IN_DOUBLE_UNDERSCORE(
@@ -63,7 +63,7 @@ public enum RewriterMessageType implements MessageTypeInt {
       MessageLevel.FATAL_ERROR),
 
   ANONYMOUS_FUNCTION_REFERENCES_THIS(
-      "%s: Anonymous function references \"this\" but isn't part of a class definition: %s, %s",
+      "%s: Anonymous function references \"this\" but is not part of a class definition: %s, %s",
       MessageLevel.FATAL_ERROR),
 
   CONSTRUCTOR_CANNOT_ESCAPE(
@@ -86,8 +86,12 @@ public enum RewriterMessageType implements MessageTypeInt {
       "%s: Member key may not end in \"__\": %s, %s",
       MessageLevel.FATAL_ERROR),
 
-  CAJA_DEF_ON_NON_CTOR(
-      "%s: caja.def called with non-constructor: %s, %s",
+  CAJA_DEF_ON_NON_FUNCTION(
+      "%s: caja.def called with non-function: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  CAJA_DEF_ON_FROZEN_FUNCTION(
+      "%s: caja.def called on an already-frozen function: %s, %s",
       MessageLevel.FATAL_ERROR),
 
   DUPLICATE_DEFINITION_OF_LOCAL_VARIABLE(
@@ -111,19 +115,57 @@ public enum RewriterMessageType implements MessageTypeInt {
       MessageLevel.CRITICAL_WARNING),
 
   NOT_DELETABLE(
-      "%s: invalid operand to delete",
+      "%s: Invalid operand to delete",
       MessageLevel.ERROR),
+
+  NONASCII_IDENTIFIER(
+      "%s: identifier contains non-ASCII characters: %s",
+      MessageLevel.FATAL_ERROR),
 
   ILLEGAL_IDENTIFIER_LEFT_OVER(
       "%s: INTERNAL COMPILER ERROR. "
           + "Illegal identifier passed through from rewriter: %s. "
-          + "Please report this error at: http://code.google.com/p/google-caja/",
+          + "Please report this error at: http://code.google.com/p/google-caja/issues/",
       MessageLevel.FATAL_ERROR),
 
   UNSEEN_NODE_LEFT_OVER(
       "%s: INTERNAL COMPILER ERROR. "
           + "Unseen node left over from rewriter. "
-          + "Please report this error at: http://code.google.com/p/google-caja/",
+          + "Please report this error at: http://code.google.com/p/google-caja/issues/",
+      MessageLevel.FATAL_ERROR),
+
+  UNMATCHED_NODE_LEFT_OVER(
+      "%s: INTERNAL COMPILER ERROR. "
+          + "Node did not match any rules at: %s. "
+          + "Please report this error at: http://code.google.com/p/google-caja/issues/",
+      MessageLevel.FATAL_ERROR),
+
+  THIS_IN_GLOBAL_CONTEXT(
+      "%s: \"this\" cannot be used in the global context",
+      MessageLevel.FATAL_ERROR),
+
+  CANNOT_ASSIGN_TO_FREE_VARIABLE(
+      "%s: Cannot assign to a free module variable: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  CANNOT_REDECLARE_CAJA(
+      "%s: Cannot re-declare the \"caja\" variable name",
+      MessageLevel.FATAL_ERROR),
+
+  IMPLICIT_XO4A_ONLY_ALLOWED_IN_WARTS_MODE(
+      "%s: Implicit xo4a only allowed in warts mode: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  SUPER_CALL_OUT_OF_CONTEXT(
+      "%s: Can only call \"super\" on the enclosing constructor: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  SUPER_CALL_ON_NON_REFERENCE(
+      "%s: Can only call \"super\" on a function reference: %s, %s",
+      MessageLevel.FATAL_ERROR),
+
+  CANNOT_ASSIGN_TO_FUNCTION_NAME(
+      "%s: Cannot assign to a function name: %s, %s",
       MessageLevel.FATAL_ERROR),
   ;
 

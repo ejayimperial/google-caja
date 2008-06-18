@@ -19,6 +19,10 @@ import com.google.caja.lexer.ExternalReference;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.lexer.escaping.Escaping;
+import com.google.caja.parser.js.ArrayConstructor;
+import com.google.caja.parser.js.Expression;
+import com.google.caja.parser.js.NullLiteral;
+import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.plugin.Jobs;
 import com.google.caja.plugin.PluginCompiler;
 import com.google.caja.plugin.PluginMeta;
@@ -27,6 +31,7 @@ import com.google.caja.opensocial.DefaultGadgetRewriter;
 import com.google.caja.opensocial.GadgetRewriteException;
 import com.google.caja.opensocial.UriCallback;
 import com.google.caja.opensocial.UriCallbackOption;
+import com.google.caja.render.JsMinimalPrinter;
 import com.google.caja.reporting.BuildInfo;
 import com.google.caja.reporting.HtmlSnippetProducer;
 import com.google.caja.reporting.Message;
@@ -47,10 +52,13 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An Applet that can be embedded in a webpage to cajole output in browser.
@@ -67,23 +75,65 @@ public class CajaApplet extends Applet {
   /**
    * Invoked by javascript in the embedding page.
    * @param cajaInput as an HTML gadget.
-   * @param embeddable true to render the output as embeddable.
-   * @param debugMode true to build with
-   *   {@link com.google.caja.plugin.stages.DebuggingSymbolsStage debugging}
-   *   symbols.
-   * @return a tuple of {@code [ cajoledHtml, messageHtml ]}.
-   *     If the cajoledHtml is non-null then cajoling succeeded.
+   * @param featureNames {@link Feature} values and other configuration
+   *   parameters as a comma separated list.
+   *   We use a comma separated string instead of an array since IE 6's
+   *   version of liveconnect does not convert javascript Arrays to java
+   *   arrays.
+   *   See discussion of IE applet/JS communication at
+   *   http://www.rohitab.com/discuss/index.php?showtopic=28868&st=0&p=10029410
+   * @return a javascript tuple of {@code [ cajoledHtml, messageHtml ]}.
+   *   If the cajoledHtml is non-null then cajoling succeeded.
+   *   We return a string instead of an Array or a Pair since IE's JS/java
+   *   bridge deals poorly with values that can't be converted to JS primitives.
    */
-  public Object[] cajole(String cajaInput, boolean embeddable,
-                         boolean debugMode) {
+  public String cajole(String cajaInput, String featureNames) {
     try {
-      return runCajoler(cajaInput, embeddable, debugMode);
+      Set<Feature> features = EnumSet.noneOf(Feature.class);
+      String testbedServer = null;
+      if (!"".equals(featureNames)) {
+        for (String featureName : featureNames.split(",")) {
+          if (featureName.startsWith("testbedServer=")) {
+            testbedServer = featureName.substring(featureName.indexOf('=') + 1);
+          } else {
+            features.add(Feature.valueOf(featureName));
+          }
+        }
+      }
+
+      final String uriCallbackProxyServer = testbedServer;
+
+      UriCallback uriCallback = new UriCallback() {
+          public UriCallbackOption getOption(
+              ExternalReference extRef, String mimeType) {
+            return UriCallbackOption.REWRITE;
+          }
+
+          public Reader retrieve(ExternalReference extref, String mimeType) {
+            // If we do retreive content, make sure to stick the original source
+            // in originalSources.
+            return null;
+          }
+
+          public URI rewrite(ExternalReference extref, String mimeType) {
+            try {
+              return URI.create(
+                  uriCallbackProxyServer + "/proxy?url="
+                  + URLEncoder.encode(extref.getUri().toString(), "UTF-8")
+                  + "&mimeType=" + URLEncoder.encode(mimeType, "UTF-8"));
+            } catch (UnsupportedEncodingException ex) {
+              throw new RuntimeException("UTF-8 should be supported.", ex);
+            }
+          }
+        };
+
+      return serializeJsArray(runCajoler(cajaInput, uriCallback, features));
     } catch (RuntimeException ex) {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
       ex.printStackTrace(pw);
       pw.flush();
-      return new Object[] { null, "<pre>" + html(sw.toString()) + "</pre>" };
+      return serializeJsArray(null, "<pre>" + html(sw.toString()) + "</pre>");
     }
   }
 
@@ -91,8 +141,8 @@ public class CajaApplet extends Applet {
     return BuildInfo.getInstance().getBuildInfo();
   }
 
-  private Object[] runCajoler(
-      String cajaInput, final boolean embeddable, boolean debugMode) {
+  private Object[] runCajoler(String cajaInput, UriCallback uriCallback,
+                              final Set<Feature> features) {
     // TODO(mikesamuel): If the text starts with a <base> tag, maybe use that
     // and white it out to preserve file positions.
     URI src = URI.create(getDocumentBase().toString());
@@ -112,7 +162,8 @@ public class CajaApplet extends Applet {
         @Override
         protected RenderContext createRenderContext(
             TokenConsumer out, MessageContext mc) {
-          return new RenderContext(mc, embeddable, out);
+          return new RenderContext(
+              mc, features.contains(Feature.EMBEDDABLE), out);
         }
         @Override
         protected PluginCompiler createPluginCompiler(
@@ -133,32 +184,10 @@ public class CajaApplet extends Applet {
           return pc;
         }
       };
-    rw.setDebugMode(debugMode);
+    rw.setDebugMode(features.contains(Feature.DEBUG_SYMBOLS));
+    rw.setWartsMode(features.contains(Feature.WARTS_MODE));
 
     StringBuilder cajoledOutput = new StringBuilder();
-    UriCallback uriCallback = new UriCallback() {
-        public UriCallbackOption getOption(
-            ExternalReference extRef, String mimeType) {
-          return UriCallbackOption.REWRITE;
-        }
-
-        public Reader retrieve(ExternalReference extref, String mimeType) {
-          // If we do retreive content, make sure to stick the original source
-          // in originalSources.
-          return null;
-        }
-
-        public URI rewrite(ExternalReference extref, String mimeType) {
-          try {
-            return URI.create(
-                "http://secure-proxy.google.com/?url="
-                + URLEncoder.encode(extref.getUri().toString(), "UTF-8")
-                + "&mimeType=" + URLEncoder.encode(mimeType, "UTF-8"));
-          } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException("UTF-8 should be supported.", ex);
-          }
-        }
-      };
 
     try {
       rw.rewriteContent(src, cp, uriCallback, cajoledOutput);
@@ -203,5 +232,29 @@ public class CajaApplet extends Applet {
     StringBuilder sb = new StringBuilder();
     Escaping.escapeXml(s, false, sb);
     return sb.toString();
+  }
+
+  private static String serializeJsArray(Object... values) {
+    List<Expression> valueExprs = new ArrayList<Expression>();
+    for (Object value : values) {
+      if (value == null) {
+        valueExprs.add(new NullLiteral());
+      } else {
+        valueExprs.add(StringLiteral.valueOf((String) value));
+      }
+    }
+    StringBuilder sb = new StringBuilder();
+    JsMinimalPrinter pp = new JsMinimalPrinter(sb, null);
+    (new ArrayConstructor(valueExprs)).render(
+        new RenderContext(new MessageContext(), false, pp));
+    pp.noMoreTokens();
+    return sb.toString();
+  }
+
+  private static enum Feature {
+    EMBEDDABLE,
+    DEBUG_SYMBOLS,
+    WARTS_MODE,
+    ;
   }
 }

@@ -21,13 +21,13 @@
 
 
 /** @type {SearchEngine} */
-var searchEngine;
+searchEngine;
 
 /**
  * @param {string} query a search query.
  * @param {string} snippet a search result snippet.
  */
-this.showKitten = function showKitten(result) {
+exports.showKitten = function showKitten(result) {
   var title = result.titleHtml.replace(/<\/?\w[^>]*>/g, '')
   var snippet = result.snippetHtml.replace(/<\/?\w[^>]*>/g, '');
 
@@ -39,7 +39,7 @@ this.showKitten = function showKitten(result) {
 
   // Search for cat pictures.
   searchEngine.imageSearch(
-      'cute +(kitten OR cat) ' + title,
+      '(+kitten OR +cat) ' + title,
       function (imageResults) {
         var n = imageResults.length;
         if (!n) {

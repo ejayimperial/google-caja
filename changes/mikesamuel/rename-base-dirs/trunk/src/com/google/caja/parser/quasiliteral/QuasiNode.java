@@ -16,6 +16,7 @@ package com.google.caja.parser.quasiliteral;
 
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.js.Identifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,53 +35,20 @@ import java.util.Map;
 public abstract class QuasiNode {
   private final List<QuasiNode> children;
 
-  /**
-   * A container for the result of a recursive match on a parse tree.
-   */
-  public interface QuasiMatch {
-    /**
-     * The root node at which the pattern matched.
-     */
-    ParseTreeNode getRoot();
-
-    /**
-     * The map of bindings resulting from the pattern match.
-     */
-    Map<String, ParseTreeNode> getBindings();
-  }
-
   protected QuasiNode(QuasiNode... children) {
     this.children = Collections.unmodifiableList(Arrays.asList(children));
   }
 
   public List<QuasiNode> getChildren() { return children; }
 
-  public List<QuasiMatch> match(ParseTreeNode specimen) {
-    List<QuasiMatch> results = new ArrayList<QuasiMatch>();
-    match(specimen, results);
-    return results;
-  }
-
-  private void match(final ParseTreeNode specimen, List<QuasiMatch> results) {
-    final Map<String, ParseTreeNode> bindings = matchHere(specimen);
-    if (bindings != null) {
-      results.add(new QuasiMatch() {
-        public ParseTreeNode getRoot() { return specimen; }
-        public Map<String, ParseTreeNode> getBindings() { return bindings; }
-        public String toString() { return specimen.toString() + ": " + bindings.toString(); }
-      });
-    }
-    for (ParseTreeNode child : specimen.children()) match(child, results);
-  }
-
-  public Map<String, ParseTreeNode> matchHere(ParseTreeNode specimen) {
+  public Map<String, ParseTreeNode> match(ParseTreeNode specimen) {
     List<ParseTreeNode> specimens = new ArrayList<ParseTreeNode>();
     specimens.add(specimen);
     Map<String, ParseTreeNode> bindings = new HashMap<String, ParseTreeNode>();
     return consumeSpecimens(specimens, bindings) ? bindings : null;
   }
 
-  public ParseTreeNode substituteHere(Map<String, ParseTreeNode> bindings) {
+  public ParseTreeNode substitute(Map<String, ParseTreeNode> bindings) {
     List<ParseTreeNode> results = new ArrayList<ParseTreeNode>();
     return (createSubstitutes(results, bindings) && results.size() == 1) ? results.get(0) : null;
   }
@@ -115,6 +83,10 @@ public abstract class QuasiNode {
       String key,
       ParseTreeNode value) {
     if (bindings.containsKey(key)) return ParseTreeNodes.deepEquals(value, bindings.get(key));
+    // TODO(ihab.awad): As a special case, an Identifier with a null value is
+    // considered to not match anything, so we reject it. See the following:
+    // http://code.google.com/p/google-caja/issues/detail?id=397
+    if (value instanceof Identifier && value.getValue() == null) return false;    
     bindings.put(key, value);
     return true;
   }

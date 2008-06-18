@@ -23,7 +23,7 @@ That state is bundled into an index.xml file and includes:
 - varz: stats such as time to run, number of failing tests, etc.
 - summaries: extracted
 - tasks: TODOs in source code
-- output trees: URL of directory trees such as ant-doc,
+- output trees: URL of directory trees such as ant-docs,
   ant-reports/tests, etc.
 
 tools/dashboard/dashboard.pl generates the dashboard by:
@@ -95,9 +95,10 @@ our $SRC_DIR = "$BUILD_CLIENT/src";          requireDir $SRC_DIR;
 our $TESTS_DIR = "$BUILD_CLIENT/tests";      requireDir $TESTS_DIR;
 
 # Caja build output directories
-our $REPORTS_DIR = "$SRC_DIR/ant-reports";
-our $DOCS_DIR = "$SRC_DIR/ant-docs";
-our $DEMOS_DIR = "$SRC_DIR/ant-demos";
+our $REPORTS_DIR = "ant-reports";
+our $DOCS_DIR = "ant-docs";
+our $DEMOS_DIR = "ant-www";
+our $LIB_DIR = "ant-lib";
 
 # History of all builds used to generate time series.
 our $HISTORY_DIR = "$MASTER_CLIENT/history"; requireDir $HISTORY_DIR;
@@ -105,14 +106,17 @@ our $HISTORY_DIR = "$MASTER_CLIENT/history"; requireDir $HISTORY_DIR;
 # Executables required
 our $ANT_HOME = "/usr/local/ant";            requireDir $ANT_HOME;
 our $ANT = "$ANT_HOME/bin/ant";              requireExe $ANT;
-our $JAVA_HOME = "/usr/lib/jvm/java-6-sun/"; requireDir $JAVA_HOME;
+our $JAVA_HOME = $ENV{JAVA_HOME} or "/usr/lib/jvm/java-6-sun/";
+                                             requireDir $JAVA_HOME;
 our $JAVA = "$JAVA_HOME/bin/java";           requireExe $JAVA;
 our $SVN = "/usr/bin/svn";                   requireExe $SVN;
+our $SVNVERSION = "/usr/bin/svnversion";     requireExe $SVNVERSION;
 our $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
 
 
 sub collectCodeStats() {
   my @status_log = ();
+
   my $build_id = Date::Format::time2str("%Y%m%dT%H%M%S", time, "UTC");
   print STDERR "dashboard $build_id\n";
 
@@ -121,26 +125,27 @@ sub collectCodeStats() {
   print STDERR "updating\n";
   track(\&updateLocalClient, [], 'update', \@status_log);
 
+  my $rev = svnversion();
+  push(@status_log, qq'<varz name="svnversion" value="$rev"/>');
+
   print STDERR "cleaning\n";
   track(\&build, ['clean'], 'clean', \@status_log);
 
   print STDERR "extracting tasks\n";
-  extractTasks(["$SRC_DIR", "$TESTS_DIR"], \@status_log);
+  extractTasks(["$SRC_DIR", "$TESTS_DIR"], $rev, \@status_log);
 
   print STDERR "building jars\n";
   track(\&build, ['jars'], 'build', \@status_log);
-  print STDERR "copying snapshot\n";
-  outputTree("ant-lib", 'snapshot', '', \@status_log);
 
   print STDERR "computing test coverage\n";
   track(\&build, ['emma', 'runtests'], 'coverage', \@status_log);
 
   print STDERR "copying coverage reports\n";
-  extractCoverageSummary("ant-reports/coverage/index.html", \@status_log);
+  extractCoverageSummary("$REPORTS_DIR/coverage/index.html", \@status_log);
 
   print STDERR "running tests\n";
   track(\&build, ['runtests'], 'tests', \@status_log);
-  extractTestSummary("ant-reports/tests/TESTS-TestSuites.xml", \@status_log);
+  extractTestSummary("$REPORTS_DIR/tests/TESTS-TestSuites.xml", \@status_log);
 
   print STDERR "building docs\n";
   track(\&build, ['docs'], 'docs', \@status_log);
@@ -152,14 +157,16 @@ sub collectCodeStats() {
   makeOutputDir();
 
   print STDERR "copying docs\n";
-  outputTree("ant-docs", 'docs', 'index.html', \@status_log);
+  outputTree($DOCS_DIR, 'docs', 'java/index.html', \@status_log);
 
   print STDERR "copying test reports\n";
-  outputTree("ant-reports/tests", 'tests', 'index.html', \@status_log);
-  outputTree("ant-reports/coverage", 'coverage', 'index.html', \@status_log);
+  outputTree("$REPORTS_DIR/tests", 'tests', 'index.html', \@status_log);
+
+  outputTree("$REPORTS_DIR/coverage", 'coverage', 'index.html', \@status_log);
 
   print STDERR "copying demos\n";
-  outputTree("ant-www", 'demos', '', \@status_log);
+  outputTree($DEMOS_DIR, 'demos', '', \@status_log);
+  outputTree($LIB_DIR, 'snapshot', '', \@status_log);
 
   print STDERR "writing reports\n";
   writeReport(\@status_log, $build_id, "$OUTPUT_DIR/index.xml");
@@ -210,15 +217,22 @@ sub updateLocalClient() {
   return exec_log($BUILD_CLIENT, $SVN, 'update');
 }
 
+# Get the current version number
+sub svnversion() {
+  my $version = `"$SVNVERSION"`;
+  die "Bad svnversion: $version @ $ENV{PWD}" unless $version =~ m/^(\d{4,})/;
+  return $1;
+}
+
 # Run ant.
 sub build(@) {
   return exec_log($BUILD_CLIENT, $ANT, @_);
 }
 
 # Extract TODOs from code.
-sub extractTasks($$) {
-  my ($dir_ref, $status_log_ref) = @_;
-  push(@{$status_log_ref}, '<tasks>');
+sub extractTasks($$$) {
+  my ($dir_ref, $rev, $status_log_ref) = @_;
+  push(@{$status_log_ref}, qq'<tasks rev="$rev">');
   foreach my $dir (@{$dir_ref}) {
     my $find = cmd('find', $dir, '-type', 'f',
                    '!', '-name', '*~',

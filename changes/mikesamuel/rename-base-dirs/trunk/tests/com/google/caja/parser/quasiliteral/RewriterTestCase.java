@@ -17,7 +17,7 @@ package com.google.caja.parser.quasiliteral;
 import com.google.caja.lexer.CharProducer;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.plugin.SyntheticNodes;
+import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.TestUtil;
 import com.google.caja.reporting.MessageLevel;
@@ -48,8 +48,16 @@ public abstract class RewriterTestCase extends CajaTestCase {
   /**
    * Given some code, rewrite it, then execute it in the proper context for the rewritten
    * version and return the value of the last expression in the original code.
-   */  
-  protected abstract Object rewriteAndExecute(String program) throws IOException, ParseException;  
+   *
+   * @param pre a prefix program fragment to be executed plain.
+   * @param program a program fragment to be rewritten.
+   * @param post a postfix program fragment to be executed plain.
+   */
+  protected abstract Object rewriteAndExecute(String pre, String program, String post) throws IOException, ParseException;
+
+  protected Object rewriteAndExecute(String program) throws IOException, ParseException {
+    return rewriteAndExecute(";", program, ";");
+  }
 
   protected void setSynthetic(ParseTreeNode n) {
     SyntheticNodes.s(n);
@@ -67,7 +75,9 @@ public abstract class RewriterTestCase extends CajaTestCase {
     mq.getMessages().clear();
     ParseTreeNode expanded = newRewriter().expand(js(fromString(input)), mq);
 
-    assertFalse(render(expanded), mq.getMessages().isEmpty());
+    assertFalse(
+        "Expected error, found none: " + error,
+        mq.getMessages().isEmpty());
 
     StringBuilder messageText = new StringBuilder();
     for (Message m : mq.getMessages()) {
@@ -140,10 +150,16 @@ public abstract class RewriterTestCase extends CajaTestCase {
     }
   }
 
-  // TODO(ihab.awad): Change dependents to use checkAddsMessage and just call js(fromString("...")) 
+  // TODO(ihab.awad): Change dependents to use checkAddsMessage and just call js(fromString("..."))
   protected void assertAddsMessage(String src, MessageTypeInt type, MessageLevel level)
       throws Exception {
     checkAddsMessage(js(fromString(src)), type, level);
+  }
+
+  protected void checkAddsMessage(
+        ParseTreeNode inputNode,
+        MessageTypeInt type)  {
+    checkAddsMessage(inputNode, type, type.getLevel());
   }
 
   protected void checkAddsMessage(
