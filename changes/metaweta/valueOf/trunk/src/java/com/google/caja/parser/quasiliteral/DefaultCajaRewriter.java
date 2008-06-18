@@ -1368,6 +1368,28 @@ public class DefaultCajaRewriter extends Rewriter {
     new Rule () {
       @Override
       @RuleDescription(
+          name="deleteBadValueOf",
+          synopsis="",
+          reason="",
+          matches="delete @o.valueOf",
+          substitutes="<reject>")
+      public ParseTreeNode fire(
+          ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings
+            = new LinkedHashMap<String, ParseTreeNode>();
+        if (QuasiBuilder.match("delete @o.valueOf", node, bindings)) {
+          mq.addMessage(
+              RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_DELETED,
+              node.getFilePosition(), this, node);
+          return node;
+        }
+        return NONE;
+      }
+    },
+
+    new Rule () {
+      @Override
+      @RuleDescription(
           name="deleteBadSuffix",
           synopsis="",
           reason="",

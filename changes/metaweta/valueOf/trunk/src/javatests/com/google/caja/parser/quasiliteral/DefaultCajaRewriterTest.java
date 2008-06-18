@@ -104,7 +104,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   public void testValueOf() throws Exception {
     checkFails("var a = {valueOf:1};", "The valueOf property must not be set");
     checkFails("var a={}; a.valueOf=1;", "The valueOf property must not be set");
+    checkFails("var a={}; delete a.valueOf;", "The valueOf property must not be deleted");
     rewriteAndExecute("var a={}; assertThrows(function(){a['valueOf']=1});");
+    rewriteAndExecute("var a={}; assertThrows(function(){delete a['valueOf'];");
   }
 
   public void testFunctionDoesNotMaskVariable() throws Exception {
