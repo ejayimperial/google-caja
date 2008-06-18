@@ -2330,7 +2330,7 @@ public class DefaultCajaRewriter extends Rewriter {
       }
     },
 
-new Rule () {
+    new Rule () {
       @Override
       @RuleDescription(
           name="mapBadKeySuffix",
