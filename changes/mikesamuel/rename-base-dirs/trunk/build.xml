@@ -43,7 +43,7 @@
   <property name="src"         location="src"/>
   <property name="tests"       location="tests"/>
   <property name="test.filter" value="*Test"/>
-  <property name="third_party" location="src/third_party"/>
+  <property name="third_party" location="third_party"/>
   <property name="demos"       location="src/com/google/caja/demos"/>
   <!--== outputs ==-->
   <property name="reports"     location="ant-reports"/>  <!-- emma reports -->
