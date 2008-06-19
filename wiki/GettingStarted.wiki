@@ -28,7 +28,7 @@ ad nauseam as it pulls source files from {{{code.google.com}}}.
 
 Then, from the command line:
 {{{
-$ cd google-caja/src
+$ cd google-caja
 $ ant
 }}}
 
@@ -66,7 +66,7 @@ number of {{{ant-*}}} directories
 If you see the following error when running ant, try upgrading to Ant 1.7:
 
 {{{
-google-caja/src/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/types/ResourceCollection
+google-caja/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/types/ResourceCollection
         at org.apache.tools.ant.IntrospectionHelper$Creator.create(IntrospectionHelper.java:1166)
         at org.apache.tools.ant.UnknownElement.handleChild(UnknownElement.java:549)
         at org.apache.tools.ant.UnknownElement.handleChildren(UnknownElement.java:326)
@@ -76,11 +76,11 @@ google-caja/src/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/
 == Code Layout ==
 
 {{{
-src
+google-caja
 |
 +--docs : documentation files.
 |
-+--java : source code
++--src : source code (java and javascript)
 |  |
 |  +--com
 |     |
@@ -106,7 +106,7 @@ src
 |           |
 |           +--reporting : Error and warning messaging.
 |
-+--javatests : test files and resources
++--tests : test files and resources
 }}}
 
 
