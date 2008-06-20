@@ -537,9 +537,9 @@ public class HtmlCompiler {
         htmlc.eventHandlers.put(
             handlerFnName,
             new ExpressionStmt((Expression) QuasiBuilder.substV(
-                "IMPORTS___.@handlerFnName = ___.simpleFunc(@handlerFunc);",
+                "IMPORTS___.@handlerFnName = @handlerFn;",
                 "handlerFnName", TreeConstruction.ref(handlerFnName),
-                "handler", handlerFn)));
+                "handlerFn", handlerFn)));
 
         String handlerFnNameLit = StringLiteral.toQuotedValue(handlerFnName);
 
