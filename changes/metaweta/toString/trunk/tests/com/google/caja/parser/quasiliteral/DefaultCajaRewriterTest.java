@@ -101,6 +101,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     return "var " + name + " = ___.readImport(IMPORTS___, '" + name + "');";
   }
 
+  public void testToString() throws Exception {
+    assertConsistent("var z={toString:function(){return 'blah';}}; ''+z;");
+  }
+  
+  public void testInitializeMap() throws Exception {
+    assertConsistent("var zerubabel={bobble:2, apple:1}; zerubabel.apple;");
+  }
+  
   public void testValueOf() throws Exception {
     checkFails("var a = {valueOf:1};", "The valueOf property must not be set");
     checkFails("var a={}; a.valueOf=1;", "The valueOf property must not be set");

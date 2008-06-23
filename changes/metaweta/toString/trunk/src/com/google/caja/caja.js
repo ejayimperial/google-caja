@@ -1020,7 +1020,7 @@ var ___;
       fastpathRead(proto, name);
       fastpathEnum(proto, name);
     }
-    proto[name] = member;
+    proto[name] = (name === 'toString') ? asXo4aFunc(member) : member;
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1329,8 +1329,12 @@ var ___;
     name = String(name);
     if (canSetPub(obj, name)) {
       fastpathSet(obj, name);
-      obj[name] = val;
-      return val;
+      if (name === 'toString') {
+        obj[name] = asXo4aFunc(val);
+      } else {
+        obj[name] = val;
+      }
+      return obj[name];
     } else {
       return obj.handleSet___(name, val);
     }
@@ -2086,9 +2090,11 @@ var ___;
     obj[list].push(trademark);
   }
 
-  function initializeMap(mapObj) {
+  function initializeMap(list) {
     var result = {};
-    each(mapObj, simpleFunc(function(k, v) { setPub(result, k, v); }));
+    for (var i = 0; i < list.length; i+=2) {
+      setPub(result, list[i], list[i+1]);
+    }
     return result;
   }
 
