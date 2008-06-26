@@ -992,6 +992,45 @@ var ___;
     return asSimpleFunc(fun);
   }
 
+  /** 
+   * Returns true if the object is known to be the prototype of some other object.
+   * May give false negatives, but won't give false positives.
+   */
+  function isPrototypical(o) {
+    if (typeof o !== 'object') {
+      return false;
+    }
+    var c = o.constructor;
+    if (typeof c !== 'function') {
+      return false;
+    }
+    return c.prototype === o; 
+  }
+
+  /**
+   * Throws an exception if the value was obtained by an 'inner hull breach'.
+   */
+  function asFirstClass(value) {
+    switch(typeof value) {
+      case 'function':
+        if ((isMethod(value) || isXo4aFunc(value) || isCtor(value)) && isFrozen(value)) {
+          return value;
+        } else {
+          // TODO(metaweta): make this a caja-uncatchable exception
+          fail("Internal: toxic function encountered: ", value);
+        }
+        break;
+      case 'object':
+        if (isPrototypical(value)) {
+          // TODO(metaweta): make this a caja-uncatchable exception
+          fail("Internal: prototypical object encountered: ", value);
+        }
+        break;
+      default:
+        return value;
+    }
+  }
+
   /**
    * Sets constr.prototype[name] = member.
    * <p>
@@ -1020,7 +1059,7 @@ var ___;
       fastpathRead(proto, name);
       fastpathEnum(proto, name);
     }
-    proto[name] = (name === 'toString') ? asXo4aFunc(member) : member;
+    proto[name] = asFirstClass(member);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1329,11 +1368,7 @@ var ___;
     name = String(name);
     if (canSetPub(obj, name)) {
       fastpathSet(obj, name);
-      if (name === 'toString') {
-        obj[name] = asXo4aFunc(val);
-      } else {
-        obj[name] = val;
-      }
+      obj[name] = asFirstClass(val);
       return obj[name];
     } else {
       return obj.handleSet___(name, val);
@@ -1566,9 +1601,12 @@ var ___;
    * <p>
    * TODO(erights): return a builder object that allows further
    * initialization.
-   */
+   */ 
   function def(sub, opt_Sup, opt_members, opt_statics) {
     var sup = opt_Sup || Object;
+    // TODO(metaweta): Fix caja.def here or in the rewrite rule to avoid creating an object
+    // literal with a bad toString member that gets executed by Firebug when printing stack info
+    // during an error.
     var members = opt_members || {};
     var statics = opt_statics || {};
 
@@ -1589,6 +1627,49 @@ var ___;
     sub.prototype.constructor = sub;
 
     setMemberMap(sub, members);
+    each(statics, simpleFunc(function(sname, staticMember) {
+      setStatic(sub, sname, staticMember);
+    }));
+
+    // translator freezes sub and sub.prototype later.
+  }
+
+  /**
+   * Provides a shorthand for a class-like declaration of a fresh
+   * Caja constructor.
+   * <p>
+   * Given that sub is a Caja constructor in formation, whose 'prototype'
+   * property hasn't been initialized yet, initialize sub and its
+   * 'prototype' property so that it acts as a subclass of opt_Sup,
+   * with opt_members added as members to sub.prototype, and
+   * opt_statics added as members to sub.
+   * <p>
+   * TODO(erights): return a builder object that allows further
+   * initialization.
+   */
+  function unsafeDef(sub, opt_Sup, opt_members, opt_statics) {
+    var sup = opt_Sup || Object;
+    var members = opt_members || {};
+    var statics = opt_statics || {};
+
+    if (isSimpleFunc(sub)) {
+      derive(sub, sup);
+    } else {
+      ctor(sub, sup);
+    }
+    function PseudoSuper() {}
+    PseudoSuper.prototype = sup.prototype;
+    sub.prototype = new PseudoSuper();
+    if (sub.make___) {
+      // We must preserve this identity, so anywhere that either
+      // <tt>.prototype</tt> property might be assigned to, we must
+      // assign to the other as well.
+      sub.make___.prototype = sub.prototype;
+    }
+    sub.prototype.constructor = sub;
+    each(members, simpleFunc(function(key, val){
+      sub.prototype[key] = val;
+    }));
     each(statics, simpleFunc(function(sname, staticMember) {
       setStatic(sub, sname, staticMember);
     }));
@@ -1790,10 +1871,10 @@ var ___;
     return primFreeze(this);
   }));
 
-  useGetAndCallHandlers(Object.prototype, 'apply', xo4a(function(that, realArgs) {
+  useGetAndCallHandlers(Function.prototype, 'apply', xo4a(function(that, realArgs) {
     return asXo4aFunc(this).apply(that, realArgs);
   }));
-  useGetAndCallHandlers(Object.prototype, 'call', xo4a(function(that, realArgs) {
+  useGetAndCallHandlers(Function.prototype, 'call', xo4a(function(that, realArgs) {
     return asXo4aFunc(this).apply(that, Array.prototype.slice.call(arguments, 1));
   }));
 
@@ -1956,7 +2037,6 @@ var ___;
       getImports: simpleFunc(function() { return imports; }),
       setImports: simpleFunc(function(newImports) { imports = newImports; }),
       handle: simpleFunc(function(newModule) {
-        imports.caja = caja;
         newModule(___, imports);
       })
     });
@@ -2136,12 +2216,10 @@ var ___;
     return freeze({ seal: seal, unseal: unseal });
   }
 
-
   ////////////////////////////////////////////////////////////////////////
   // Exports
   ////////////////////////////////////////////////////////////////////////
-
-  caja = {
+  safeCaja = {
     // Diagnostics and condition enforcement
     getLogFunc: getLogFunc,
     setLogFunc: setLogFunc,
@@ -2180,9 +2258,12 @@ var ___;
     def: def,
     USELESS: USELESS
   };
+  
+  caja = copy(safeCaja);
+  caja.def = unsafeDef;
 
   sharedImports = {
-    caja: caja,
+    caja: safeCaja,
 
     'null': null,
     'false': false,
