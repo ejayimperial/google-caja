@@ -1635,17 +1635,7 @@ var ___;
   }
 
   /**
-   * Provides a shorthand for a class-like declaration of a fresh
-   * Caja constructor.
-   * <p>
-   * Given that sub is a Caja constructor in formation, whose 'prototype'
-   * property hasn't been initialized yet, initialize sub and its
-   * 'prototype' property so that it acts as a subclass of opt_Sup,
-   * with opt_members added as members to sub.prototype, and
-   * opt_statics added as members to sub.
-   * <p>
-   * TODO(erights): return a builder object that allows further
-   * initialization.
+   * Unsafe version of <tt>caja.def</tt> for use by uncajoled code.
    */
   function unsafeDef(sub, opt_Sup, opt_members, opt_statics) {
     var sup = opt_Sup || Object;
