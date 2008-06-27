@@ -76,8 +76,8 @@
 function myvn() {
   local verb="$1"
   local current_cl="$(perl -e 'print $1 if $ENV{PWD}=~m|/svn-changes/([^/]+)|')"
-  local gvn=/Users/jasvir/pkg/chrome_depot_tools/bin/gvn
-  local svn=/Users/jasvir/pkg/chrome_depot_tools/bin/gvn
+  local gvn=/opt/googlesvn/bin/gvn
+  local svn=/opt/googlesvn/bin/svn
   local username="$(
       perl -ne 'print $1 if m/^username\s*=\s*(\S.*)$/' "$HOME"/.gvn/config)"
   if [ -z "$username" ]; then
