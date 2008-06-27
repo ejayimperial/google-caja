@@ -1,5 +1,5 @@
-#summary How to install Caja and run it from the command line.
 #labels Phase-Deploy,Featured
+ #summary How to install Caja and run it from the command line.
 
 = Getting Started with Caja =
 
@@ -72,6 +72,32 @@ google-caja/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/
         at org.apache.tools.ant.UnknownElement.handleChildren(UnknownElement.java:326)
 ...
 }}}
+
+== Building Caja via Eclipse ===
+
+Caja includes a script for creating a Eclipse project file.  Eclipse relies on some files created by the ant build. Once you have checked out the caja source, run ant as follows:
+
+{{{
+$ cd google-caja
+$ ant
+}}}
+
+Check that your ANT_HOME environment variable is set correctly.  If it isn't, set it:
+
+{{{
+$ cd google-caja
+$ ant
+}}}
+
+Now create an eclipse project:
+
+{{{
+$ ./tools/myvn eclipse
+}}}
+
+From inside eclipse, import the project from the File -> Import -> Existing Project into Workspace option.  Select the Caja checkout directory as the root directory and import the project.
+
+Run the JUnit tests to ensure everything was checked out correctly.
 
 == Code Layout ==
 
