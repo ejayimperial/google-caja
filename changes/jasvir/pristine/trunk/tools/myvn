@@ -162,7 +162,6 @@ function myvn() {
       if [ -z "$ANT_HOME" ]; then
         echo Please set up the following environment variables:
         test -z "$ANT_HOME" && echo ANT_HOME \(eg. export ANT_HOME=/usr/share/ant\)
-        test -z "$JAVA_HOME" && echo JAVA_HOME
       fi
       makeEclipseProject "$current_cl" > .project
       makeEclipseClasspath > .classpath
