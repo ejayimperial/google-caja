@@ -2072,6 +2072,7 @@ var ___;
         "delayedTrademarks___" : "trademarks___";
     if (!obj[list]) { obj[list] = []; }
     obj[list].push(trademark);
+    return obj;
   }
 
 

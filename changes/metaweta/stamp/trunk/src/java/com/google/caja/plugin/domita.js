@@ -170,8 +170,8 @@ attachDocumentStub = (function () {
   var timeoutIdTrademark = {};
   function tameSetTimeout(timeout, delayMillis) {
     var timeoutId = setTimeout(___.asSimpleFunc(timeout), delayMillis | 0);
-    return ___.stamp(timeoutIdTrademark,
-                     ___.freeze({ timeoutId___: timeoutId }));
+    return ___.freeze(___.stamp(timeoutIdTrademark,
+                          { timeoutId___: timeoutId }));
   }
   ___.simpleFunc(tameSetTimeout);
   function tameClearTimeout(timeoutId) {
@@ -182,8 +182,8 @@ attachDocumentStub = (function () {
   var intervalIdTrademark = {};
   function tameSetInterval(interval, delayMillis) {
     var intervalId = setInterval(___.asSimpleFunc(interval), delayMillis | 0);
-    return ___.stamp(intervalIdTrademark,
-                     ___.freeze({ intervalId___: intervalId }));
+    return ___.freeze(___.stamp(intervalIdTrademark,
+                          { intervalId___: intervalId }));
   }
   ___.simpleFunc(tameSetInterval);
   function tameClearInterval(intervalId) {
