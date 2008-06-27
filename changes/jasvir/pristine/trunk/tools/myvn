@@ -56,12 +56,12 @@
 #       Eclipse
 # ====================
 # (1) Generate the project
-#       $ cd google-caja/src
+#       $ cd google-caja/
 #       $ myvn eclipse
 # (2) Open Eclipse
 # (3) Choose New Java Project  (NOT new google3 project)
 # (4) From Existing Source
-# (5) Enter the .../svn-changes/my-change-1/google-caja/src path
+# (5) Enter the .../svn-changes/my-change-1/google-caja/ path
 # (6) Finish
 #
 #
