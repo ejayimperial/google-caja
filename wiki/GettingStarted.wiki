@@ -147,5 +147,5 @@ discussion list.
 
 [http://www.cajadores.com/ Cajadores.com] periodically generates test
 and coverage status reports, and includes a snapshot of generated
-code, including the [http://www.cajadores.com/demos/testbed/index.html
-Testbed applet] and other demos that can be linked to.
+code, including the 
+[http://www.cajadores.com/demos/testbed/index.html Testbed applet] and other demos that can be linked to.
