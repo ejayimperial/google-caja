@@ -64,6 +64,33 @@ public class HtmlCompiledPluginTest extends TestCase {
   public void testStamp() throws Exception {
     execGadget(
         "<script>" +
+        "function Foo(){this;}" +
+        "var foo = new Foo;" +
+        "var passed = false;" +
+        "try { stamp({}, foo); }" +
+        "catch (e) {" +
+        "  if (!e.message.match('may not be stamped')) {" +
+        "    fail(e.message);" +
+        "  }" +
+        "  passed = true;" +
+        "}" +
+        "if (!passed) { fail ('Able to stamp constructed objects.'); }" +
+        "</script>",
+        ""
+        );
+    execGadget(
+        "<script>" +
+        "function Foo(){this;}" +
+        "var foo = new Foo;" +
+        "try { stamp({}, foo, true); }" +
+        "catch (e) {" +
+        "  fail(e.message);" +
+        "}" +
+        "</script>",
+        ""
+        );
+    execGadget(
+        "<script>" +
         "var foo = {};" +
         "var tm = {};" +
         "stamp(tm, foo);" +

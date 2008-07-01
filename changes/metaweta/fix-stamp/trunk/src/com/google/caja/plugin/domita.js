@@ -438,7 +438,7 @@ attachDocumentStub = (function () {
     function TameNode(node, editable) {
       this.node___ = node;
       this.editable___ = editable;
-      ___.stamp(tameNodeTrademark, this);
+      ___.stamp(tameNodeTrademark, this, true);
     }
     TameNode.prototype.getNodeType = function () {
       return this.node___.nodeType;
