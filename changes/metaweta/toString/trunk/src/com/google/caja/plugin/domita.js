@@ -170,8 +170,8 @@ attachDocumentStub = (function () {
   var timeoutIdTrademark = {};
   function tameSetTimeout(timeout, delayMillis) {
     var timeoutId = setTimeout(___.asSimpleFunc(timeout), delayMillis | 0);
-    return ___.audit(timeoutIdTrademark,
-                     ___.freeze({ timeoutId___: timeoutId }));
+    return ___.freeze(___.stamp(timeoutIdTrademark,
+                          { timeoutId___: timeoutId }));
   }
   ___.simpleFunc(tameSetTimeout);
   function tameClearTimeout(timeoutId) {
@@ -182,8 +182,8 @@ attachDocumentStub = (function () {
   var intervalIdTrademark = {};
   function tameSetInterval(interval, delayMillis) {
     var intervalId = setInterval(___.asSimpleFunc(interval), delayMillis | 0);
-    return ___.audit(intervalIdTrademark,
-                     ___.freeze({ intervalId___: intervalId }));
+    return ___.freeze(___.stamp(intervalIdTrademark,
+                          { intervalId___: intervalId }));
   }
   ___.simpleFunc(tameSetInterval);
   function tameClearInterval(intervalId) {
@@ -386,8 +386,8 @@ attachDocumentStub = (function () {
               break;
             default:
               // TODO(mikesamuel): If an unrecognized node, return a
-	      // placeholder that doesn't prevent tree navigation, but
-	      // that doesn't allow mutation or inspection.
+              // placeholder that doesn't prevent tree navigation, but
+              // that doesn't allow mutation or inspection.
               tamed = new TameElement(node, editable);
               break;
           }
@@ -438,7 +438,7 @@ attachDocumentStub = (function () {
     function TameNode(node, editable) {
       this.node___ = node;
       this.editable___ = editable;
-      caja.audit(tameNodeTrademark, this);
+      ___.stamp(tameNodeTrademark, this, true);
     }
     TameNode.prototype.getNodeType = function () {
       return this.node___.nodeType;
