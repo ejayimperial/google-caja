@@ -2304,24 +2304,6 @@ public class DefaultCajaRewriter extends Rewriter {
     // map - object literals
     ////////////////////////////////////////////////////////////////////////
 
-    // TODO(erights): Is this rule needed?
-    new Rule () {
-      @Override
-      @RuleDescription(
-          name="mapEmpty",
-          synopsis="",
-          reason="",
-          matches="({})",
-          substitutes="___.initializeMap([])")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
-        if (QuasiBuilder.match("({})", node, bindings)) {
-          return substV("___.initializeMap([])");
-        }
-        return NONE;
-      }
-    },
-
     new Rule () {
       @Override
       @RuleDescription(

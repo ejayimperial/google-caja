@@ -1008,7 +1008,7 @@ var ___;
   }
 
   /**
-   * Throws an exception if the value was obtained by an 'inner hull breach'.
+   * Throws an exception if the value is an unmarked function or a prototypical object.
    */
   function asFirstClass(value) {
     switch(typeof value) {
@@ -1330,11 +1330,11 @@ var ___;
   function setProp(that, name, val) {
     name = String(name);
     if (canSetProp(that, name)) {
-      fastpathSet(that, name);
+      if (name !== 'toString') { fastpathSet(that, name); }
       if (!hasOwnProp(that, name)) {
         fastpathDelete(that, name);
       }
-      return that[name] = val;
+      return that[name] = asFirstClass(val);
     } else {
       return that.handleSet___(name, val);
     }
@@ -1367,9 +1367,8 @@ var ___;
   function setPub(obj, name, val) {
     name = String(name);
     if (canSetPub(obj, name)) {
-      fastpathSet(obj, name);
-      obj[name] = asFirstClass(val);
-      return obj[name];
+      if (name !== 'toString') { fastpathSet(obj, name); }
+      return obj[name] = asFirstClass(val);
     } else {
       return obj.handleSet___(name, val);
     }
@@ -2361,6 +2360,7 @@ var ___;
     callStackUnsealer: callStackSealer.unseal,
     RegExp: RegExp,  // Available to rewrite rule w/o risk of masking
     stamp: stamp,
+    asFirstClass: asFirstClass,
 
     // Taming mechanism
     useGetHandler: useGetHandler,

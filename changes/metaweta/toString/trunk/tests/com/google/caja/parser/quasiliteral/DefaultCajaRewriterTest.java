@@ -101,10 +101,11 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  function foo(){this.x_ = 1;}"
         + "caja.def(foo, Object, {"
         + "    toString: function (){"
-        + "      return this.x;"
+        + "      return this.x_;"
         + "    }"
         + "});"
         + "'' + (new foo);");
+    rewriteAndExecute("");
   }
   
   public void testInitializeMap() throws Exception {
