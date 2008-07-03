@@ -174,6 +174,7 @@ var ___;
    * the message of the Error that's thrown.
    */
   function fail(var_args) {
+  	// TODO(metaweta): Ask mike samuel about this vs. log-to-console.js
     (typeof console !== 'undefined') && console.trace();
     var message = Array.prototype.slice.call(arguments, 0).join('');
     myLogFunc_(message, true);
@@ -1013,7 +1014,11 @@ var ___;
   function asFirstClass(value) {
     switch(typeof value) {
       case 'function':
-        if ((isMethod(value) || isXo4aFunc(value) || isCtor(value)) && isFrozen(value)) {
+        if (((isMethod(value) || 
+            isXo4aFunc(value) || 
+            isCtor(value)) && 
+            isFrozen(value)) ||
+            (value instanceof RegExp)) {
           return value;
         } else {
           // TODO(metaweta): make this a caja-uncatchable exception
@@ -1025,6 +1030,7 @@ var ___;
           // TODO(metaweta): make this a caja-uncatchable exception
           fail("Internal: prototypical object encountered: ", value);
         }
+        return value;
         break;
       default:
         return value;
