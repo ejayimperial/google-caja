@@ -174,7 +174,7 @@ var ___;
    * the message of the Error that's thrown.
    */
   function fail(var_args) {
-  	// TODO(metaweta): Ask mike samuel about this vs. log-to-console.js
+    // TODO(metaweta): Ask mike samuel about this vs. log-to-console.js
     (typeof console !== 'undefined') && console.trace();
     var message = Array.prototype.slice.call(arguments, 0).join('');
     myLogFunc_(message, true);
