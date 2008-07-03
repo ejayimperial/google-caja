@@ -1607,70 +1607,53 @@ var ___;
    * TODO(erights): return a builder object that allows further
    * initialization.
    */ 
-  function def(sub, opt_Sup, opt_members, opt_statics) {
-    var sup = opt_Sup || Object;
-    // TODO(metaweta): Fix caja.def here or in the rewrite rule to avoid creating an object
-    // literal with a bad toString member that gets executed by Firebug when printing stack info
-    // during an error.
-    var members = opt_members || {};
-    var statics = opt_statics || {};
+  function commonDef(init) {
+    return function(sub, opt_Sup, opt_members, opt_statics) {
+      var sup = opt_Sup || Object;
+      // TODO(metaweta): Fix caja.def here or in the rewrite rule to avoid creating an object
+      // literal with a bad toString member that gets executed by Firebug when printing stack info
+      // during an error.
+      var members = opt_members || {};
+      var statics = opt_statics || {};
 
-    if (isSimpleFunc(sub)) {
-      derive(sub, sup);
-    } else {
-      ctor(sub, sup);
+      if (isSimpleFunc(sub)) {
+        derive(sub, sup);
+      } else {
+        ctor(sub, sup);
+      }
+      function PseudoSuper() {}
+      PseudoSuper.prototype = sup.prototype;
+      sub.prototype = new PseudoSuper();
+      if (sub.make___) {
+        // We must preserve this identity, so anywhere that either
+        // <tt>.prototype</tt> property might be assigned to, we must
+        // assign to the other as well.
+        sub.make___.prototype = sub.prototype;
+      }
+      sub.prototype.constructor = sub;
+      init(sub, members);
+      each(statics, simpleFunc(function(sname, staticMember) {
+        setStatic(sub, sname, staticMember);
+      }));
+      // translator freezes sub and sub.prototype later.
     }
-    function PseudoSuper() {}
-    PseudoSuper.prototype = sup.prototype;
-    sub.prototype = new PseudoSuper();
-    if (sub.make___) {
-      // We must preserve this identity, so anywhere that either
-      // <tt>.prototype</tt> property might be assigned to, we must
-      // assign to the other as well.
-      sub.make___.prototype = sub.prototype;
-    }
-    sub.prototype.constructor = sub;
-
-    setMemberMap(sub, members);
-    each(statics, simpleFunc(function(sname, staticMember) {
-      setStatic(sub, sname, staticMember);
-    }));
-
-    // translator freezes sub and sub.prototype later.
   }
+
+  var def = commonDef(
+      function(sub, members) {
+        setMemberMap(sub, members);
+      });
 
   /**
+   * 
    * Unsafe version of <tt>caja.def</tt> for use by uncajoled code.
    */
-  function unsafeDef(sub, opt_Sup, opt_members, opt_statics) {
-    var sup = opt_Sup || Object;
-    var members = opt_members || {};
-    var statics = opt_statics || {};
-
-    if (isSimpleFunc(sub)) {
-      derive(sub, sup);
-    } else {
-      ctor(sub, sup);
-    }
-    function PseudoSuper() {}
-    PseudoSuper.prototype = sup.prototype;
-    sub.prototype = new PseudoSuper();
-    if (sub.make___) {
-      // We must preserve this identity, so anywhere that either
-      // <tt>.prototype</tt> property might be assigned to, we must
-      // assign to the other as well.
-      sub.make___.prototype = sub.prototype;
-    }
-    sub.prototype.constructor = sub;
-    each(members, simpleFunc(function(key, val){
-      sub.prototype[key] = val;
-    }));
-    each(statics, simpleFunc(function(sname, staticMember) {
-      setStatic(sub, sname, staticMember);
-    }));
-
-    // translator freezes sub and sub.prototype later.
-  }
+  var unsafeDef = commonDef(
+      function (sub, members) {
+        each(members, simpleFunc(function(key, val){
+          sub.prototype[key] = val;
+        }));
+      });
 
   ////////////////////////////////////////////////////////////////////////
   // Taming mechanism
