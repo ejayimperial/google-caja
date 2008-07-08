@@ -82,11 +82,10 @@ $ cd google-caja
 $ ant
 }}}
 
-Check that your ANT_HOME environment variable is set correctly.  If it isn't, set it:
+Check that your ANT_HOME environment variable is set correctly.  If it isn't, set it. For example, if you use bash and your ant is installed at /usr/share/ant, place the following in your ~/.bashrc file:
 
 {{{
-$ cd google-caja
-$ ant
+export ANT_HOME=/usr/share/ant
 }}}
 
 Now create an eclipse project:
