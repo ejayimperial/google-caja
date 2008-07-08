@@ -118,7 +118,7 @@
   <target name="default" depends="jars"
    description="Builds the plugin compiler."/>
 
-  <target name="all" depends="docs,jars"
+  <target name="all" depends="docs,jars,demos"
    description="Builds the plugin compiler, and documentation."/>
 
   <target name="clean"
