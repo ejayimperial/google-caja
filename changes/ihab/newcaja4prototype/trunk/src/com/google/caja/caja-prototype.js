@@ -1097,8 +1097,7 @@ var ___;
   function readProp(that, name) {
     name = String(name);
     if (canReadProp(that, name)) { return that[name]; }
-    // "this" is bound to the local ___
-    if (this.canCall(that, name)) { return this.attach(that, that[name]); }
+    if (canCall(that, name)) { return attach(that, that[name]); }
     return that.handleRead___(name, false);
   }
 
@@ -1134,15 +1133,13 @@ var ___;
     if ((typeof name) === 'number') { return obj[name]; }
     name = String(name);
     if (canReadPub(obj, name)) { return obj[name]; }
-    // "this" is bound to the local ___
-    if (this.canCall(obj, name)) { return this.attach(obj, obj[name]); }
-
-    java.lang.System.out.println("POE +++ this = " + this);
-    java.lang.System.out.println("POE +++ this.getExtension = " + this.getExtension);
-    
-    var ext = this.getExtension(obj, name);
-    if (!ext) { fail("Internal: getExtension returned falsey"); }
-    if (ext.length) { return ext[0]; }
+    if (canCall(obj, name)) { return attach(obj, obj[name]); }
+    if (this && this.wonderbar___) {
+      // "this" is bound to the local ___
+      var ext = this.getExtension(obj, name);
+      if (!ext) { fail("Internal: getExtension returned falsey"); }
+      if (ext.length) { return ext[0]; }
+    }
     return obj.handleRead___(name, opt_shouldThrow);
   }
 
@@ -1155,7 +1152,7 @@ var ___;
    * more informative, rather than just whatever readPub throws.
    */
   function readImport(module_imports, name) {
-    return this.readPub(module_imports, name);
+    return readPub(module_imports, name);
   }
 
   /**
@@ -1317,14 +1314,16 @@ var ___;
    */
   function callPub(obj, name, args) {
     name = String(name);
-    if (this.canCallPub(obj, name)) {
+    if (canCallPub(obj, name)) {
       var meth = obj[name];
       return meth.apply(obj, args);
     }
-    // "this" is bound to the local ___
-    var ext = this.getExtension(obj, name);
-    if (!ext) { fail("Internal: getExtension returned falsey"); }
-    if (ext.length) { return ext[0].apply(obj, args); } 
+    if (this && this.wonderbar___) {
+      // "this" is bound to the local ___
+      var ext = this.getExtension(obj, name);
+      if (!ext) { fail("Internal: getExtension returned falsey"); }
+      if (ext.length) { return ext[0].apply(obj, args); }
+    }
     if (obj.handleCall___) { return obj.handleCall___(name, args); }
     fail('not callable %o %s', debugReference(obj), name);
   }
@@ -2028,16 +2027,15 @@ var ___;
       getImports: simpleFunc(function() { return imports; }),
       setImports: simpleFunc(function(newImports) { imports = newImports; }),
       handle: simpleFunc(function(newModule) {
-        var map = begetCajaObjects();
-        map.___.POE = {};
-        map.caja.extend = safeExtend(map.___.POE);
-        simpleFunc(map.caja.extend);
-        grantCall(map.caja, "extend");
-        imports.caja = map.caja;
-
-        java.lang.System.out.println("++ POE new module; map.___.getExtension = " + map.___.getExtension);
-        
-        newModule(map.___, imports);
+        var local___ = copy(___);
+        local___.wonderbar___ = true;
+        local___.POE = {};
+        var localCaja = copy(safeCaja);
+        localCaja.extend = safeExtend(local___.POE);
+        simpleFunc(localCaja.extend);
+        grantCall(localCaja.extend);
+        imports.caja = localCaja;
+        newModule(local___, imports);
       })
     });
   }
@@ -2523,9 +2521,4 @@ var ___;
   caja.extend = unsafeExtend;
   primFreeze(caja);
   setNewModuleHandler(makeNormalNewModuleHandler());
-
-  function begetCajaObjects() {
-    function beget(obj) { function F(){} F.prototype=obj; return new F; }
-    return { caja: beget(caja), ___: copy(___) };
-  }
 })(this);
