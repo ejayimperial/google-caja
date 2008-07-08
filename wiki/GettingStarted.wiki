@@ -73,6 +73,12 @@ google-caja/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/
 ...
 }}}
 
+If you get a complaint about Java running out of heap memory, set {{{ANT_OPTS}}} to the additional option to be passed to your Java for increasing heap memory. For example, if you use bash and Sun's JDK, placing the following in your {{{~/.bashrc}}} file increase your maximum Java heap size to 100MB:
+
+{{{
+export ANT_OPTS=-Xmx100M
+}}}
+
 == Building Caja via Eclipse ===
 
 Caja includes a script for creating a Eclipse project file.  Eclipse relies on some files created by the ant build. Once you have checked out the caja source, run ant as follows:
@@ -82,7 +88,7 @@ $ cd google-caja
 $ ant
 }}}
 
-Check that your ANT_HOME environment variable is set correctly.  If it isn't, set it. For example, if you use bash and your ant is installed at /usr/share/ant, place the following in your ~/.bashrc file:
+Check that your ANT_HOME environment variable is set correctly.  If it isn't, set it. For example, if you use bash and your ant is installed at {{{/usr/share/ant}}}, place the following in your {{{~/.bashrc}}} file:
 
 {{{
 export ANT_HOME=/usr/share/ant
