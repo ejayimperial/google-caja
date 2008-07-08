@@ -217,7 +217,7 @@
     <mkdir dir="${jsdocs}"/>
     <jsdoctoolkit jsdochome="${third_party}/java/jsdoctoolkit/"
      encoding="utf-8" template="jsdoc"
-     includeundocumented="false" includeprivate="true" includeunderscored="true"
+     includeundocumented="true" includeprivate="true" includeunderscored="true"
      outputdir="${jsdocs}">
       <source file="${src}/com/google/caja/JSON.js"/>
       <source file="${src}/com/google/caja/Brand-cajita.js"/>
