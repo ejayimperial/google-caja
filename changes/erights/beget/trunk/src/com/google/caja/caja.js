@@ -1688,6 +1688,15 @@ var ___;
   }
 
   /**
+   * Makes a new empty object that directly inherits from parent.
+   */
+  function primBeget(parent) {
+    function F() {}
+    F.prototype = parent;
+    return new F();
+  }
+
+  /**
    * Provides a shorthand for a class-like declaration of a fresh
    * Caja constructor.
    * <p>
@@ -1715,7 +1724,7 @@ var ___;
       } else {
         ctor(sub, sup);
       }
-      sub.prototype = beget(sup.prototype);
+      sub.prototype = primBeget(sup.prototype);
       if (sub.make___) {
         // We must preserve this identity, so anywhere that either
         // <tt>.prototype</tt> property might be assigned to, we must
@@ -2345,7 +2354,7 @@ var ___;
     if (ctor.make___) {
       return new ctor.make___(args);
     }
-    var result = beget(ctor.prototype);
+    var result = primBeget(ctor.prototype);
     var altResult = ctor.apply(result, args);
     switch (typeof altResult) {
       case 'object': {
@@ -2466,20 +2475,27 @@ var ___;
   }
 
   /**
-   *
+   * 
    */
-  function getSuperCtor(ctor) {
-    ctor = asCtor(ctor);
-    return directConstructor(ctor.prototype);
+  function getSuperCtor(func) {
+    enforceType(func, 'function');
+    if (isCtor(func) || isSimpleFunc(func)) {
+      var result = directConstructor(func.prototype);
+      if (isCtor(result) || isSimpleFunc(result)) {
+        return result;
+      }
+    }
+    return undefined;
   }
 
   /**
-   *
+   * Like primBeget(), but applicable only to records.
    */
   function beget(parent) {
-    function F() {}
-    F.prototype = parent;
-    return new F();
+    if (!isRecord(parent)) {
+      fail("Can only beget() records: ", parent);
+    }
+    return primBeget(parent);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -2648,6 +2664,7 @@ var ___;
     hasOwnProp: hasOwnProp,
     args: args,
     tameException: tameException,
+    primBeget: primBeget,
     callStackUnsealer: callStackSealer.unseal,
     RegExp: RegExp,  // Available to rewrite rule w/o risk of masking
     stamp: stamp,

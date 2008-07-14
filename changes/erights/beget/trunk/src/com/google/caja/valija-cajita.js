@@ -57,35 +57,73 @@
 var valija = function() {
 
   /**
-   * A table mapping from <i>function categories</i> to the
-   * pseudo-prototype object POE associates with that function
-   * category. 
+   * Simulates a monkey-patchable <tt>Object.prototype</tt>.
+   */
+  var ObjectPrototype = {constructor: Object};
+
+  /**
+   * Simulates a monkey-patchable <tt>Function.prototype</tt>.
    * <p>
-   * We assume a <tt>caja.newTable()</tt> operation that 
+   * Currently the call(), apply(), and bind() methods are
+   * genuine functions on each Disfunction instance, rather being
+   * disfunctions inherited from DisfunctionPrototype. This is needed
+   * for call() and apply(), but bind() could probably become an
+   * inherited disfunction. 
+   */
+  var DisfunctionPrototype = caja.beget(ObjectPrototype);
+
+  var Disfunction = caja.beget(DisfunctionPrototype);
+  Disfunction.prototype = DisfunctionPrototype,
+  Disfunction.length = 1;
+  DisfunctionPrototype.constructor = Disfunction;
+
+  var ObjectShadow = caja.beget(DisfunctionPrototype);
+  ObjectShadow.prototype = ObjectPrototype;
+
+  /**
+   * A table mapping from <i>function categories</i> to the
+   * monkey-patchable shadow object that POE associates with that
+   * function category. 
    */
   var myPOE = caja.newTable();
 
-  myPOE.set(caja.getFuncCategory(Object), {
-    constructor: Object
-  });
+  myPOE.set(caja.getFuncCategory(Object), ObjectShadow);
+
+  /**
+   * Returns the monkey-patchable POE shadow of <tt>func</tt>'s
+   * category, creating it and its parents as needed.
+   */
+  function getShadow(func) {
+    caja.enforceType(func, 'function');
+    var cat = caja.getFuncCategory(func);
+    var result = myPOE.get(cat);
+    if (undefined === result) {
+      result = caja.beget(DisfunctionPrototype);
+      var parentFunc = caja.getSuperCtor(func);
+      var parentShadow;
+      if (typeof parentFunc === 'function') {
+        parentShadow = getShadow(parentFunc);
+      } else {
+	parentShadow = caja.beget(DisfunctionPrototype);
+      }
+      result.prototype = caja.beget(parentShadow.prototype);
+      result.prototype.constructor = result;
+      myPOE.set(cat, result);
+    }
+    return result;
+  }
   
   /** 
    * Handle Valija <tt><i>func</i>.prototype</tt>.
    * <p>
-   * If <tt>func</tt> is a genuine function, return its associated POE
+   * If <tt>func</tt> is a genuine function, return its shadow's
    * pseudo-prototype, creating it (and its parent pseudo-prototypes)
    * if needed. Otherwise as normal.
    */
   function getPrototypeOf(func) {
     if (typeof func === 'function') {
-      var cat = caja.getFuncCategory(func);
-      var result = myPOE.get(cat);
-      if (undefined === result) {
-	var parent = getPrototypeOf(caja.getSuperCtor(func));
-	result = caja.beget(parent);
-	myPOE.set(cat, result);
-      }
-      return result;
+      var shadow = getShadow(func);
+      return result.prototype;
     } else {
       return func.prototype;
     }
@@ -99,8 +137,8 @@ var valija = function() {
    */
   function setPrototypeOf(func, newProto) {
     if (typeof func === 'function') {
-      myPOE.set(caja.getFuncCategory(func), newProto);
-      return newProto;
+      var shadow = getShadow(func);
+      return shadow.prototype = newProto;
     } else {
       return func.prototype = newProto;
     }
@@ -191,17 +229,6 @@ var valija = function() {
     return result;
   }
   
-  /**
-   * Simulates a monkey-patchable <tt>Function.prototype</tt>.
-   * <p>
-   * Currently the call(), apply(), and bind() methods are
-   * genuine functions on each Disfunction instance, rather being
-   * disfunctions inherited from DisfunctionPrototype. This is needed
-   * for call() and apply(), but bind() could probably become an
-   * inherited disfunction. 
-   */
-  var DisfunctionPrototype = {};
-
   /** 
    * Handle Valija <tt>function <i>opt_name</i>(...){...}</tt>.
    * <p>
@@ -209,35 +236,26 @@ var valija = function() {
   function dis(callFn, opt_name) {
     caja.enforceType(callFn, 'function');
 
-    var result = {
-      call: callFn,
-      apply: function(self, args) {
-	return callFn.apply(caja.USELESS, [self].concat(args));
-      },
-      bind: function(self, var_args) {
-	var leftArgs = Array.slice(arguments, 0);
-	return function(var_args) {
-          return callFn.apply(caja.USELESS, 
-			      leftArgs.concat(Array.slice(arguments, 0)));
-	};
-      },
-      prototype: caja.beget(DisfunctionPrototype),
-      length: callFn.length -1
+    var result = caja.beget(DisfunctionPrototype);
+    result.call = callFn;
+    result.apply = function(self, args) {
+      return callFn.apply(caja.USELESS, [self].concat(args));
     };
+    result.bind = function(self, var_args) {
+      var leftArgs = Array.slice(arguments, 0);
+      return function(var_args) {
+        return callFn.apply(caja.USELESS, 
+			    leftArgs.concat(Array.slice(arguments, 0)));
+      };
+    };
+    result.prototype = caja.beget(ObjectPrototype);
     result.prototype.constructor = result;
+    result.length = callFn.length -1
     if (opt_name !== undefined) {
       result.name = opt_name;
     }
     return result;
   }
-
-  var Disfunction = dis(
-    function(var_args) {
-      caja.fail("Can't yet create brand new Valija functions");
-    }, 
-    'Function');
-  Disfunction.prototype = DisfunctionPrototype;
-  DisfunctionPrototype.constructor = Disfunction;
 
   return caja.freeze({
     getPrototypeOf: getPrototypeOf,
@@ -254,6 +272,9 @@ var valija = function() {
   });
 }();
 
+// This conditional allows this code to work uncajoled without a
+// loader, in which case the top level "var valija = ..." will export
+// 'valija' globally.
 if (typeof loader !== 'undefined') {
   loader.provide('com.google.caja.valija',valija);
 }
