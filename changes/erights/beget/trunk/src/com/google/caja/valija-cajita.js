@@ -147,10 +147,11 @@ var valija = function() {
     if (typeof obj === 'function') {
       return DisfunctionPrototype[name];
     }
-    // TODO(erights): I suspect obj.constructor isn't good
+    // TODO(erights): I suspect read(obj,'constructor') isn't good
     // enough. Does caja.js need to expose ___.directConstructor() as
     // caja.directConstructor()? 
-    return getPrototypeOf(obj.constructor)[name];
+    var ctor = read(obj, 'constructor');
+    return getPrototypeOf(ctor)[name];
   }
 
   /** 
