@@ -202,7 +202,9 @@ var ___;
   function fail(var_args) {
     // TODO(metaweta): Ask mike samuel about this vs. log-to-console.js
     (typeof console !== 'undefined') && console.trace();
-    myLogFunc_(Array.slice(arguments, 0).join(''), true);
+    var message = Array.slice(arguments, 0).join('');
+    myLogFunc_(message, true);
+    throw new Error(message);
   }
   
   /** 
