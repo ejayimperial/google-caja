@@ -136,6 +136,23 @@ var valija = function() {
     }
   }
 
+  /**
+   * Handle Valija <tt><i>obj</i>[<i>name</i>]</tt>.
+   * <p>
+   */
+  function read(obj, name) {
+    if (name in obj) {
+      return obj[name];
+    }
+    if (typeof obj === 'function') {
+      return DisfunctionPrototype[name];
+    }
+    // TODO(erights): I suspect obj.constructor isn't good
+    // enough. Does caja.js need to expose ___.directConstructor() as
+    // caja.directConstructor()? 
+    return getPrototypeOf(obj.constructor)[name];
+  }
+
   /** 
    * Handle Valija <tt><i>func</i>(<i>args...</i>)</tt>.
    * <p>
@@ -149,13 +166,7 @@ var valija = function() {
    * <p>
    */
   function callMethod(obj, name, args) {
-    var meth;
-    if (name in obj) {
-      meth = obj[name];
-    } else {
-      meth = getPrototypeOf(obj.constructor)[name];
-    }
-    return meth.apply(obj, args);
+    return read(obj, name).apply(obj, args);
   }
 
   /** 
