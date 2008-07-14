@@ -1,0 +1,162 @@
+<html xmlns="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <head>
+    <title>Caja Transformation Rules</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <style type="text/css">
+    h1 { text-align: center }
+      div.centered { text-align: center }
+      div.centered table { margin: 0 auto; text-align: left }
+    </style>
+  </head>
+<body>
+    <h1>Valija Transformation Rules</h1>
+    <h2>Default set of transformations used by Valija</h2>
+  <table cellpadding="2" cellspacing="2">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Rule</th>
+        <th>Synopsis</th>
+        <th>Matches</th>
+        <th>Substitutes</th>
+      </tr>
+    </thead>
+    <tr>
+      <td>0</td>
+      <td>module</td>
+      <td>Import valija.</td>
+      <td><pre>@ss*;</pre></td>
+      <td><pre>var valija = loader.require('com.google.caja.valija');
+@startStmts*; 
+@ss*;</pre>      </td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>block</td>
+      <td>Initialize named functions at the beginning of their enclosing block.</td>
+      <td><pre>{@ss*;}</pre></td>
+      <td><pre>{@startStmts*; @ss*;}</pre></td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>varThis</td>
+      <td>Translates all occurrences of "this" to "$dis".</td>
+      <td><pre>this</pre></td>
+      <td><pre>$dis</pre></td>
+    </tr>
+    <tr>
+      <td bgcolor="#FFFFFF">28</td>
+      <td bgcolor="#FFFFFF">setPrototype</td>
+      <td bgcolor="#FFFFFF">If @o is a genuine function, modify the associated POE table</td>
+      <td bgcolor="#FFFFFF"><pre>@o.prototype = @r</pre></td>
+      <td bgcolor="#FFFFFF"><pre>valija.setPrototypeOf(@o, @r)</pre></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>readPrototype</td>
+      <td>If @o is a genuine function, return the associated POE table</td>
+      <td><pre>@o.prototype</pre></td>
+      <td><pre>valija.getPrototypeOf(@o)</pre></td>
+    </tr>
+    <tr>
+      <td>42</td>
+      <td>constructNoArgs</td>
+      <td>Add missing empty argument list.</td>
+      <td><pre>new @ctor</pre></td>
+      <td><pre>valija.construct(@ctor, [])</pre></td>
+    </tr>
+    <tr>
+      <td>43</td>
+      <td>construct</td>
+      <td></td>
+      <td><pre>new @ctor(@as*)</pre></td>
+      <td><pre>valija.construct(@ctor, [@as*])</pre></td>
+    </tr>
+    
+    <tr>
+      <td>64</td>
+      <td>callNamed</td>
+      <td>Like @o.@p.apply(@o, [@as*])</td>
+      <td><pre>@o.@p(@as*)</pre></td>
+      <td><pre>valija.callMethod(@o, @'p', [@as*])</pre></td>
+    </tr>
+    <tr>
+      <td>66</td>
+      <td>callMethod</td>
+      <td>Like @o[@s].apply(@o, [@as*])</td>
+      <td><pre>@o[@s](@as*)</pre></td>
+      <td><pre>valija.callMethod(@o, @s, [@as*])</pre></td>
+    </tr>
+    <tr>
+      <td>67</td>
+      <td>callFunc</td>
+      <td>Like @f.apply(null, [@as*])</td>
+      <td><pre>@f(@as*)</pre></td>
+      <td><pre>valija.callFunc(@f, @as*)</pre></td>
+    </tr>
+    <tr>
+      <td>68</td>
+      <td>disfuncAnon</td>
+      <td>Transmutes functions into disfunctions</td>
+      <td><pre>function (@ps*) {@bs*;}</pre></td>
+      <td><pre>valija.dis(
+    function ($dis, @ps*) {@fh*; @stmts*; @bs*;})</pre></td>
+    </tr>
+    <tr>
+      <td>69</td>
+      <td>disfuncNamedDecl</td>
+      <td>Transmutes functions into disfunctions</td>
+      <td><pre>function @fname(@ps*) {@bs*;}</pre></td>
+      <td><pre>var @fname = valija.dis(
+    function($dis, @ps*) {@fh*; @stmts*; @bs*;},
+    @'fname');</pre>      </td>
+    </tr>
+    <tr>
+      <td>70</td>
+      <td>disfuncNamedValue</td>
+      <td>Transmutes functions into disfunctions</td>
+      <td><pre>function @fname(@ps*) {@bs*;}</pre></td>
+      <td><pre>(function() {
+  var @fname = valija.dis(
+      function($dis, @ps*) {@fh*; @stmts*; @bs*;},
+      @'fname');  
+  return @fname;})()</pre></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>metaDisfunc</td>
+      <td>Simulates the Function constructor</td>
+      <td><pre>Function</pre></td>
+      <td><pre>valija.Disfunction</pre></td>
+    </tr>
+    <tr>
+      <td>77</td>
+      <td>otherTypeof</td>
+      <td>The typeof both functions and disfunctions is 'function'.</td>
+      <td><pre>typeof @f</pre></td>
+      <td><pre>valija.typeOf(@f)</pre></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>otherInstanceof</td>
+      <td>Does @o inherit from @f.prototype, even if @f isn't a function?</td>
+      <td><pre>@o instanceof @f</pre></td>
+      <td><pre>valija.instanceOf(@o, @f)</pre></td>
+    </tr>
+    <tr>
+      <td>82</td>
+      <td>regexLiteral</td>
+      <td>Use the regular expression constructor</td>
+      <td><pre>UNKNOWN</pre></td>
+      <td><pre>new RegExp(@pattern, @modifiers?)</pre></td>
+    </tr>
+    <tr>
+      <td>83</td>
+      <td>recurse</td>
+      <td>Automatically recurse into some structures</td>
+      <td><pre>UNKNOWN</pre></td>
+      <td><pre>UNKNOWN</pre></td>
+    </tr>
+  </table>
+</body>
+</html>
