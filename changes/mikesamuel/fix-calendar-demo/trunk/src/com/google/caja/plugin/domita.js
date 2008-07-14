@@ -952,7 +952,7 @@ attachDocumentStub = (function () {
       (function (propertyName) {
          ___.useGetHandler(
              TameStyle.prototype, propertyName,
-             function (opt_shouldThrow) {
+             function () {
                return String(this.style___[propertyName] || '');
              });
          var pattern = css.properties[propertyName];

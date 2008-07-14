@@ -17,7 +17,6 @@ package com.google.caja.plugin.stages;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.SyntheticNodes;
-import com.google.caja.parser.js.BooleanLiteral;
 import com.google.caja.parser.js.IntegerLiteral;
 import com.google.caja.parser.quasiliteral.Rewriter;
 import com.google.caja.parser.quasiliteral.Rule;
@@ -145,17 +144,10 @@ final class CajaRuntimeDebuggingRewriter extends Rewriter {
               name="readProp",
               synopsis="adds debug info to ___.readProp calls",
               reason="",
-              matches="___.readProp(@obj, @name, @opt_shouldThrow?)",
-              substitutes="___.readProp(@obj, @name, @opt_shouldThrow, @debug)")
+              matches="___.readProp(@obj, @name)",
+              substitutes="___.readProp(@obj, @name,@debug)")
           public ParseTreeNode fire(ParseTreeNode n, Scope s, MessageQueue mq) {
             return super.fire(n, s, mq);
-          }
-          @Override
-          protected void rebind(Map<String, ParseTreeNode> bindings,
-                                Scope scope, MessageQueue mq) {
-            if (bindings.get("opt_shouldThrow") == null) {
-              bindings.put("opt_shouldThrow", new BooleanLiteral(false));
-            }
           }
         });
     addRule(new AddPositionParamRule() {
@@ -164,17 +156,34 @@ final class CajaRuntimeDebuggingRewriter extends Rewriter {
               name="readPub",
               synopsis="adds debug info to ___.readPub calls",
               reason="",
-              matches="___.readPub(@obj, @name, @opt_shouldThrow?)",
-              substitutes="___.readPub(@obj, @name, @opt_shouldThrow, @debug)")
+              matches="___.readPub(@obj, @name)",
+              substitutes="___.readPub(@obj, @name, @debug)")
           public ParseTreeNode fire(ParseTreeNode n, Scope s, MessageQueue mq) {
             return super.fire(n, s, mq);
           }
+        });
+    addRule(new AddPositionParamRule() {
           @Override
-          protected void rebind(Map<String, ParseTreeNode> bindings,
-                                Scope scope, MessageQueue mq) {
-            if (bindings.get("opt_shouldThrow") == null) {
-              bindings.put("opt_shouldThrow", new BooleanLiteral(false));
-            }
+          @RuleDescription(
+              name="canReadProp",
+              synopsis="adds debug info to ___.canReadProp calls",
+              reason="",
+              matches="___.canReadProp(t___, @name)",
+              substitutes="___.canReadProp(t___, @name, @debug)")
+          public ParseTreeNode fire(ParseTreeNode n, Scope s, MessageQueue mq) {
+            return super.fire(n, s, mq);
+          }
+        });
+    addRule(new AddPositionParamRule() {
+          @Override
+          @RuleDescription(
+              name="canReadPubRev",
+              synopsis="adds debug info to ___.canReadPubRev calls",
+              reason="",
+              matches="___.canReadPubRev(@obj, @name)",
+              substitutes="___.canReadPubRev(@obj, @name, @debug)")
+          public ParseTreeNode fire(ParseTreeNode n, Scope s, MessageQueue mq) {
+            return super.fire(n, s, mq);
           }
         });
     addRule(new AddPositionParamRule() {
