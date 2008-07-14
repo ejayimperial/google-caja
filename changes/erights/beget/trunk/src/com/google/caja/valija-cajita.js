@@ -65,7 +65,9 @@ var valija = function() {
    */
   var myPOE = caja.newTable();
 
-  myPOE.set(caja.getFuncCategory(Object), {});
+  myPOE.set(caja.getFuncCategory(Object), {
+    constructor: Object
+  });
   
   /** 
    * Handle Valija <tt><i>func</i>.prototype</tt>.
