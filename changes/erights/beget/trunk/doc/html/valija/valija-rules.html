@@ -24,9 +24,9 @@
     <tr>
       <td>0</td>
       <td>module</td>
-      <td>Import valija.</td>
+      <td>Assume an imported &quot;valija&quot; that knows our shared outers. Name it $dis so top level uses of &quot;this&quot; in Valija work.</td>
       <td><pre>@ss*;</pre></td>
-      <td><pre>var $dis = $outers;
+      <td><pre>var $dis = valija.getOuters();
 @startStmts*;
 @ss*;</pre>      </td>
     </tr>
@@ -40,9 +40,14 @@
     <tr>
       <td>5</td>
       <td>foreach</td>
-      <td>Checks both read and pseudo prototype chains</td>
+      <td>Checks both real and pseudo prototype chains</td>
       <td><pre>for (@k in @o) @ss;</pre></td>
-      <td><pre>TBD</pre></td>
+      <td><pre>var @t1 = valija.keys(@o);
+
+for (var @t2 = 0; @t2 &lt; @t1.length; @t2++) {
+  @k = @t1[@t2];
+  @ss;
+}</pre></td>
     </tr>
     <tr>
       <td>10</td>
@@ -51,6 +56,35 @@
       <td><pre>this</pre></td>
       <td><pre>$dis</pre></td>
     </tr>
+    <tr>
+      <td bgcolor="#FFFFFF">&nbsp;</td>
+      <td bgcolor="#FFFFFF">initFreeVar</td>
+      <td bgcolor="#FFFFFF">&nbsp;</td>
+      <td bgcolor="#FFFFFF"><pre>var @import = @r</pre></td>
+      <td bgcolor="#FFFFFF"><pre>valija.setOuter(@'import', @r)</pre></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>setFreeVar</td>
+      <td>&nbsp;</td>
+      <td><pre>@import = @r</pre></td>
+      <td><pre>valija.setOuter(@'import', @r)</pre></td>
+    </tr>
+    <tr>
+      <td bgcolor="#FFFFFF">&nbsp;</td>
+      <td bgcolor="#FFFFFF">declFreeVar</td>
+      <td bgcolor="#FFFFFF">&nbsp;</td>
+      <td bgcolor="#FFFFFF"><pre>var @import</pre></td>
+      <td bgcolor="#FFFFFF"><pre>valija.initOuter(@'import')</pre></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>readFreeVar</td>
+      <td>&nbsp;</td>
+      <td><pre>@import</pre></td>
+      <td><pre>valija.readOuter(@'import')</pre></td>
+    </tr>
+    
     <tr>
       <td>19</td>
       <td>readPublic</td>
@@ -66,20 +100,6 @@
       <td><pre>valija.read(@o, @s)</pre></td>
     </tr>
     
-    <tr>
-      <td>&nbsp;</td>
-      <td>freeVariable</td>
-      <td>Free variables, whether used as lValues or rValues</td>
-      <td><pre>@import</pre></td>
-      <td><pre>$outers.@import</pre></td>
-    </tr>
-    <tr>
-      <td bgcolor="#FFFFFF">&nbsp;</td>
-      <td bgcolor="#FFFFFF">freeVarDecl</td>
-      <td bgcolor="#FFFFFF">&nbsp;</td>
-      <td bgcolor="#FFFFFF"><pre>var @import</pre></td>
-      <td bgcolor="#FFFFFF"><pre>$outers.@import = $outers.@import</pre></td>
-    </tr>
     <tr>
       <td>31</td>
       <td>setPublic</td>
