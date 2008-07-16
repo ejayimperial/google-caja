@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+  ////////////////////////////////////////////////////////////////////////
+  // TODO(erights): nothing in this file is tested yet
+  ////////////////////////////////////////////////////////////////////////
+
 /**
  * @fileoverview the Valija runtime library.
  * <p>
@@ -107,7 +111,7 @@ var valija = function() {
 	parentShadow = caja.beget(DisfunctionPrototype);
       }
       result.prototype = caja.beget(parentShadow.prototype);
-      result.prototype.constructor = result;
+      result.prototype.constructor = func;
       myPOE.set(cat, result);
     }
     return result;
@@ -123,38 +127,23 @@ var valija = function() {
   function getPrototypeOf(func) {
     if (typeof func === 'function') {
       var shadow = getShadow(func);
-      return result.prototype;
+      return shadow.prototype;
     } else {
       return func.prototype;
     }
   }
   
   /** 
-   * Handle Valija <tt><i>func</i>.prototype = <i>newProto</i></tt>.
-   * <p>
-   * If <tt>func</tt> is a genuine function, set its associated POE
-   * pseudo-prototype. Otherwise as normal.
-   */
-  function setPrototypeOf(func, newProto) {
-    if (typeof func === 'function') {
-      var shadow = getShadow(func);
-      return shadow.prototype = newProto;
-    } else {
-      return func.prototype = newProto;
-    }
-  }
-
-  /** 
    * Handle Valija <tt>typeof <i>obj</i></tt>.
    * <p>
-   * If <tt>obj</tt> duck types as a disfunction, then return
+   * If <tt>obj</tt> inherits from DisfunctionPrototype, then return
    * 'function'. Otherwise as normal.
    */
   function typeOf(obj) {
     var result = typeof obj;
     if (result !== 'object') { return result; }
     if (null === obj) { return result; }
-    if (typeof obj.call === 'function') { return 'function'; }
+    if (caja.inheritsFrom(DisfunctionPrototype)) { return 'function'; }
     return result;
   }
   
@@ -179,17 +168,37 @@ var valija = function() {
    * <p>
    */
   function read(obj, name) {
+    if (typeof obj === 'function') {
+      var shadow = getShadow(name);
+      if (name in shadow) {
+	return shadow[name];
+      } else {
+	return obj[name];
+    }
+    // BUG TODO(erights): Should check in order 1) obj's own
+    // properties, 2) getPrototypeOf(ctor)'s properties, 3) obj's
+    // inherited properties.
     if (name in obj) {
       return obj[name];
-    }
-    if (typeof obj === 'function') {
-      return DisfunctionPrototype[name];
     }
     // TODO(erights): I suspect read(obj,'constructor') isn't good
     // enough. Does caja.js need to expose ___.directConstructor() as
     // caja.directConstructor()? 
     var ctor = read(obj, 'constructor');
     return getPrototypeOf(ctor)[name];
+  }
+
+  /** 
+   * Handle Valija <tt><i>obj</i>[<i>name</i>] = <i>newValue</i></tt>.
+   * <p>
+   */
+  function set(obj, name, newValue) {
+    if (typeof obj === 'function') {
+      getShadow(obj)[name] = newValue;
+    } else {
+      obj[name] = newValue;
+    }
+    return newValue;
   }
 
   /** 
@@ -221,6 +230,7 @@ var valija = function() {
     switch (typeof altResult) {
       case 'object': {
 	if (null !== altResult) { return altResult; }
+	break;
       }
       case 'function': {
 	return altResult;
@@ -263,6 +273,7 @@ var valija = function() {
     typeOf: typeOf,
     instanceOf: instanceOf,
 
+    read: read,
     callFunc: callFunc,
     callMethod: callMethod,
     construct: construct,
