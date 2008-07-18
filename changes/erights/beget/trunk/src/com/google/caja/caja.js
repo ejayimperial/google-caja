@@ -438,6 +438,9 @@ var ___;
    */
   function directConstructor(obj) {
     if (obj === null) { return (void 0); }
+    // TODO(erights): This won't work for a cross-frame RegExp,
+    // but we can't use isInstanceOf(), because it depends on 
+    // directConstructor().
     if (typeof obj !== 'object' && !(obj instanceof RegExp)) {
       // Note that functions thereby return undefined,
       // so directConstructor() doesn't provide access to the
@@ -628,7 +631,7 @@ var ___;
    */
   function freeze(obj) {
     if (!isJSONContainer(obj)) {
-      if (typeof obj === 'function' && !(obj instanceof RegExp)) {
+      if (typeof obj === 'function' && !isInstanceOf(obj, RegExp)) {
 	enforce(isFrozen(obj), 'Internal: non-frozen function: ' + obj);
 	return obj;
       }
@@ -1254,8 +1257,12 @@ var ___;
   function readPub(obj, name) {
     if ((typeof name) === 'number') {
       if (typeof obj === 'string') {
-        // In anticipation of ES3.1
-        return obj.charAt(1);
+        // In partial anticipation of ES3.1. 
+        // TODO(erights): Once ES3.1 settles, revisit this and 
+        // correctly implement the agreed semantics.
+        // Mike Samuel suggests also making it conditional on
+        //  (+name) === (name & 0x7fffffff)
+        return obj.charAt(name);
       } else {
         return obj[name]; 
       }
