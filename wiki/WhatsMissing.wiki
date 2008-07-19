@@ -22,7 +22,7 @@ Neither ES3.1 not Valija is settled yet, and actual browser behavior is determin
     * *'as if by the expression "{{{new Array()}}}"'* -- if such language is interpreted literally, rebinding _or shadowing_ the {{{Array}}} literal will cause, for example, array literal expressions to use the local binding to {{{Array}}} rather than the original built-in Array constructor.
     * *try/catch* -- see Deviations document
     * *nested function expressions* -- as with try/catch, ES3 specifies that the name is brought into scope by adding a new object to the scope chain. Therefore, according to the spec language, properties on {{{Object.prototype}}} will shadow _lexical variables_ of those same name within the body of the nested function.
-  * *Shared mutable RegExp Literal*
+  * *Shared mutable !RegExp Literal*
 
 == In ES3.1, but not in the ES3.1 cautious subset ==
 
