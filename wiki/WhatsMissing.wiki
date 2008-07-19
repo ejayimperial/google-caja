@@ -15,6 +15,7 @@ Neither ES3.1 not Valija is settled yet, and actual browser behavior is determin
   * *{{{Function.caller}}}*
   * *{{{Function.arguments}}}*
   * *{{{arguments.caller}}}*
+  * *{{{__proto__}}}*
 
 == In ES3 or ES3R but not in ES3.1 ==
 
@@ -22,7 +23,7 @@ Neither ES3.1 not Valija is settled yet, and actual browser behavior is determin
     * *'as if by the expression "{{{new Array()}}}"'* -- if such language is interpreted literally, rebinding _or shadowing_ the {{{Array}}} literal will cause, for example, array literal expressions to use the local binding to {{{Array}}} rather than the original built-in Array constructor.
     * *try/catch* -- see Deviations document
     * *nested function expressions* -- as with try/catch, ES3 specifies that the name is brought into scope by adding a new object to the scope chain. Therefore, according to the spec language, properties on {{{Object.prototype}}} will shadow _lexical variables_ of those same name within the body of the nested function.
-  * *Shared mutable !RegExp Literal*
+  * *Shared mutable !RegExp literal*
 
 == In ES3.1, but not in the ES3.1 cautious subset ==
 
@@ -31,8 +32,23 @@ Neither ES3.1 not Valija is settled yet, and actual browser behavior is determin
   * *{{{arguments.callee}}}*
   * *Joining of arguments array with parameter list*
 
+== The continued adventures of block-nested declarations ==
 
-== In ES3.1 cautious, but not in Valija ==
+  * *nested {{{var}}} declarations*
+  * *nested {{{const}}} declataions*
+  * *nested {{{function}}} declarations*
+
+
+== In ES3R and ES3.1 cautious, but not in Valija ==
 
   * *{{{eval()}}}*
   * *{{{Function()}}} constructor*
+  * *All identifiers ending in an underscore ("{{{_}}}")*
+  * *Distinction between a function's invoke behavior and its {{{call}}} or {{{apply}}} methods* -- In Valija, we translate all calls into calls to the {{{call}}} or {{{apply}}} method of the invoked thing, which need not itself be a function.
+  * *Function members inherited from {{{Function.prototype}}}* --- {{{call}}}, {{{bind}}}, {{{apply}}}, and {{{length}}} are normally inherited from {{{Function.prototype}}}. In Valija, they are on each disfunction instance.
+
+== In ES3.1 cautious but not yet in Valija ==
+
+  * *Reflective attribute control* -- ES3.1 adds reflective attribute control operations on the {{{Object()}}} constructor.
+  * *Decimal* -- ES3.1 adds a decimal floating point library as an arithmetic alternative to binary floating point.
+  * *getters and setters*
