@@ -31,6 +31,7 @@ Neither ES3.1 not Valija is settled yet, and actual browser behavior is determin
   * *{{{this}}}-promotion* -- when a function mentioning "{{{this}}}" is called as a function, or reflectively with its "thisArg" bound to null, occurrences of "{{{this}}}" in the function become bound instead to the global object. In ES3.1 cautious, such use of "{{{this}}}" will cause an exception to be thrown. In Valija, the "{{{this}}}" will simply evaluate to null with no promotion.
   * *{{{arguments.callee}}}*
   * *Joining of arguments array with parameter list*
+  * *{{{delete}}} _<variable-name>_*
 
 == The continued adventures of block-nested declarations ==
 
