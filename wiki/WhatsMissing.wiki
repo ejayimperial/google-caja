@@ -1,5 +1,5 @@
 #labels Phase-Design
-What common !EcmaScript elements are absent from Valija?
+What !JavaScript constructs are proposed for !EcmaScript or commonly used, and absent from Valija?
 
 = Introduction =
 
@@ -36,7 +36,7 @@ Neither ES3.1 not Valija is settled yet, and actual browser behavior is determin
 == The continued adventures of block-nested declarations ==
 
   * *nested {{{var}}} declarations*
-  * *nested {{{const}}} declataions*
+  * *nested {{{const}}} declarations*
   * *nested {{{function}}} declarations*
 
 
