@@ -64,7 +64,9 @@ public final class RuleChain {
   /**
    * Caches quasi text to a conservative lower bound for ParseTreeNode types
    * that it might match.
-   * This does not assume that quasi
+   * This does not assume that quasi-strings parse to a valid parse tree.
+   * Some of the quasi-strings look like "<Approximately> @foo = @bar" and
+   * so on parse failures we return a lower bound of ParseTreeNode.
    */
   private static final Map<String, Class<? extends ParseTreeNode>> lowerBounds
       = Collections.synchronizedMap(
@@ -77,7 +79,7 @@ public final class RuleChain {
     for (Rule rule : rules) {
       String pattern = rule.getRuleDescription().matches();
       Class<? extends ParseTreeNode> lowerBound = lowerBounds.get(pattern);
-      if (lowerBound == null || "".equals(lowerBound)) {
+      if (lowerBound == null) {
         try {
           QuasiNode p = QuasiBuilder.parseQuasiNode(pattern);
           if (p instanceof SimpleQuasiNode) {

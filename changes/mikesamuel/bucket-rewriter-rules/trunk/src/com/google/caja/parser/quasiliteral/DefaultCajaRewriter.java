@@ -473,7 +473,7 @@ public class DefaultCajaRewriter extends Rewriter {
               + "without the intention of providing the ability to mutate the "
               + "caller's parameter variables. By making a frozen array "
               + "snapshot with no \"callee\" property, we provide the least "
-              + "authority assumed by this typical use. \n"
+              + "authority assumed by this typical use.\n"
               + "The snapshot is made with a \"var a___ = "
               + "___.args(arguments);\" generated at the beginning of the "
               + "function body.",
@@ -978,8 +978,7 @@ public class DefaultCajaRewriter extends Rewriter {
           Reference fname = (Reference) bindings.get("fname");
           Reference p = (Reference) bindings.get("p");
           // TODO(erights) Does this only need to check isDeclaredFunction?
-          if (scope.isFunction(getReferenceName(fname))
-              && !"Super".equals(p.getIdentifierName())) {
+          if (scope.isFunction(getReferenceName(fname))) {
             return substV(
                 "___.setStatic(@fname, @rp, @r)",
                 "fname", fname,
@@ -1661,7 +1660,7 @@ public class DefaultCajaRewriter extends Rewriter {
         if (bindings != null) {
           ParseTreeNode fname = bindings.get("fname");
           if (fname instanceof Reference
-              && scope.isFunction(getReferenceName(bindings.get("fname")))) {
+              && scope.isFunction(getReferenceName(fname))) {
             mq.addMessage(
                 RewriterMessageType.CAJA_DEF_ON_FROZEN_FUNCTION,
                 node.getFilePosition(), this, node);
