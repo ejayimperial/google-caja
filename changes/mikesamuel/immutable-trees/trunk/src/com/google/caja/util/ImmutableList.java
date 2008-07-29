@@ -31,6 +31,8 @@ import java.util.NoSuchElementException;
  * {@link ImmutableList.Builder builder} object that can be used to construct
  * immutable lists without unnecessary array copies.
  *
+ * @param <T> a lower bound on the type of content.
+ *
  * @author mikesamuel@gmail.com
  */
 public final class ImmutableList<T> extends AbstractList<T> {

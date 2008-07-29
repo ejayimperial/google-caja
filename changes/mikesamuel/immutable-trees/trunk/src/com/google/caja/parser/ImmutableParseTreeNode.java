@@ -29,10 +29,13 @@ import java.util.List;
 /**
  * Base class for immutable parse tree nodes.
  *
+ * @param <T> a lower bound on the type of children.
+ *
  * @author mikesamuel@gmail.com
  */
 public abstract class ImmutableParseTreeNode<T extends ParseTreeNode>
 // TODO(mikesamuel): type parameter T should extend ImmutableParseTreeNode
+// to make parse trees deeply immutable.
     implements ParseTreeNode {
   private final ImmutableList<T> children;
   private SyntheticAttributes attributes;

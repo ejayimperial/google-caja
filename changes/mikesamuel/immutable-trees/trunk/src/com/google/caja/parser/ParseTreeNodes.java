@@ -50,7 +50,7 @@ public class ParseTreeNodes {
    */
   public static <T extends ParseTreeNode> T newNodeInstance(
       Class<T> clazz, Object value, List<? extends ParseTreeNode> children) {
-    children = flattenNodeList(children, ParseTreeNode.class);
+    children = flattenNodeList(children);
     Constructor<T> ctor = findCloneCtor(clazz);
     try {
       return ctor.newInstance(value, children);
@@ -65,27 +65,26 @@ public class ParseTreeNodes {
     }
   }
 
-  private static <T extends ParseTreeNode>
-  List<? extends ParseTreeNode> flattenNodeList(
-      List<? extends ParseTreeNode> nodes, Class<T> childType) {
-    ImmutableList.Builder<T> results = flattenNodeList(nodes, childType, null);
+  private static List<? extends ParseTreeNode> flattenNodeList(
+      List<? extends ParseTreeNode> nodes) {
+    ImmutableList.Builder<ParseTreeNode> results = flattenNodeList(nodes, null);
     return results != null ? results.toImmutableList() : nodes;
   }
 
-  private static <T extends ParseTreeNode>
-    ImmutableList.Builder<T> flattenNodeList(
-        List<? extends ParseTreeNode> nodes, Class<T> childType,
-        ImmutableList.Builder<T> flattened) {
+  private static ImmutableList.Builder<ParseTreeNode> flattenNodeList(
+        List<? extends ParseTreeNode> nodes,
+        ImmutableList.Builder<ParseTreeNode> flattened) {
     int pos = 0;
     int n = nodes.size();
     for (int i = 0; i < n; i++) {
       ParseTreeNode node = nodes.get(i);
       if (node instanceof ParseTreeNodeContainer) {
         if (flattened == null) {
-          flattened = ImmutableList.Builder.instance(childType, n);
+          // TODO: compute a better lower bound based on the node being created
+          flattened = ImmutableList.Builder.instance(ParseTreeNode.class, n);
         }
         addAll(nodes.subList(pos, i), flattened);
-        addAll(flattenNodeList(node.children(), childType), flattened);
+        addAll(flattenNodeList(node.children()), flattened);
         pos = i + 1;
       }
     }
