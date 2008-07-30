@@ -158,8 +158,8 @@ public abstract class ImmutableParseTreeNode<T extends ParseTreeNode>
   ImmutableList<? extends E> cloneChildren(
       Class<E> contentType, ImmutableList<E> children) {
     // TODO: produce an ImmutableList efficiently
-    ImmutableList.Builder<E> clonedChildren
-        = ImmutableList.Builder.instance(contentType, children.size());
+    ImmutableList.Builder<E> clonedChildren = ImmutableList.builder(
+       contentType, children.size());
     for (E child : children) {
       clonedChildren.add(
           contentType.cast(child.getClass().cast(child.clone())));

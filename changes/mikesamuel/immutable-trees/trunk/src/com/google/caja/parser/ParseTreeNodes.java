@@ -81,7 +81,7 @@ public class ParseTreeNodes {
       if (node instanceof ParseTreeNodeContainer) {
         if (flattened == null) {
           // TODO: compute a better lower bound based on the node being created
-          flattened = ImmutableList.Builder.instance(ParseTreeNode.class, n);
+          flattened = ImmutableList.builder(ParseTreeNode.class, n);
         }
         addAll(nodes.subList(pos, i), flattened);
         addAll(flattenNodeList(node.children()), flattened);
