@@ -145,7 +145,7 @@ public abstract class ImmutableParseTreeNode<T extends ParseTreeNode>
     // the child list has type contentType.
     ImmutableParseTreeNode<T> cloned = getClass().cast(
         ParseTreeNodes.newNodeInstance(
-            contentType, getValue(), cloneChildren(contentType, children)));
+            getClass(), getValue(), cloneChildren(contentType, children)));
     cloned.setFilePosition(getFilePosition());
     if (attributes != null) {
       cloned.attributes = new SyntheticAttributes(attributes);

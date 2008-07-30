@@ -258,6 +258,21 @@ public final class ImmutableList<T> extends AbstractList<T> {
     return (E[]) Array.newInstance(elType, length);
   }
 
+  public static <E> Builder<E> builder(Class<E> elementType) {
+    return builder(elementType, 16);
+  }
+
+  public static <E> Builder<E> builder(Class<E> elementType, int capacity) {
+    return new Builder<E>(elementType, capacity);
+  }
+
+  public static <E> Builder<E> builder(
+      Class<E> elementType, Collection<? extends E> els) {
+    Builder<E> b = builder(elementType, els.size());
+    b.addAll(els);
+    return b;
+  }
+
   /**
    * A type-safe mutable list that can create an {@link ImmutableList}
    * without array copies.
@@ -267,21 +282,6 @@ public final class ImmutableList<T> extends AbstractList<T> {
     private Class<T> elType;
     private int size;
     private boolean shared;
-
-    public static <E> Builder<E> instance(Class<E> elementType) {
-      return instance(elementType, 16);
-    }
-
-    public static <E> Builder<E> instance(Class<E> elementType, int capacity) {
-      return new Builder<E>(elementType, capacity);
-    }
-
-    public static <E> Builder<E> instance(
-        Class<E> elementType, Collection<? extends E> els) {
-      Builder<E> b = instance(elementType, els.size());
-      b.addAll(els);
-      return b;
-    }
 
     private Builder(Class<T> elementType, int capacity) {
       this.els = makeArray(elementType, capacity);
