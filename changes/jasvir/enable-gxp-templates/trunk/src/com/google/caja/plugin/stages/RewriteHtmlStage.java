@@ -143,7 +143,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
         scriptTag, "src", DupePolicy.YIELD_FIRST);
     boolean treatAsJs = type == null || isJavaScriptContentType(type.getAttribValue());
     boolean treatAsGxp = type != null && isGxpContentType(type.getAttribValue());
-    if (!treatAsJs || !treatAsGxp) {
+    if (!treatAsJs && !treatAsGxp) {
       jobs.getMessageQueue().addMessage(
           PluginMessageType.UNRECOGNIZED_CONTENT_TYPE,
           type.getFilePosition(),
