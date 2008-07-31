@@ -36,6 +36,18 @@ public final class RewriteHtmlStageTest extends PipelineStageTestCase {
         );
 
     assertPipeline(
+        job("foo<script type=text/gxp>" +
+            "  <gxp:template name=\"Test\">" +
+            "  </gxp:template>" +
+            "</script>baz",
+            Job.JobType.HTML),
+            job("foobaz", Job.JobType.HTML),
+            job("<gxp:template name=\"Test\">" +
+                "  </gxp:template>",
+                  Job.JobType.GXP)
+        );
+
+    assertPipeline(
         job("foo<script type=text/vbscript>deleted()</script>baz",
             Job.JobType.HTML),
         job("foobaz", Job.JobType.HTML)

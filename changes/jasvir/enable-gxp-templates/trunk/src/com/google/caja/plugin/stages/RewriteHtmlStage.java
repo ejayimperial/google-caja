@@ -188,19 +188,19 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     // Parse the body and create a block that will be placed inline in
     // loadModule.
     Block parsedScriptBody = null;
-    DomTree parsedGxpBody = null;
+    DomTree.Tag parsedGxpBody = null;
     boolean parseError = false;
     try {
       if (treatAsJs) {
       parsedScriptBody = parseJs(scriptStream.getCurrentPosition().source(),
                                  scriptStream, jobs.getMessageQueue());
       } else {
+        assert(treatAsGxp);
         parsedGxpBody = parseGxp(scriptStream.getCurrentPosition().source(),
             scriptStream, jobs.getMessageQueue());
       }
     } catch (ParseException ex) {
       ex.toMessageQueue(jobs.getMessageQueue());
-      parsedScriptBody = null;
       parseError = true;
     }
 
@@ -210,31 +210,32 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     }
 
     if (treatAsGxp) {
-      AncestorChain<DomTree> input = new AncestorChain<DomTree>(parsedGxpBody);
+      AncestorChain<DomTree.Tag> input = new AncestorChain<DomTree.Tag>(parsedGxpBody);
       jobs.getJobs().add(new Job(input));
       jobs.getMessageContext().inputSources.add(
           input.node.getFilePosition().source());
+      // Replace the external script tag with the inlined script.
+      parent.removeChild(scriptTag);
+    } else {
+      // Build a replacment element, <span/>, and link it to the extracted
+      // javascript, so that when the DOM is rendered, we can properly interleave
+      // the extract scripts with the scripts that generate markup.
+      DomTree.Tag placeholder;
+      {
+        Token<HtmlTokenType> startToken = Token.instance(
+            "<span", HtmlTokenType.TAGBEGIN, scriptTag.getToken().pos);
+        Token<HtmlTokenType> endToken = Token.instance(
+            "/>", HtmlTokenType.TAGEND,
+            FilePosition.endOf(scriptTag.getFilePosition()));
+        placeholder = new DomTree.Tag(
+            Collections.<DomTree>emptyList(), startToken, endToken);
+        if (treatAsJs) {
+          placeholder.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
+        } 
+      }
+      // Replace the external script tag with the inlined script.
+      parent.replaceChild(placeholder, scriptTag);
     }
-    
-    // Build a replacment element, <span/>, and link it to the extracted
-    // javascript, so that when the DOM is rendered, we can properly interleave
-    // the extract scripts with the scripts that generate markup.
-    DomTree.Tag placeholder;
-    {
-      Token<HtmlTokenType> startToken = Token.instance(
-          "<span", HtmlTokenType.TAGBEGIN, scriptTag.getToken().pos);
-      Token<HtmlTokenType> endToken = Token.instance(
-          "/>", HtmlTokenType.TAGEND,
-          FilePosition.endOf(scriptTag.getFilePosition()));
-      placeholder = new DomTree.Tag(
-          Collections.<DomTree>emptyList(), startToken, endToken);
-      if (treatAsJs) {
-        placeholder.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
-      } 
-    }
-
-    // Replace the external script tag with the inlined script.
-    parent.replaceChild(placeholder, scriptTag);
   }
 
   private void rewriteStyleTag(
@@ -531,17 +532,17 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     return body;
   }
 
-  public static DomTree parseGxp(
+  public static DomTree.Tag parseGxp(
       InputSource is, CharProducer cp, MessageQueue localMessageQueue)
       throws ParseException {
     HtmlLexer lexer = new HtmlLexer(cp);
-    lexer.setTreatedAsXml(false);
+    lexer.setTreatedAsXml(true);
     TokenQueue<HtmlTokenType> tq = new TokenQueue<HtmlTokenType>(lexer, is);
     if (tq.isEmpty()) { return null; }
-    DomParser p = new DomParser(tq, false, localMessageQueue);
+    DomParser p = new DomParser(tq, /* asXml */ true, localMessageQueue);
     DomTree body = p.parseDocument();
     tq.expectEmpty();
-    return body;
+    return (DomTree.Tag)body;
   }
 
   public static CssTree.StyleSheet parseCss(InputSource is, CharProducer cp)
