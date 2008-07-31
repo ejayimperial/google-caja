@@ -41,6 +41,9 @@ height="260" render_inline="never">
     <script src="overlap.js"></script>
     <script src="widget.js"></script>
 
+    <script type="text/gxp" src="widget.gxp"></script>
+    <script type="text/gxp" src="widget-chips.gxp"></script>
+
     <style type=text/css>
     .calendar { border: 1px solid #888; position: relative }
     .y-axis {
