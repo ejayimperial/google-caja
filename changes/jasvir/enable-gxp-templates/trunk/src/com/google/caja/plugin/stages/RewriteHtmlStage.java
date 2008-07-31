@@ -171,21 +171,11 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
         parent.removeChild(scriptTag);
         return;
       }
-
-      
       // Fetch the script source.
-      if (treatAsJs) {
-        scriptStream = env.loadExternalResource(
+      scriptStream = env.loadExternalResource(
           new ExternalReference(
               srcUri, src.getAttribValueNode().getFilePosition()),
-          "text/javascript");
-      } else {
-        assert(treatAsGxp);
-        scriptStream = env.loadExternalResource(
-            new ExternalReference(
-                srcUri, src.getAttribValueNode().getFilePosition()),
-            "text/gxp");
-      }
+          treatAsJs ? "text/javascript" : "text/gxp");
       if (scriptStream == null) {
         parent.removeChild(scriptTag);
         jobs.getMessageQueue().addMessage(
@@ -219,6 +209,13 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
       return;
     }
 
+    if (treatAsGxp) {
+      AncestorChain<DomTree> input = new AncestorChain<DomTree>(parsedGxpBody);
+      jobs.getJobs().add(new Job(input));
+      jobs.getMessageContext().inputSources.add(
+          input.node.getFilePosition().source());
+    }
+    
     // Build a replacment element, <span/>, and link it to the extracted
     // javascript, so that when the DOM is rendered, we can properly interleave
     // the extract scripts with the scripts that generate markup.
@@ -233,9 +230,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
           Collections.<DomTree>emptyList(), startToken, endToken);
       if (treatAsJs) {
         placeholder.getAttributes().set(EXTRACTED_SCRIPT_BODY, parsedScriptBody);
-      } else {
-        placeholder.getAttributes().set(EXTRACTED_GXP_BODY, parsedGxpBody);
-      }
+      } 
     }
 
     // Replace the external script tag with the inlined script.
