@@ -60,6 +60,9 @@
 
 var valija = (function() {
 
+// EVIL EVIL REMOVE THIS!!
+var outers={Date:Date};
+
   /**
    * Simulates a monkey-patchable <tt>Object.prototype</tt>.
    */
@@ -268,16 +271,59 @@ var valija = (function() {
     return result;
   }
 
+  function getOuters() {
+    caja.enforceType(outers, "object");
+    return outers;
+  }
+
+  function readOuter(name) {
+    if (name in outers) {
+      return outers[name];
+    } else {
+      throw new ReferenceError('not found: ' + name);
+    }
+  }
+
+  function setOuter(name, val) {
+    return outers[name] = val;
+  }
+
+  function initOuter(name) {
+    if (name in outers) { return; }
+    outers[name] = undefined;
+  }
+
+  function remove(obj, name) {
+    if (typeof obj === 'function') {
+      var shadow = getShadow(obj);
+      return delete shadow[name];
+    } else {
+      return delete obj[name];
+    }
+  }
+
+  function keys(obj) {
+    var result = [];
+    for (var name in obj) {
+      result.push(name);
+    }
+    return result;
+  }
+
   return caja.freeze({
     getPrototypeOf: getPrototypeOf,
-    setPrototypeOf: setPrototypeOf,
     typeOf: typeOf,
     instanceOf: instanceOf,
 
     read: read,
+    set: set,
     callFunc: callFunc,
     callMethod: callMethod,
     construct: construct,
+    getOuters: getOuters,
+    readOuter: readOuter,
+    setOuter: setOuter,
+    //removeOuter: removeOuter,
 
     dis: dis,
     Disfunction: Disfunction

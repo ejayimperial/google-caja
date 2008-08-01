@@ -26,8 +26,10 @@ import com.google.caja.reporting.MessageType;
 import com.google.caja.util.RhinoTestBed;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 
 import junit.framework.AssertionFailedError;
 
@@ -2886,7 +2888,9 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   @Override
-  protected Rewriter newRewriter() {
-    return new DefaultCajaRewriter(false, wartsMode);
+  protected List<Rewriter> newRewriters() {
+    ArrayList<Rewriter> rewriters = new ArrayList<Rewriter>();
+    rewriters.add(new DefaultCajaRewriter(false, wartsMode));
+    return rewriters;
   }
 }

@@ -19,6 +19,8 @@ import com.google.caja.parser.js.Statement;
 import com.google.caja.util.RhinoTestBed;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author adrienne.felt@gmail.com
@@ -186,8 +188,9 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
   }
 
   @Override
-  protected Rewriter newRewriter() {
-    return new InnocentCodeRewriter(true);
+  protected List<Rewriter> newRewriters() {
+    ArrayList<Rewriter> rewriters = new ArrayList<Rewriter>();
+    rewriters.add(new InnocentCodeRewriter(true));
+    return rewriters;
   }
-
 }

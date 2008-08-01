@@ -25,30 +25,15 @@ import java.util.Map;
 import com.google.caja.lexer.Keyword;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
-import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.parser.js.Block;
-import com.google.caja.parser.js.BreakStmt;
-import com.google.caja.parser.js.CaseStmt;
-import com.google.caja.parser.js.Conditional;
-import com.google.caja.parser.js.ContinueStmt;
-import com.google.caja.parser.js.ControlOperation;
-import com.google.caja.parser.js.DebuggerStmt;
-import com.google.caja.parser.js.DefaultCaseStmt;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
-import com.google.caja.parser.js.Literal;
-import com.google.caja.parser.js.Loop;
-import com.google.caja.parser.js.Noop;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.RegexpLiteral;
-import com.google.caja.parser.js.ReturnStmt;
-import com.google.caja.parser.js.SimpleOperation;
 import com.google.caja.parser.js.StringLiteral;
-import com.google.caja.parser.js.SwitchStmt;
-import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.reporting.MessageQueue;
 
 /**
@@ -57,8 +42,8 @@ import com.google.caja.reporting.MessageQueue;
  * @author metaweta@gmail.com (Ihab Awad)
  */
 @RulesetDescription(
-    name="Caja Transformation Rules",
-    synopsis="Default set of transformations used by Caja"
+    name="Valija-to-Cajita Transformation Rules",
+    synopsis="Default set of transformations used by Valija"
   )
 
 public class DefaultValijaRewriter extends Rewriter {
@@ -86,6 +71,23 @@ public class DefaultValijaRewriter extends Rewriter {
               "var $dis = valija.getOuters(); @startStmts*; @expanded*;",
               "startStmts", new ParseTreeNodeContainer(s2.getStartStatements()),
               "expanded", new ParseTreeNodeContainer(expanded));
+        }
+        return NONE;
+      }
+    },
+
+    new Rule () {
+      @Override
+      @RuleDescription(
+          name="synthetic",
+          synopsis="Pass through synthetic nodes.",
+          reason="Allow a relied-upon (trusted) translator to supply JavaScript code to be " +
+            "included in the output with no further translation.",
+          matches="<@synthetic>",
+          substitutes="<@synthetic>")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (isSynthetic(node)) {
+          return expandAll(node, scope, mq);
         }
         return NONE;
       }
@@ -256,6 +258,7 @@ public class DefaultValijaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("@v = @r", node, bindings) &&
+            bindings.get("v") instanceof Reference &&
             scope.isImported(getReferenceName(bindings.get("v")))) {
           return substV(
               "valija.setOuter(@rv, @r)",
@@ -277,6 +280,7 @@ public class DefaultValijaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("var @v", node, bindings) &&
+            bindings.get("v") instanceof Reference &&
             scope.isImported(getReferenceName(bindings.get("v")))) {
           return substV(
               "valija.initOuter(@rv)",
@@ -297,6 +301,7 @@ public class DefaultValijaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("@v", node, bindings) &&
+            bindings.get("v") instanceof Reference &&
             scope.isImported(getReferenceName(bindings.get("v")))) {
           return substV(
               "valija.readOuter(@rv)",
@@ -424,6 +429,47 @@ public class DefaultValijaRewriter extends Rewriter {
           return QuasiBuilder.subst(
               "valija.construct(@c, [@as*])",
               bindings);
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="deletePublic",
+          synopsis="Delete a statically known property of an object.",
+          reason="",
+          matches="delete @o.@p",
+          substitutes="<approx>valija.remove(@o, @'p')")
+          public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (QuasiBuilder.match("delete @o.@p", node, bindings)) {
+          Reference p = (Reference) bindings.get("p");
+          return substV(
+              "valija.remove(@o, @rp)",
+              "o", expand(bindings.get("o"), scope, mq),
+              "rp", toStringLiteral(p));
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="deleteIndexPublic",
+          synopsis="Delete a dynamically chosen property of an object.",
+          reason="",
+          matches="delete @o[@p]",
+          substitutes="valija.remove(@o, @p)")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
+        if (QuasiBuilder.match("delete @o[@p]", node, bindings)) {
+          return substV(
+              "valija.remove(@o, @p)",
+              "o", expand(bindings.get("o"), scope, mq),
+              "p", expand(bindings.get("p"), scope, mq));
         }
         return NONE;
       }
@@ -721,30 +767,10 @@ public class DefaultValijaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="recurse",
-          synopsis="Automatically recurse into some structures",
+          synopsis="Automatically recurse into any remaining structures",
           reason="")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (node instanceof ParseTreeNodeContainer ||
-            node instanceof ArrayConstructor ||
-            node instanceof BreakStmt ||
-            node instanceof CaseStmt ||
-            node instanceof Conditional ||
-            node instanceof ContinueStmt ||
-            node instanceof DebuggerStmt ||
-            node instanceof DefaultCaseStmt ||
-            node instanceof ExpressionStmt ||
-            node instanceof Identifier ||
-            node instanceof Literal ||
-            node instanceof Loop ||
-            node instanceof Noop ||
-            node instanceof SimpleOperation ||
-            node instanceof ControlOperation ||
-            node instanceof ReturnStmt ||
-            node instanceof SwitchStmt ||
-            node instanceof ThrowStmt) {
-          return expandAll(node, scope, mq);
-        }
-        return NONE;
+        return expandAll(node, scope, mq);
       }
     }
   };

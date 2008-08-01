@@ -14,6 +14,9 @@
 
 package com.google.caja.parser.quasiliteral;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.caja.reporting.MessageLevel;
 
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
@@ -54,8 +57,10 @@ public class IllegalReferenceCheckRewriterTest extends RewriterTestCase {
   }
 
   @Override
-  protected Rewriter newRewriter() {
-    return new IllegalReferenceCheckRewriter(true);
+  protected List<Rewriter> newRewriters() {
+    ArrayList<Rewriter> rewriters = new ArrayList<Rewriter>();
+    rewriters.add(new IllegalReferenceCheckRewriter(true));
+    return rewriters;
   }
 
   @Override

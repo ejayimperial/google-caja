@@ -14,6 +14,9 @@
 
 package com.google.caja.parser.quasiliteral;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.parser.ParseTreeNode;
@@ -37,24 +40,26 @@ public class RewriterTest extends RewriterTestCase {
   }
 
   @Override
-  protected Rewriter newRewriter() {
-    return new Rewriter(true) {{
-      addRule(new Rule () {
-        @Override
-        @RuleDescription(
-            name="setTaint",
-            synopsis="Ensures that the result is tainted",
-            reason="Test that Rewriter tainting check works")
-        public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-          if (taintMode) { return node; }
-          node.getAttributes().remove(ParseTreeNode.TAINTED);
-          for (ParseTreeNode c : node.children()) {
-            getRewriter().expand(c, scope, mq);
+  protected List<Rewriter> newRewriters() {
+    ArrayList<Rewriter> rewriters = new ArrayList<Rewriter>();
+    rewriters.add(new Rewriter(true) {{
+        addRule(new Rule () {
+          @Override
+          @RuleDescription(
+              name="setTaint",
+              synopsis="Ensures that the result is tainted",
+              reason="Test that Rewriter tainting check works")
+          public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+            if (taintMode) { return node; }
+            node.getAttributes().remove(ParseTreeNode.TAINTED);
+            for (ParseTreeNode c : node.children()) {
+              getRewriter().expand(c, scope, mq);
+            }
+            return node;
           }
-          return node;
-        }
-      });
-    }};
+        });
+      }});
+    return rewriters;
   }
 
   @Override

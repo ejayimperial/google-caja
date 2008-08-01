@@ -80,7 +80,7 @@ public abstract class Rewriter {
    * @param mq a message queue for compiler messages.
    * @return the expanded parse tree node.
    */
-  public final ParseTreeNode expand(ParseTreeNode node, MessageQueue mq) {
+  public ParseTreeNode expand(ParseTreeNode node, MessageQueue mq) {
     flagTainted(node, mq);
     ParseTreeNode result = expand(node, null, mq);
     checkTainted(result, mq);
