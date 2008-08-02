@@ -14,8 +14,8 @@ The with construct takes an expression, and any reference R in its body not sati
 
 
 ==Assumptions==
-Globals are hidden by using the `with` construct and {{{delete}}}s of unqualified references are not prevented, or the masking object is aliased by `this` or some other reference that can have properties deleted from it.
-
+    * Globals are hidden by using the with construct; and
+    * Either deletes of unqualified references are not prevented, or the masking object is aliased by this or some other reference that can have properties deleted from it. 
 
 
 ==Versions==
@@ -29,7 +29,7 @@ If the untrusted code
   delete document;
   alert('your cookie is ' + document.cookie);
 }}}
-is naively rewritten to
+is naively implemented as
 {{{
   with ({ document: null }) {
     delete document;
