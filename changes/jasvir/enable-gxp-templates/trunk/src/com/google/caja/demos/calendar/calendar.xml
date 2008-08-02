@@ -5,20 +5,17 @@ author_email="mikesamuel@gmail.com"
 description="Demo Calendar Gadget written in Caja"
 title="Calendar Gadget"
 height="260" render_inline="never">
+   <Require feature="opensocial-0.7"/>
+   <Require feature="caja"/>
+   <Require feature="dynamic-height"/>
 </ModulePrefs>
 
 <Content type="html">
       <![CDATA[
-  <head>
-    <title>Calendar Gadget Demo</title>
-    <script src="firebugx.js"></script>
-
-    <script src="string-interpolation.js"></script>
-    <script src="html-interp.js"></script>
-
     <script src="util.js"></script>
     <script src="bitset.js"></script>
-    <script src="html.js"></script>
+    <script src="html4-defs.js"></script>
+    <script src="html-sanitizer.js"></script>
     <script src="uformat.js"></script>
     <script src="time-cajita.js"></script>
     <script src="weekday-cajita.js"></script>
@@ -39,10 +36,9 @@ height="260" render_inline="never">
     <script src="layout_policy.js"></script>
     <script src="layout.js"></script>
     <script src="overlap.js"></script>
-    <script src="widget.js"></script>
-
     <script type="text/gxp" src="widget.gxp"></script>
     <script type="text/gxp" src="widget-chips.gxp"></script>
+    <script src="widget.js"></script>
 
     <style type=text/css>
     .calendar { border: 1px solid #888; position: relative }
@@ -77,7 +73,7 @@ height="260" render_inline="never">
     .x-axis span {
       width: 20%; text-align: center; display: block; float: left; height: 1.5em
     }
-    .view-port { position: relative; border }
+    .view-port { position: relative; border: 1px }
     .main-grid {
       position: absolute;
       bottom: 1px;
@@ -128,9 +124,7 @@ height="260" render_inline="never">
     #prev-button { float: left }
     #next-button { float: right }
     </style>
-  </head>
-  <body bgcolor=white>
-    <table width=100%><tr valign=top>
+    <table><tr valign=top>
     <td>
       <div class="vcalendar">
         <div class="vevent">
@@ -172,6 +166,8 @@ height="260" render_inline="never">
         </div>
       </div>
     <td>
+   <div id="datastore" style="visibility: hidden">
+   </div>
       <div id=controls>
         <span class=control id=prev-button>&laquo;</span>
         <span class=control id=next-button>&raquo;</span>
@@ -179,7 +175,6 @@ height="260" render_inline="never">
       <div id=container></div>
       <script src="main.js"></script>
     </table>
-  </body>
 ]]> 
 </Content>
 </Module>
