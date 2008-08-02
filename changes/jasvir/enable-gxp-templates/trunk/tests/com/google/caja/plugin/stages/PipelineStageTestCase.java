@@ -20,6 +20,7 @@ import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.parser.html.DomTree;
 import com.google.caja.plugin.Job;
 import com.google.caja.plugin.Jobs;
 import com.google.caja.plugin.PluginEnvironment;
@@ -116,6 +117,11 @@ public abstract class PipelineStageTestCase extends CajaTestCase {
         outputJobs.getJobs().add(
             new Job(AncestorChain.instance(
                 js(fromString(inputJob.content, is)))));
+        break;
+      case GXP:
+        outputJobs.getJobs().add(
+            new Job(AncestorChain.instance(
+                (DomTree.Tag) xml(fromString(inputJob.content, is)))));
         break;
       default:
         throw new IllegalArgumentException(inputJob.type.name());

@@ -276,6 +276,8 @@ public interface CharProducer extends Closeable {
       ENTITY_TABLE.put("quot", Character.valueOf('"'));
       ENTITY_TABLE.put("amp", Character.valueOf('&'));
       ENTITY_TABLE.put("nbsp", Character.valueOf('\u00a0'));
+      ENTITY_TABLE.put("laquo", Character.valueOf('\u00ab'));
+      ENTITY_TABLE.put("raquo", Character.valueOf('\u00bb'));
     }
   }
 
