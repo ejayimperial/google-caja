@@ -448,6 +448,11 @@ public abstract class Rule implements MessagePart {
     return null;
   }
 
+  protected static Map<String, ParseTreeNode> makeBindings() {
+    return new LinkedHashMap<String, ParseTreeNode>();
+  }
+
+  
   /**
    * Substitutes bindings into the Quasi-pattern from
    * {@link RuleDescription#substitutes}.
