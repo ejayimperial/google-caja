@@ -310,6 +310,22 @@ var outers={Date:Date};
     return result;
   }
 
+  /**
+   * Return the object to be used as the per-plugin subjective
+   * supplement to obj and its actual inheritance chain.
+   */
+  function getSupplement(obj) {
+    if (typeof obj === 'function') {
+      return getShadow(obj);
+    } else {
+      // TODO(erights): I suspect read(obj,'constructor') isn't good
+      // enough. Does caja.js need to expose ___.directConstructor() as
+      // caja.directConstructor()?
+      var ctor = read(obj, 'constructor');
+      return getPrototypeOf(ctor);
+    }
+  }
+
   return caja.freeze({
     getPrototypeOf: getPrototypeOf,
     typeOf: typeOf,
@@ -324,6 +340,7 @@ var outers={Date:Date};
     readOuter: readOuter,
     setOuter: setOuter,
     //removeOuter: removeOuter,
+    remove: remove,
 
     dis: dis,
     Disfunction: Disfunction

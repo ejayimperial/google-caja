@@ -45,6 +45,7 @@ import com.google.caja.parser.js.NumberLiteralTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
 import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
+import com.google.caja.parser.quasiliteral.DefaultValijaRewriterTest;
 import com.google.caja.parser.quasiliteral.IllegalReferenceCheckRewriterTest;
 import com.google.caja.parser.quasiliteral.InnocentCodeRewriterTest;
 import com.google.caja.parser.quasiliteral.MatchTest;
