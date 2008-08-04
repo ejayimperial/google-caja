@@ -98,7 +98,7 @@ public final class SimpleQuasiNode extends QuasiNode {
     AbstractParseTreeNode<?> node = (AbstractParseTreeNode<?>)
         ParseTreeNodes.newNodeInstance(clazz, value, children);
     node.setFilePosition(NULL_FILE_POSITION);
-    substitutes.add(SyntheticNodes.s(node));
+    substitutes.add(node);
 
     return true;
   }
