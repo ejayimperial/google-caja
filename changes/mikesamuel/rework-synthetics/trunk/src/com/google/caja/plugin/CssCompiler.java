@@ -191,7 +191,7 @@ public final class CssCompiler {
     // will only make purple paragraphs that are under a node with class g123__.
     ExpressionStmt emitStmt = new ExpressionStmt(
         (Expression) QuasiBuilder.substV(
-            ReservedNames.IMPORTS + ".emitCss___(@cssParts.join("
+            ReservedNames.IMPORTS + ".emitCss___(@cssParts./*@synthetic*/join("
             + ReservedNames.IMPORTS + ".getIdClass___()))",
             "cssParts", cssPartsArray));
     emitStmt.setFilePosition(ss.getFilePosition());

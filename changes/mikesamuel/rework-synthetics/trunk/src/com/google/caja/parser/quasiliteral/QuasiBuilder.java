@@ -19,6 +19,7 @@ import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.JsLexer;
 import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.lexer.ParseException;
+import com.google.caja.lexer.Token;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Expression;
@@ -26,19 +27,19 @@ import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FormalParam;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.ObjectConstructor;
 import com.google.caja.parser.js.Parser;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
-import com.google.caja.parser.js.ObjectConstructor;
 import com.google.caja.parser.js.SyntheticNodes;
 import com.google.caja.reporting.DevNullMessageQueue;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.net.URI;
 
 /**
@@ -246,32 +247,47 @@ public class QuasiBuilder {
       }
     }
 
+    return buildSimpleNode(n);
+  }
+
+  private static QuasiNode buildSimpleNode(ParseTreeNode n) {
     // Synthetic nodes are ones which intentionally break caja rules in
     // source code producers.
     // Since putting a name like foo___ in a quasiliteral produces code that
     // breaks the rules, recognize this and mark it synthetic so that
     // when that quasiliteral is used with subst, the resulting tree has
     // the correct nodes marked synthetic.
-    if (n instanceof Identifier) {
+    boolean isSynthetic = false;
+    if (hasSyntheticAnnotation(n)) {
+      isSynthetic = true;
+    } else if (n instanceof Identifier) {
       Identifier ident = (Identifier) n;
-      if (ident.getName() != null && ident.getName().endsWith("__")) {
-        SyntheticNodes.s(ident);
-      }
+      isSynthetic = ident.getName() != null && ident.getName().endsWith("__");
     } else if (n instanceof Reference) {
       Reference ref = (Reference) n;
-      if (ref.getIdentifierName().endsWith("__")) {
-        SyntheticNodes.s(ref.getIdentifier());
-      }
+      isSynthetic = ref.getIdentifierName().endsWith("__");
     }
 
-    return buildSimpleNode(n);
+    if (isSynthetic) {
+      return new SyntheticQuasiNode(
+          n.getClass(),
+          n.getValue(),
+          buildChildrenOf(n));
+    } else {
+      return new SimpleQuasiNode(
+          n.getClass(),
+          n.getValue(),
+          buildChildrenOf(n));
+    }
   }
 
-  private static QuasiNode buildSimpleNode(ParseTreeNode n) {
-    return new SimpleQuasiNode(
-        n.getClass(),
-        n.getValue(),
-        buildChildrenOf(n));
+  private static boolean hasSyntheticAnnotation(ParseTreeNode n) {
+    for (Token<?> comment : n.getComments()) {
+      if (comment.text.indexOf("@synthetic") >= 0) {
+        return SyntheticNodes.isSynthesizable(n);
+      }
+    }
+    return false;
   }
 
   private static QuasiNode buildMatchNode(
@@ -330,8 +346,7 @@ public class QuasiBuilder {
                 CharProducer.Factory.create(new StringReader(sourceText),
                 inputSource),
                 true),
-            inputSource,
-            JsTokenQueue.NO_COMMENT),
+            inputSource),
         DevNullMessageQueue.singleton(),
         true);
 

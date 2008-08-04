@@ -41,7 +41,8 @@ public final class SyntheticNodes {
       = new SyntheticAttributeKey<Boolean>(Boolean.class, "synthetic");
 
   public static boolean isSynthesizable(ParseTreeNode node) {
-    return node instanceof Identifier || node instanceof FunctionConstructor;
+    return (node instanceof Identifier && node.getValue() != null)
+        || node instanceof FunctionConstructor;
   }
 
   /**
