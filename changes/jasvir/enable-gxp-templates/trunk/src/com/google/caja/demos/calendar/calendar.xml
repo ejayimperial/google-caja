@@ -41,7 +41,7 @@ height="260" render_inline="never">
     <script src="widget.js"></script>
 
     <style type=text/css>
-    .calendar { border: 1px solid #888; position: relative }
+    .calendar { border: 1px solid #888; position: relative; width: 600px }
     .y-axis {
       border-width: 0 1px 0 0;
       border-style: solid;
@@ -126,6 +126,7 @@ height="260" render_inline="never">
     </style>
     <table><tr valign=top>
     <td>
+    <div id="datastore">
       <div class="vcalendar">
         <div class="vevent">
           <h2 class="summary">Weekly mtg.</h2>
@@ -165,15 +166,16 @@ height="260" render_inline="never">
           <abbr class="dtend" title="20080506">6 May</abbr>
         </div>
       </div>
-    <td>
-   <div id="datastore" style="visibility: hidden">
-   </div>
-      <div id=controls>
-        <span class=control id=prev-button>&laquo;</span>
-        <span class=control id=next-button>&raquo;</span>
       </div>
+      <td>
+      <div id="datastore">
+        <div id=controls>
+          <span class=control id=prev-button>&laquo;</span>
+          <span class=control id=next-button>&raquo;</span>
+        </div>
       <div id=container></div>
       <script src="main.js"></script>
+      </div>
     </table>
 ]]> 
 </Content>
