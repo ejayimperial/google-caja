@@ -282,6 +282,10 @@ public class QuasiBuilder {
   }
 
   private static boolean hasSyntheticAnnotation(ParseTreeNode n) {
+    // HACK(mikesamuel): Switching based on comments this way is a horrible
+    // kludge.  This is only a stopgap until we can get rid of synthetics
+    // entirely and/or a real quasi parser that doesn't have to work off the
+    // regular javascript parser.
     for (Token<?> comment : n.getComments()) {
       if (comment.text.indexOf("@synthetic") >= 0) {
         return SyntheticNodes.isSynthesizable(n);
