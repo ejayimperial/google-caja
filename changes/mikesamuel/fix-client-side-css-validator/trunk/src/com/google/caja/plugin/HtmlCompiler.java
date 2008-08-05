@@ -14,6 +14,7 @@
 
 package com.google.caja.plugin;
 
+import com.google.caja.CajaException;
 import com.google.caja.lang.css.CssSchema;
 import com.google.caja.lang.html.HTML;
 import com.google.caja.lang.html.HtmlSchema;
@@ -29,6 +30,7 @@ import com.google.caja.lexer.Keyword;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
 import com.google.caja.lexer.TokenQueue;
+import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
@@ -51,13 +53,15 @@ import com.google.caja.parser.quasiliteral.QuasiBuilder;
 import com.google.caja.parser.quasiliteral.ReservedNames;
 import com.google.caja.plugin.stages.RewriteHtmlStage;
 import com.google.caja.reporting.Message;
+import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
+import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Criterion;
 import com.google.caja.util.Pair;
-import static com.google.caja.parser.SyntheticNodes.s;
+import static com.google.caja.parser.js.SyntheticNodes.s;
 
 import java.io.StringReader;
 import java.net.URI;
@@ -77,14 +81,15 @@ import java.util.regex.Pattern;
  * The resulting javascript requires "html-emitter.js" which builds the DOM
  * client side.
  *
- * <p>
- * TODO(mikesamuel): this shares a lot of code with GxpCompiler and the two
- * should be merged.
- * </p>
- *
  * @author mikesamuel@gmail.com
  */
 public class HtmlCompiler {
+  public static final class BadContentException extends CajaException {
+    private static final long serialVersionUID = -5317800396186044550L;
+    BadContentException(Message m) { super(m); }
+    BadContentException(Message m, Throwable th) { super(m, th); }
+  }
+
   private final CssSchema cssSchema;
   private final HtmlSchema htmlSchema;
   private final MessageQueue mq;
@@ -110,14 +115,14 @@ public class HtmlCompiler {
    * it.</p>
    */
   public Statement compileDocument(DomTree doc)
-      throws GxpCompiler.BadContentException {
+      throws BadContentException {
 
     // Produce calls to IMPORTS___.htmlEmitter___(...)
     // with interleaved script bodies.
     DomProcessingEvents cdom = new DomProcessingEvents();
     compileDom(doc, cdom);
 
-    Block body = s(new Block(Collections.<Statement>emptyList()));
+    Block body = new Block(Collections.<Statement>emptyList());
     cdom.toJavascript(body);
     return body;
   }
@@ -133,7 +138,7 @@ public class HtmlCompiler {
    * @param t the tree to render
    */
   private void compileDom(DomTree t, DomProcessingEvents out)
-      throws GxpCompiler.BadContentException {
+      throws BadContentException {
     if (t instanceof DomTree.Fragment) {
       for (DomTree child : t.children()) {
         compileDom(child, out);
@@ -256,9 +261,9 @@ public class HtmlCompiler {
   private static final Pattern HTML_ID = Pattern.compile(
       "^[a-z][a-z0-9-]*$", Pattern.CASE_INSENSITIVE);
   private static String assertHtmlIdentifier(String s, DomTree node)
-      throws GxpCompiler.BadContentException {
+      throws BadContentException {
     if (!HTML_ID.matcher(s).matches()) {
-      throw new GxpCompiler.BadContentException(
+      throw new BadContentException(
           new Message(PluginMessageType.BAD_IDENTIFIER, node.getFilePosition(),
                       MessagePart.Factory.valueOf(s)));
     }
@@ -266,10 +271,10 @@ public class HtmlCompiler {
   }
 
   private void assertNotBlacklistedTag(DomTree node)
-      throws GxpCompiler.BadContentException {
+      throws BadContentException {
     String tagName = node.getValue().toLowerCase();
     if (!htmlSchema.isElementAllowed(tagName)) {
-      throw new GxpCompiler.BadContentException(
+      throw new BadContentException(
           new Message(PluginMessageType.UNSAFE_TAG, node.getFilePosition(),
                       MessagePart.Factory.valueOf(tagName)));
     }
@@ -301,13 +306,13 @@ public class HtmlCompiler {
    */
   private void compileStyleAttrib(
       DomTree.Attrib attrib, DomProcessingEvents out)
-      throws GxpCompiler.BadContentException {
+      throws BadContentException {
     CssTree.DeclarationGroup decls;
     try {
       decls = parseStyleAttrib(attrib);
       if (decls == null) { return; }
     } catch (ParseException ex) {
-      throw new GxpCompiler.BadContentException(ex.getCajaMessage(), ex);
+      throw new BadContentException(ex.getCajaMessage(), ex);
     }
 
     // The validator will check that property values are well-formed,
@@ -322,8 +327,8 @@ public class HtmlCompiler {
 
     Block cssBlock = new Block(Collections.<Statement>emptyList());
     // Produces a call to cat(bits, of, css);
-    CssTemplate.declGroupToStyleValue(
-        decls, Arrays.asList("cat"), cssBlock, JsWriter.Esc.NONE, mq);
+    declGroupToStyleValue(
+        decls, Arrays.asList("cat"), cssBlock, JsWriter.Esc.NONE);
     if (cssBlock.children().isEmpty()) { return; }
     if (cssBlock.children().size() != 1) {
       throw new IllegalStateException(attrib.getAttribValue());
@@ -334,7 +339,7 @@ public class HtmlCompiler {
     List<? extends Expression> operands = ((Operation) css).children();
     Expression cssOp = operands.get(1);
     for (Expression e : operands.subList(2, operands.size())) {
-      cssOp = s(Operation.create(Operator.ADDITION, cssOp, e));
+      cssOp = Operation.create(Operator.ADDITION, cssOp, e);
     }
     out.attr("style", cssOp);
   }
@@ -529,8 +534,8 @@ public class HtmlCompiler {
         FunctionConstructor handlerFn = new FunctionConstructor(
             new Identifier(null),
             Arrays.asList(
-                s(new FormalParam(s(new Identifier(ReservedNames.THIS_NODE)))),
-                s(new FormalParam(s(new Identifier("event"))))),
+                new FormalParam(s(new Identifier(ReservedNames.THIS_NODE))),
+                new FormalParam(s(new Identifier("event")))),
             handler);
 
         String handlerFnName = htmlc.syntheticId();
@@ -543,17 +548,17 @@ public class HtmlCompiler {
 
         String handlerFnNameLit = StringLiteral.toQuotedValue(handlerFnName);
 
-        Operation dispatcher = s(Operation.create(
+        Operation dispatcher = Operation.create(
             Operator.ADDITION,
-            s(Operation.create(
+            Operation.create(
                 Operator.ADDITION,
                 TreeConstruction.stringLiteral(
                     "return plugin_dispatchEvent___("
                     + "this, event || window.event, "),
                 TreeConstruction.call(
                     TreeConstruction.memberAccess("___", "getId"),
-                    TreeConstruction.ref(ReservedNames.IMPORTS)))),
-            TreeConstruction.stringLiteral(", " + handlerFnNameLit + ")")));
+                    TreeConstruction.ref(ReservedNames.IMPORTS))),
+            TreeConstruction.stringLiteral(", " + handlerFnNameLit + ")"));
         out.attr(t.getAttribName(), dispatcher);
       }
     },
@@ -598,7 +603,7 @@ public class HtmlCompiler {
     abstract void apply(
         AncestorChain<DomTree.Attrib> tChain,
         HtmlCompiler htmlc, DomProcessingEvents out)
-        throws GxpCompiler.BadContentException;
+        throws BadContentException;
   }
 
   /**
@@ -632,7 +637,6 @@ public class HtmlCompiler {
                 Identifier oldRef = r.getIdentifier();
                 Identifier thisNode = new Identifier(ReservedNames.THIS_NODE);
                 thisNode.setFilePosition(oldRef.getFilePosition());
-                s(r);
                 r.replaceChild(s(thisNode), oldRef);
               }
               return false;
@@ -640,5 +644,75 @@ public class HtmlCompiler {
             return true;
           }
         }, null);
+  }
+
+  static void declGroupToStyleValue(
+      CssTree.DeclarationGroup cssTree, final List<String> tgtChain,
+      final Block b, final JsWriter.Esc esc) {
+
+    declarationsToJavascript(cssTree, esc, new DynamicCssReceiver() {
+        boolean first = true;
+
+        public void property(CssTree.Property p) {
+          StringBuilder out = new StringBuilder();
+          TokenConsumer tc = p.makeRenderer(out, null);
+          if (first) {
+            first = false;
+          } else {
+            tc.consume(";");
+          }
+          p.render(new RenderContext(new MessageContext(), tc));
+          tc.consume(":");
+          out.append(" ");
+          rawCss(out.toString());
+        }
+
+        public void rawCss(String rawCss) {
+          JsWriter.appendText(rawCss, esc, tgtChain, b);
+        }
+
+        public void priority(CssTree.Prio p) {
+          StringBuilder out = new StringBuilder();
+          out.append(" ");
+          TokenConsumer tc = p.makeRenderer(out, null);
+          p.render(new RenderContext(new MessageContext(), tc));
+          rawCss(out.toString());
+        }
+      });
+  }
+
+  private static interface DynamicCssReceiver {
+    void property(CssTree.Property p);
+
+    void rawCss(String rawCss);
+
+    void priority(CssTree.Prio p);
+  }
+
+  private static void declarationsToJavascript(
+      CssTree.DeclarationGroup decls, JsWriter.Esc esc,
+      DynamicCssReceiver out) {
+    assert esc == JsWriter.Esc.NONE || esc == JsWriter.Esc.HTML_ATTRIB : esc;
+
+    for (CssTree child : decls.children()) {
+      CssTree.Declaration decl = (CssTree.Declaration) child;
+      // Render the style to a canonical form with consistent escaping
+      // conventions, so that we can avoid browser bugs.
+      String css;
+      {
+        StringBuilder cssBuf = new StringBuilder();
+        TokenConsumer tc = decl.makeRenderer(cssBuf, null);
+        decl.getExpr().render(new RenderContext(new MessageContext(), tc));
+
+        // Contains the rendered CSS with ${\0###\0} placeholders.
+        // Split around the placeholders, parse the javascript, escape the
+        // literal text, and emit the appropriate javascript.
+        css = cssBuf.toString();
+      }
+
+      out.property(decl.getProperty());
+      out.rawCss(css);
+      if (decl.getPrio() != null) { out.priority(decl.getPrio()); }
+    }
   }
 }

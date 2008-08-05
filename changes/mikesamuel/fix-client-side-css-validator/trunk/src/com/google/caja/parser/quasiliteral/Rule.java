@@ -20,7 +20,6 @@ import com.google.caja.parser.AbstractParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.SyntheticNodes;
 import com.google.caja.parser.js.Declaration;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.FormalParam;
@@ -31,6 +30,8 @@ import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.StringLiteral;
+import com.google.caja.parser.js.SyntheticNodes;
+import static com.google.caja.parser.js.SyntheticNodes.s;
 import com.google.caja.parser.js.UndefinedLiteral;
 import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
@@ -38,7 +39,6 @@ import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Callback;
 import com.google.caja.util.Pair;
-import static com.google.caja.parser.SyntheticNodes.s;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -205,10 +205,7 @@ public abstract class Rule implements MessagePart {
     return result;
   }
 
-  protected ParseTreeNode getFunctionHeadDeclarations(
-      Rule rule,
-      Scope scope,
-      MessageQueue mq) {
+  protected ParseTreeNode getFunctionHeadDeclarations(Scope scope) {
     List<ParseTreeNode> stmts = new ArrayList<ParseTreeNode>();
 
     if (scope.hasFreeArguments()) {
@@ -228,7 +225,7 @@ public abstract class Rule implements MessagePart {
   }
 
   protected Reference newReference(String name) {
-    return s(new Reference(s(new Identifier(name))));
+    return new Reference(s(new Identifier(name)));
   }
 
   protected Expression newCommaOperation(List<? extends ParseTreeNode> operands) {
@@ -242,10 +239,10 @@ public abstract class Rule implements MessagePart {
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuse(
       ParseTreeNode value,
-      Rule rule,
       Scope scope,
       MessageQueue mq) {
-    ParseTreeNode reference = s(new Reference(scope.declareStartOfScopeTempVariable()));
+    ParseTreeNode reference = new Reference(
+        scope.declareStartOfScopeTempVariable());
     ParseTreeNode variableDefinition = QuasiBuilder.substV(
         "@ref = @rhs;",
         "ref", reference,
@@ -257,7 +254,6 @@ public abstract class Rule implements MessagePart {
 
   protected Pair<ParseTreeNode, ParseTreeNode> reuseAll(
       ParseTreeNode arguments,
-      Rule rule,
       Scope scope,
       MessageQueue mq) {
     List<ParseTreeNode> refs = new ArrayList<ParseTreeNode>();
@@ -266,7 +262,6 @@ public abstract class Rule implements MessagePart {
     for (int i = 0; i < arguments.children().size(); i++) {
       Pair<ParseTreeNode, ParseTreeNode> p = reuse(
           arguments.children().get(i),
-          rule,
           scope,
           mq);
       refs.add(p.a);
@@ -280,7 +275,6 @@ public abstract class Rule implements MessagePart {
 
   protected ParseTreeNode expandMember(
       ParseTreeNode member,
-      Rule rule,
       Scope scope,
       MessageQueue mq) {
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -298,7 +292,7 @@ public abstract class Rule implements MessagePart {
             "ps",    bindings.get("ps"),
             // It's important to expand bs before computing fh and stmts.
             "bs",    rewriter.expand(bindings.get("bs"), s2, mq),
-            "fh",    getFunctionHeadDeclarations(rule, s2, mq),
+            "fh",    getFunctionHeadDeclarations(s2),
             "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
       }
     }
@@ -308,19 +302,17 @@ public abstract class Rule implements MessagePart {
 
   protected ParseTreeNode expandAllMembers(
       ParseTreeNode members,
-      Rule rule,
       Scope scope,
       MessageQueue mq) {
     List<ParseTreeNode> results = new ArrayList<ParseTreeNode>();
     for (ParseTreeNode member : members.children()) {
-      results.add(expandMember(member, rule, scope, mq));
+      results.add(expandMember(member, scope, mq));
     }
     return new ParseTreeNodeContainer(results);
   }
 
   protected ParseTreeNode expandMemberMap(
       ParseTreeNode memberMap,
-      Rule rule,
       Scope scope,
       MessageQueue mq) {
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
@@ -329,41 +321,39 @@ public abstract class Rule implements MessagePart {
       if (literalsEndWith(bindings.get("keys"), "__")) {
         mq.addMessage(
             RewriterMessageType.MEMBER_KEY_MAY_NOT_END_IN_DOUBLE_UNDERSCORE,
-            memberMap.getFilePosition(), rule, memberMap);
+            memberMap.getFilePosition(), this, memberMap);
         return memberMap;
       }
 
       return QuasiBuilder.substV(
           "({@keys*: @vals*})",
           "keys", bindings.get("keys"),
-          "vals", expandAllMembers(bindings.get("vals"), rule, scope, mq));
+          "vals", expandAllMembers(bindings.get("vals"), scope, mq));
     }
 
     mq.addMessage(RewriterMessageType.MAP_EXPRESSION_EXPECTED,
-        memberMap.getFilePosition(), rule, memberMap);
+        memberMap.getFilePosition(), this, memberMap);
     return memberMap;
   }
 
   protected boolean checkMapExpression(
       ParseTreeNode node,
-      Rule rule,
-      Scope scope,
       MessageQueue mq) {
     Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
     if (!QuasiBuilder.match("({@keys*: @vals*})", node, bindings)) {
       mq.addMessage(
           RewriterMessageType.MAP_EXPRESSION_EXPECTED,
-          node.getFilePosition(), rule, node);
+          node.getFilePosition(), this, node);
       return false;
     } else if (literalsEndWith(bindings.get("keys"), "_")) {
       mq.addMessage(
           RewriterMessageType.KEY_MAY_NOT_END_IN_UNDERSCORE,
-          node.getFilePosition(), rule, node);
+          node.getFilePosition(), this, node);
       return false;
     } else if (literalsContain(bindings.get("keys"), "valueOf")) {
       mq.addMessage(
           RewriterMessageType.VALUEOF_PROPERTY_MUST_NOT_BE_SET,
-          node.getFilePosition(), rule, node);
+          node.getFilePosition(), this, node);
       return false;
     }
     return true;
@@ -372,7 +362,8 @@ public abstract class Rule implements MessagePart {
   protected void checkFormals(ParseTreeNode formals, MessageQueue mq) {
     for (ParseTreeNode formal : formals.children()) {
       FormalParam f = (FormalParam) formal;
-      if (!isSynthetic(f) && f.getIdentifierName().endsWith("__")) {
+      if (!isSynthetic(f.getIdentifier())
+          && f.getIdentifierName().endsWith("__")) {
         mq.addMessage(
             RewriterMessageType.VARIABLES_CANNOT_END_IN_DOUBLE_UNDERSCORE,
             f.getFilePosition(), this, f);
@@ -380,7 +371,15 @@ public abstract class Rule implements MessagePart {
     }
   }
 
-  protected static boolean isSynthetic(ParseTreeNode node) {
+  protected static boolean isSynthetic(Identifier node) {
+    return node.getAttributes().is(SyntheticNodes.SYNTHETIC);
+  }
+
+  protected static boolean isSynthetic(Reference node) {
+    return isSynthetic(node.getIdentifier());
+  }
+
+  protected static boolean isSynthetic(FunctionConstructor node) {
     return node.getAttributes().is(SyntheticNodes.SYNTHETIC);
   }
 
@@ -541,9 +540,9 @@ public abstract class Rule implements MessagePart {
       Identifier tmpVar = scope.declareStartOfScopeTempVariable();
       temporaries.add((Expression) QuasiBuilder.substV(
           "@tmpVar = @left;",
-          "tmpVar", s(new Reference(tmpVar)),
+          "tmpVar", new Reference(tmpVar),
           "left", left));
-      object = s(new Reference(tmpVar));
+      object = new Reference(tmpVar);
     }
 
     // Don't bother to generate a temporary for a simple value like 'foo'
@@ -553,9 +552,9 @@ public abstract class Rule implements MessagePart {
       Identifier tmpVar = scope.declareStartOfScopeTempVariable();
       temporaries.add((Expression) QuasiBuilder.substV(
           "@tmpVar = @right;",
-          "tmpVar", s(new Reference(tmpVar)),
+          "tmpVar", new Reference(tmpVar),
           "right", right));
-      key = s(new Reference(tmpVar));
+      key = new Reference(tmpVar);
     }
 
     // Is a property (as opposed to a public) reference.
@@ -637,5 +636,10 @@ public abstract class Rule implements MessagePart {
     public boolean isSimpleLValue() {
       return temporaries.isEmpty() && rvalue.isLeftHandSide();
     }
+  }
+
+  @Override
+  public String toString() {
+    return "<Rule " + getName() + ">";
   }
 }

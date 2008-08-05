@@ -46,8 +46,6 @@ import junit.framework.TestCase;
  * End-to-end tests that compiles a plugin to javascript and runs the
  * javascript under Rhino to test the base plugin implementation.
  *
- * <p>This also serves as a test of plugin-base.js</p>
- *
  * @author mikesamuel@gmail.com
  */
 public class CompiledPluginTest extends TestCase {
@@ -379,7 +377,7 @@ public class CompiledPluginTest extends TestCase {
             + "var testImports = ___.getNewModuleHandler().getImports();\n"
             + "testImports.exports = {};\n"
             + "attachDocumentStub('-post', uriCallback, testImports);\n"
-            + "testImports.log = ___.simpleFrozenFunc(function(s) {\n"
+            + "testImports.log = ___.simpleFunc(function(s) {\n"
             + "  console.log(s);\n"
             + "});"),
             "container"),

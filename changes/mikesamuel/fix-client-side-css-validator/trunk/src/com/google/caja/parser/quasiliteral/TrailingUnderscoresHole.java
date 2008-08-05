@@ -37,30 +37,30 @@ public class TrailingUnderscoresHole extends AbstractQuasiHole {
     trailing = b.toString();
   }
 
+  @Override
   protected boolean consumeSpecimens(
-      List<ParseTreeNode> specimens,
-      Map<String, ParseTreeNode> bindings) {
+      List<ParseTreeNode> specimens, Map<String, ParseTreeNode> bindings) {
     if (specimens.size() > 0 && isCompatibleClass(specimens.get(0))) {
-      String value = ((Identifier)specimens.get(0)).getValue();
-      if (value.endsWith(trailing)) {
+      Identifier specimen = (Identifier) specimens.get(0);
+      String value = specimen.getName();
+      if (value != null && value.endsWith(trailing)) {
         specimens.remove(0);
+        Identifier shortIdentifier = new Identifier(
+            value.substring(0, value.length() - trailing.length()));
+        shortIdentifier.getAttributes().putAll(specimen.getAttributes());
+
         return putIfDeepEquals(
             bindings,
             getIdentifier(),
-            ParseTreeNodes.newNodeInstance(
-                Identifier.class,
-                value.substring(
-                    0,
-                    value.length() - trailing.length()),
-                Collections.<ParseTreeNode>emptyList()));
+            shortIdentifier);
       }
     }
     return false;
   }
-  
+
+  @Override
   protected boolean createSubstitutes(
-      List<ParseTreeNode> substitutes,
-      Map<String, ParseTreeNode> bindings) {
+      List<ParseTreeNode> substitutes, Map<String, ParseTreeNode> bindings) {
     ParseTreeNode n = bindings.get(getIdentifier());
     if (n == null || !(n instanceof Identifier)) return false;
     substitutes.add(
@@ -70,10 +70,12 @@ public class TrailingUnderscoresHole extends AbstractQuasiHole {
             Collections.<ParseTreeNode>emptyList()));
     return true;
   }
-  
+
+  @Override
   protected String getQuantifierSuffix() { throw new UnsupportedOperationException(); }
 
+  @Override
   public String toString() {
     return "(Identifier) : @${" + getIdentifier() + "}" + trailing;
-  }  
+  }
 }

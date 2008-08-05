@@ -22,7 +22,6 @@ import com.google.caja.demos.calendar.RRuleTest;
 import com.google.caja.lang.css.CssSchemaTest;
 import com.google.caja.lang.html.HtmlSchemaTest;
 import com.google.caja.lexer.CharProducerTest;
-import com.google.caja.lexer.CommentLexerTest;
 import com.google.caja.lexer.CssLexerTest;
 import com.google.caja.lexer.HtmlLexerTest;
 import com.google.caja.lexer.JsLexerTest;
@@ -47,20 +46,17 @@ import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
 import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
 import com.google.caja.parser.quasiliteral.IllegalReferenceCheckRewriterTest;
+import com.google.caja.parser.quasiliteral.InnocentCodeRewriterTest;
 import com.google.caja.parser.quasiliteral.MatchTest;
 import com.google.caja.parser.quasiliteral.QuasiBuilderTest;
 import com.google.caja.parser.quasiliteral.RewriterTest;
 import com.google.caja.parser.quasiliteral.ScopeTest;
-import com.google.caja.plugin.CompiledPluginTest;
 import com.google.caja.plugin.CssCompilerTest;
 import com.google.caja.plugin.CssPropertyPatternsTest;
 import com.google.caja.plugin.CssRewriterTest;
-import com.google.caja.plugin.CssTemplateTest;
 import com.google.caja.plugin.CssValidatorTest;
 import com.google.caja.plugin.DomProcessingEventsTest;
 import com.google.caja.plugin.ExpressionSanitizerTest;
-import com.google.caja.plugin.GxpCompilerTest;
-import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlCompilerTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
@@ -98,8 +94,6 @@ public class AllTests {
           BuildInfoTest.class,
           CajolingServiceTest.class,
           CharProducerTest.class,
-          CommentLexerTest.class,
-          CompiledPluginTest.class,
           ConfigUtilTest.class,
           ContentTypeCheckTest.class,
           CssCompilerTest.class,
@@ -109,7 +103,6 @@ public class AllTests {
           CssPropertySignatureTest.class,
           CssRewriterTest.class,
           CssSchemaTest.class,
-          CssTemplateTest.class,
           CssTreeTest.class,
           CssValidatorTest.class,
           DebuggingSymbolsStageTest.class,
@@ -123,8 +116,6 @@ public class AllTests {
           ExpressionSanitizerTest.class,
           FuzzedParserTest.class,
           GadgetParserTest.class,
-          GxpCompilerTest.class,
-          GxpValidatorTest.class,
           HcalTest.class,
           HtmlCompiledPluginTest.class,
           HtmlCompilerTest.class,
@@ -133,6 +124,7 @@ public class AllTests {
           HtmlSchemaTest.class,
           IllegalReferenceCheckRewriterTest.class,
           InlineCssImportsStageTest.class,
+          InnocentCodeRewriterTest.class,
           JoinTest.class,
           JsHtmlSanitizerTest.class,
           JsLexerTest.class,
