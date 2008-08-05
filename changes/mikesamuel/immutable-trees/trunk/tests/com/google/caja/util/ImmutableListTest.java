@@ -17,6 +17,7 @@ package com.google.caja.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
@@ -33,7 +34,7 @@ public class ImmutableListTest extends TestCase {
     assertEquals(4, ints.get(4).intValue());
     assertFalse(ints.isEmpty());
     assertEquals("[0, 1, 2, 3, 4]", ints.toString());
-    ArrayList al = new ArrayList<Integer>(ints);
+    List<Integer> al = new ArrayList<Integer>(ints);
     assertEquals(ints.hashCode(), al.hashCode());
     assertEquals(ints, al);
     try {
@@ -67,7 +68,7 @@ public class ImmutableListTest extends TestCase {
     assertEquals(-1, someInts.lastIndexOf(3));
     assertFalse(someInts.isEmpty());
     assertEquals("[1, 2]", someInts.toString());
-    ArrayList al = new ArrayList<Integer>(someInts);
+    List<Integer> al = new ArrayList<Integer>(someInts);
     assertEquals(someInts.hashCode(), al.hashCode());
     assertEquals(someInts, al);
     try {
