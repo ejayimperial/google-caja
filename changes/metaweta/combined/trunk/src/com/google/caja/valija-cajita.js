@@ -78,6 +78,7 @@ var outers={Date:Date};
    * inherited disfunction. 
    */
   var DisfunctionPrototype = caja.beget(ObjectPrototype);
+  DisfunctionPrototype.name = "dfp";
 
   var Disfunction = caja.beget(DisfunctionPrototype);
   Disfunction.prototype = DisfunctionPrototype,
@@ -264,7 +265,7 @@ var outers={Date:Date};
     };
     result.prototype = caja.beget(ObjectPrototype);
     result.prototype.constructor = result;
-    result.length = callFn.length -1
+    result.length = callFn.length -1;
     if (opt_name !== undefined) {
       result.name = opt_name;
     }

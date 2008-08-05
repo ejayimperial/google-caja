@@ -27,7 +27,12 @@ import java.util.List;
  * @author ihab.awad@gmail.com
  */
 public class InnocentCodeRewriterTest extends RewriterTestCase {
-
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    setRewriter(new InnocentCodeRewriter(true));
+  }
+    
   // Tests block-level forEach statements
   public void testForEachPlain() throws Exception {
     checkSucceeds(
@@ -186,12 +191,4 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
     assertNoErrors();
     return result;
   }
-
-  @Override
-  protected List<Rewriter> newRewriters() {
-    ArrayList<Rewriter> rewriters = new ArrayList<Rewriter>();
-    rewriters.add(new InnocentCodeRewriter(true));
-    return rewriters;
-  }
-
 }

@@ -52,16 +52,12 @@ import com.google.caja.parser.quasiliteral.MatchTest;
 import com.google.caja.parser.quasiliteral.QuasiBuilderTest;
 import com.google.caja.parser.quasiliteral.RewriterTest;
 import com.google.caja.parser.quasiliteral.ScopeTest;
-import com.google.caja.plugin.CompiledPluginTest;
 import com.google.caja.plugin.CssCompilerTest;
 import com.google.caja.plugin.CssPropertyPatternsTest;
 import com.google.caja.plugin.CssRewriterTest;
-import com.google.caja.plugin.CssTemplateTest;
 import com.google.caja.plugin.CssValidatorTest;
 import com.google.caja.plugin.DomProcessingEventsTest;
 import com.google.caja.plugin.ExpressionSanitizerTest;
-import com.google.caja.plugin.GxpCompilerTest;
-import com.google.caja.plugin.GxpValidatorTest;
 import com.google.caja.plugin.HtmlCompiledPluginTest;
 import com.google.caja.plugin.HtmlCompilerTest;
 import com.google.caja.plugin.HtmlSanitizerTest;
@@ -99,7 +95,6 @@ public class AllTests {
           BuildInfoTest.class,
           CajolingServiceTest.class,
           CharProducerTest.class,
-          CompiledPluginTest.class,
           ConfigUtilTest.class,
           ContentTypeCheckTest.class,
           CssCompilerTest.class,
@@ -109,7 +104,6 @@ public class AllTests {
           CssPropertySignatureTest.class,
           CssRewriterTest.class,
           CssSchemaTest.class,
-          CssTemplateTest.class,
           CssTreeTest.class,
           CssValidatorTest.class,
           DebuggingSymbolsStageTest.class,
@@ -124,8 +118,6 @@ public class AllTests {
           ExpressionSanitizerTest.class,
           FuzzedParserTest.class,
           GadgetParserTest.class,
-          GxpCompilerTest.class,
-          GxpValidatorTest.class,
           HcalTest.class,
           HtmlCompiledPluginTest.class,
           HtmlCompilerTest.class,

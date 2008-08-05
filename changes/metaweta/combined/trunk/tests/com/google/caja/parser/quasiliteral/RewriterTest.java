@@ -25,6 +25,27 @@ import java.util.List;
  * @author ihab.awad@gmail.com
  */
 public class RewriterTest extends RewriterTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    setRewriter(new Rewriter(true) {{
+      addRule(new Rule () {
+        @Override
+        @RuleDescription(
+            name="setTaint",
+            synopsis="Ensures that the result is tainted",
+            reason="Test that Rewriter tainting check works")
+        public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+          if (taintMode) { return node; }
+          node.getAttributes().remove(ParseTreeNode.TAINTED);
+          for (ParseTreeNode c : node.children()) {
+            getRewriter().expand(c, scope, mq);
+          }
+          return node;
+      }});
+    }});
+  }
+
   private boolean taintMode;
 
   public void testTainting() throws Exception {
@@ -48,28 +69,6 @@ public class RewriterTest extends RewriterTestCase {
       return;
     }
     fail("assertConsistent not working");
-  }
-
-  @Override
-  protected List<Rewriter> newRewriters() {
-    ArrayList<Rewriter> rewriters = new ArrayList<Rewriter>();
-    rewriters.add(new Rewriter(true) {{
-        addRule(new Rule () {
-          @Override
-          @RuleDescription(
-              name="setTaint",
-              synopsis="Ensures that the result is tainted",
-              reason="Test that Rewriter tainting check works")
-          public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-            if (taintMode) { return node; }
-            node.getAttributes().remove(ParseTreeNode.TAINTED);
-            for (ParseTreeNode c : node.children()) {
-              getRewriter().expand(c, scope, mq);
-            }
-            return node;
-        }});
-      }});
-    return rewriters;
   }
 
   @Override

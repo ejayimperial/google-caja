@@ -33,7 +33,6 @@ import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.SyntheticNodes;
-import com.google.caja.parser.js.SyntheticNodes;
 import com.google.caja.reporting.DevNullMessageQueue;
 
 import java.io.StringReader;
@@ -245,24 +244,6 @@ public class QuasiBuilder {
       if (key.startsWith("@") && key.endsWith("*")
           && val.startsWith("@") && val.endsWith("*")) {
         return buildObjectConstructorMatchNode(key, val);
-      }
-    }
-
-    // Synthetic nodes are ones which intentionally break caja rules in
-    // source code producers.
-    // Since putting a name like foo___ in a quasiliteral produces code that
-    // breaks the rules, recognize this and mark it synthetic so that
-    // when that quasiliteral is used with subst, the resulting tree has
-    // the correct nodes marked synthetic.
-    if (n instanceof Identifier) {
-      Identifier ident = (Identifier) n;
-      if (ident.getName() != null && ident.getName().endsWith("__")) {
-        SyntheticNodes.s(ident);
-      }
-    } else if (n instanceof Reference) {
-      Reference ref = (Reference) n;
-      if (ref.getIdentifierName().endsWith("__")) {
-        SyntheticNodes.s(ref.getIdentifier());
       }
     }
 
