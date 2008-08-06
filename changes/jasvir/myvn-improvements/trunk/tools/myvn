@@ -89,7 +89,7 @@ function myvn() {
   local svn=${SVN_BIN:-default_svn_path}
   local gvn=${GVN_BIN:-default_gvn_path}
   local username="$(
-      perl -ne 'print $1 if m/^username\s*=\s*(\S.*)$/' "$HOME"/.gvn/config)"
+      perl -ne 'print $1 if m/^username\s*=\s*(\S+)$/' "$HOME"/.gvn/config)"
   if [ ! -x "$gvn" ]; then
     echo "Cannot find gvn.  Please set GVN_BIN (eg. export GVN_BIN=/opt/googlesvn/bin/gvn)"
     exit -1
