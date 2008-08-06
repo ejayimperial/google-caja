@@ -69,6 +69,16 @@
 # (8) Test stuff
 #       Right click on project and select "Run As" > "JUnit Test"
 #       $ ant runtests
+#
+#
+# ====================
+#    Other Commands
+# ====================
+# changed      -  files changed in the snapshotted CL.  Pipeable to xargs
+# diffstats    -  number of lines added/changed/removed
+# files        -  files changed in svn.  Pipeable to xargs 
+# filetypes    -  sets svn:mime-type of modified files based on file suffix
+
 
 default_gvn_path=/opt/googlesvn/bin/gvn
 default_svn_path=/opt/googlesvn/bin/svn
