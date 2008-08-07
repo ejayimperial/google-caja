@@ -320,6 +320,14 @@
     </cajole>
   </target>
 
+  <target name="CajoledValija" depends="pluginc">
+    <cajole>
+      <job output="${lib}/com/google/caja/plugin/valija-cajoled.js">
+        <include file="${src}/com/google/caja/valija-cajita.js" />
+      </job>
+    </cajole>
+  </target>
+
   <target name="MinifiedJs" depends="pluginc">
     <minify>
       <job output="${lib}/com/google/caja/plugin/domita-minified.js">
