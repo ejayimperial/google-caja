@@ -58,7 +58,7 @@
  * @author erights@gmail.com
  */
 
-var valija = (function() {
+exports.valija = (function() {
 
   /**
    * Simulates a monkey-patchable <tt>Object.prototype</tt>.
