@@ -932,7 +932,7 @@ var ___;
     function result(var_args) {
       if (this !== self) {
           fail('Method ', meth, ' is already attached.\nthis: ',
-               this, '\nself: ', self.toSource());
+               this, '\nself: ', self);
       }
       return meth.apply(self, arguments);
     }
