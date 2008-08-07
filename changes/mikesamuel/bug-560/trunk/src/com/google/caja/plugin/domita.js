@@ -499,7 +499,7 @@ attachDocumentStub = (function () {
     };
     TameNode.prototype.removeChild = function (child) {
       caja.guard(tameNodeTrademark, child);
-      if (!this.editable___ || !replacement.editable___) {
+      if (!this.editable___ || !child.editable___) {
         throw new Error();
       }
       this.node___.removeChild(child.node___);
