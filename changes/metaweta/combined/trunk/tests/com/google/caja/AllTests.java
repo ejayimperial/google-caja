@@ -72,6 +72,7 @@ import com.google.caja.render.SideBySideRendererTest;
 import com.google.caja.render.TokenClassificationTest;
 import com.google.caja.reporting.AbstractMessageQueueTest;
 import com.google.caja.reporting.BuildInfoTest;
+import com.google.caja.reporting.HtmlSnippetProducerTest;
 import com.google.caja.reporting.SnippetProducerTest;
 import com.google.caja.util.JoinTest;
 import com.google.caja.util.SparseBitSetTest;
@@ -124,6 +125,7 @@ public class AllTests {
           HtmlLexerTest.class,
           HtmlSanitizerTest.class,
           HtmlSchemaTest.class,
+          HtmlSnippetProducerTest.class,
           IllegalReferenceCheckRewriterTest.class,
           InlineCssImportsStageTest.class,
           InnocentCodeRewriterTest.class,

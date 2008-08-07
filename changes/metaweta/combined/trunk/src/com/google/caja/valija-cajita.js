@@ -60,9 +60,6 @@
 
 var valija = (function() {
 
-// EVIL EVIL REMOVE THIS!!
-var outers={Date:Date};
-
   /**
    * Simulates a monkey-patchable <tt>Object.prototype</tt>.
    */
@@ -133,7 +130,10 @@ var outers={Date:Date};
       var shadow = getShadow(func);
       return shadow.prototype;
     } else {
-      return func.prototype;
+      if (typeof func === 'object' && func !== null) {
+        return func.prototype;
+      }
+      return (void 0);
     }
   }
   
@@ -186,10 +186,7 @@ var outers={Date:Date};
     if (name in obj) {
       return obj[name];
     }
-    // TODO(erights): I suspect read(obj,'constructor') isn't good
-    // enough. Does caja.js need to expose ___.directConstructor() as
-    // caja.directConstructor()? 
-    var ctor = read(obj, 'constructor');
+    var ctor = caja.directConstructor(obj);
     return getPrototypeOf(ctor)[name];
   }
 
@@ -278,8 +275,8 @@ var outers={Date:Date};
   }
 
   function readOuter(name) {
-    if (name in outers) {
-      return outers[name];
+    if (canReadRev(name, outers)) {
+      return read(outers, name);
     } else {
       throw new ReferenceError('not found: ' + name);
     }
@@ -289,9 +286,9 @@ var outers={Date:Date};
     return outers[name] = val;
   }
 
-  function initOuter(name) {
-    if (name in outers) { return; }
-    outers[name] = undefined;
+  function initOuters(name) {
+    if (canReadRev(name, outers)) { return; }
+    set(outers, name, undefined);
   }
 
   function remove(obj, name) {
@@ -308,7 +305,18 @@ var outers={Date:Date};
     for (var name in obj) {
       result.push(name);
     }
+    for (name in getSupplement(obj)) {
+      if (!(name in obj)) {
+  
+        result.push(name);
+      }
+    }
     return result;
+  }
+
+  function canReadRev(name, obj) {
+    if (name in obj) { return true; }
+    return name in getSupplement(obj);
   }
 
   /**
@@ -342,6 +350,7 @@ var outers={Date:Date};
     setOuter: setOuter,
     //removeOuter: removeOuter,
     remove: remove,
+    keys: keys,
 
     dis: dis,
     Disfunction: Disfunction

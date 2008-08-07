@@ -422,17 +422,13 @@ var ___;
   /**
    * Returns the 'constructor' property of obj's prototype.
    * <p>
-   * BUG TODO(erights): This following code and comments predates
-   * record inheritance, and will not work when inheriting from parent
-   * records that happen to define a property named
-   * 'constructor'. Valija won't actually work until this is fixed. 
+   * SECURITY TODO(erights): Analyze the security implications
+   * of exposing this as a property of the caja object.
    * <p>
    * By "obj's prototype", we mean the object that obj directly
-   * inherits from, not the value of its 'prototype' property. If
-   * obj has a '__proto__' property, then we assume we're on a
-   * platform (like Firefox) in which this reliably gives us obj's
-   * prototype. Otherwise, we memoize the apparent prototype into
-   * '__proto__' to speed up future queries.
+   * inherits from, not the value of its 'prototype' property. We 
+   * memoize the apparent prototype into 'proto___' to speed up 
+   * future queries.
    * <p>
    * If obj is a function or not an object, return undefined.
    */
@@ -449,21 +445,30 @@ var ___;
     }
     // The following test will initially return false in IE
     var result;
-    if (hasOwnProp(obj, '__proto__')) {
-      if (obj.__proto__ === null) { return (void 0); }
-      result = obj.__proto__.constructor;
+    var proto;
+    if (hasOwnProp(obj, 'proto___')) {
+      proto = obj.proto___;
+      if (proto === null) { return (void 0); }
+      result = isPrototypical(proto) ? proto.constructor : directConstructor(proto);
     } else {
       if (!hasOwnProp(obj, 'constructor')) {
-	result = obj.constructor;
+        result = obj.constructor;
       } else {
-	var oldConstr = obj.constructor;
-	if (!(delete obj.constructor)) { return (void 0); }
-	result = obj.constructor;
-	obj.constructor = oldConstr;
+        var oldConstr = obj.constructor;
+        if (!(delete obj.constructor)) { 
+          fail("Discovery of direct constructors unsupported when the constructor property " +
+              "is not deletable."); 
+        }
+        result = obj.constructor;
+        obj.constructor = oldConstr;
+      }
+      if (typeof result !== 'function' || !(obj instanceof result)) {
+        fail("Discovery of direct constructors for foreign begotten " +
+            "objects not implemented on platforms not supporting __proto__ yet.\n");
       }
       if (result.prototype.constructor === result) {
-	// Memoize, so it'll be faster next time.
-	obj.__proto__ = result.prototype;
+        // Memoize, so it'll be faster next time.
+        obj.proto___ = result.prototype;
       }
     }
     return result;
@@ -673,6 +678,7 @@ var ___;
 
   /** Tests whether the fast-path canRead flag is set. */
   function canRead(obj, name)   { return !!obj[name + '_canRead___']; }
+
   /** Tests whether the fast-path canEnum flag is set. */
   function canEnum(obj, name)   { return !!obj[name + '_canEnum___']; }
   /**
@@ -926,7 +932,7 @@ var ___;
     function result(var_args) {
       if (this !== self) {
           fail('Method ', meth, ' is already attached.\nthis: ',
-               this, '\nself: ', self);
+               this, '\nself: ', self.toSource());
       }
       return meth.apply(self, arguments);
     }
@@ -1255,7 +1261,7 @@ var ___;
    */
   function readPub(obj, name) {
     if ((typeof name) === 'number') {
-      if (typeof obj === 'string') {
+      if (typeof obj === 'sting') {
         // In partial anticipation of ES3.1. 
         // TODO(erights): Once ES3.1 settles, revisit this and 
         // correctly implement the agreed semantics.
@@ -1740,10 +1746,12 @@ var ___;
   /**
    * Makes a new empty object that directly inherits from parent.
    */
-  function primBeget(parent) {
+  function primBeget(proto) {
     function F() {}
-    F.prototype = parent;
-    return new F();
+    F.prototype = proto;
+    var result = new F();
+    result.proto___ = proto;
+    return result;
   }
 
   /**
@@ -2566,6 +2574,7 @@ var ___;
     enforceNat: enforceNat,
 
     // walking prototype chain, checking JSON containers
+    directConstructor: directConstructor,
     getFuncCategory: getFuncCategory,
     isDirectInstanceOf: isDirectInstanceOf,
     isInstanceOf: isInstanceOf,
@@ -2674,8 +2683,6 @@ var ___;
     getLogFunc: getLogFunc,
     setLogFunc: setLogFunc,
 
-    // walking prototype chain, checking JSON containers
-    directConstructor: directConstructor,
     isFrozen: isFrozen,
     primFreeze: primFreeze,
 
