@@ -50,8 +50,9 @@ The {{{HtmlCompiler}}} which extracts {{{script}}} tags from HTML wraps the scri
 {{{
   try {
     ...
-  } catch (ex) {
-    ___.getNewModuleHandler().handleUncaughtException(ex, onerror, 'file.html', lineNumber);
+  } catch (ex___) {
+    ___.getNewModuleHandler().handleUncaughtException(
+        ex___, onerror, 'file.html', lineNumber);
   }
 }}}
 If {{{onerror}}} is defined locally as by {{{var onerror = null;}}} or {{{function onerror(message, sourceUri, lineNumber) {...} }}}, {{{onerror}}} will be that version.  Otherwise, {{{onerror}}} will end up being loaded from {{{IMPORTS___}}} before any of the {{{try}}} blocks can be entered.  This latter case allows a container to define a default implementation.
