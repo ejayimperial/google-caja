@@ -145,14 +145,14 @@ var cajole = (function () {
       var stackTrace = document.getElementById('caja-stacks' + uiSuffix)
       stackTrace.style.display = 'none';
 
-      // Set up the module handler
-      ___.getNewModuleHandler().setImports(imports);
       // Provide an object into which the module can export its public API.
       imports.exports = {};
       if (document.getElementById("VALIJA_MODE" + uiSuffix).checked) {
         imports.valija = valija;
-        imports.outers = {};
+        imports.outers = {caja: caja};
       }
+      // Set up the module handler
+      ___.getNewModuleHandler().setImports(imports);
 
       // Load the script
       try {
