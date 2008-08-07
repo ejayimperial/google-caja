@@ -61,8 +61,8 @@ If the container wants to maintain any invariants it can provide a new module ha
 The default {{{handleUncaughtException}}} implementation does
   # Call {{{___.tameException(ex)}}} which will rethrow the exception.  This avoids trapping uncatchable exceptions such as stack overflows.
   # Extract the error message from {{{ex}}} ensuring it is a string.
-  # {{{var result = (typeof onerror) === 'function' ? onerror(message, sourceUri, lineNumber) : onerror !== null;
-  # If {{[result !== false}}} invoke {{{caja.log}}} with the error message, sourceUri, and lineNumber.
+  # {{{var result = (typeof onerror) === 'function' ? onerror(message, sourceUri, lineNumber) : onerror !== null;}}}
+  # If {{{result !== false}}} invoke {{{caja.log}}} with the error message, sourceUri, and lineNumber.
 
 In debug mode, {{{caja-debugmode.js}}} will wrap {{{getNewModuleHandler}}} to extract a more accurate error position from the debug stack, and will dump the entire stack to the console if possible.
 
