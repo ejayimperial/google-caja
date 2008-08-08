@@ -1911,6 +1911,15 @@ var ___;
     grantCall(constr.prototype, name);
   }
 
+  /**
+   * Whitelist constr.prototype[name] as a method that can be called
+   * on instances of constr.
+   */
+  function grantXo4a(constr, name) {
+    xo4a(constr.prototype[name], name);
+    grantCall(constr.prototype, name);
+  }
+
   function useGetAndCallHandlers(constr, name, func) {
     useGetHandler(constr, name, function() { return func; });
     useCallHandler(constr, name, func);
@@ -1986,7 +1995,7 @@ var ___;
   /// Object
 
   ctor(Object, (void 0), 'Object');
-  all2(grantMethod, Object, [
+  all2(grantXo4a, Object, [
     'toString', 'toLocaleString', 'valueOf', 'isPrototypeOf'
   ]);
   grantRead(Object.prototype, 'length');
