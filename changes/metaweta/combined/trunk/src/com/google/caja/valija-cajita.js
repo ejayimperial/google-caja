@@ -58,7 +58,7 @@
  * @author erights@gmail.com
  */
 
-exports.valija = (function() {
+var valija = (function() {
 
   /**
    * Simulates a monkey-patchable <tt>Object.prototype</tt>.
@@ -171,7 +171,7 @@ exports.valija = (function() {
    * Handle Valija <tt><i>obj</i>[<i>name</i>]</tt>.
    * <p>
    */
-  function read(obj, name) {
+  function read(obj, name) {            caja.log("READING:\n"+obj.toString() + "\n" + name);
     if (typeof obj === 'function') {
       var shadow = getShadow(name);
       if (name in shadow) {
@@ -361,5 +361,5 @@ exports.valija = (function() {
 // loader, in which case the top level "var valija = ..." will export
 // 'valija' globally.
 if (typeof loader !== 'undefined') {
-  loader.provide('com.google.caja.valija',valija);
+  loader.provide('com.google.caja.valija', valija);
 }

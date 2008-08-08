@@ -82,14 +82,11 @@
     <script type="text/javascript">
     (function(){
       var imports = ___.getNewModuleHandler().getImports();
-      imports.exports = {};
+      imports.loader = {provide:___.simpleFunc(function(p, v){valija=v;})};
       imports.outers = {caja: caja};
     })();
     </script>
     <script type="text/javascript" src="valija-cajoled.js"></script>
-    <script type="text/javascript">
-    valija = ___.getNewModuleHandler().getImports().exports.valija;
-    </script>
   </head>
 
 

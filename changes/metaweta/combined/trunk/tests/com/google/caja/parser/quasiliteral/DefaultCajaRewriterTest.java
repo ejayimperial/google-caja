@@ -2362,7 +2362,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "___.xo4a(" +
         "    function () {" +
         "      var t___ = this;" +
-        "      ___.canReadPubRev(\'foo\', t___);" +
+        "      ___.inPub(\'foo\', t___);" +
         "    });");
     checkFails(
         "function () { for (var k in this); };",

@@ -920,7 +920,7 @@ var ___;
     if (self === null) {
       fail('Internal: may not attach to null: ', meth);
     }
-    if (!isMethod(meth)  && !isSimpleFunc(meth)) {
+    if (!isMethod(meth)  && !isXo4aFunc(meth)) {
       fail('Internal: attach should not see non-methods: ', meth);
     }
     if (meth.___ATTACHMENT___ === self) {
@@ -1246,10 +1246,21 @@ var ___;
   }
 
   /**
-   * Just like canReadPub() but with the arguments reversed.
+   * Implements <tt>name in obj</tt>
    */
-  function canReadPubRev(name, obj) {
-    return canReadPub(obj, name);
+  function inPub(name, obj) {
+    if (canReadPub(obj, name)) {
+      return true;
+    }
+    var handlerName = name + '_getter___';
+    if (handlerName in obj) {
+      return true;
+    }
+    handlerName = name + '_handler___';
+    if (handlerName in obj) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1906,17 +1917,18 @@ var ___;
    * Whitelist constr.prototype[name] as a method that can be called
    * on instances of constr.
    */
-  function grantMethod(constr, name) {
-    method(constr.prototype[name], name);
-    grantCall(constr.prototype, name);
+  function grantXo4a(obj, name) {
+    xo4a(obj[name], name);
+    grantCall(obj, name);
+    grantRead(obj, name);
   }
 
   /**
    * Whitelist constr.prototype[name] as a method that can be called
    * on instances of constr.
    */
-  function grantXo4a(constr, name) {
-    xo4a(constr.prototype[name], name);
+  function grantMethod(constr, name) {
+    method(constr.prototype[name], name);
     grantCall(constr.prototype, name);
   }
 
@@ -1995,7 +2007,7 @@ var ___;
   /// Object
 
   ctor(Object, (void 0), 'Object');
-  all2(grantXo4a, Object, [
+  all2(grantXo4a, Object.prototype, [
     'toString', 'toLocaleString', 'valueOf', 'isPrototypeOf'
   ]);
   grantRead(Object.prototype, 'length');
@@ -2054,6 +2066,9 @@ var ___;
 
   ctor(Array, Object, 'Array');
   grantSimpleFunc(Array, 'slice');
+  all2(grantXo4a, Array.prototype, [
+    'toString'
+  ]);
   all2(grantMethod, Array, [
     'concat', 'join', 'slice', 'indexOf', 'lastIndexOf'
   ]);
@@ -2724,7 +2739,7 @@ var ___;
 
     // Accessing properties
     canReadProp: canReadProp,     readProp: readProp,
-    canReadPubRev: canReadPubRev,
+    inPub: inPub,
     canEnumProp: canEnumProp,
     canCallProp: canCallProp,     callProp: callProp,
     canSetProp: canSetProp,       setProp: setProp,

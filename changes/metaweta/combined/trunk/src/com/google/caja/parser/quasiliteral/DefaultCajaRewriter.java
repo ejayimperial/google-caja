@@ -2681,12 +2681,12 @@ public class DefaultCajaRewriter extends Rewriter {
           synopsis="Is a public property present on the object?",
           reason="",
           matches="@i in @o",
-          substitutes="___.canReadPubRev(@i, @o)")
+          substitutes="___.inPub(@i, @o)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
           return substV(
-              "___.canReadPubRev(@i, @o)",
+              "___.inPub(@i, @o)",
               "i", expand(bindings.get("i"), scope, mq),
               "o", expand(bindings.get("o"), scope, mq));
         }

@@ -37,6 +37,7 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
   }
 
   public void testIt() throws Exception {
+/*
     assertConsistent("1;");
     assertConsistent("var a=0; a;");
     assertConsistent("function f(){ this.x = 1; } f; var g = new f(); g.x;");
@@ -52,8 +53,8 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
         "f.call(h);" +
         "h.y = g.x;" +
         "h.x() + h.y();");
-
-//    assertConsistent("[].toString();");
+//*/
+    assertConsistent("[3,2,1].sort().toString();");
     assertConsistent("for (var i=0; i<10; i++) {} i;");
     assertConsistent("var x_=1; x_;");
     
@@ -91,10 +92,8 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
     Statement cajitaTree = (Statement)rewriteStatements(valijaTree);
 System.err.println(render(cajitaTree));
     setRewriter(defaultCajaRewriter);    
-    String cajoledJs = render(
-        rewriteStatements(
-            js(fromResource("../../valija-cajita.js")),
-            cajitaTree));
+    String cajoledJs = render(rewriteStatements(cajitaTree));
+    String valijaCajoled = render(rewriteStatements(js(fromResource("../../valija-cajita.js"))));
 System.err.println(cajoledJs);
     assertNoErrors();
 
@@ -106,23 +105,33 @@ System.err.println(cajoledJs);
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/log-to-console.js"),
         new RhinoTestBed.Input(
+            "var valija = {};\n" +
+            "var testImports = ___.copy(___.sharedImports);\n" +
+            "testImports.loader = {provide:___.simpleFunc(function(p,v){valija=v;})};\n" +
+            "testImports.outers = {caja: caja};\n" +
+            "___.getNewModuleHandler().setImports(testImports);",
+            getName() + "valija-setup"),
+        new RhinoTestBed.Input(
+            "___.loadModule(function (___, IMPORTS___) {" + valijaCajoled + "\n});",
+            "valija-cajoled"),
+        new RhinoTestBed.Input(
             // Initialize the output field to something containing a unique
             // object value that will not compare identically across runs.
             // Set up the imports environment.
-            "var testImports = ___.copy(___.sharedImports);\n" +
+            "testImports = ___.copy(___.sharedImports);\n" +
             "testImports.unittestResult___ = {\n" +
             "    toString: function () { return '' + this.value; },\n" +
             "    value: '--NO-RESULT--'\n" +
             "};\n" +
-            "testImports.outers = { Date: Date };\n" +
+            "testImports.valija = valija;\n" +
             "___.getNewModuleHandler().setImports(testImports);",
             getName() + "-test-fixture"),
-        new RhinoTestBed.Input(pre, getName()),
+        new RhinoTestBed.Input(pre, getName() + "-pre"),
         // Load the cajoled code.
         new RhinoTestBed.Input(
             "___.loadModule(function (___, IMPORTS___) {" + cajoledJs + "\n});",
             getName() + "-cajoled"),
-        new RhinoTestBed.Input(post, getName()),
+        new RhinoTestBed.Input(post, getName() + "-post"),
         // Return the output field as the value of the run.
         new RhinoTestBed.Input("unittestResult___;", getName()));
 
