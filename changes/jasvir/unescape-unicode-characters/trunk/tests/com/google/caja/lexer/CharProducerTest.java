@@ -468,6 +468,10 @@ public final class CharProducerTest extends TestCase {
         CharProducer.Factory.fromHtmlAttribute(
             charProducerFromString("&AMP")),
             "&AMP");
+    testProducer(
+        CharProducer.Factory.fromHtmlAttribute(
+            charProducerFromString("&AmP;")),
+            "&");
 
 
     testProducer(

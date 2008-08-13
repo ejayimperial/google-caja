@@ -257,9 +257,12 @@ public interface CharProducer extends Closeable {
         } else {
           StringBuilder sb = new StringBuilder(end);
           for (int i = 0; i < end; ++i) {
-            sb.append(Character.toLowerCase((char) peek(i)));
+            sb.append((char) peek(i));
           }
           Character c = ENTITY_TABLE.get(sb.toString());
+          if (null == c) {
+            c = ENTITY_TABLE.get(sb.toString().toLowerCase());
+          }
           if (null == c) { return ch; }
           consume(end + 1);
           return c.charValue();
@@ -270,6 +273,10 @@ public interface CharProducer extends Closeable {
     private static final Map<String, Character> ENTITY_TABLE =
         new HashMap<String, Character>();
     static {
+      /* XML 1.0 */
+      ENTITY_TABLE.put("apos", '\'');
+
+      /* HTML4 entities */
       ENTITY_TABLE.put("nbsp", Character.valueOf('\u00a0'));
       ENTITY_TABLE.put("iexcl", Character.valueOf('\u00a1'));
       ENTITY_TABLE.put("cent", Character.valueOf('\u00a2'));
@@ -548,7 +555,8 @@ public interface CharProducer extends Closeable {
       ENTITY_TABLE.put("permil", Character.valueOf('\u2030'));
       ENTITY_TABLE.put("lsaquo", Character.valueOf('\u2039'));
       ENTITY_TABLE.put("rsaquo", Character.valueOf('\u203a'));
-      ENTITY_TABLE.put("euro", Character.valueOf('\u20ac'));    }
+      ENTITY_TABLE.put("euro", Character.valueOf('\u20ac'));
+    }
   }
 
   /**
