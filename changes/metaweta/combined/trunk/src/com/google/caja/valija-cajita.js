@@ -75,7 +75,6 @@ var valija = (function() {
    * inherited disfunction. 
    */
   var DisfunctionPrototype = caja.beget(ObjectPrototype);
-  DisfunctionPrototype.name = "dfp";
 
   var Disfunction = caja.beget(DisfunctionPrototype);
   Disfunction.prototype = DisfunctionPrototype,
@@ -171,7 +170,7 @@ var valija = (function() {
    * Handle Valija <tt><i>obj</i>[<i>name</i>]</tt>.
    * <p>
    */
-  function read(obj, name) {            caja.log("READING:\n"+obj.toString() + "\n" + name);
+  function read(obj, name) {
     if (typeof obj === 'function') {
       var shadow = getShadow(name);
       if (name in shadow) {

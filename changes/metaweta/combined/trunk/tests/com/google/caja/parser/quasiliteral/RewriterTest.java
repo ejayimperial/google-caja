@@ -17,7 +17,6 @@ package com.google.caja.parser.quasiliteral;
 import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.parser.ParseTreeNode;
-import junit.framework.AssertionFailedError;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,24 +59,13 @@ public class RewriterTest extends RewriterTestCase {
         null);
   }
 
-  public void testAssertConsistent() throws Exception {
-    try {
-      // A value that cannot be consistent across invocations.
-      assertConsistent("({})");
-    } catch (AssertionFailedError e) {
-      // Pass
-      return;
-    }
-    fail("assertConsistent not working");
-  }
-
   @Override
   protected Object executePlain(String program) {
-    return new Object();  // Placeholder to allow assertConsistent() to work
+    throw new UnsupportedOperationException("Implemented in subclasses");
   }
 
   @Override
   protected Object rewriteAndExecute(String pre, String program, String post) {
-    return new Object();  // Placeholder to allow assertConsistent() to work
+    throw new UnsupportedOperationException("Implemented in subclasses");
   }
 }

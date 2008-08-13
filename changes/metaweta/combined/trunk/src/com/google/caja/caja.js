@@ -2148,8 +2148,9 @@ var ___;
   grantSimpleFunc(Date, 'parse');
   grantSimpleFunc(Date, 'UTC');
 
+  all2(grantXo4a, Date.prototype , ['toString']);
   all2(grantMethod, Date, [
-    'toDateString', 'toTimeString', 'toUTCString',
+    'toDateString','toTimeString', 'toUTCString',
     'toLocaleString', 'toLocaleDateString', 'toLocaleTimeString',
     'toISOString',
     'getDay', 'getUTCDay', 'getTimezoneOffset',

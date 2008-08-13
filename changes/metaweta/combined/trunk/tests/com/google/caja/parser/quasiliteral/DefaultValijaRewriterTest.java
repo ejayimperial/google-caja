@@ -25,7 +25,7 @@ import com.google.caja.util.RhinoTestBed;
  */
 public class DefaultValijaRewriterTest extends RewriterTestCase {
 
-  protected Rewriter defaultValijaRewriter = new DefaultValijaRewriter(false);
+  protected Rewriter defaultValijaRewriter = new DefaultValijaRewriter(true);
   protected Rewriter defaultCajaRewriter = new DefaultCajaRewriter(false, false);
   protected Rewriter innocentCodeRewriter = new InnocentCodeRewriter(false);
 
@@ -53,17 +53,17 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
         "f.call(h);" +
         "h.y = g.x;" +
         "h.x() + h.y();");
-//*/
     assertConsistent("[3,2,1].sort().toString();");
     assertConsistent("for (var i=0; i<10; i++) {} i;");
     assertConsistent("var x_=1; x_;");
-    
-//    assertConsistent("(new Date()).toString();");
-
+    assertConsistent("({x:1,y:2}).toString();");
+  //*/
+    //assertConsistent("''+new Date;");
+    /*
     assertConsistent("var a={x:1}; delete a.x; a.x;");
     assertConsistent("var a={x:1}; ''+ ('x' in a) + ('y' in a);");
-
-//    assertConsistent("for (var i in {x:1, y:true}) {} i;");
+//*/
+    assertConsistent("str=''; for (var i in {x:1, y:true}) {str+=i;} str;");
     checkFails("var o={p_:1}; o.p_;", "Key may not end in \"_\"");
 //*/
   }
@@ -92,7 +92,9 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
     Statement cajitaTree = (Statement)rewriteStatements(valijaTree);
 System.err.println(render(cajitaTree));
     setRewriter(defaultCajaRewriter);    
-    String cajoledJs = render(rewriteStatements(cajitaTree));
+    String cajoledJs = "___.loadModule(function (___, IMPORTS___) {\n" + 
+        render(rewriteStatements(cajitaTree)) + 
+        "\n});";
     String valijaCajoled = render(rewriteStatements(js(fromResource("../../valija-cajita.js"))));
 System.err.println(cajoledJs);
     assertNoErrors();
@@ -108,7 +110,7 @@ System.err.println(cajoledJs);
             "var valija = {};\n" +
             "var testImports = ___.copy(___.sharedImports);\n" +
             "testImports.loader = {provide:___.simpleFunc(function(p,v){valija=v;})};\n" +
-            "testImports.outers = {caja: caja};\n" +
+            "testImports.outers = ___.copy(___.sharedImports);\n" +
             "___.getNewModuleHandler().setImports(testImports);",
             getName() + "valija-setup"),
         new RhinoTestBed.Input(
@@ -128,9 +130,7 @@ System.err.println(cajoledJs);
             getName() + "-test-fixture"),
         new RhinoTestBed.Input(pre, getName() + "-pre"),
         // Load the cajoled code.
-        new RhinoTestBed.Input(
-            "___.loadModule(function (___, IMPORTS___) {" + cajoledJs + "\n});",
-            getName() + "-cajoled"),
+        new RhinoTestBed.Input(cajoledJs, getName() + "-cajoled"),
         new RhinoTestBed.Input(post, getName() + "-post"),
         // Return the output field as the value of the run.
         new RhinoTestBed.Input("unittestResult___;", getName()));

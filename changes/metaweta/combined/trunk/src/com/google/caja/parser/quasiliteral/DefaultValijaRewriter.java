@@ -162,9 +162,10 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Get the keys, then iterate over them.",
           reason="",
           matches="for (var @k in @o) @ss;",
-          substitutes="var @t1 = valija.keys(@o);" +
-                      "for (var @t2 = 0; @t2 < @t1.length; @t2++) {" +
-                      "  @k = @t1[@t2];" +
+          substitutes="<approx>var t1, t2;" +
+                      "@t1 = valija.keys(@o);" +
+                      "for (@t2 = 0; @t2 < @t1.length; @t2++) {" +
+                      "  var @k = @t1[@t2];" +
                       "  @ss;" +
                       "}")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -301,13 +302,13 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Read @'p' from @o or @o's POE table",
           reason="",
           matches="@o.@p",
-          substitutes="<approx> valija.read(@o, @'p')")
+          substitutes="<approx> valija.read(@o, @'p')[@'p']")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("@o.@p", node, bindings)) {
           Reference p = (Reference) bindings.get("p");
           return substV(
-              "valija.read(@o, @rp)",
+              "valija.read(@o, @rp)[@rp]",
               "o", expand(bindings.get("o"), scope, mq),
               "rp", toStringLiteral(p));
         }
