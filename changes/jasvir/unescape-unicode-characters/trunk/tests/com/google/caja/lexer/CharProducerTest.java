@@ -472,6 +472,14 @@ public final class CharProducerTest extends TestCase {
         CharProducer.Factory.fromHtmlAttribute(
             charProducerFromString("&AmP;")),
             "&");
+    testProducer(
+        CharProducer.Factory.fromHtmlAttribute(
+            charProducerFromString("&Alpha;")),
+            ""+Character.valueOf('\u0391'));
+    testProducer(
+        CharProducer.Factory.fromHtmlAttribute(
+            charProducerFromString("&alpha;")),
+            ""+Character.valueOf('\u03b1'));
 
 
     testProducer(
