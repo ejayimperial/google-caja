@@ -277,6 +277,7 @@ var valija = (function() {
     if (canReadRev(name, outers)) {
       return read(outers, name);
     } else {
+      caja.log(outers[name]);
       throw new ReferenceError('not found: ' + name);
     }
   }

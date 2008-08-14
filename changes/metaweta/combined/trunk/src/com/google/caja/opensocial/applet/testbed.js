@@ -149,7 +149,7 @@ var cajole = (function () {
       imports.exports = {};
       if (document.getElementById("VALIJA_MODE" + uiSuffix).checked) {
         imports.valija = valija;
-        imports.outers = {caja: caja};
+        imports.outers = imports;
       }
       // Set up the module handler
       ___.getNewModuleHandler().setImports(imports);
