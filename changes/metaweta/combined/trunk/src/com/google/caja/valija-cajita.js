@@ -305,6 +305,7 @@ var valija = (function() {
       result.push(name);
     }
     for (name in getSupplement(obj)) {
+      // TODO(erights): fix this once DONTENUM properties are better settled in ES-Harmony.
       if (!(name in obj) && name !== 'constructor') {
         result.push(name);
       }

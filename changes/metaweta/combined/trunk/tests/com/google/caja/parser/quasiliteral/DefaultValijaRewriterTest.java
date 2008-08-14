@@ -36,13 +36,16 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
     setRewriter(defaultValijaRewriter);
   }
 
-  public void testIt() throws Exception {
-/*
+  public void testConstant() throws Exception {
     assertConsistent("1;");
+  }
+  public void testInit() throws Exception {
     assertConsistent("var a=0; a;");
-//*/
+  }
+  public void testNew() throws Exception {
     assertConsistent("function f(){ this.x = 1; } f; var g = new f(); g.x;");
-/*
+  }
+  public void testClosure() throws Exception {
     assertConsistent(
         "function f(){" +
         "  var y=2; " +
@@ -55,19 +58,31 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
         "f.call(h);" +
         "h.y = g.x;" +
         "h.x() + h.y();");
+  }
+  public void testArray() throws Exception {
     assertConsistent("[3,2,1].sort().toString();");
-    assertConsistent("for (var i=0; i<10; i++) {} i;");
-    assertConsistent("var x_=1; x_;");
+  }
+  public void testObject() throws Exception {
     assertConsistent("({x:1,y:2}).toString();");
-//*/
-/*
-    assertConsistent("''+new Date;");
-    assertConsistent("var a={x:1}; delete a.x; a.x;");
-    assertConsistent("var a={x:1}; ''+ ('x' in a) + ('y' in a);");
-    assertConsistent("var x=3+4; x;");
-    assertConsistent("str=''; for (var i in {x:1, y:true}) {str+=i;} str;");
+  }
+  public void testFor() throws Exception {
+    assertConsistent("for (var i=0; i<10; i++) {} i;");
+  }
+  public void testUnderscore() throws Exception {
+    assertConsistent("var x_=1; x_;");
     checkFails("var o={p_:1}; o.p_;", "Key may not end in \"_\"");
-//*/
+  }
+  public void testDate() throws Exception {
+    //assertConsistent("''+new Date;");
+  }
+  public void testDelete() throws Exception {
+    assertConsistent("var a={x:1}; delete a.x; a.x;");
+  }
+  public void testIn() throws Exception {
+    assertConsistent("var a={x:1}; ''+ ('x' in a) + ('y' in a);");
+  }
+  public void testForIn() throws Exception {
+    assertConsistent("str=''; for (var i in {x:1, y:true}) {str+=i;} str;");
   }
 
   @Override
