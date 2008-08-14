@@ -17,9 +17,6 @@ package com.google.caja.util;
 import com.google.caja.parser.js.StringLiteral;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,8 +30,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import junit.framework.Assert;
+import junit.framework.AssertionFailedError;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
@@ -50,34 +50,35 @@ public class RhinoTestBed {
    * result.
    * If dumpJsFile is not null, also put all the javascript in that file.
    */
-  public static Object runJs(final String dumpJsFile, Input... inputs)
-      throws IOException {
-    Context context = Context.enter();
+  public static Object runJs(Input... inputs) throws IOException {
+    Context context = ContextFactory.getGlobal().enterContext();
+    // Don't bother to compile tests to a class file.  Removing this causes
+    // a 5x slow-down in Rhino-heavy tests.
+    context.setOptimizationLevel(-1);
     try {
       ScriptableObject globalScope = context.initStandardObjects();
       Object stderr = Context.javaToJS(System.err, globalScope);
       ScriptableObject.putProperty(globalScope, "stderr", stderr);
       Object result = null;
 
-      if (dumpJsFile != null) {
-        String allInputs = "";
-        for (Input input : inputs) {
-          allInputs += readReader(input.input);
-        }
-        writeFile(new File(dumpJsFile), allInputs);
-        Input input = new Input(new StringReader(allInputs), "all");
-        result = context.evaluateReader(
-            globalScope, input.input, input.source, 1, null);
-      } else {
-        for (Input input : inputs) {
+      for (Input input : inputs) {
+        String js = readReader(input.input);
+        input.input.close();
+        try {
           result = context.evaluateReader(
-              globalScope, input.input, input.source, 1, null);
+              globalScope, new StringReader(js), input.source, 1, null);
+        } catch (RhinoException e) {
+          if (e.getCause() instanceof AssertionFailedError) {
+            throw (AssertionFailedError) e.getCause();
+          }
+          System.err.println(input.source + ": [[[");
+          System.err.println(js);
+          System.err.println("]]]");
+          Assert.fail(e.details() + "\n" + e.getScriptStackTrace());
+          return null;
         }
       }
       return result;
-    } catch (org.mozilla.javascript.JavaScriptException e) {
-      Assert.fail(e.details() + "\n" + e.getScriptStackTrace());
-      return null;
     } finally {
       Context.exit();
     }
@@ -125,7 +126,7 @@ public class RhinoTestBed {
 
 
     // Execute for side-effect
-    runJs(null, inputs.toArray(new Input[0]));
+    runJs(inputs.toArray(new Input[0]));
   }
 
   /** An input javascript file. */
@@ -169,31 +170,6 @@ public class RhinoTestBed {
     }
 
     return w.toString();
-  }
-
-  private static void writeFile(File path, String contents) {
-    Writer w;
-    try {
-      w = new BufferedWriter(new FileWriter(path, false));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      w.write(contents);
-      if (contents.length() > 0 && !contents.endsWith("\n")) {
-        w.write("\n");
-      }
-    } catch (IOException e)  {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      w.flush();
-      w.close();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static void extractScriptsFromHtml(
