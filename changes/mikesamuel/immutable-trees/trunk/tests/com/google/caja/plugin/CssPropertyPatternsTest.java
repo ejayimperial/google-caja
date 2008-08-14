@@ -110,6 +110,13 @@ public class CssPropertyPatternsTest extends CajaTestCase {
         "\"@import\"", "\"!important\"");
   }
 
+  public void testNumbers() throws Exception {
+    String leftSignature = "<length> | <percentage> | auto | inherit";
+    assertMatches(
+        leftSignature, "0", "10px", "-10.5px", "0.125em", "+10px", "110%");
+    assertDoesNotMatch(leftSignature, ".in", "-px", "em");
+  }
+
   private void assertPattern(String sig, String golden) {
     String actual = toPattern(sig);
     assertEquals(actual, golden, actual);
@@ -118,7 +125,6 @@ public class CssPropertyPatternsTest extends CajaTestCase {
   private void assertMatches(String sig, String... candidates)
       throws Exception {
     RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(
             ""
             + "var pattern = " + toPattern(sig) + ";"
@@ -134,7 +140,6 @@ public class CssPropertyPatternsTest extends CajaTestCase {
   private void assertDoesNotMatch(String sig, String... candidates)
       throws Exception {
     RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(
             ""
             + "var pattern = " + toPattern(sig) + ";"

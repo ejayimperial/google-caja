@@ -1531,6 +1531,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
   public void testSetReadModifyWriteLocalVar() throws Exception {
     checkFails("x__ *= 2;", "");
+    checkFails("x *= y__;", "");
     checkSucceeds(
         "var x; x += g[0];",
         weldPrelude("g")
@@ -1564,6 +1565,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
     assertConsistent("var x = 3; x *= 2;");
     assertConsistent("var x = 1; x += 7;");
+    assertConsistent("var x = 1; x /= '2';");
     assertConsistent("var o = { x: 'a' }; o.x += 'b';");
 
     EnumSet<Operator> ops = EnumSet.of(
@@ -1597,7 +1599,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var x0___;" +
         "var x1___;" +
         "x0___ = g," +
-        "x1___ = ___.readPub(x0___, 0) - 0," +
+        "x1___ = +___.readPub(x0___, 0)," +
         "___.setPub(x0___, 0, x1___ + 1)," +
         "x1___;");
     checkSucceeds(
@@ -1606,7 +1608,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var x0___;" +
         "var x1___;" +
         "x0___ = g," +
-        "x1___ = ___.readPub(x0___, 0) - 0," +
+        "x1___ = +___.readPub(x0___, 0)," +
         "___.setPub(x0___, 0, x1___ - 1)," +
         "x1___;");
     checkSucceeds(
@@ -1618,6 +1620,11 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
     assertConsistent(
         "var x = 2;" +
+        "var arr = [--x, x, x--, x, ++x, x, x++, x];" +
+        "assertEquals('1,1,1,0,1,1,1,2', arr.join(','));" +
+        "arr.join(',');");
+    assertConsistent(
+        "var x = '2';" +
         "var arr = [--x, x, x--, x, ++x, x, x++, x];" +
         "assertEquals('1,1,1,0,1,1,1,2', arr.join(','));" +
         "arr.join(',');");
@@ -1649,7 +1656,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "var x0___;" +
         "var x1___;" +
         "x0___ = o," +
-        "x1___ = ___.readPub(x0___, 'x') - 0," +
+        "x1___ = +___.readPub(x0___, 'x')," +
         "___.setPub(x0___, 'x', x1___ + 1)," +
         "x1___;");
 
@@ -2844,12 +2851,53 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkSucceeds(fromResource("listfriends.js"));
   }
 
+  public void testRecursionOnIE() throws Exception {
+    ParseTreeNode input = js(fromString(
+        ""
+        + "var x = 1;\n"
+        + "var f = function x(b) { return b ? 1 : x(true); };\n"
+        + "assertEquals(2, x + f());"));
+    ParseTreeNode cajoled = newRewriter().expand(input, mq);
+    assertNoErrors();
+    ParseTreeNode emulated = emulateIE6FunctionConstructors(cajoled);
+    executePlain(
+        ""
+        + "___.getNewModuleHandler().getImports().assertEquals\n"
+        + "    = ___.simpleFrozenFunc(assertEquals);\n"
+        + "___.loadModule(function (___, IMPORTS___) {\n"
+        + render(emulated)
+        + "});").toString();
+  }
+
+  public void testAssertConsistent() throws Exception {
+    try {
+      // A value that cannot be consistent across invocations.
+      assertConsistent("({})");
+    } catch (AssertionFailedError e) {
+      // Pass
+      return;
+    }
+    fail("assertConsistent not working");
+  }
+
+  public void testIE_Emulation() throws Exception {
+    ParseTreeNode input = js(fromString(
+        ""
+        + "void (function x() {});\n"
+        + "assertEquals('function', typeof x);\n"));
+    assertNoErrors();
+    ParseTreeNode emulated = emulateIE6FunctionConstructors(input);
+    executePlain(
+        "___.loadModule(function (___, IMPORTS___) {"
+        + render(emulated)
+        + "});");
+  }
+
   @Override
   protected Object executePlain(String caja) throws IOException {
     mq.getMessages().clear();
     // Make sure the tree assigns the result to the unittestResult___ var.
     return RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
@@ -2869,7 +2917,6 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     assertNoErrors();
 
     Object result = RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
