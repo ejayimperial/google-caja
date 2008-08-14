@@ -132,7 +132,7 @@ public class DefaultCajaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
-          name="syntheticReferemce",
+          name="syntheticReference",
           synopsis="Pass through calls where the method name is synthetic.",
           reason="A synthetic method may not be marked callable.",
           matches="/* synthetic */ @ref",
