@@ -305,8 +305,7 @@ var valija = (function() {
       result.push(name);
     }
     for (name in getSupplement(obj)) {
-      if (!(name in obj)) {
-  
+      if (!(name in obj) && name !== 'constructor') {
         result.push(name);
       }
     }
@@ -329,7 +328,7 @@ var valija = (function() {
       // TODO(erights): I suspect read(obj,'constructor') isn't good
       // enough. Does caja.js need to expose ___.directConstructor() as
       // caja.directConstructor()?
-      var ctor = read(obj, 'constructor');
+      var ctor = caja.directConstructor(obj);
       return getPrototypeOf(ctor);
     }
   }

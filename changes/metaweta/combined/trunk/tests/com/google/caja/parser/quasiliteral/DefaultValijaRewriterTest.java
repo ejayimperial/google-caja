@@ -40,7 +40,9 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
 /*
     assertConsistent("1;");
     assertConsistent("var a=0; a;");
+//*/
     assertConsistent("function f(){ this.x = 1; } f; var g = new f(); g.x;");
+/*
     assertConsistent(
         "function f(){" +
         "  var y=2; " +
@@ -57,12 +59,12 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
     assertConsistent("for (var i=0; i<10; i++) {} i;");
     assertConsistent("var x_=1; x_;");
     assertConsistent("({x:1,y:2}).toString();");
-  //*/
-    //assertConsistent("''+new Date;");
-    /*
+//*/
+/*
+    assertConsistent("''+new Date;");
     assertConsistent("var a={x:1}; delete a.x; a.x;");
     assertConsistent("var a={x:1}; ''+ ('x' in a) + ('y' in a);");
-//*/
+    assertConsistent("var x=3+4; x;");
     assertConsistent("str=''; for (var i in {x:1, y:true}) {str+=i;} str;");
     checkFails("var o={p_:1}; o.p_;", "Key may not end in \"_\"");
 //*/
@@ -75,7 +77,6 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
     Statement innocentTree = (Statement)rewriteStatements(js(fromString(caja, is)));
     // Make sure the tree assigns the result to the unittestResult___ var.
     return RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(render(innocentTree), getName() + "-uncajoled"));
@@ -100,7 +101,6 @@ System.err.println(cajoledJs);
     assertNoErrors();
 
     Object result = RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),

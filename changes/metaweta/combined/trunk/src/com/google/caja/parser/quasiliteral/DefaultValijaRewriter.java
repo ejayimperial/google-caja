@@ -24,15 +24,19 @@ import java.util.Map;
 import com.google.caja.lexer.Keyword;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
+import com.google.caja.parser.js.AssignOperation;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.Operation;
+import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.RegexpLiteral;
 import com.google.caja.parser.js.StringLiteral;
+import com.google.caja.parser.quasiliteral.Rule.ReadAssignOperands;
 import com.google.caja.reporting.MessageQueue;
 
 /**
@@ -308,7 +312,7 @@ public class DefaultValijaRewriter extends Rewriter {
         if (QuasiBuilder.match("@o.@p", node, bindings)) {
           Reference p = (Reference) bindings.get("p");
           return substV(
-              "valija.read(@o, @rp)[@rp]",
+              "valija.read(@o, @rp)",
               "o", expand(bindings.get("o"), scope, mq),
               "rp", toStringLiteral(p));
         }
@@ -376,6 +380,159 @@ public class DefaultValijaRewriter extends Rewriter {
               "r", expand(bindings.get("r"), scope, mq));
         }
         return NONE;
+      }
+    },
+
+    // TODO(erights): Need a general way to expand readModifyWrite lValues.
+    // For now, we're just picking off a few common special cases as they
+    // come up.
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="setReadModifyWriteLocalVar",
+          synopsis="",
+          reason="",
+          matches="@x @op= @y",  // TODO(mikesamuel): better lower limit
+          substitutes="<approx> @x = @x @op @y")
+      // Handle x += 3 and similar ops by rewriting them using the assignment
+      // delegate, "x += y" => "x = x + y", with deconstructReadAssignOperand
+      // assuring that x is evaluated at most once where that matters.
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof AssignOperation) {
+          AssignOperation aNode = (AssignOperation) node;
+          Operator op = aNode.getOperator();
+          if (op.getAssignmentDelegate() == null) { return NONE; }
+
+          ReadAssignOperands ops = deconstructReadAssignOperand(
+              aNode.children().get(0), scope, mq, false);
+          if (ops == null) { return node; }  // Error deconstructing
+
+          // For x += 3, rhs is (x + 3)
+          Operation rhs = Operation.create(
+              op.getAssignmentDelegate(),
+              ops.getUncajoledLValue(), aNode.children().get(1));
+          rhs.setFilePosition(aNode.children().get(0).getFilePosition());
+          Operation assignment = ops.makeAssignment(rhs);
+          assignment.setFilePosition(aNode.getFilePosition());
+          if (ops.getTemporaries().isEmpty()) {
+            return expand(assignment, scope, mq);
+          } else {
+            return substV(
+                "@tmps, @assignment",
+                "tmps", newCommaOperation(ops.getTemporaries()),
+                "assignment", expand(assignment, scope, mq));
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="setIncrDecr",
+          synopsis="Handle pre and post ++ and --.",
+          // TODO(mikesamuel): better lower bound
+          matches="<approx> ++@x but any {pre,post}{in,de}crement will do",
+          reason="")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (!(node instanceof AssignOperation)) { return NONE; }
+        AssignOperation op = (AssignOperation) node;
+        Expression v = op.children().get(0);
+        ReadAssignOperands ops = deconstructReadAssignOperand(v, scope, mq);
+        if (ops == null) { return node; }
+
+        // TODO(mikesamuel): Figure out when post increments are being
+        // used without use of the resulting value and switch them to
+        // pre-increments.
+        switch (op.getOperator()) {
+          case POST_INCREMENT:
+            if (ops.isSimpleLValue()) {
+              return substV("@v ++", "v", ops.getCajoledLValue());
+            } else {
+              Reference tmpVal = new Reference(
+                  scope.declareStartOfScopeTempVariable());
+              Expression assign = (Expression) expand(
+                  ops.makeAssignment(
+                      (Expression) substV("@tmpVal + 1", "tmpVal", tmpVal)),
+                  scope, mq);
+              return substV(
+                  "  @tmps,"
+                  + "@tmpVal = +@rvalue,"  // Coerce to a number.
+                  + "@assign,"  // Assign value.
+                  + "@tmpVal",
+                  "tmps", newCommaOperation(ops.getTemporaries()),
+                  "tmpVal", tmpVal,
+                  "rvalue", ops.getCajoledLValue(),
+                  "assign", assign);
+            }
+          case PRE_INCREMENT:
+            // We subtract -1 instead of adding 1 since the - operator coerces
+            // to a number in the same way the ++ operator does.
+            if (ops.isSimpleLValue()) {
+              return substV("++@v", "v", ops.getCajoledLValue());
+            } else if (ops.getTemporaries().isEmpty()) {
+              return expand(
+                  ops.makeAssignment(
+                      (Expression) substV("@rvalue - -1",
+                         "rvalue", ops.getUncajoledLValue())),
+                  scope, mq);
+            } else {
+              return substV(
+                  "  @tmps,"
+                  + "@assign",
+                  "tmps", newCommaOperation(ops.getTemporaries()),
+                  "assign", expand(
+                      ops.makeAssignment((Expression)
+                          substV("@rvalue - -1",
+                                 "rvalue", ops.getUncajoledLValue())),
+                      scope, mq));
+            }
+          case POST_DECREMENT:
+            if (ops.isSimpleLValue()) {
+              return substV("@v--", "v", ops.getCajoledLValue());
+            } else {
+              Reference tmpVal = new Reference(
+                  scope.declareStartOfScopeTempVariable());
+              Expression assign = (Expression) expand(
+                  ops.makeAssignment(
+                      (Expression) substV("@tmpVal - 1", "tmpVal", tmpVal)),
+                  scope, mq);
+              return substV(
+                  "  @tmps,"
+                  + "@tmpVal = +@rvalue,"  // Coerce to a number.
+                  + "@assign,"  // Assign value.
+                  + "@tmpVal;",
+                  "tmps", newCommaOperation(ops.getTemporaries()),
+                  "tmpVal", tmpVal,
+                  "rvalue", ops.getCajoledLValue(),
+                  "assign", assign);
+            }
+          case PRE_DECREMENT:
+            if (ops.isSimpleLValue()) {
+              return substV("--@v", "v", ops.getCajoledLValue());
+            } else if (ops.getTemporaries().isEmpty()) {
+              return expand(
+                  ops.makeAssignment(
+                      (Expression) substV(
+                          "@rvalue - 1", "rvalue",
+                          ops.getUncajoledLValue())),
+                  scope, mq);
+            } else {
+              return substV(
+                  "  @tmps,"
+                  + "@assign",
+                  "tmps", newCommaOperation(ops.getTemporaries()),
+                  "assign", expand(
+                      ops.makeAssignment((Expression)
+                          substV("@rvalue - 1",
+                                 "rvalue", ops.getUncajoledLValue())),
+                      scope, mq));
+            }
+          default:
+            return NONE;
+        }
       }
     },
 

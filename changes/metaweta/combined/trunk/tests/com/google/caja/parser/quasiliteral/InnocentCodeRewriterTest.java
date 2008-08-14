@@ -160,7 +160,6 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
     mq.getMessages().clear();
     // Make sure the tree assigns the result to the unittestResult___ var.
     return RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
@@ -180,7 +179,6 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
     assertNoErrors();
 
     Object result = RhinoTestBed.runJs(
-        null,
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),

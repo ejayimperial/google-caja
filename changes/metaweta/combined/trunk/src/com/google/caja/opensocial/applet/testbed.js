@@ -198,11 +198,7 @@ var cajole = (function () {
       logForm.appendChild(msgInput);
     }
     document.getElementById('logFormMsg').value = msg;
-    try {
-      logForm.submit();
-    } catch (ex) {
-      caja.log(ex.toSource());
-    }
+    logForm.submit();
   }
 
   function cajole(form) {
