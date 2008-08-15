@@ -84,6 +84,7 @@ class TestBedProxy(BaseHTTPServer.BaseHTTPRequestHandler):
       if ctype == 'application/x-www-form-urlencoded':
         qs = self.rfile.read(int(self.headers.getheader('Content-Length')))
         print '%r' % cgi.parse_qs(qs)
+        sys.stdout.flush()  # flush so that stdout/stderr interleave properly
         self.send_response(204)
         self.end_headers()
         return
