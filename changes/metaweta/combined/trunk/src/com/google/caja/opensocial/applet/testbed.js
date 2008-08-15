@@ -57,6 +57,9 @@
 /** UI suffixes of all registered testbeds. */
 var testbeds = [];
 
+/** URL to use when no proxy URL is provided */
+var BOGUS_PROXY_URL = 'http://bogus-proxy.google.com';
+
 /** A registry of the public APIs of each of the testbed applets. */
 var gadgetPublicApis = {
   // Predefine a honeypot so we can try to exploit confused deputies
@@ -114,7 +117,7 @@ var getTestbedServer = (function () {
       var backend = getCgiParams().backend;
       testbedServer = (backend && backend.length === 1)
           ? backend[0]
-          : 'http://bogus-proxy.google.com';
+          : BOGUS_PROXY_URL;
     }
     return testbedServer;
   }
@@ -179,6 +182,7 @@ var cajole = (function () {
     var logForm = document.getElementById('logForm');
     if (!logForm) {
       var testbedServer = getTestbedServer();
+      if (testbedServer === BOGUS_PROXY_URL) { return; }
       logForm = document.createElement('FORM');
       logForm.id = 'logForm';
       logForm.method = 'POST';
