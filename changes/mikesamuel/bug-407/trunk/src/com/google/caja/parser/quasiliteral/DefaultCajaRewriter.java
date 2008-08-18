@@ -14,12 +14,9 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.Keyword;
-import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
 import com.google.caja.parser.ParseTreeNodes;
-import com.google.caja.parser.Visitor;
 import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.parser.js.AssignOperation;
 import com.google.caja.parser.js.Block;
@@ -100,22 +97,9 @@ public class DefaultCajaRewriter extends Rewriter {
         if (node instanceof Block && scope == null) {
           Scope s2 = Scope.fromProgram((Block) node, mq);
           if (s2.hasFreeThis()) {
-            final Reference[] thisRef = { null };
-            node.acceptPreOrder(new Visitor() {
-              public boolean visit(AncestorChain<?> ac) {
-                if (ac.node instanceof FunctionConstructor) { return false; }
-                if (thisRef[0] == null && ac.node instanceof Reference) {
-                  Reference r = ac.cast(Reference.class).node;
-                  if (Keyword.THIS.toString().equals(r.getIdentifierName())) {
-                    thisRef[0] = r;
-                  }
-                }
-                return true;
-              }
-            }, null);
             mq.addMessage(
                 RewriterMessageType.THIS_IN_GLOBAL_CONTEXT,
-                thisRef[0].getFilePosition());
+                s2.getFreeThis().get(0).getFilePosition());
           }
           List<ParseTreeNode> expanded = new ArrayList<ParseTreeNode>();
           for (ParseTreeNode c : node.children()) {
