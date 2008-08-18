@@ -58,7 +58,7 @@
  * @author erights@gmail.com
  */
 
-var valija = (function() {
+var valija = (function(outers) {
 
   /**
    * Simulates a monkey-patchable <tt>Object.prototype</tt>.
@@ -101,7 +101,7 @@ var valija = (function() {
     caja.enforceType(func, 'function');
     var cat = caja.getFuncCategory(func);
     var result = myPOE.get(cat);
-    if (undefined === result) {
+    if (void 0 === result) {
       result = caja.beget(DisfunctionPrototype);
       var parentFunc = caja.getSuperCtor(func);
       var parentShadow;
@@ -168,7 +168,6 @@ var valija = (function() {
 
   /**
    * Handle Valija <tt><i>obj</i>[<i>name</i>]</tt>.
-   * <p>
    */
   function read(obj, name) {
     if (typeof obj === 'function') {
@@ -191,7 +190,6 @@ var valija = (function() {
 
   /** 
    * Handle Valija <tt><i>obj</i>[<i>name</i>] = <i>newValue</i></tt>.
-   * <p>
    */
   function set(obj, name, newValue) {
     if (typeof obj === 'function') {
@@ -204,7 +202,6 @@ var valija = (function() {
 
   /** 
    * Handle Valija <tt><i>func</i>(<i>args...</i>)</tt>.
-   * <p>
    */
   function callFunc(func, args) {
     return func.apply(caja.USELESS, args);
@@ -212,7 +209,6 @@ var valija = (function() {
 
   /** 
    * Handle Valija <tt><i>obj</i>[<i>name</i>](<i>args...</i>)</tt>.
-   * <p>
    */
   function callMethod(obj, name, args) {
     return read(obj, name).apply(obj, args);
@@ -220,7 +216,6 @@ var valija = (function() {
 
   /** 
    * Handle Valija <tt>new <i>ctor</i>(<i>args...</i>)</tt>.
-   * <p>
    */
   function construct(ctor, args) {
     if (typeof ctor === 'function') {
@@ -242,7 +237,6 @@ var valija = (function() {
   
   /** 
    * Handle Valija <tt>function <i>opt_name</i>(...){...}</tt>.
-   * <p>
    */
   function dis(callFn, opt_name) {
     caja.enforceType(callFn, 'function');
@@ -262,7 +256,7 @@ var valija = (function() {
     result.prototype = caja.beget(ObjectPrototype);
     result.prototype.constructor = result;
     result.length = callFn.length -1;
-    if (opt_name !== undefined) {
+    if (opt_name !== void 0) {
       result.name = opt_name;
     }
     return result;
@@ -355,7 +349,7 @@ var valija = (function() {
     dis: dis,
     Disfunction: Disfunction
   });
-})();
+});
 
 // This conditional allows this code to work uncajoled without a
 // loader, in which case the top level "var valija = ..." will export
