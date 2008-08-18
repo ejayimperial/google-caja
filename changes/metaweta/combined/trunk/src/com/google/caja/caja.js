@@ -1257,6 +1257,9 @@ var ___;
     if (canReadPub(obj, name)) {
       return true;
     }
+    if (canCallPub(obj, name)) {
+      return true;
+    }
     var handlerName = name + '_getter___';
     if (handlerName in obj) {
       return true;
@@ -1290,7 +1293,7 @@ var ___;
     }
     name = String(name);
     if (canReadPub(obj, name)) { return obj[name]; }
-    if (canCall(obj, name)) { return attach(obj, obj[name]); }
+    if (canCallPub(obj, name)) { return attach(obj, obj[name]); }
     return obj.handleRead___(name);
   }
 
