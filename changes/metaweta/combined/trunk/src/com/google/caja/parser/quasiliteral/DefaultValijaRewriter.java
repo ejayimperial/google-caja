@@ -42,7 +42,7 @@ import com.google.caja.reporting.MessageQueue;
 /**
  * Rewrites a JavaScript parse tree to comply with default Valija rules.
  *
- * @author metaweta@gmail.com (Ihab Awad)
+ * @author metaweta@gmail.com (Mike Stay)
  */
 @RulesetDescription(
     name="Valija-to-Cajita Transformation Rules",
