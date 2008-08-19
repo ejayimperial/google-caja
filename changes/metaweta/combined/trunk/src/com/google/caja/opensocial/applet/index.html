@@ -82,7 +82,7 @@
     <script type="text/javascript">
     (function(){
       var imports = ___.getNewModuleHandler().getImports();
-      imports.loader = {provide:___.simpleFunc(function(p, v){valija = v;})};
+      imports.loader = {provide:___.simpleFunc(function(v){valijaMaker = v;})};
       imports.outers = imports;
     })();
     </script>
@@ -110,7 +110,7 @@
          title="Enable complicated features required for backwards feature"
          >Warty</label>
         &nbsp;
-        <input id="VALIJA_MODE" type="checkbox">
+        <input id="VALIJA_MODE" type="checkbox" checked>
         <label for="VALIJA_MODE"
          title="Enable valija mode."
          >Valija</label>

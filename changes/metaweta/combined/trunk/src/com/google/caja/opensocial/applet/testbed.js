@@ -151,7 +151,7 @@ var cajole = (function () {
       // Provide an object into which the module can export its public API.
       imports.exports = {};
       if (document.getElementById("VALIJA_MODE" + uiSuffix).checked) {
-        imports.valija = valija(imports);
+        imports.valija = valijaMaker(imports);
       }
      // Set up the module handler
       ___.getNewModuleHandler().setImports(imports);

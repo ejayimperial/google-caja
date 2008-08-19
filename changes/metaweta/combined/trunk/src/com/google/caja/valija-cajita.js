@@ -58,7 +58,7 @@
  * @author erights@gmail.com
  */
 
-var valija = (function(outers) {
+var valijaMaker = (function(outers) {
 
   /**
    * Simulates a monkey-patchable <tt>Object.prototype</tt>.
@@ -348,5 +348,5 @@ var valija = (function(outers) {
 // loader, in which case the top level "var valija = ..." will export
 // 'valija' globally.
 if (typeof loader !== 'undefined') {
-  loader.provide('com.google.caja.valija', valija);
+  loader.provide(valijaMaker);
 }

@@ -232,8 +232,8 @@ public class DefaultCajaRewriter extends Rewriter {
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
-        if (bindings != null) {
-          if (isSynthetic((Identifier) bindings.get("lhs"))) {
+        if (bindings != null && bindings.get("lhs") instanceof Reference) {
+          if (isSynthetic((Reference)bindings.get("lhs"))) {
             return expandAll(node, scope, mq);
           }
         }

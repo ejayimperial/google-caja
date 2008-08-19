@@ -122,7 +122,7 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
         new RhinoTestBed.Input(
             "var valija = {};\n" +
             "var testImports = ___.copy(___.sharedImports);\n" +
-            "testImports.loader = {provide:___.simpleFunc(function(p,v){valija=v;})};\n" +
+            "testImports.loader = {provide:___.simpleFunc(function(v){valijaMaker=v;})};\n" +
             "testImports.outers = ___.copy(___.sharedImports);\n" +
             "___.getNewModuleHandler().setImports(testImports);",
             getName() + "valija-setup"),
@@ -138,7 +138,7 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
             "    toString: function () { return '' + this.value; },\n" +
             "    value: '--NO-RESULT--'\n" +
             "};\n" +
-            "testImports.valija = valija;\n" +
+            "testImports.valija = valijaMaker(testImports);\n" +
             "___.getNewModuleHandler().setImports(testImports);",
             getName() + "-test-fixture"),
         new RhinoTestBed.Input(pre, getName() + "-pre"),
