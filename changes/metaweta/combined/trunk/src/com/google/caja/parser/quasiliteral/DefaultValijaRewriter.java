@@ -49,6 +49,8 @@ import com.google.caja.reporting.MessageQueue;
     synopsis="Default set of transformations used by Valija"
   )
 
+//TODO(metaweta): replace QuasiBuilder.match with this.match where possible.
+  
 public class DefaultValijaRewriter extends Rewriter {
   private int tempVarCount = 0;
   private final String tempVarPrefix = "$caja$";
@@ -58,8 +60,8 @@ public class DefaultValijaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="syntheticReference",
-          synopsis="Pass through calls where the method name is synthetic.",
-          reason="A synthetic method may not be marked callable.",
+          synopsis="Pass through synthetic references.",
+          reason="A variable may not be mentionable otherwise.",
           matches="/* synthetic */ @ref",
           substitutes="<expanded>")
       public ParseTreeNode fire(
@@ -96,7 +98,7 @@ public class DefaultValijaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="syntheticDeletes",
-          synopsis="Pass through reads of synthetic members.",
+          synopsis="Pass through deletes of synthetic members.",
           reason="A synthetic member may not be marked deletable.",
           matches="/* synthetic */ delete @o.@m",
           substitutes="<expanded>")
@@ -152,7 +154,7 @@ public class DefaultValijaRewriter extends Rewriter {
           name="syntheticSetVar",
           synopsis="Pass through set of synthetic vars.",
           reason="A local variable might not be mentionable otherwise.",
-          matches="/* synthetic */ @lhs___ = @rhs",
+          matches="/* synthetic */ @lhs = @rhs",
           substitutes="<expanded>")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -172,7 +174,7 @@ public class DefaultValijaRewriter extends Rewriter {
           name="syntheticDeclaration",
           synopsis="Pass through synthetic variables which are unmentionable.",
           reason="Synthetic code might need local variables for safe-keeping.",
-          matches="/* synthetic */ var @v___ = @initial?;",
+          matches="/* synthetic */ var @v = @initial?;",
           substitutes="<expanded>")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -321,8 +323,8 @@ public class DefaultValijaRewriter extends Rewriter {
           name="foreachExpr",
           synopsis="Get the keys, then iterate over them.",
           reason="",
-          matches="<approx>for (@k in @o) @ss;",
-          substitutes="var @t1 = valija.keys(@o);" +
+          matches="for (@k in @o) @ss;",
+          substitutes="<approx>var @t1 = valija.keys(@o);" +
                       "for (var @t2 = 0; @t2 < @t1.length; @t2++) {" +
                       "  @k = @t1[@t2];" +
                       "  @ss;" +
@@ -342,17 +344,29 @@ public class DefaultValijaRewriter extends Rewriter {
           scope.declareStartOfScopeVariable(t2);
           Reference rt2 = new Reference(t2);
 
+          Identifier t3 = new Identifier(tempVarPrefix + tempVarCount++);
+          scope.declareStartOfScopeVariable(t3);
+          Reference rt3 = new Reference(t3);
+
           return substV(
               "@t1 = valija.keys(@o);" +
               "for (@t2 = 0; @t2 < @t1.length; ++@t2) {" +
-              "  @k = @t1[@t2];" +
+              "  @t3 = @t1[@t2];" +
+              "  @assign;" +
               "  @ss;" +
               "}",
               "t1", rt1,
               "o", expand(bindings.get("o"), scope, mq),
               "t2", rt2,
-              "k", expand(bindings.get("k"), scope, mq),
-              "ss", expand(bindings.get("ss"), scope, mq));
+              "t3", rt3,
+              "ss", expand(bindings.get("ss"), scope, mq),
+              "assign", expand(// TODO(metaweta): Before check in, see op= below for tainting
+                  substV(
+                      "@k = @t3",
+                      "k", bindings.get("k"),
+                      "t3", rt3),
+                  scope, 
+                  mq));
         } else {
           return NONE;
         }
@@ -506,7 +520,7 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Read @'p' from @o or @o's POE table",
           reason="",
           matches="@o.@p",
-          substitutes="<approx> valija.read(@o, @'p')[@'p']")
+          substitutes="<approx> valija.read(@o, @'p')")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         if (QuasiBuilder.match("@o.@p", node, bindings)) {
@@ -593,7 +607,7 @@ public class DefaultValijaRewriter extends Rewriter {
           name="setReadModifyWriteLocalVar",
           synopsis="",
           reason="",
-          matches="@x @op= @y",  // TODO(mikesamuel): better lower limit
+          matches="<approx> @x @op= @y",  // TODO(mikesamuel): better lower limit
           substitutes="<approx> @x = @x @op @y")
       // Handle x += 3 and similar ops by rewriting them using the assignment
       // delegate, "x += y" => "x = x + y", with deconstructReadAssignOperand

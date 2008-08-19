@@ -133,8 +133,8 @@ public class DefaultCajaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="syntheticReference",
-          synopsis="Pass through calls where the method name is synthetic.",
-          reason="A synthetic method may not be marked callable.",
+          synopsis="Pass through synthetic references.",
+          reason="A variable may not be mentionable otherwise.",
           matches="/* synthetic */ @ref",
           substitutes="<expanded>")
       public ParseTreeNode fire(
@@ -171,7 +171,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="syntheticDeletes",
-          synopsis="Pass through reads of synthetic members.",
+          synopsis="Pass through deletes of synthetic members.",
           reason="A synthetic member may not be marked deletable.",
           matches="/* synthetic */ delete @o.@m",
           substitutes="<expanded>")
@@ -227,7 +227,7 @@ public class DefaultCajaRewriter extends Rewriter {
           name="syntheticSetVar",
           synopsis="Pass through set of synthetic vars.",
           reason="A local variable might not be mentionable otherwise.",
-          matches="/* synthetic */ @lhs___ = @rhs",
+          matches="/* synthetic */ @lhs = @rhs",
           substitutes="<expanded>")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -247,7 +247,7 @@ public class DefaultCajaRewriter extends Rewriter {
           name="syntheticDeclaration",
           synopsis="Pass through synthetic variables which are unmentionable.",
           reason="Synthetic code might need local variables for safe-keeping.",
-          matches="/* synthetic */ var @v___ = @initial?;",
+          matches="/* synthetic */ var @v = @initial?;",
           substitutes="<expanded>")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1391,7 +1391,7 @@ public class DefaultCajaRewriter extends Rewriter {
           name="setReadModifyWriteLocalVar",
           synopsis="",
           reason="",
-          matches="@x @op= @y",  // TODO(mikesamuel): better lower limit
+          matches="<approx> @x @op= @y",  // TODO(mikesamuel): better lower limit
           substitutes="<approx> @x = @x @op @y")
       // Handle x += 3 and similar ops by rewriting them using the assignment
       // delegate, "x += y" => "x = x + y", with deconstructReadAssignOperand

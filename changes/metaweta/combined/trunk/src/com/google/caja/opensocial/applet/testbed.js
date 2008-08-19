@@ -401,7 +401,6 @@ var getImports = (function () {
                }
          },
          testImports);
-caja.log(testImports.document.toSource());
     testImports.clearHtml___ = function () {
       var htmlContainer = document.getElementById('caja-html' + uiSuffix);
       htmlContainer.className = idClass;

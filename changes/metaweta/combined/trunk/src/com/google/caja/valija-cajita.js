@@ -128,10 +128,9 @@ var valija = (function(outers) {
     if (typeof func === 'function') {
       var shadow = getShadow(func);
       return shadow.prototype;
-    } else {
-      if (typeof func === 'object' && func !== null) {
+    } else if (typeof func === 'object' && func !== null) {
         return func.prototype;
-      }
+    } else {
       return (void 0);
     }
   }
@@ -271,7 +270,6 @@ var valija = (function(outers) {
     if (canReadRev(name, outers)) {
       return read(outers, name);
     } else {
-      caja.log(outers[name]);
       throw new ReferenceError('not found: ' + name);
     }
   }
@@ -321,16 +319,12 @@ var valija = (function(outers) {
     if (typeof obj === 'function') {
       return getShadow(obj);
     } else {
-      // TODO(erights): I suspect read(obj,'constructor') isn't good
-      // enough. Does caja.js need to expose ___.directConstructor() as
-      // caja.directConstructor()?
       var ctor = caja.directConstructor(obj);
       return getPrototypeOf(ctor);
     }
   }
 
   return caja.freeze({
-    getPrototypeOf: getPrototypeOf,
     typeOf: typeOf,
     instanceOf: instanceOf,
 
@@ -342,7 +336,6 @@ var valija = (function(outers) {
     getOuters: getOuters,
     readOuter: readOuter,
     setOuter: setOuter,
-    //removeOuter: removeOuter,
     remove: remove,
     keys: keys,
 

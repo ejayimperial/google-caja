@@ -106,13 +106,11 @@ public class DefaultValijaRewriterTest extends RewriterTestCase {
     Statement valijaTree = replaceLastStatementWithEmit(
         js(fromString(caja, is)), "unittestResult___;");
     Statement cajitaTree = (Statement)rewriteStatements(valijaTree);
-System.err.println(render(cajitaTree));
     setRewriter(defaultCajaRewriter);    
     String cajoledJs = "___.loadModule(function (___, IMPORTS___) {\n" + 
         render(rewriteStatements(cajitaTree)) + 
         "\n});";
     String valijaCajoled = render(rewriteStatements(js(fromResource("../../valija-cajita.js"))));
-System.err.println(cajoledJs);
     assertNoErrors();
 
     Object result = RhinoTestBed.runJs(

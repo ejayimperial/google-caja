@@ -464,7 +464,7 @@ var ___;
       }
       if (typeof result !== 'function' || !(obj instanceof result)) {
         fail("Discovery of direct constructors for foreign begotten " +
-            "objects not implemented on platforms not supporting __proto__ yet.\n");
+            "objects not implemented on this platform.\n");
       }
       if (result.prototype.constructor === result) {
         // Memoize, so it'll be faster next time.
@@ -1280,7 +1280,7 @@ var ___;
    */
   function readPub(obj, name) {
     if ((typeof name) === 'number') {
-      if (typeof obj === 'sting') {
+      if (typeof obj === 'string') {
         // In partial anticipation of ES3.1. 
         // TODO(erights): Once ES3.1 settles, revisit this and 
         // correctly implement the agreed semantics.
