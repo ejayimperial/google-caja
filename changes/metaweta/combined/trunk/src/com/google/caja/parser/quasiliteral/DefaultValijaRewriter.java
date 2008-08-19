@@ -49,8 +49,6 @@ import com.google.caja.reporting.MessageQueue;
     synopsis="Default set of transformations used by Valija"
   )
 
-//TODO(metaweta): replace QuasiBuilder.match with this.match where possible.
-  
 public class DefaultValijaRewriter extends Rewriter {
   private int tempVarCount = 0;
   private final String tempVarPrefix = "$caja$";
