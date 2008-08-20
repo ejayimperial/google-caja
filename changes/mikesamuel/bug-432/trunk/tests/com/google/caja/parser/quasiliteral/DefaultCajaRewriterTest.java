@@ -14,6 +14,7 @@
 
 package com.google.caja.parser.quasiliteral;
 
+import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodes;
@@ -40,12 +41,13 @@ import junit.framework.AssertionFailedError;
  */
 public class DefaultCajaRewriterTest extends RewriterTestCase {
 
-  private boolean wartsMode = false;
+  protected Rewriter defaultCajaRewriter = new DefaultCajaRewriter(false, false);
+  protected Rewriter wartyCajaRewriter = new DefaultCajaRewriter(false, true);
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    wartsMode = false;
+    setRewriter(defaultCajaRewriter);
   }
 
   /**
@@ -254,13 +256,14 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public void testWartyReflectiveMethodInvocation() throws Exception {
-    wartsMode = true;
+    setRewriter(wartyCajaRewriter);
     assertConsistent(
         "(function (first, second){this; return 'a'+first+'b'+second;}).call([],8,9);");
     assertConsistent(
         "(function (a,b){this;return 'a'+a+'b'+b;}).apply([],[8,9]);");
     assertConsistent(
         "(function (first, second){this; return 'a'+first+'b'+second;}).bind([],8)(9);");
+    setRewriter(defaultCajaRewriter);
   }
 
   public void testReflectiveMethodInvocation() throws Exception {
@@ -436,7 +439,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public void testPrimordialObjectExtension() throws Exception {
-    wartsMode = true;
+    setRewriter(wartyCajaRewriter);
     // TODO(metaweta): Reenable once POE is part of warts mode.
     if (false) {
       assertConsistent(
@@ -460,6 +463,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
           "caja.extend(Object, {x:1});" +
           "b.x;");
     }
+    setRewriter(defaultCajaRewriter);
   }
 
   public void testConstructorProperty() throws Exception {
@@ -555,7 +559,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public void testAttachedMethodPublicProps() throws Exception {
-    wartsMode = true;
+    setRewriter(wartyCajaRewriter);
     checkFails(
         "function (){" +
         "  this.x_ = 1;" +
@@ -571,6 +575,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  };" +
         "};",
         "Public properties cannot end in \"_\"");
+    setRewriter(defaultCajaRewriter);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1156,6 +1161,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "function() {" +
         "  " + unchanged +
         "};",
+        "var undefined = ___.readImport(IMPORTS___, 'undefined');" +
         "___.simpleFrozenFunc(function() {" +
         "  " + unchanged +
         "});");
@@ -1286,13 +1292,20 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   // TODO(ihab.awad): Move this to the proper order of rules
-  public void testBadGlobalThis() throws Exception {
+  public void testAssignmentToThis() throws Exception {
     checkAddsMessage(js(fromString(
         "this = 3;")),
         RewriterMessageType.CANNOT_ASSIGN_TO_THIS);
-    checkAddsMessage(js(fromString(
-        "var x = this;")),
-        RewriterMessageType.THIS_IN_GLOBAL_CONTEXT);
+  }
+
+  public void testBadGlobalThis() throws Exception {
+    checkFails(
+        "var x = 1;\n" +
+        "(this);",
+        "\"this\" cannot be used in the global context");
+    assertMessage(
+        RewriterMessageType.THIS_IN_GLOBAL_CONTEXT, MessageLevel.FATAL_ERROR,
+        FilePosition.instance(is, 2, 2, 13, 2, 2, 2, 17, 6));
   }
 
   public void testSetBadSuffix() throws Exception {
@@ -2012,12 +2025,12 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
                       "  function C() { this; }" +
                       "  return caja.def(C, Object);" +
                       "})({ def: function () { return 123; } });")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
     checkAddsMessage(
         js(fromString("var caja = { def: function () { return 123; } };" +
                       "function C() {}" +
                       "caja.def(C, Object, {}, {});")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
     assertConsistent(
         "function foo() {}" +
         "caja.def(foo, Object, { f: function () { return 3; }});" +
@@ -2101,7 +2114,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "  caja.def(WigglyPoint, Point, { foo: x }, x);" +
         "};",
         "Map expression expected");
-    wartsMode = true;
+    setRewriter(wartyCajaRewriter);
     checkFails(
         "function() {\n" +
         "  function Point() {}\n" +
@@ -2134,26 +2147,27 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
     checkAddsMessage(
         js(fromString("(function (caja) {" +
                       "})({ def: function () { return 123; } });")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
     checkAddsMessage(
         js(fromString("try {" +
                       "  throw { def: function () { return 123; } };" +
                       "} catch (caja) {" +
                       "}" +
                       "result;")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
     checkAddsMessage(
         js(fromString("function caja() { this; }" +
                       "caja.def = function () { return 123; };")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
     checkAddsMessage(
         js(fromString("for (var caja = { def: function () { return 123; } }" +
                       "     ; caja; caja = null) {" +
                       "}")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
     checkAddsMessage(
         js(fromString("for (var caja in { x: 0 }) {}")),
-        RewriterMessageType.CANNOT_REDECLARE_CAJA);
+        RewriterMessageType.CANNOT_MASK_IDENTIFIER);
+    setRewriter(defaultCajaRewriter);
   }
 
   public void testCallCajaDef3PlusBadFunction() throws Exception {
@@ -2350,7 +2364,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
   }
 
   public void testFuncExophoricFunction() throws Exception {
-    wartsMode = true;
+    setRewriter(wartyCajaRewriter);
     checkSucceeds(
         "function (x) { return this.x; };",
         "___.xo4a(" +
@@ -2379,7 +2393,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "___.xo4a(" +
         "    function () {" +
         "      var t___ = this;" +
-        "      ___.canReadPubRev(\'foo\', t___);" +
+        "      ___.inPub(\'foo\', t___);" +
         "    });");
     checkFails(
         "function () { for (var k in this); };",
@@ -2391,13 +2405,15 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         "({ f7: function () { return this.x + this.y; }, x: 1, y: 2 }).f7();");
     assertConsistent(
         "({ f: function (y) { return this.x * y; }, x: 4 }).f(2);");
+    setRewriter(defaultCajaRewriter);
   }
 
   public void testFuncBadMethod() throws Exception {
-    wartsMode = true;
+    setRewriter(wartyCajaRewriter);
     checkFails(
         "function(x) { this.x_ = x; };",
         "Public properties cannot end in \"_\"");
+    setRewriter(defaultCajaRewriter);
   }
 
   public void testMaskingFunction () throws Exception {
@@ -2874,7 +2890,7 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
         + "var x = 1;\n"
         + "var f = function x(b) { return b ? 1 : x(true); };\n"
         + "assertEquals(2, x + f());"));
-    ParseTreeNode cajoled = newRewriter().expand(input, mq);
+    ParseTreeNode cajoled = defaultCajaRewriter.expand(input, mq);
     assertNoErrors();
     ParseTreeNode emulated = emulateIE6FunctionConstructors(cajoled);
     executePlain(
@@ -2962,10 +2978,5 @@ public class DefaultCajaRewriterTest extends RewriterTestCase {
 
     assertNoErrors();
     return result;
-  }
-
-  @Override
-  protected Rewriter newRewriter() {
-    return new DefaultCajaRewriter(false, wartsMode);
   }
 }

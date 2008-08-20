@@ -40,6 +40,7 @@ import static com.google.caja.parser.js.SyntheticNodes.s;
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -187,7 +188,7 @@ public class Scope {
   private final MessageQueue mq;
   private final ScopeType type;
   private final boolean sideEffecting;
-  private boolean containsThis = false;
+  private final List<Reference> freeThis = new ArrayList<Reference>();
   private boolean containsArguments = false;
   private int tempVariableCounter = 0;
   private final Map<String, Pair<LocalType, FilePosition>> locals
@@ -196,7 +197,7 @@ public class Scope {
   // TODO(ihab.awad): importedVariables is only used by the root-most scope; it is
   // empty everywhere else. Define subclasses of Scope so that this confusing
   // overlapping of instance variables does not occur.
-  private final Set<String> importedVariables = new TreeSet<String>();
+  private final SortedSet<String> importedVariables = new TreeSet<String>();
 
   public static Scope fromProgram(Block root, MessageQueue mq) {
     Scope s = new Scope(ScopeType.PROGRAM, mq, true);
@@ -358,7 +359,11 @@ public class Scope {
    * @return whether this block has a free "this".
    */
   public boolean hasFreeThis() {
-    return containsThis;
+    return !freeThis.isEmpty();
+  }
+
+  public List<Reference> getFreeThis() {
+    return Collections.unmodifiableList(freeThis);
   }
 
   /**
@@ -501,11 +506,12 @@ public class Scope {
     // Now resolve all the references harvested by the visitor. If they have
     // not been defined in the scope chain (including the declarations we just
     // harvested), then they must be free variables, so record them as such.
-    for (String name : v.getReferences()) {
+    for (Reference ref : v.getReferences()) {
+      String name = ref.getIdentifierName();
       if (ReservedNames.ARGUMENTS.equals(name)) {
         s.containsArguments = true;
       } else if (Keyword.THIS.toString().equals(name)) {
-        s.containsThis = true;
+        s.freeThis.add(ref);
       } else if (!s.isDefined(name) && s.sideEffecting) {
         addImportedVariable(s, name);
       }
@@ -520,11 +526,11 @@ public class Scope {
   // using it because, due to the MEMBER_ACCESS case, we need more control
   // over when to stop traversing the children of a node.
   private static class SymbolHarvestVisitor {
-    private final SortedSet<String> references = new TreeSet<String>();
+    private final List<Reference> references = new ArrayList<Reference>();
     private final List<Declaration> declarations = new ArrayList<Declaration>();
     private final List<String> exceptionVariables = new ArrayList<String>();
 
-    public SortedSet<String> getReferences() { return references; }
+    public List<Reference> getReferences() { return references; }
 
     public List<Declaration> getDeclarations() { return declarations; }
 
@@ -592,7 +598,7 @@ public class Scope {
     private void visitReference(Reference node) {
       if (!node.getIdentifier().getAttributes().is(SyntheticNodes.SYNTHETIC) &&
           !exceptionVariables.contains(node.getIdentifierName())) {
-        references.add(node.getIdentifierName());
+        references.add(node);
       }
     }
   }
@@ -620,11 +626,7 @@ public class Scope {
   private static void declare(Scope s, Identifier ident, LocalType type) {
     String name = ident.getName();
 
-    if ("caja".equals(name)) {
-      s.mq.addMessage(
-          RewriterMessageType.CANNOT_REDECLARE_CAJA,
-          ident.getFilePosition());
-    } else if (UNMASKABLE_IDENTIFIERS.contains(name)) {
+    if (UNMASKABLE_IDENTIFIERS.contains(name)) {
       s.mq.addMessage(
           RewriterMessageType.CANNOT_MASK_IDENTIFIER,
           ident.getFilePosition(), MessagePart.Factory.valueOf(name));

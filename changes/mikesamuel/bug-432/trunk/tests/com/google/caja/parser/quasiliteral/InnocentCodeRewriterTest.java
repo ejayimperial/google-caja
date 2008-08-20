@@ -25,6 +25,11 @@ import java.io.IOException;
  * @author ihab.awad@gmail.com
  */
 public class InnocentCodeRewriterTest extends RewriterTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    setRewriter(new InnocentCodeRewriter(true));
+  }
 
   // Tests block-level forEach statements
   public void testForEachPlain() throws Exception {
@@ -182,10 +187,4 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
     assertNoErrors();
     return result;
   }
-
-  @Override
-  protected Rewriter newRewriter() {
-    return new InnocentCodeRewriter(true);
-  }
-
 }

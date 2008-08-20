@@ -469,7 +469,7 @@ var ___;
    * expressed in the JSON language.
    */
   function isJSONContainer(obj) {
-    if (obj == null) { return false; }  // Match null and undefined
+    if (obj === || obj === void 0) { return false; }
     var constr = directConstructor(obj);
     var typeTag = constr && constr.typeTag___;
     return typeTag === 'Object' || typeTag === 'Array';
@@ -813,7 +813,7 @@ var ___;
     if (meth.___ATTACHMENT___ === that) {
       return meth;
     }
-    if (meth.___ATTACHMENT___ !== undefined) {
+    if (meth.___ATTACHMENT___ !== void 0) {
       fail('Method ', meth, ' cannot be reattached to: ', that);
     }
     function result(var_args) {
@@ -898,22 +898,6 @@ var ___;
   /** Only constructors and simple functions can be called as constructors */
   function asCtor(constr) {
     return primFreeze(asCtorOnly(constr)); 
-  }
-  
-  /** Only methods and simple functions can be called as methods */
-  function asMethod(meth) {
-    if (isSimpleFunc(meth) || isMethod(meth)) { 
-      if (!isFrozen(meth)) {
-        fail('internal: non-frozen func stored as method: ', meth);
-      }
-      return meth; 
-    }
-    
-    enforceType(meth, 'function');
-    if (isCtor(meth)) {
-      fail("Constructors can't be called as methods: ", meth);
-    }
-    fail("Untamed functions can't be called as methods: ", meth);
   }
   
   /** Only simple functions can be called as simple functions */
@@ -2327,7 +2311,7 @@ var ___;
     ctor: ctor,                   asCtorOnly: asCtorOnly,
     asCtor: asCtor,
     splitCtor: splitCtor,
-    method: method,               asMethod: asMethod,
+    method: method,
     simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
     xo4a: xo4a,
     setMember: setMember,

@@ -17,6 +17,7 @@ package com.google.caja.parser.quasiliteral;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
 import com.google.caja.parser.ParseTreeNodes;
+import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.parser.js.AssignOperation;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.BreakStmt;
@@ -44,13 +45,12 @@ import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.RegexpLiteral;
 import com.google.caja.parser.js.ReturnStmt;
 import com.google.caja.parser.js.SimpleOperation;
+import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.SwitchStmt;
 import com.google.caja.parser.js.SyntheticNodes;
 import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.parser.js.TryStmt;
-import com.google.caja.parser.js.Statement;
-import com.google.caja.parser.js.ArrayConstructor;
 import com.google.caja.util.Pair;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
@@ -99,7 +99,7 @@ public class DefaultCajaRewriter extends Rewriter {
           if (s2.hasFreeThis()) {
             mq.addMessage(
                 RewriterMessageType.THIS_IN_GLOBAL_CONTEXT,
-                node.getFilePosition());
+                s2.getFreeThis().get(0).getFilePosition());
           }
           List<ParseTreeNode> expanded = new ArrayList<ParseTreeNode>();
           for (ParseTreeNode c : node.children()) {
@@ -132,9 +132,9 @@ public class DefaultCajaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
-          name="syntheticReferemce",
-          synopsis="Pass through calls where the method name is synthetic.",
-          reason="A synthetic method may not be marked callable.",
+          name="syntheticReference",
+          synopsis="Pass through synthetic references.",
+          reason="A variable may not be mentionable otherwise.",
           matches="/* synthetic */ @ref",
           substitutes="<expanded>")
       public ParseTreeNode fire(
@@ -171,7 +171,7 @@ public class DefaultCajaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="syntheticDeletes",
-          synopsis="Pass through reads of synthetic members.",
+          synopsis="Pass through deletes of synthetic members.",
           reason="A synthetic member may not be marked deletable.",
           matches="/* synthetic */ delete @o.@m",
           substitutes="<expanded>")
@@ -227,13 +227,13 @@ public class DefaultCajaRewriter extends Rewriter {
           name="syntheticSetVar",
           synopsis="Pass through set of synthetic vars.",
           reason="A local variable might not be mentionable otherwise.",
-          matches="/* synthetic */ @lhs___ = @rhs",
+          matches="/* synthetic */ @lhs = @rhs",
           substitutes="<expanded>")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
-        if (bindings != null) {
-          if (isSynthetic((Identifier) bindings.get("lhs"))) {
+        if (bindings != null && bindings.get("lhs") instanceof Reference) {
+          if (isSynthetic((Reference)bindings.get("lhs"))) {
             return expandAll(node, scope, mq);
           }
         }
@@ -247,7 +247,7 @@ public class DefaultCajaRewriter extends Rewriter {
           name="syntheticDeclaration",
           synopsis="Pass through synthetic variables which are unmentionable.",
           reason="Synthetic code might need local variables for safe-keeping.",
-          matches="/* synthetic */ var @v___ = @initial?;",
+          matches="/* synthetic */ var @v = @initial?;",
           substitutes="<expanded>")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1403,7 +1403,7 @@ public class DefaultCajaRewriter extends Rewriter {
           name="setReadModifyWriteLocalVar",
           synopsis="",
           reason="",
-          matches="@x @op= @y",  // TODO(mikesamuel): better lower limit
+          matches="<approx> @x @op= @y",  // TODO(mikesamuel): better lower limit
           substitutes="<approx> @x = @x @op @y")
       // Handle x += 3 and similar ops by rewriting them using the assignment
       // delegate, "x += y" => "x = x + y", with deconstructReadAssignOperand
@@ -2710,12 +2710,12 @@ public class DefaultCajaRewriter extends Rewriter {
           synopsis="Is a public property present on the object?",
           reason="",
           matches="@i in @o",
-          substitutes="___.canReadPubRev(@i, @o)")
+          substitutes="___.inPub(@i, @o)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
           return substV(
-              "___.canReadPubRev(@i, @o)",
+              "___.inPub(@i, @o)",
               "i", expand(bindings.get("i"), scope, mq),
               "o", expand(bindings.get("o"), scope, mq));
         }

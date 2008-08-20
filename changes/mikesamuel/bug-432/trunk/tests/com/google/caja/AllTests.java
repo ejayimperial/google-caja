@@ -45,6 +45,7 @@ import com.google.caja.parser.js.NumberLiteralTest;
 import com.google.caja.parser.js.ParserTest;
 import com.google.caja.parser.js.StringLiteralTest;
 import com.google.caja.parser.quasiliteral.DefaultCajaRewriterTest;
+import com.google.caja.parser.quasiliteral.DefaultValijaRewriterTest;
 import com.google.caja.parser.quasiliteral.IllegalReferenceCheckRewriterTest;
 import com.google.caja.parser.quasiliteral.InnocentCodeRewriterTest;
 import com.google.caja.parser.quasiliteral.MatchTest;
@@ -65,6 +66,7 @@ import com.google.caja.plugin.stages.DebuggingSymbolsStageTest;
 import com.google.caja.plugin.stages.InlineCssImportsStageTest;
 import com.google.caja.plugin.stages.OpenTemplateStageTest;
 import com.google.caja.plugin.stages.RewriteHtmlStageTest;
+import com.google.caja.render.JsLinePreservingPrinterTest;
 import com.google.caja.render.JsMinimalPrinterTest;
 import com.google.caja.render.JsPrettyPrinterTest;
 import com.google.caja.render.SideBySideRendererTest;
@@ -109,6 +111,7 @@ public class AllTests {
           DebuggingSymbolsStageTest.class,
           DefaultCajaRewriterTest.class,
           DefaultGadgetRewriterTest.class,
+          DefaultValijaRewriterTest.class,
           DomParserTest.class,
           DomProcessingEventsTest.class,
           EscapingTest.class,
@@ -130,6 +133,7 @@ public class AllTests {
           JoinTest.class,
           JsHtmlSanitizerTest.class,
           JsLexerTest.class,
+          JsLinePreservingPrinterTest.class,
           JsMinimalPrinterTest.class,
           JsPrettyPrinterTest.class,
           LayoutTest.class,

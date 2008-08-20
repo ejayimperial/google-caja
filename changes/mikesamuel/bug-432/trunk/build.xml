@@ -219,10 +219,7 @@
      encoding="utf-8" template="jsdoc"
      includeundocumented="true" includeprivate="true" includeunderscored="true"
      outputdir="${jsdocs}">
-      <source file="${src}/com/google/caja/JSON.js"/>
       <source file="${src}/com/google/caja/Brand-cajita.js"/>
-      <source file="${src}/com/google/caja/Mint-cajita.js"/>
-      <source file="${src}/com/google/caja/Q-caja.js"/>
       <source file="${src}/com/google/caja/caja.js"/>
       <source file="${src}/com/google/caja/caja-debugmode.js"/>
       <source file="${src}/com/google/caja/caja-prototype.js"/>
@@ -281,7 +278,7 @@
     </genrule>
   </target>
 
-  <target name="jars" depends="pluginc,MinifiedJs"
+  <target name="jars" depends="pluginc,CajoledValija,MinifiedJs"
    description="Place all jars needed to run the cajoler under ${jars}">
     <copy todir="${jars}">
       <fileset dir="${third_party}/java/jakarta_commons">
@@ -324,6 +321,14 @@
     </copy>
   </target>
 
+  <target name="CajoledValija" depends="pluginc">
+    <cajole>
+      <job output="${lib}/com/google/caja/plugin/valija-cajoled.js">
+        <include file="${src}/com/google/caja/valija-cajita.js" />
+      </job>
+    </cajole>
+  </target>
+
   <target name="MinifiedJs" depends="pluginc">
     <minify>
       <job output="${lib}/com/google/caja/plugin/html-sanitizer-minified.js">
@@ -359,6 +364,7 @@
         <include name="**/caja/caja.js"/>
         <include name="**/caja/caja-debugmode.js"/>
         <include name="**/caja/log-to-console.js"/>
+        <include name="**/caja/valija-cajita.js"/>
         <include name="**/caja/demos/calendar/*.js"/>
         <include name="**/caja/opensocial/applet/testbed.js"/>
         <include name="**/caja/plugin/domita.js"/>
@@ -404,8 +410,7 @@
   </target>
 
   <target name="RuleDoclet" depends="Quasiliterals">
-    <!-- HtmlRuleDoclet requires DOMImplementation from java 1.6 -->
-    <javac destdir="${lib}" debug="true" target="1.5" source="1.6">
+    <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/quasiliteral/*Doclet.java"/>
@@ -649,6 +654,7 @@
       </fileset>
       <fileset dir="${lib}/com/google/caja/plugin">
         <include name="css-defs.js"/>
+        <include name="valija-cajoled.js"/>
       </fileset>
       <fileset dir="${src}/com/google/caja/opensocial/applet">
         <include name="*.html"/>
