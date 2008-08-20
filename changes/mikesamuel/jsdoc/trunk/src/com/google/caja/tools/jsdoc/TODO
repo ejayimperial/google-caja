@@ -1,3 +1,4 @@
+- Sandbox rhino properly so that it can't call out to arbitrary java.
 - Make object graph walking breadth-first
 - Fix back button in AJAX viewer
 - JsdocHtmlFormatter to generate searchable HTML
