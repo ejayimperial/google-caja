@@ -338,7 +338,7 @@ var getImports = (function () {
    * one that can be evaled.
    */
   function repr(o) {
-    if (o.toSource) { return o.toSource(); }
+    if (Object.prototype.toSource) { return Object.prototype.toSource.call(o); }
     try {
       switch (typeof o) {
         case 'string':
