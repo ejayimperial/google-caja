@@ -330,11 +330,14 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Get the keys, then iterate over them.",
           reason="",
           matches="for (@k in @o) @ss;",
-          substitutes="<approx>var @t1 = valija.keys(@o);" +
-                      "for (var @t2 = 0; @t2 < @t1.length; @t2++) {" +
-                      "  @k = @t1[@t2];" +
-                      "  @ss;" +
-                      "}")
+          substitutes="<approx>\n" +
+                      "var @t1 = valija.keys(@o);\n" +
+                      "for (var @t2 = 0; @t2 < @t1.length; @t2++) {\n" +
+                      "  @assign;\n" +
+                      "  @ss;\n" +
+                      "}\n" +
+                      "where @assign is the expansion of\n" +
+                      "@k = QuotedExpression( @t1[@t2] );")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null &&
@@ -344,25 +347,25 @@ public class DefaultValijaRewriter extends Rewriter {
 
           Reference rt1 = newTempVar(scope);
           Reference rt2 = newTempVar(scope);
-          Reference rt3 = newTempVar(scope);
 
           ParseTreeNode assignment = substV(
               "@k = @t3;",
               "k", bindings.get("k"),
-              "t3", new QuotedExpression(rt3));
+              "t3", new QuotedExpression((Expression) substV(
+                  "@t1[@t2]",
+                  "t1", rt1,
+                  "t2", rt2)));
           assignment.getAttributes().set(ParseTreeNode.TAINTED, true);
 
           return substV(
               "@t1 = valija.keys(@o);" +
               "for (@t2 = 0; @t2 < @t1.length; ++@t2) {" +
-              "  @t3 = @t1[@t2];" +
               "  @assign;" +
               "  @ss;" +
               "}",
               "t1", rt1,
               "o", expand(bindings.get("o"), scope, mq),
               "t2", rt2,
-              "t3", rt3,
               "assign", SyntheticNodes.s(
                   new ExpressionStmt((Expression) expand(assignment, scope, mq))),
               "ss", expand(bindings.get("ss"), scope, mq));
@@ -379,36 +382,40 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Get the keys, then iterate over them.",
           reason="",
           matches="for (var @k in @o) @ss;",
-          substitutes="<approx>var t1, t2;" +
-                      "@t1 = valija.keys(@o);" +
-                      "for (@t2 = 0; @t2 < @t1.length; @t2++) {" +
-                      "  var @k = @t1[@t2];" +
-                      "  @ss;" +
-                      "}")
+          substitutes="<approx>\n" +
+                      "var t1, t2;\n" +
+                      "@t1 = valija.keys(@o);\n" +
+                      "for (@t2 = 0; @t2 < @t1.length; @t2++) {\n" +
+                      "  @assign\n" +
+                      "  @ss;\n" +
+                      "}\n" +
+                      "where @assign is the expansion of\n" +
+                      "var @k = QuotedExpression( @t1[@t2] );")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
           Reference rt1 = newTempVar(scope);
           Reference rt2 = newTempVar(scope);
-          Reference rt3 = newTempVar(scope);
           
           ParseTreeNode assignment = substV(
               "var @k = @t3;",
               "k", bindings.get("k"),
-              "t3", new QuotedExpression(rt3));
+              "t3", new QuotedExpression((Expression) substV(
+                  "@t1[@t2]",
+                  "t1", rt1,
+                  "t2", rt2)));
+
           assignment.getAttributes().set(ParseTreeNode.TAINTED, true);
           
           return substV(
               "@t1 = valija.keys(@o);" +
               "for (@t2 = 0; @t2 < @t1.length; ++@t2) {" +
-              "  @t3 = @t1[@t2];" +
               "  @assign;" +
               "  @ss;" +
               "}",
               "t1", rt1,
               "o", expand(bindings.get("o"), scope, mq),
               "t2", rt2,
-              "t3", rt3,
               "assign", SyntheticNodes.s(expand(assignment, scope, mq)),
               "ss", expand(bindings.get("ss"), scope, mq));
         } else {
