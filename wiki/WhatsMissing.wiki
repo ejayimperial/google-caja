@@ -3,7 +3,7 @@
 
 = Introduction =
 
-Valija is approximately a subset of the ES3.1 "cautious" subset. But existing libraries are built for "consensus !JavaScript", also known as "ES3 + Reality" (hereafter "ES3R"), as represented by what browsers currently do. On this page we try to enumerate all features of ES3R not available in Valija, so that we can more quickly spot problem areas in porting old !JavaScript libraries to Valija.
+[http://groups.google.com/group/google-caja-discuss/browse_thread/thread/284935fa0784316d/31e476a985ae8c66?#31e476a985ae8c66 Valija] is approximately a subset of the ES3.1 "cautious" subset. But existing libraries are built for "consensus !JavaScript", also known as "ES3 + Reality" (hereafter "ES3R"), as represented by what browsers currently do. On this page we try to enumerate all features of ES3R not available in Valija, so that we can more quickly spot problem areas in porting old !JavaScript libraries to Valija.
 
 Neither ES3.1 not Valija is settled yet, and actual browser behavior is determined only by ongoing experiment, so these lists are preliminary and fluid.
 
