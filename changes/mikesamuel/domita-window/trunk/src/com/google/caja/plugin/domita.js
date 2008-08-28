@@ -1162,6 +1162,7 @@ attachDocumentStub = (function () {
       self: tameWindow,
       opener: tameWindow,
       parent: tameWindow,
+      window: tameWindow,
       location: tameLocation,
       navigator: tameNavigator,
       setTimeout: tameSetTimeout,
