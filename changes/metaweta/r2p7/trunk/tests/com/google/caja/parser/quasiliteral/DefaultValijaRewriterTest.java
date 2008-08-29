@@ -153,7 +153,7 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTest {
   public void testFuncArgs() throws Exception {
     rewriteAndExecute(
         "  var x = 0;"
-        + "function f() { x = arguments[1]; }"
+        + "function f() { x = arguments[0]; }"
         + "f(3);"
         + "assertEquals(3, x);");
   }
