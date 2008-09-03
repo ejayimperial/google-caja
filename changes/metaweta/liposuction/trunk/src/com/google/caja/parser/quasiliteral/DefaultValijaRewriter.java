@@ -976,7 +976,7 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Transmutes functions into disfunctions.",
           reason="",
           matches="<at top level>function @fname(@ps*) {@bs*;}",
-          substitutes="<approx>$v.so(@fname, $v.dis(" +
+          substitutes="<approx>$v.so('@fname', $v.dis(" +
                                    "function($dis, @ps*) {" +
                                    "  @fh*;" +
                                    "  @stmts*;" +

@@ -346,7 +346,7 @@ var valijaMaker = (function(outers) {
     keys: keys,
     canReadRev: canReadRev,
 
-    dis: dis,
+    dis: dis
   });
 });
 
