@@ -23,7 +23,7 @@ import com.google.caja.util.RhinoTestBed;
 /**
  * @author metaweta@gmail.com
  */
-public class DefaultValijaRewriterTest extends CommonJsRewriterTest {
+public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
 
   protected Rewriter defaultValijaRewriter = new DefaultValijaRewriter(true);
   protected Rewriter defaultCajaRewriter = new DefaultCajaRewriter(false, false);
@@ -96,24 +96,22 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTest {
         "var a={x:1};\n" +
         "'' + ('x' in a) + ('y' in a);");
   }
-  
-  public void testForIn2() throws Exception {
+
+  public void testForInLoop() throws Exception {
     assertConsistent("(function(){ str=''; for (i in {x:1, y:true}) {str+=i;} str; })();");
     assertConsistent("(function(){ str=''; for (var i in {x:1, y:true}) {str+=i;} str;})();");
     assertConsistent("str=''; for (i in {x:1, y:true}) {str+=i;} str;");
     assertConsistent("str=''; for (var i in {x:1, y:true}) {str+=i;} str;");
   }
-  
+
   public void testValueOf() throws Exception {
-    //TODO: is setting valueOf possible in valija? 
+    //TODO: is setting valueOf possible in valija?
     //assertConsistent("var x={valueOf:function(hint){return 2;}}; x+1;");
   }
-  
+
   /**
    * Tests that the container can get access to
    * "virtual globals" defined in cajoled code.
-   *
-   * @throws Exception
    */
   public void testWrapperAccess() throws Exception {
     // TODO(ihab.awad): SECURITY: Re-enable by reading (say) x.foo, and
@@ -181,8 +179,8 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTest {
     Statement cajitaTree = (Statement)rewriteStatements(
         valijaTree);
     setRewriter(defaultCajaRewriter);
-    String cajoledJs = "___.loadModule(function (___, IMPORTS___) {\n" + 
-        render(rewriteStatements(cajitaTree)) + 
+    String cajoledJs = "___.loadModule(function (___, IMPORTS___) {\n" +
+        render(rewriteStatements(cajitaTree)) +
         "\n});";
     String valijaCajoled = render(
         rewriteStatements(js(fromResource("../../valija-cajita.js"))));

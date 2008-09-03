@@ -22,12 +22,10 @@ import junit.framework.AssertionFailedError;
  *
  * @author ihab.awad@gmail.com
  */
-public abstract class CommonJsRewriterTest extends RewriterTestCase {
+public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
 
   /**
    * Tests that eval is uncallable.
-   *
-   * @throws Exception
    */
   public void testEval() throws Exception {
     rewriteAndExecute(
@@ -39,8 +37,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
   /**
    * Tests that arguments to functions are not mutable through the
    * arguments array.
-   *
-   * @throws Exception
    */
   public void testMutableArguments() throws Exception {
     rewriteAndExecute(
@@ -59,8 +55,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
 
   /**
    * Tests that the caller attribute is unreadable.
-   *
-   * @throws Exception
    */
   public void testCaller() throws Exception {
     rewriteAndExecute(
@@ -76,8 +70,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
 
   /**
    * Tests that the callee attribute is unreadable.
-   *
-   * @throws Exception
    */
   public void testCallee() throws Exception {
     rewriteAndExecute(
@@ -93,8 +85,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
 
   /**
    * Tests that arguments are immutable from another function's scope.
-   *
-   * @throws Exception
    */
   public void testCrossScopeArguments() throws Exception {
     rewriteAndExecute(
@@ -111,8 +101,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
 
   /**
    * Tests that exceptions are not visible outside of the catch block.
-   *
-   * @throws Exception
    */
   public void testCatch() throws Exception {
     try {
@@ -128,8 +116,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
 
   /**
    * Tests that setTimeout is uncallable.
-   *
-   * @throws Exception
    */
   public void testSetTimeout() throws Exception {
     rewriteAndExecute(
@@ -140,8 +126,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
 
   /**
    * Tests that Object.watch is uncallable.
-   *
-   * @throws Exception
    */
   public void testObjectWatch() throws Exception {
     rewriteAndExecute(
@@ -154,8 +138,6 @@ public abstract class CommonJsRewriterTest extends RewriterTestCase {
   /**
    * Tests that unreadable global properties are not readable by way of
    * Object.toSource().
-   *
-   * @throws Exception
    */
   public void testToSource() throws Exception {
     rewriteAndExecute(

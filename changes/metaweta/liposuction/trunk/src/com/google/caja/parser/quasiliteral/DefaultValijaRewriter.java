@@ -519,11 +519,11 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Translate reference to 'arguments' unmodified",
           reason="",
           matches="arguments",
-          substitutes="arguments")
+          substitutes="Array.slice(arguments,1)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
-          return substV("$v.args(arguments)");
+          return subst(bindings);
         }
         return NONE;
       }
@@ -1175,7 +1175,7 @@ public class DefaultValijaRewriter extends Rewriter {
           reason="So that every use of a regex literal creates a new instance"
                + " to prevent state from leaking via interned literals.  This"
                + " is consistent with the way ES4 treates regex literals.",
-          substitutes="new RegExp(@pattern, @modifiers?)")
+          substitutes="valija.construct(RegExp, [@pattern, @modifiers?])")
       public ParseTreeNode fire(
           ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof RegexpLiteral) {
