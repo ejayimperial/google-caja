@@ -1216,14 +1216,14 @@ public class DefaultValijaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof MultiDeclaration
             && scope.isOuter()) {
-          Expression[] newChildren = new Expression[node.children().size()];
-          for (int i = 0; i < newChildren.length; i++) {
+          List <Expression> newChildren = new ArrayList<Expression>();
+          for (int i = 0, len = node.children().size(); i < len; i++) {
             ExpressionStmt result = (ExpressionStmt)
                 expand(node.children().get(i), scope, mq);
-            newChildren[i] = result.getExpression();
+            newChildren.add(i, result.getExpression());
           }
           return new ExpressionStmt(
-              Operation.create(Operator.COMMA, newChildren));
+              newCommaOperation(newChildren));
         }
         return NONE;
       }
