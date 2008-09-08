@@ -113,7 +113,7 @@ var getTestbedServer = (function () {
 
   var testbedServer;
   return function getTestbedServer() {
-    if (testbedServer === undefined) {
+    if (testbedServer === void 0) {
       var backend = getCgiParams().backend;
       testbedServer = (backend && backend.length === 1)
           ? backend[0]

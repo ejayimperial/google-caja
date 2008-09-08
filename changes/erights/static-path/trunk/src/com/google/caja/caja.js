@@ -1405,6 +1405,7 @@ var ___;
    * diagnostic purposes only) its name.
    */
   function Token(name) {
+    name = String(name);
     return primFreeze({
           toString: simpleFrozenFunc(function() { return name; })
         });
@@ -2340,10 +2341,11 @@ var ___;
   }
 
   /**
-   * A new-module-handler which does nothing.
+   * A new-module-handler which returns the new module without
+   * instantiating it.
    */
-  var ignoreNewModule = freeze({
-    handle: simpleFrozenFunc(function(newModule){})
+  var obtainNewModule = freeze({
+    handle: simpleFrozenFunc(function(newModule){ return newModule; })
   });
 
   /**
@@ -2441,8 +2443,7 @@ var ___;
    * notifying the handler), and returns the new module.
    */
   function loadModule(module) {
-    callPub(myNewModuleHandler, 'handle', [simpleFrozenFunc(module)]);
-    return module;
+    return callPub(myNewModuleHandler, 'handle', [simpleFrozenFunc(module)]);
   }
 
   var registeredImports = [];
@@ -3007,7 +3008,7 @@ var ___;
     // Module loading
     getNewModuleHandler: getNewModuleHandler,
     setNewModuleHandler: setNewModuleHandler,
-    ignoreNewModule: ignoreNewModule,
+    obtainNewModule: obtainNewModule,
     makeNormalNewModuleHandler: makeNormalNewModuleHandler,
     loadModule: loadModule,
 
