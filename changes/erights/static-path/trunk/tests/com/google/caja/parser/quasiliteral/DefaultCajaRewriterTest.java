@@ -455,7 +455,7 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
    */
   public void testInVeil() throws Exception {
     rewriteAndExecute(
-        "assertFalse('___FROZEN___' in Object);");
+        "assertFalse('FROZEN___' in Object);");
   }
 
   public void testPrimordialObjectExtension() throws Exception {

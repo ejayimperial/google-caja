@@ -51,6 +51,33 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
     assertConsistent("function f(){ this.x = 1; } f; var g = new f(); g.x;");
   }
 
+  public void testProtoCall() throws Exception {
+    assertConsistent("''+Array.prototype.sort.call([3,1,2]);");
+    assertConsistent("''+[3,1,2].sort();");
+    assertConsistent("''+[3,1,2].sort.call([4,2,7]);");
+
+    assertConsistent("String.prototype.indexOf.call('foo','o');");
+    assertConsistent("'foo'.indexOf('o');");
+
+    assertConsistent("'foo'.indexOf.call('bar','o');");
+    assertConsistent("'foo'.indexOf.call('bar','a');");
+  }
+
+  public void testInherit() throws Exception {
+    assertConsistent(
+        "function Point(x){this.x=x;}\n" +
+        "Point.prototype.toString = function(){return \'<\'+this.x+\'>\';};\n" +
+        "function WP(x){Point.call(this,x);}\n" +
+        "WP.prototype = caja.beget(Point.prototype);\n" +
+        "var pt = new WP(3);\n" +
+        "pt.toString();");
+  }
+
+  /** See bug 528 */
+  public void checkRegExpLeak() throws Exception {
+    checkSucceeds("''+(/(.*)/).exec();", "undefined,undefined");
+  }
+
   public void testClosure() throws Exception {
     assertConsistent(
         "function f(){" +

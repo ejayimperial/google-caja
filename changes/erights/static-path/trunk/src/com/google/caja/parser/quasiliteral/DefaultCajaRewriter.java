@@ -313,6 +313,8 @@ public class DefaultCajaRewriter extends Rewriter {
 
           // TODO(erights): Pull manifest up into module record. myPermit should generate
           // a JSON AST directly, rather than generating a string which we then parse.
+          // Properly scope the myPermit to a per-module Scope rather than a 
+          // DefaultCajaRewriter. 
           return substV(
               "@importedvars*; @startStmts*;" +
 //              "caja.manifest('permitsAssumed', @permits);" +

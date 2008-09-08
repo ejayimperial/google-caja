@@ -134,7 +134,7 @@ var valijaMaker = (function(outers) {
       var statics = caja.getOwnPropertyNames(func);
       for (var i = 0; i < statics.length; i++) {
         var k = statics[i];
-        if (k !== 'valueOf' && k !== 'toString') {
+        if (k !== 'valueOf') {
           result[k] = func[k];
         }
       }
@@ -142,7 +142,7 @@ var valijaMaker = (function(outers) {
       var meths = caja.getMethodNames(func);
       for (var i = 0; i < meths.length; i++) {
         var k = meths[i];
-        if (k !== 'valueOf' && k !== 'toString') {
+        if (k !== 'valueOf') {
           proto[k] = makeDefaultMethod(k);
         }
       }
@@ -208,7 +208,7 @@ var valijaMaker = (function(outers) {
   }
   
   function hasOwnProp(obj, name) {
-    return {}.hasOwnProperty(obj, name);
+    return {}.hasOwnProperty.call(obj, name);
   } 
 
   /**
@@ -227,8 +227,9 @@ var valijaMaker = (function(outers) {
     if (name in obj) { return obj[name];}
 
     var stepParent = getFakeProtoOf(caja.directConstructor(obj));
-    if (stepParent !== (void 0) && name in stepParent &&
-        name !== 'valueOf' && name !== 'toString') {
+    if (stepParent !== (void 0) && 
+        name in stepParent &&
+        name !== 'valueOf') {
       return stepParent[name];
     }
     return obj[name];
@@ -282,9 +283,18 @@ var valijaMaker = (function(outers) {
   }
   
   var FuncHeader = new RegExp(
-    'function *([a-zA-Z0-9\$_]*) *' +
-      '\\((\\$dis,? *)?' + 
-      '([^\\)]*)\\).*');
+    // Capture the function name if present.
+    // Use absence of spaces or open parens, rather than presence of
+    // identifier chars, so we don't need to worry about charset
+    // issues (beyond the definition of \s). 
+    '^\\s*function\\s*([^\\s\\(]*)\\s*\\(' +
+      // Skip a first '$dis' parameter if present.
+      '(?:\\$dis,?\\s*)?' + 
+      // Capture any remaining arguments until the matching close paren. 
+      // TODO(erights): Once EcmaScript and Valija allow patterns in parameter 
+      // position, a close paren will no longer be a reliable indication of 
+      // the end of the parameter list, so we'll need to revisit this.
+      '([^\\)]*)\\)'); // don't care what's after the close paren
 
   /** 
    * Handle Valija <tt>function <i>opt_name</i>(...){...}</tt>.
@@ -300,7 +310,7 @@ var valijaMaker = (function(outers) {
     result.bind = function(self, var_args) {
       var leftArgs = Array.slice(arguments, 0);
       return function(var_args) {
-	return callFn.apply(caja.USELESS, 
+        return callFn.apply(caja.USELESS, 
                             leftArgs.concat(Array.slice(arguments, 0)));
       };
     };
@@ -313,7 +323,7 @@ var valijaMaker = (function(outers) {
     var match = FuncHeader.exec(printRep);
     if (null !== match) {
       if (opt_name === void 0) { opt_name = match[1]; }
-      printRep = 'function ' + opt_name + '(' + match[3] + 
+      printRep = 'function ' + opt_name + '(' + match[2] + 
         ') {\n  [cajoled code]\n}';
     }
     result.toString = function() { return printRep; };
