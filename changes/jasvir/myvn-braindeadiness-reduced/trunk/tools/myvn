@@ -157,7 +157,7 @@ function myvn() {
       fi
       MISSING=`$gvn nothave | grep -v '^ant-'`
       if [ -n "$MISSING" ]; then
-        echo Warning: The following files are not part of the current changelist
+        echo WARNING: The following files are not part of the current changelist:
        # Ignore ant-* directories which are created during the build
         gvn nothave | grep -v "^ant-"
       fi
