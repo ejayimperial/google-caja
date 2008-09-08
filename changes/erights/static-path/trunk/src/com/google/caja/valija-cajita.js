@@ -89,9 +89,35 @@ var valijaMaker = (function(outers) {
   var ObjectShadow = caja.beget(DisfunctionPrototype);
   ObjectShadow.prototype = ObjectPrototype;
 
-  DisfunctionPrototype.toString = function() { 
+  var FuncHeader = new RegExp(
+    // Capture the function name if present.
+    // Use absence of spaces or open parens, rather than presence of
+    // identifier chars, so we don't need to worry about charset
+    // issues (beyond the definition of \s). 
+    '^\\s*function\\s*([^\\s\\(]*)\\s*\\(' +
+      // Skip a first '$dis' parameter if present.
+      '(?:\\$dis,?\\s*)?' + 
+      // Capture any remaining arguments until the matching close paren. 
+      // TODO(erights): Once EcmaScript and Valija allow patterns in parameter 
+      // position, a close paren will no longer be a reliable indication of 
+      // the end of the parameter list, so we'll need to revisit this.
+      '([^\\)]*)\\)'); // don't care what's after the close paren
+
+  DisfunctionPrototype.toString = dis(function($dis) { 
+    var callFn = $dis.call;
+    if (callFn) {
+      var printRep = callFn.toString();    
+      var match = FuncHeader.exec(printRep);
+      if (null !== match) {
+	var name = $dis.name;
+	if (name === void 0) { name = match[1]; }
+	return 'function ' + name + '(' + match[2] + 
+          ') {\n  [cajoled code]\n}';
+      }
+      return printRep;
+    }
     return 'disfunction(var_args){\n   [cajoled code]\n}';
-  };
+  });
 
   outers.Function = Disfunction;
 
@@ -152,12 +178,6 @@ var valijaMaker = (function(outers) {
     return result;
   }
   
-
-// TODO(erights): Why doesn't this work?
-//  var fpts = getShadow(DisfunctionPrototype.toString);
-//  function fptsCallFn($dis) { return $dis.toString(); }
-//  fpts.call = fpts.apply = fptsCallFn;
-
 
   /** 
    * Handle Valija <tt><i>func</i>.prototype</tt>.
@@ -282,20 +302,6 @@ var valijaMaker = (function(outers) {
     return result;
   }
   
-  var FuncHeader = new RegExp(
-    // Capture the function name if present.
-    // Use absence of spaces or open parens, rather than presence of
-    // identifier chars, so we don't need to worry about charset
-    // issues (beyond the definition of \s). 
-    '^\\s*function\\s*([^\\s\\(]*)\\s*\\(' +
-      // Skip a first '$dis' parameter if present.
-      '(?:\\$dis,?\\s*)?' + 
-      // Capture any remaining arguments until the matching close paren. 
-      // TODO(erights): Once EcmaScript and Valija allow patterns in parameter 
-      // position, a close paren will no longer be a reliable indication of 
-      // the end of the parameter list, so we'll need to revisit this.
-      '([^\\)]*)\\)'); // don't care what's after the close paren
-
   /** 
    * Handle Valija <tt>function <i>opt_name</i>(...){...}</tt>.
    */
@@ -318,16 +324,6 @@ var valijaMaker = (function(outers) {
     result.prototype = caja.beget(ObjectPrototype);
     result.prototype.constructor = result;
     result.length = callFn.length -1;
-
-    var printRep = callFn.toString();    
-    var match = FuncHeader.exec(printRep);
-    if (null !== match) {
-      if (opt_name === void 0) { opt_name = match[1]; }
-      printRep = 'function ' + opt_name + '(' + match[2] + 
-        ') {\n  [cajoled code]\n}';
-    }
-    result.toString = function() { return printRep; };
-
     if (opt_name !== void 0 && opt_name !== '') {
       result.name = opt_name;
     }
