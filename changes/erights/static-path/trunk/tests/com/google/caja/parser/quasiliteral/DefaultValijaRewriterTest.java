@@ -74,8 +74,8 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
   }
 
   /** See bug 528 */
-  public void checkRegExpLeak() throws Exception {
-    checkSucceeds("''+(/(.*)/).exec();", "undefined,undefined");
+  public void testRegExpLeak() throws Exception {
+    rewriteAndExecute("assertEquals(''+(/(.*)/).exec(), 'undefined,undefined');");
   }
 
   public void testClosure() throws Exception {
@@ -95,6 +95,7 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
 
   public void testArray() throws Exception {
     assertConsistent("[3,2,1].sort().toString();");
+    assertConsistent("[3,2,1].sort.call([4,2,7]).toString();");
   }
 
   public void testObject() throws Exception {
@@ -106,10 +107,18 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
   }
 
   public void testFunctionToStringCall() throws Exception {
-    assertConsistent("function foo() {}\n"
-        + "typeof foo.toString();");
-    assertConsistent("function foo() {}\n"
-        + "typeof Function.prototype.toString.call(foo);");
+    rewriteAndExecute("function foo() {}\n"
+        + "assertEquals(foo.toString()," +
+        		"'function foo() {\\n  [cajoled code]\\n}');");
+    rewriteAndExecute("function foo (a, b) {xx;}\n"
+        + "assertEquals(foo.toString()," +
+        		"'function foo(a, b) {\\n  [cajoled code]\\n}');");
+    rewriteAndExecute("function foo() {}\n"
+        + "assertEquals(Function.prototype.toString.call(foo), " +
+                        "'function foo() {\\n  [cajoled code]\\n}');");
+    rewriteAndExecute("var foo = function  ( x$x,y_y) {}\n"
+        + "assertEquals(Function.prototype.toString.call(foo), " +
+                        "'function (x$x, y_y) {\\n  [cajoled code]\\n}');");
   }
 
   public void testUnderscore() throws Exception {
