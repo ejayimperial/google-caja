@@ -59,8 +59,6 @@ import com.google.caja.reporting.MessageQueue;
 
 import static com.google.caja.parser.js.SyntheticNodes.s;
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
-import static com.google.caja.parser.quasiliteral.PermitTemplate.CanRead;
-import static com.google.caja.parser.quasiliteral.PermitTemplate.CanCall;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,137 +113,6 @@ public class DefaultCajaRewriter extends Rewriter {
     }
     return result;
   }
-
-  // TODO(erights): to be read in from a JSON config
-  private static PermitTemplate OurTemplate = new PermitTemplate(
-      "valija", new PermitTemplate(
-          "typeOf", CanCall,
-          "instanceOf", CanCall,
-          "read", CanCall,
-          "set", CanCall,
-          "callFunc", CanCall,
-          "callMethod", CanCall,
-          "construct", CanCall,
-          "getOuters", CanCall,
-          "readOuter", CanCall,
-          "setOuter", CanCall,
-          "initOuter", CanCall,
-          "remove", CanCall,
-          "keys", CanCall,
-          "canReadRev", CanCall,
-          "dis", CanCall),
-      "caja", new PermitTemplate(
-          "log", CanCall,
-          "fail", CanCall,
-          "enforce", CanCall,
-          "enforceType", CanCall,
-          "enforceNat", CanCall,
-          "directConstructor", CanCall,
-          "getFuncCategory", CanCall,
-          "isDirectInstanceOf", CanCall,
-          "isInstanceOf", CanCall,
-          "isRecord", CanCall,
-          "isArray", CanCall,
-          "isJSONContainer", CanCall,
-          "freeze", CanCall,
-          "copy", CanCall,
-          "snapshot", CanCall,
-          "canReadPub", CanCall,
-          "readPub", CanCall,
-          "canEnumPub", CanCall,
-          "canEnumOwn", CanCall,
-          "canInnocentEnum", CanCall,
-          "BREAK", CanCall,
-          "each", CanCall,
-          "canCallPub", CanCall,
-          "callPub", CanCall,
-          "canSetPub", CanCall,
-          "setPub", CanCall,
-          "canDeletePub", CanCall,
-          "deletePub", CanCall,
-          "hasTrademark", CanCall,
-          "guard", CanCall,
-          "makeSealerUnsealerPair", CanCall,
-          "def", CanCall,
-          "USELESS", CanCall,
-          "manifest", CanCall,
-          "construct", CanCall,
-          "newTable", CanCall,
-          "inheritsFrom", CanCall,
-          "getSuperCtor", CanCall,
-          "getOwnPropertyNames", CanCall,
-          "getMethodNames", CanCall,
-          "beget", CanCall),
-      "null", CanRead,
-      "false", CanRead,
-      "true", CanRead,
-      "NaN", CanRead,
-      "Infinity", CanRead,
-      "undefined", CanRead,
-      "parseInt", CanCall,
-      "parseFloat", CanCall,
-      "isNaN", CanCall,
-      "isFinite", CanCall,
-      "decodeURI", CanCall,
-      "decodeURIComponent", CanCall,
-      "encodeURI", CanCall,
-      "encodeURIComponent", CanCall,
-      "Math", new PermitTemplate(
-          "E", CanRead,
-          "LN10", CanRead,
-          "LN2", CanRead,
-          "LOG2E", CanRead,
-          "LOG10E", CanRead,
-          "PI", CanRead,
-          "SQRT1_2", CanRead,
-          "SQRT2", CanRead,
-          "abs", CanCall,
-          "acos", CanCall,
-          "asin", CanCall,
-          "atan", CanCall,
-          "atan2", CanCall,
-          "ceil", CanCall,
-          "cos", CanCall,
-          "exp", CanCall,
-          "floor", CanCall,
-          "log", CanCall,
-          "max", CanCall,
-          "min", CanCall,
-          "pow", CanCall,
-          "random", CanCall,
-          "round", CanCall,
-          "sin", CanCall,
-          "sqrt", CanCall,
-          "tan", CanCall),
-      "Object", CanCall,
-      "Array", new PermitTemplate(
-          "()", CanRead,
-          "slice", CanCall),
-      "String", new PermitTemplate(
-          "()", CanRead,
-          "fromCharCode", CanCall),
-      "Boolean", CanCall,
-      "Number", new PermitTemplate(
-          "()", CanRead,
-          "MAX_VALUE", CanRead,
-          "MIN_VALUE", CanRead,
-          "NaN", CanRead,
-          "NEGATIVE_INFINITY", CanRead,
-          "POSITIVE_INFINITY", CanRead),
-      "Date", new PermitTemplate(
-          "()", CanRead,
-          "parse", CanCall,
-          "UTC", CanCall),
-      "RegExp", CanCall,
-      "Error", CanCall,
-      "EvalError", CanCall,
-      "RangeError", CanCall,
-      "ReferenceError", CanCall,
-      "SyntaxError", CanCall,
-      "TypeError", CanCall,
-      "URIError", CanCall);
-
-  private final Permit myPermit = new Permit(OurTemplate);
 
   // A NOTE ABOUT MATCHING MEMBER ACCESS EXPRESSIONS
   // When we match the pattern like '@x.@y' or '@x.@y()' against a specimen,
@@ -311,17 +178,14 @@ public class DefaultCajaRewriter extends Rewriter {
             );
           }
 
-          // TODO(erights): Pull manifest up into module record. myPermit should generate
-          // a JSON AST directly, rather than generating a string which we then parse.
-          // Properly scope the myPermit to a per-module Scope rather than a 
-          // DefaultCajaRewriter. 
+          // TODO(erights): Pull manifest up into module record.
           return substV(
               "@importedvars*; @startStmts*;" +
 //              "caja.manifest('permitsAssumed', @permits);" +
               "@expanded*;",
               "importedvars", new ParseTreeNodeContainer(importedVars),
               "startStmts", new ParseTreeNodeContainer(s2.getStartStatements()),
-              "permits", substV("(" + myPermit.toString() + ")"),
+              "permits", s2.getPermitsUsed(),
               "expanded", new ParseTreeNodeContainer(expanded));
         }
         return NONE;
@@ -2305,7 +2169,7 @@ public class DefaultCajaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
           ParseTreeNode o = bindings.get("o");
-          Permit oPermit = myPermit.canRead(o);
+          Permit oPermit = scope.permitRead(o);
           if (null != oPermit) {
             ParseTreeNode m = bindings.get("m");
             if (null != oPermit.canCall(m)) {

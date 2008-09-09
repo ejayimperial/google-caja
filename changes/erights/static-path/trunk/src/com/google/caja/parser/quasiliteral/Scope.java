@@ -18,6 +18,7 @@ import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.Keyword;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
+import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ModuleEnvelope;
 import com.google.caja.parser.js.SyntheticNodes;
 import com.google.caja.parser.js.CatchStmt;
@@ -199,6 +200,7 @@ public class Scope {
   // empty everywhere else. Define subclasses of Scope so that this confusing
   // overlapping of instance variables does not occur.
   private final SortedSet<String> importedVariables = new TreeSet<String>();
+  private final Permit permitsUsed;
 
   public static Scope fromProgram(Block root, MessageQueue mq) {
     Scope s = new Scope(ScopeType.PROGRAM, mq, true);
@@ -227,7 +229,9 @@ public class Scope {
     return s;
   }
 
-  private static Scope fromFunctionConstructor(Scope parent, FunctionConstructor root, boolean sideEffecting) {
+  private static Scope fromFunctionConstructor(Scope parent,
+                                               FunctionConstructor root,
+                                               boolean sideEffecting) {
     Scope s = new Scope(ScopeType.FUNCTION_BODY, parent, sideEffecting);
 
     // A function's name is bound to it in its body. After executing
@@ -252,6 +256,7 @@ public class Scope {
     this.parent = null;
     this.mq = mq;
     this.sideEffecting = sideEffecting;
+    this.permitsUsed = new Permit();
   }
 
   private Scope(ScopeType type, Scope parent, boolean sideEffecting) {
@@ -259,6 +264,7 @@ public class Scope {
     this.parent = parent;
     this.mq = parent.mq;
     this.sideEffecting = sideEffecting;
+    this.permitsUsed = parent.permitsUsed;
   }
 
   /**
@@ -716,5 +722,17 @@ public class Scope {
     }
 
     s.locals.put(name, Pair.pair(type, ident.getFilePosition()));
+  }
+
+  // TODO(erights): Permit should generate a JSON AST directly,
+  // rather than generating a string which we then parse.
+  Expression getPermitsUsed() {
+    return (Expression)substV("(" + permitsUsed.toString() + ")");
+  }
+
+  // SECURITY HOLE TODO(erights): Don't permit o if it's base
+  // is defined by non-imported variable.
+  public Permit permitRead(ParseTreeNode o) {
+    return permitsUsed.canRead(o);
   }
 }

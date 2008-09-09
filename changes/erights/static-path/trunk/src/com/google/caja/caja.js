@@ -2674,8 +2674,9 @@ var ___;
    * Is this technique well known?
    */
   function newTable() {
+    magicCount++;
     var myMagicIndexName = '_' + Math.random() + '_' + 
-                           magicCount++ + '_index___';
+                           magicCount + '_index___';
     var myKeys = [];
     var myValues = [];
 

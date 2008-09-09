@@ -11,6 +11,10 @@ final class Permit {
   final private Map<String, Permit> myPermits;
   final private PermitTemplate myTemplate;
 
+  Permit() {
+    this(PermitTemplate.DefaultTemplate);
+  }
+
   Permit(PermitTemplate template) {
     myPermits = new HashMap<String, Permit>();
     myTemplate = template;
