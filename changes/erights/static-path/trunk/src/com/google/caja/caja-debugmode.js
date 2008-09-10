@@ -372,7 +372,7 @@
         this,
         [
          'grantRead', noop,
-         'grantEnum', noop,
+         'grantEnumOnly', noop,
          'grantCall', noop,
          'grantSet', requireNotFrozen,
          'grantDelete', requireNotFrozen

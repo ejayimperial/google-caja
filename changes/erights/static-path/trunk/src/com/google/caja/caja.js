@@ -739,16 +739,10 @@ var ___;
    * other means.
    */
   function fastpathRead(obj, name) {
+    if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
     obj[name + '_canRead___'] = true;
   }
 
-  /** fastpathEnum implies fastpathRead */
-  function fastpathEnum(obj, name) {
-    fastpathRead(obj, name);
-    obj[name + '_canEnum___'] = true;
-  }
-
-  /** fastpathEnum for members */
   function fastpathEnumOnly(obj, name) {
     obj[name + '_canEnum___'] = true;
   }
@@ -758,6 +752,7 @@ var ___;
    * should only be callable.
    */
   function fastpathCall(obj, name) {
+    if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
     obj[name + '_canCall___'] = true;
     if (obj[name + '_canSet___']) {
       obj[name + '_canSet___'] = false;
@@ -768,14 +763,16 @@ var ___;
   }
 
   /**
-   * fastpathSet implies fastpathEnum and fastpathRead. It also
+   * fastpathSet implies fastpathEnumOnly and fastpathRead. It also
    * disables the ability to call.
    */
   function fastpathSet(obj, name) {
+    if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
     if (isFrozen(obj)) {
       fail("Can't set .", name, ' on frozen (', debugReference(obj), ')');
     }
-    fastpathEnum(obj, name);
+    fastpathEnumOnly(obj, name);
+    fastpathRead(obj, name);
     obj[name + '_canSet___'] = true;
     if (obj[name + '_canCall___']) {
       obj[name + '_canCall___'] = false;
@@ -788,8 +785,12 @@ var ___;
   /**
    * fastpathDelete allows delete of a member on a constructed object via
    * the private API.
+   * <p>
+   * TODO(erights): Having a fastpath flag for this probably doesn't
+   * make sense.
    */
   function fastpathDelete(obj, name) {
+    if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
     if (isFrozen(obj)) {
       fail("Can't delete .", name, ' on frozen (', debugReference(obj), ')');
     }
@@ -802,10 +803,6 @@ var ___;
    */
   function grantRead(obj, name) {
     fastpathRead(obj, name);
-  }
-
-  function grantEnum(obj, name) {
-    fastpathEnum(obj, name);
   }
 
   function grantEnumOnly(obj, name) {
@@ -1212,9 +1209,11 @@ var ___;
       fastpathEnumOnly(proto, name);
     } else if (isSimpleFunc(member)) {
       fastpathCall(proto, name);
-      fastpathEnum(proto, name);
+      fastpathEnumOnly(proto, name);
+      fastpathRead(proto, name);
     } else {
-      fastpathEnum(proto, name);
+      fastpathEnumOnly(proto, name);
+      fastpathRead(proto, name);
     }
     proto[name] = asFirstClass(member);
   }
@@ -1388,7 +1387,9 @@ var ___;
     if (canEnum(obj, name)) { return true; }
     if (!isJSONContainer(obj)) { return false; }
     if (!hasOwnProp(obj, name)) { return false; }
-    fastpathEnum(obj, name);
+    fastpathEnumOnly(obj, name);
+    if (name === 'toString') { return true; }
+    fastpathRead(obj, name);
     return true;
   }
 
@@ -1621,7 +1622,8 @@ var ___;
     staticMemberName = '' + staticMemberName;
     if (canSetStatic(ctor, staticMemberName)) {
       ctor[staticMemberName] = staticMemberValue;
-      fastpathEnum(ctor, staticMemberName);
+      fastpathEnumOnly(ctor, staticMemberName);
+      fastpathRead(ctor, staticMemberName);
     } else {
       ctor.handleSet___(staticMemberName, staticMemberValue);
     }
@@ -2108,6 +2110,14 @@ var ___;
     proto.TOSTRING___ = xo4a(proto.toString, 'toString');
   }
   useGetHandler(Object.prototype, 'toString', function() {
+    if (hasOwnProp(this, 'toString') && 
+	typeof this.toString === 'function' &&
+	!hasOwnProp(this, 'TOSTRING___')) {
+      // This case is a kludge
+//      this.TOSTRING___ = xo4a(this.toString, 'toString');
+      // This case is a different kludge
+      return this.toString;
+    }
     return this.TOSTRING___;
   });
   useApplyHandler(Object.prototype, 'toString', function(args) {
@@ -2941,7 +2951,7 @@ var ___;
 
     // Accessing property attributes.
     canRead: canRead,        grantRead: grantRead,
-    canEnum: canEnum,        grantEnum: grantEnum,
+    canEnum: canEnum,        grantEnumOnly: grantEnumOnly,
     canCall: canCall,        grantCall: grantCall,
     canSet: canSet,          grantSet: grantSet,
     canDelete: canDelete,    grantDelete: grantDelete,
