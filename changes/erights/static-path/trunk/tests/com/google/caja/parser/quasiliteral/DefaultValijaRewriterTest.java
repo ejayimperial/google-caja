@@ -17,7 +17,6 @@ package com.google.caja.parser.quasiliteral;
 import java.io.IOException;
 
 import com.google.caja.lexer.ParseException;
-import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.ModuleEnvelope;
 import com.google.caja.parser.js.Statement;

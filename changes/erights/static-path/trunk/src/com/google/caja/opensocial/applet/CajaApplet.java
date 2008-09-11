@@ -61,15 +61,14 @@ import java.util.Set;
  * @author mikesamuel@gmail.com
  */
 public class CajaApplet extends Applet {
-
-  private final boolean myStandAlone;
+  private final boolean standAlone;
 
   public CajaApplet() {
-    myStandAlone = false;
+    standAlone = false;
   }
 
   public CajaApplet(boolean standalone) {
-    myStandAlone = standalone;
+    this.standAlone = standalone;
   }
 
   @Override
@@ -150,7 +149,7 @@ public class CajaApplet extends Applet {
                               final Set<Feature> features) {
     // TODO(mikesamuel): If the text starts with a <base> tag, maybe use that
     // and white it out to preserve file positions.
-    String url = myStandAlone ? "http://www.example.com/" : getDocumentBase().toString();
+    String url = standAlone ? "http://www.example.com/" : getDocumentBase().toString();
     URI src = URI.create(url);
     InputSource is = new InputSource(src);
 

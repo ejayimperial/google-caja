@@ -484,7 +484,6 @@ public class Scope {
     return parent.isImported(name);
   }
 
-
   /**
    * Is a given symbol an outer in this Valija code?
    *
@@ -496,7 +495,6 @@ public class Scope {
     if (locals.containsKey(name)) return false;
     return parent.isOuter(name);
   }
-
 
   private LocalType getType(String name) {
     Scope current = this;
@@ -724,10 +722,19 @@ public class Scope {
     s.locals.put(name, Pair.pair(type, ident.getFilePosition()));
   }
 
-  // TODO(erights): Permit should generate a JSON AST directly,
-  // rather than generating a string which we then parse.
-  Expression getPermitsUsed() {
-    return (Expression)substV("(" + permitsUsed.toString() + ")");
+  /**
+   * If varName is not a statically permitted base name, return null;
+   * otherwise return a JSON description of all the statically
+   * permitted paths rooted in varName which this module's compilation
+   * assumed were safe.
+   */
+  Expression getPermitsUsed(Identifier varName) {
+    // TODO(erights): Permit should generate a JSON AST directly,
+    // rather than generating a string which we then parse.
+    Permit subPermit = permitsUsed.canRead(varName);
+    if (null == subPermit) { return null; }
+    return (Expression)substV(
+        "(" + subPermit.getPermitsUsedAsJSONString() + ")");
   }
 
   // SECURITY HOLE TODO(erights): Don't permit o if it's base

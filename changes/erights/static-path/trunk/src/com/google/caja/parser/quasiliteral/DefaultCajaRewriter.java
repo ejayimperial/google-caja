@@ -84,7 +84,7 @@ public class DefaultCajaRewriter extends Rewriter {
     } else if (node instanceof Block) {
       List<Statement> stats = new ArrayList<Statement>();
       stats.addAll((Collection<? extends Statement>) node.children());
-      int lasti = stats.size()-1;
+      int lasti = stats.size() - 1;
       if (lasti >= 0) {
         stats.set(lasti, returnLast(stats.get(lasti)));
         result = new Block(stats);
@@ -92,7 +92,7 @@ public class DefaultCajaRewriter extends Rewriter {
     } else if (node instanceof Conditional) {
       List<ParseTreeNode> nodes = new ArrayList<ParseTreeNode>();
       nodes.addAll(node.children());
-      int lasti = nodes.size()-1;
+      int lasti = nodes.size() - 1;
       for (int i = 1; i <= lasti; i += 2) {  // Even are conditions.
         nodes.set(i, returnLast((Statement)nodes.get(i)));
       }
@@ -122,18 +122,20 @@ public class DefaultCajaRewriter extends Rewriter {
   // is that 'y' is always bound to a Reference.
 
   final public Rule[] cajaRules = {
-
     new Rule() {
       @Override
       @RuleDescription(
           name="moduleEnvelope",
-          synopsis="",
-          reason="",
-          matches="<wtf>",
-          substitutes="<wtf>")
+          synopsis="Cajole a ModuleEnvelope into a call to load a module description.",
+          reason="Each script tag defines a separately loadable program unit.",
+          matches="<a ModuleEnvelope>",
+          substitutes="___.loadModule(function(___, IMPORTS___) {" +
+          "  @body*;" +
+          "});")
       public ParseTreeNode fire(
               ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof ModuleEnvelope) {
+          // TODO(erights): Pull manifest up into module record.
           return new ExpressionStmt((Expression) substV(
               "___.loadModule(function(___, IMPORTS___) {" +
               "  @body*;" +
@@ -170,22 +172,29 @@ public class DefaultCajaRewriter extends Rewriter {
           }
           List<ParseTreeNode> importedVars = new ArrayList<ParseTreeNode>();
           for (String k : s2.getImportedVariables()) {
-            importedVars.add(
-                substV(
-                    "var @vIdent = ___.readImport(IMPORTS___, @vName);",
-                    "vIdent", s(new Identifier(k)),
-                    "vName", toStringLiteral(new Identifier(k)))
-            );
+            Identifier kid = new Identifier(k);
+            Expression permitsUsed = s2.getPermitsUsed(kid);
+            if (null == permitsUsed) {
+              importedVars.add(
+                  substV(
+                      "var @vIdent = ___.readImport(IMPORTS___, @vName);",
+                      "vIdent", s(kid),
+                      "vName", toStringLiteral(kid)));
+            } else {
+              importedVars.add(
+                  substV(
+                      "var @vIdent = ___.readImport(IMPORTS___, @vName, @permits);",
+                      "vIdent", s(kid),
+                      "vName", toStringLiteral(kid),
+                      "permits", permitsUsed));
+            }
           }
 
-          // TODO(erights): Pull manifest up into module record.
           return substV(
               "@importedvars*; @startStmts*;" +
-//              "caja.manifest('permitsAssumed', @permits);" +
               "@expanded*;",
               "importedvars", new ParseTreeNodeContainer(importedVars),
               "startStmts", new ParseTreeNodeContainer(s2.getStartStatements()),
-              "permits", s2.getPermitsUsed(),
               "expanded", new ParseTreeNodeContainer(expanded));
         }
         return NONE;
@@ -209,12 +218,6 @@ public class DefaultCajaRewriter extends Rewriter {
         if (node instanceof Reference) {
           Reference ref = (Reference) node;
           if (isSynthetic(ref.getIdentifier())) {
-            // TODO(erights): remove debugging cruft
-//            if (ref.getIdentifierName().equals("exy___")) {
-//              RuntimeException exy = new RuntimeException("exy___");
-//              exy.printStackTrace();
-//              throw exy;
-//            }
             return node;
           }
         }

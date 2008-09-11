@@ -37,7 +37,7 @@
       global.console.log(str);
       if (opt_stop) {
         // breakpoint here by uncommenting out the following line:
-        //debugger;
+        debugger;
         // or by setting a breakpoint on this useless line:
         return;
       }

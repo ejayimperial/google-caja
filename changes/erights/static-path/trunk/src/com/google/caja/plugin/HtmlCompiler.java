@@ -51,7 +51,6 @@ import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.TryStmt;
-import com.google.caja.parser.quasiliteral.DefaultCajaRewriter;
 import com.google.caja.parser.quasiliteral.QuasiBuilder;
 import com.google.caja.parser.quasiliteral.ReservedNames;
 import com.google.caja.plugin.stages.RewriteHtmlStage;

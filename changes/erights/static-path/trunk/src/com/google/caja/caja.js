@@ -1325,6 +1325,32 @@ var ___;
   }
 
   /**
+   * Ensure that all the permitsUsed starting at result are forever
+   * safe to allow without runtime checks.
+   */
+  function enforceStaticPath(result, permitsUsed) {
+    each(permitsUsed, simpleFrozenFunc(function(name, subPermits) {
+      // Don't factor out since we don't enforce frozen if permitsUsed
+      // are empty. 
+      // TODO(erights): Once we have ES3.1ish attribute control, it
+      // will suffice to enforce that each used property is frozen
+      // independent of the object as a whole.
+      enforce(isFrozen(result), 'Assumed frozen: ', result);
+      if (name === '()') {
+        // TODO(erights): Revisit this case
+      } else {
+        enforce(canReadPub(result, name),
+                'Assumed readable: ', result, '.', name);
+        if (inPub('()', subPermits)) {
+          enforce(canCallPub(result, name),
+                  'Assumed callable: ', result, '.', name, '()');
+        }
+        enforceStaticPath(readPub(result, name), subPermits);
+      }
+    }));
+  }
+
+  /**
    * Privileged code attempting to read an imported value from a module's
    * <tt>IMPORTS___</tt>. This function is NOT available to Caja code.
    * <p>
@@ -1332,9 +1358,17 @@ var ___;
    * TODO(ihab.awad): Make this throw a "module linkage error" so as to be
    * more informative, rather than just whatever readPub throws.
    */
-  function readImport(module_imports, name) {
-    if ((typeof name) === 'number') { return module_imports[name]; }
-    return readPub(module_imports, name);
+  function readImport(module_imports, name, opt_permitsUsed) {
+    var result;
+    if ((typeof name) === 'number') { 
+      result = module_imports[name]; 
+    } else {
+      result = readPub(module_imports, name);
+    }
+    if (opt_permitsUsed) {
+      enforceStaticPath(result, opt_permitsUsed);
+    }
+    return result;
   }
 
   /**
@@ -2111,8 +2145,8 @@ var ___;
   }
   useGetHandler(Object.prototype, 'toString', function() {
     if (hasOwnProp(this, 'toString') && 
-	typeof this.toString === 'function' &&
-	!hasOwnProp(this, 'TOSTRING___')) {
+        typeof this.toString === 'function' &&
+        !hasOwnProp(this, 'TOSTRING___')) {
       // This case is a kludge
 //      this.TOSTRING___ = xo4a(this.toString, 'toString');
       // This case is a different kludge
@@ -2370,10 +2404,6 @@ var ___;
   function makeNormalNewModuleHandler() {
     var imports = copy(sharedImports);
     var lastOutcome = void 0;
-    var outcomeHandler = 
-      simpleFrozenFunc(function(isSuccess, valueOrProblem) {
-        if (!isSuccess) { throw valueOrProblem; }
-      });
     return freeze({
       getImports: simpleFrozenFunc(function() { return imports; }),
       setImports: simpleFrozenFunc(function(newImports) { 
@@ -2389,19 +2419,18 @@ var ___;
           return void 0;
         }
       }),
-      setOutcomeHandler: simpleFrozenFunc(function(newOutcomeHandler) {
-        outcomeHandler = newOutcomeHandler;
-      }),
       handle: simpleFrozenFunc(function(newModule) {
         try {
-          lastOutcome = [true, newModule(___, imports)];
+          var result = newModule(___, imports);
+          lastOutcome = [true, result];
+          return result;
         } catch (ex) {
           // TODO(erights): I hope that this outcome reporting can be
           // adequate to replace the in-place rewrite currently being
           // done by HtmlCompiler.java as explained below.
           lastOutcome = [false, ex];
+          throw ex;
         }
-        asSimpleFunc(outcomeHandler)(lastOutcome[0], lastOutcome[1]);
       }),
       /**
        * This emulates HTML5 exception handling for scripts as discussed at

@@ -17,6 +17,7 @@ package com.google.caja.parser.js;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.util.SyntheticAttributeKey;
 
+// TODO(erights,ihab): Remove the concept of "synthetic" entirely.
 /**
  * Defines a Synthetic Attribute that marks a node as having been generated
  * as part of the compilation process.
@@ -41,7 +42,6 @@ public final class SyntheticNodes {
       = new SyntheticAttributeKey<Boolean>(Boolean.class, "synthetic");
 
   public static boolean isSynthesizable(ParseTreeNode node) {
-    // TODO(erights,ihab): WTF
     return (node instanceof Identifier && node.getValue() != null)
         || node instanceof FunctionConstructor
         || node instanceof ModuleEnvelope;

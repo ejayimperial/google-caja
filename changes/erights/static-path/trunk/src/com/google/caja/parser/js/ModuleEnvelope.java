@@ -1,4 +1,4 @@
-// Copyright (C) 2005 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,10 +40,12 @@ public final class ModuleEnvelope extends AbstractStatement<Block> {
   protected void childrenChanged() {
     super.childrenChanged();
     if (children().size() != 1) {
-      throw new IllegalStateException("A ModuleEnvelope may only have one child");
+      throw new IllegalStateException(
+          "A ModuleEnvelope may only have one child");
     }
     if (!(children().get(0) instanceof Block)) {
-      throw new ClassCastException("Expected block, not " + children().get(0));
+      throw new ClassCastException(
+          "Expected block, not " + children().get(0));
     }
   }
 

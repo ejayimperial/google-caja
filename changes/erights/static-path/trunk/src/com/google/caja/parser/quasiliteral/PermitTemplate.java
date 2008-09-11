@@ -1,24 +1,44 @@
-package com.google.caja.parser.quasiliteral;
+// Copyright (C) 2008 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-import static com.google.caja.parser.quasiliteral.PermitTemplate.CanCall;
-import static com.google.caja.parser.quasiliteral.PermitTemplate.CanRead;
+package com.google.caja.parser.quasiliteral;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represent which static access paths are presumed safe.
+ * <p>
+ * Only {@class Permit} should access PermitTemplate directly. All other
+ * inquiries should go through Permit.
+ *
+ * @author erights
+ */
 final class PermitTemplate {
 
   final static PermitTemplate CanRead = new PermitTemplate();
   final static PermitTemplate CanCall = new PermitTemplate("()", CanRead);
 
-  final Map<String, PermitTemplate> myTemplates;
+  final Map<String, PermitTemplate> templates;
 
   PermitTemplate(Object... pairs) {
-    Map<String, PermitTemplate> templates = new HashMap<String, PermitTemplate>();
+    Map<String, PermitTemplate> templates =
+      new HashMap<String, PermitTemplate>();
     for (int i = 0; i < pairs.length; i += 2) {
       templates.put((String)pairs[i], (PermitTemplate)pairs[i+1]);
     }
-    myTemplates = templates;
+    this.templates = templates;
   }
 
   // TODO(erights): to be read in from a JSON config

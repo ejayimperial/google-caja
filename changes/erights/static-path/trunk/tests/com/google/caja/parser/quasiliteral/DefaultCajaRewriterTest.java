@@ -115,13 +115,9 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
     return "var " + name + " = ___.readImport(IMPORTS___, '" + name + "');";
   }
 
-  public void testTestTest() throws Exception {
-    assertConsistent(
-        "try {" +
-        "  '';" +
-        "} catch (e) {" +
-        "  throw new Error('PlusPlus error: ' + e);" +
-        "}");
+  public static String weldPrelude(String name, String permitsUsed) {
+    return "var " + name + " = ___.readImport(IMPORTS___, '" + name +
+           "', " + permitsUsed + ");";
   }
 
   public void testToString() throws Exception {
@@ -132,8 +128,6 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
         "} catch (e) {" +
         "  throw new Error('PlusPlus error: ' + e);" +
         "}");
-
-
     assertConsistent(
         "  function foo(){this.x_ = 1;}"
         + "caja.def(foo, Object, {"
@@ -1181,7 +1175,7 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
         "function() {" +
         "  " + unchanged +
         "};",
-        "var undefined = ___.readImport(IMPORTS___, 'undefined');" +
+        "var undefined = ___.readImport(IMPORTS___, 'undefined', {});" +
         "___.simpleFrozenFunc(function() {" +
         "  " + unchanged +
         "});");
@@ -1746,7 +1740,7 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
   public void testNewCalllessCtor() throws Exception {
     checkSucceeds(
         "(new Date);",
-        weldPrelude("Date")
+        weldPrelude("Date", "{}")
         + "new (___.asCtor(Date))();");
   }
 
@@ -2004,8 +1998,8 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
         "caja.def(Point, Object);" +
         "function WigglyPoint() {}" +
         "caja.def(WigglyPoint, Point);",
-        weldPrelude("Object") +
-        weldPrelude("caja") +
+        weldPrelude("Object", "{}") +
+        weldPrelude("caja", "{}") +
         "var Point;" +
         "Point = ___.simpleFunc(function() {}, 'Point');" +
         "var WigglyPoint;" +
@@ -2079,7 +2073,7 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
         "function Point() {}" +
         "function WigglyPoint() {}" +
         "caja.def(WigglyPoint, Point, { m0: g[0], m1: function() { this.p = 3; } });",
-        weldPrelude("caja") +
+        weldPrelude("caja", "{}") +
         weldPrelude("g") +
         "var Point;" +
         "Point = ___.simpleFunc(function() {}, 'Point');" +
@@ -2101,7 +2095,7 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
         "caja.def(WigglyPoint, Point," +
         "    { m0: g[0], m1: function() { this.p = 3; } }," +
         "    { s0: g[1], s1: function() { return 3; } });",
-        weldPrelude("caja") +
+        weldPrelude("caja", "{}") +
         weldPrelude("g") +
         "var Point;" +
         "Point = ___.simpleFunc(function() {}, 'Point');" +
@@ -2574,7 +2568,7 @@ public class DefaultCajaRewriterTest extends CommonJsRewriterTestCase {
         "___.readPub(g, 0) instanceof ___.primFreeze(foo);");
     checkSucceeds(
         "g[0] instanceof Object;",
-        weldPrelude("Object") +
+        weldPrelude("Object", "{}") +
         weldPrelude("g") +
         "___.readPub(g, 0) instanceof Object;");
 
