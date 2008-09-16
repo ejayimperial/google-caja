@@ -17,7 +17,21 @@ If you intend to contribute patches to Caja (and we would love you to do that), 
 
 == Building Caja via Ant ===
 
-Once you have subversion installed, follow the instructions at [http://code.google.com/p/google-caja/source/checkout] to checkout the Caja source.
+Once you have subversion installed, create a directory for your caja branches.  Here we assume you name it caja:
+
+  mkdir caja; cd caja
+
+Next make a directory named "svn-changes".  This is necessary for certain scripts to work.
+
+  mkdir svn-changes; cd svn-changes
+
+Then make a directory for a new branch.  Here we assume you name it "pristine":
+
+  mkdir pristine; cd pristine
+
+Repeat this step in the svn-changes directory every time you check out a new branch.
+
+Finally, follow the instructions at [http://code.google.com/p/google-caja/source/checkout] to checkout the Caja source.
 
 You should see a lot of lines like:
 {{{
