@@ -60,11 +60,6 @@
 
       .caja-stack { white-space: pre; font-family: monospace }
     </style>
-    <!-- asah: cut caja latency, so this page is usable every day.
-         There are two tricks: (1) combine files offline and run through
-         jsmin-- 14 HTTP requests @ 322KB vs. 1 req @ 144K
-         combiner.sh, jsmin.py 
-    -->
   <script src="caja-combined-min.js"></script>
   <script>
     function asyncLoadScript(url) {
