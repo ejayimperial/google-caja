@@ -646,6 +646,18 @@
     </jar>
 
     <mkdir dir="${www}/testbed"/>
+    <copy todir="${www}/testbed">
+      <fileset dir="${src}/com/google/caja/opensocial/applet">
+        <include name="*.html"/>
+        <include name="*.js"/>
+      </fileset>
+      <fileset dir="${jars}">
+        <include name="testbed.jar"/>
+        <include name="htmlparser.jar"/>
+        <include name="json_simple.jar"/>
+      </fileset>
+    </copy>
+
     <minify>
       <job output="${www}/testbed/caja-combined-min.js">
         <include file="${src}/com/google/caja/caja.js"/>
