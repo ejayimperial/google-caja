@@ -680,10 +680,8 @@
 
     <copy file="${src}/com/google/caja/opensocial/applet/index.html" tofile="${www}/testbed/debug.html"/>
     <replace file="${www}/testbed/debug.html">
-     <replacetoken>
-       <script type="text/javascript" src="caja-combined-min.js"></script>
-     </replacetoken>
-     <replacevalue>
+     <replacetoken><![CDATA[<script type="text/javascript" src="caja-combined-min.js"></script>]]></replacetoken>
+     <replacevalue><![CDATA[
        <script type="text/javascript" src="caja.js"></script>
        <script type="text/javascript" src="log-to-console.js"></script>
        <script type="text/javascript" src="caja-debugmode.js"></script>
@@ -698,6 +696,7 @@
        <script type="text/javascript" src="testbed.js"></script>
        <script type="text/javascript" src="setup-valija.js"></script>
        <script type="text/javascript" src="valija-cajoled.js"></script>
+       ]]>
      </replacevalue>
     </replace>
     <minify>
