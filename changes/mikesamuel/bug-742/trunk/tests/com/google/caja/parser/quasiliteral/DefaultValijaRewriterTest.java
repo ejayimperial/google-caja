@@ -211,6 +211,25 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         "str = ''; for (var i in { x: 1, y: true }) { str += i; } str;");
   }
 
+  public void testValueOf() throws Exception {
+     rewriteAndExecute(
+         ""
+         + "var msg;"
+         + "try {"
+         + "  var k = 'valueOf';"
+         + "  var o = {};"
+         + "  o[k] = function (hint) { return 2; };"
+         + "} catch (ex) {"
+         + "  msg = ex.message;"
+         + "}"
+         + "assertEquals('Not settable: ([Object]).valueOf', msg);"
+         );
+    checkFails("var x = { valueOf: function (hint) { return 2; } };",
+               "The valueOf property must not be set");
+    checkFails("var o = {}; o.valueOf = function (hint) { return 2; };",
+               "The valueOf property must not be set");
+  }
+
   /**
    * Tests that the container can get access to
    * "virtual globals" defined in cajoled code.
