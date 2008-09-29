@@ -42,33 +42,44 @@ function assertFailsSafe(canFail, assertionsIfPasses) {
  */
 function canonInnerHtml(s) {
   // Sort attributes.
+  var htmlAttribute = new RegExp('^\\s*(\\w+)(?:\\s*=\\s*("[^\\"]*"'
+                                 + '|\'[^\\\']*\'|[^\\\'\\"\\s>]+))?');
+  var quot = new RegExp('"', 'g');
+  var htmlStartTag = new RegExp('(<\\w+)\\s+([^\\s>][^>]*)>', 'g');
+  var htmlTag = new RegExp('(<\/?)(\\w+)(\\s+[^\\s>][^>]*)?>', 'g');
+  var ignorableWhitespace = new RegExp('^[ \\t]*(\\r\\n?|\\n)|\\s+$', 'g');
+  var tagEntityOrText = new RegExp(
+      '(?:(</?\\w[^>]*>|&[a-zA-Z#]|[^<&>]+)|([<&>]))', 'g');
   s = s.replace(
-      new RegExp('(<\\w+)\\s+([^\\s>][^>]*)>', 'g'),
+      htmlStartTag,
       function (_, tagStart, tagBody) {
         var attrs = [];
-        for (var m; (m = tagBody.match(
-                 new RegExp('^\\s*(\\w+)(?:\\s*=\\s*("[^\\"]*"'
-                            + '|\'[^\\\']*\'|[^\\\'\\"\\s>]+))?')));) {
-          var value = m[2] && !(new RegExp('^["\']')).test(m[2])
-              ? '"' + (m[2].substring(1, m[2].length - 1)
-                       .replace(new RegExp('"', 'g'), '&quot;')) + '"'
-              : m[2];
-          attrs.push(m[1] + (value ? '=' + value : ''));
+        for (var m; (m = tagBody.match(htmlAttribute));) {
+          var name = m[1];
+          var value = m[2];
+          var hasValue = value != null;
+          if (hasValue && (new RegExp('^["\']')).test(value)) {
+            value = value.substring(1, value.length - 1);
+          }
+          attrs.push(
+              hasValue
+              ? name + '="' + value.replace(quot, '&quot;') + '"'
+              : name);
           tagBody = tagBody.substring(m[0].length);
         }
         attrs.sort();
-        return tagStart + ' ' +attrs.join(' ') + '>';
+        return tagStart + ' ' + attrs.join(' ') + '>';
       });
   s = s.replace(
-      new RegExp('(<\/?)(\\w+)([^>]*)>', 'g'),
+      htmlTag,
       function (_, open, name, body) {
-        return open + name.toLowerCase() + body + '>';
+        return open + name.toLowerCase() + (body || '') + '>';
       });
   // Remove ignorable whitespace.
-  s = s.replace(new RegExp('^[ \\t]*(\\r\\n?|\\n)|\\s+$', 'g'), '');
+  s = s.replace(ignorableWhitespace, '');
   // Normalize escaping of text nodes since Safari doesn't escape loose >.
   s = s.replace(
-      new RegExp('(?:(</?\\w[^>]*>|&[a-zA-Z#]|[^<&>]+)|([<&>]))', 'g'),
+      tagEntityOrText,
       function (_, good, bad) {
         return good
             ? good

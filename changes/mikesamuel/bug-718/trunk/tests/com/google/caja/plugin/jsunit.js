@@ -69,8 +69,8 @@ function jsunitRun() {
     document.title = (originalTitle + ' - ' + msg);
     throw firstFailure || new Error(msg);
   }
-  (typeof console !== 'undefined') && (console.group(document.title),
-                                       console.groupEnd());
+  (typeof console !== 'undefined' && 'group' in console)
+      && (console.group(document.title), console.groupEnd());
 }
 
 if ('undefined' === typeof console) {
