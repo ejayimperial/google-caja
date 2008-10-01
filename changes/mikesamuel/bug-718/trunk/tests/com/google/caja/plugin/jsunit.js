@@ -45,8 +45,12 @@ function jsunitRun() {
   var nFailures = 0;
   for (var i = 0; i < testNames.length; ++i) {
     var testName = testNames[i];
-    (typeof console !== 'undefined' && 'group' in console)
-        && (console.group('running %s', testName), console.time(testName));
+    var groupLogMessages = (typeof console !== 'undefined'
+                            && 'group' in console);  // Not on Safari.
+    if (groupLogMessages) {
+      console.group('running %s', testName);
+      console.time(testName);
+    }
     try {
       (typeof setUp === 'function') && setUp();
       jsunitTests[testName].call(this);
@@ -57,8 +61,10 @@ function jsunitRun() {
       (typeof console !== 'undefined')
           && (console.error((e.message || '' + e) + '\n' + e.stack));
     } finally {
-      (typeof console !== 'undefined' && 'group' in console)
-          && (console.timeEnd(testName), console.groupEnd());
+      if (groupLogMessages) {
+        console.timeEnd(testName);
+        console.groupEnd();
+      }
     }
   }
 
