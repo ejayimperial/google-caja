@@ -510,7 +510,7 @@ attachDocumentStub = (function () {
     };
     TameNode.prototype.insertBefore = function (toInsert, child) {
       cajita.guard(tameNodeTrademark, toInsert);
-      if (child === void 0) { child === null; }
+      if (child === void 0) { child = null; }
       if (child !== null) { cajita.guard(tameNodeTrademark, child); }
       if (!this.editable___ || !toInsert.editable___) {
         throw new Error();

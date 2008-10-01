@@ -312,7 +312,7 @@ jsunitRegister('testInsertBefore',
   assertChildren('zero', 'two', 'one', 'three', 'four');
   el.insertBefore(one, two);
   assertChildren('zero', 'one', 'two', 'three', 'four');
-  el.insertBefore(four, null);
+  el.insertBefore(four, void 0);
   assertChildren('zero', 'one', 'two', 'three', 'four');
   pass('test-insert-before');
 });
