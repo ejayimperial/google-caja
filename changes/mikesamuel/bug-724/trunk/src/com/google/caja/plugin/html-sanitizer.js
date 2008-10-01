@@ -253,10 +253,10 @@ html.makeHtmlSanitizer = function (sanitizeAttributes) {
           if (ignoring) { return; }
           if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
           var eflags = html4.ELEMENTS[tagName];
-          if (eflags & html4.eflags.UNSAFE) {
-            ignoring = !(eflags & html4.eflags.EMPTY);
+          if (eflags & html4.eflags.FOLDABLE) {
             return;
-          } else if (eflags & html4.eflags.FOLDABLE) {
+          } else if (eflags & html4.eflags.UNSAFE) {
+            ignoring = !(eflags & html4.eflags.EMPTY);
             return;
           }
           attribs = sanitizeAttributes(tagName, attribs);

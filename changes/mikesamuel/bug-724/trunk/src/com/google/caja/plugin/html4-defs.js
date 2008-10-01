@@ -81,7 +81,8 @@ html4.ELEMENTS = {
   'big'        : 0,
   'blockquote' : html4.eflags.BREAKS_FLOW,
   // Attributes merged into global body.
-  'body'       : html4.eflags.FOLDABLE | html4.eflags.OPTIONAL_ENDTAG,
+  'body'       : (html4.eflags.FOLDABLE | html4.eflags.OPTIONAL_ENDTAG
+                | html4.eflags.UNSAFE),
   'br'         : html4.eflags.EMPTY | html4.eflags.BREAKS_FLOW,
   'button'     : 0,
   'caption'    : 0,
@@ -111,10 +112,10 @@ html4.ELEMENTS = {
   'h5'         : html4.eflags.BREAKS_FLOW,
   'h6'         : html4.eflags.BREAKS_FLOW,
   'head'       : (html4.eflags.FOLDABLE | html4.eflags.OPTIONAL_ENDTAG
-                | html4.eflags.BREAKS_FLOW),
+                | html4.eflags.BREAKS_FLOW | html4.eflags.UNSAFE),
   'hr'         : html4.eflags.EMPTY | html4.eflags.BREAKS_FLOW,
   'html'       : (html4.eflags.FOLDABLE | html4.eflags.OPTIONAL_ENDTAG
-                | html4.eflags.BREAKS_FLOW),
+                | html4.eflags.BREAKS_FLOW | html4.eflags.UNSAFE),
   'i'          : 0,
   'iframe'     : html4.eflags.UNSAFE,
   'img'        : html4.eflags.EMPTY,
