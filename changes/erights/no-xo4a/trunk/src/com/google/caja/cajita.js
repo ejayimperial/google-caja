@@ -901,9 +901,9 @@ var ___;
    * malfunctions -- frozen records with call, bind, and apply
    * simpleFunctions. 
    */
-  function reifyXo4a(xfunc, opt_name) {
+  function reifyIfXo4a(xfunc, opt_name) {
     if (!isXo4aFunc(xfunc)) {
-      fail('Internal: reifyXo4a should not see non-exophora: ', xfunc);
+      return asFirstClass(xfunc);
     }
     var result = {
       call: simpleFrozenFunc(function(self, var_args) {
@@ -1722,34 +1722,32 @@ var ___;
   }
 
   /**
-   * Whitelist proto[name] as a generic method that can safely be
-   * called with its <tt>this</tt> bound to other objects.
+   * Whitelist proto[name] as a generic exophoric function that can
+   * safely be called with its <tt>this</tt> bound to other objects.
    * <p>
-   * TODO(erights): Once we retire Original-Caja, the result of
-   * extracting a generic method should be disfunction-like rather than
-   * an exophoric function. We should remove any remaining notions of
-   * exophoric behavior from Cajita.
+   * Since exophoric functions are not first-class, reading
+   * proto[name] returns the corresponding malfunction -- a record
+   * with simple-functions for its call, bind, and apply.
    */
   function grantGeneric(proto, name) {
     var func = xo4a(proto[name], name);
     grantCall(proto, name);
-    var malfunc = reifyXo4a(func, name);
+    var malfunc = reifyIfXo4a(func, name);
     useGetHandler(proto, name, function() { return malfunc; });
   }
 
   /**
-   * Mark func as exophoric (for now) and use it as a virtual generic
-   * method by installing appropriate get and call handlers.
+   * Mark func as exophoric and use it as a virtual generic
+   * exophoric function by installing appropriate get and call handlers.
    * <p>
-   * TODO(erights): Once we retire Original-Caja, the result of
-   * extracting a generic method should be disfunction-like rather than
-   * an exophoric function. We should remove any remaining notions of
-   * exophoric behavior from Cajita.
+   * Since exophoric functions are not first-class, reading
+   * proto[name] returns the corresponding malfunction -- a record
+   * with simple-functions for its call, bind, and apply.
    */
   function handleGeneric(obj, name, func) {
     xo4a(func);
     useCallHandler(obj, name, func);
-    var malfunc = reifyXo4a(func, name);
+    var malfunc = reifyIfXo4a(func, name);
     useGetHandler(obj, name, function() { return malfunc; });
   }
 
@@ -1860,7 +1858,7 @@ var ___;
       // TODO(erights): This is probably wrong in that it can leak xo4a.
       return this.toString;
     }
-    return this.TOSTRING___;
+    return reifyIfXo4a(this.TOSTRING___, 'toString');
   });
   useApplyHandler(Object.prototype, 'toString', function(args) {
     return this.toString.apply(this, args); 
