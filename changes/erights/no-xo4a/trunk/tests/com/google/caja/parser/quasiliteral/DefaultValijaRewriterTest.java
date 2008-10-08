@@ -137,24 +137,15 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
          ""
          + "var msg;"
          + "try {"
-         + "  var x_ = 1;"
-         + "  x_;"
+         + "  var x__ = 1;"
+         + "  x__;"
          + "} catch (ex) {"
          + "  msg = ex.message;"
          + "}"
-         + "assertEquals('Not settable: ([Object]).x_', msg);"
-         );
-     rewriteAndExecute(
-         ""
-         + "var msg;"
-         + "try {"
-         + "  var o = { p_: 1 };"
-         + "  o.p_;"
-         + "} catch (ex) {"
-         + "  msg = ex.message;"
-         + "}"
-         + "assertEquals('Not settable: ([Object]).p_', msg);"
-         );
+         + "assertEquals('Not settable: ([Object]).x__', msg);");
+     checkFails(
+         "var o = { p__: 1 };",
+         "Properties cannot end in \"__\"");
   }
 
   public void testDate() throws Exception {
@@ -280,6 +271,17 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
 
   public void testStatic() throws Exception {
     assertConsistent("'' + Array.slice([3, 4, 5, 6], 1);");
+  }
+
+  public void testReformedGenerics() throws Exception {
+    assertConsistent(
+        "var x = [33];" +
+        "Array.prototype.push.apply(x, [3,4,5]);" +
+        "x.toString();");
+    assertConsistent(
+        "var x = {blue:'green'};" +
+        "Array.prototype.push.apply(x, [3,4,5]);" +
+        "x;");
   }
 
   @Override

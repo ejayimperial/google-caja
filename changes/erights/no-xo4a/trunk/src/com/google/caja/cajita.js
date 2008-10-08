@@ -2333,6 +2333,7 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
   // Sealing and Unsealing
   ////////////////////////////////////////////////////////////////////////
+
   /**
    * Returns a pair of functions such that the seal(x) wraps x in an object
    * so that only unseal can get x back from the object.
@@ -2365,12 +2366,14 @@ var ___;
         squirrel = null;
       }
     }
-    return freeze({ seal: seal, unseal: unseal });
+    return freeze({ 
+      seal: simpleFrozenFunc(seal), 
+      unseal: simpleFrozenFunc(unseal) 
+    });
   }
 
   ////////////////////////////////////////////////////////////////////////
   // Needed for Valija
-  // TODO(erights): nothing in this section is tested yet
   ////////////////////////////////////////////////////////////////////////
 
   /**
@@ -2541,18 +2544,27 @@ var ___;
     var result = [];
     var seen = {};
     for (var k in obj) {
-      var match = Attribute.exec(k);
-      if (match !== null) {
-        var base = match[1];
-        if (!hasOwnProp(seen, base)) {
-          seen[base] = true;
-          result.push(base);
-        }
+      if (hasOwnProp(obj, k)) {
+	if (!endsWith__.test(k)) {
+	  if (canReadPub(obj, k) && !hasOwnProp(seen, k)) {
+	    seen[k] = true;
+	    result.push(k);
+	  }
+	} else {
+	  var match = Attribute.exec(k);
+	  if (match !== null) {
+            var base = match[1];
+            if (!hasOwnProp(seen, base)) {
+              seen[base] = true;
+              result.push(base);
+	    }
+          }
+	}
       }
     }
     return result;
   }
-  
+
   function getMethodNames(func) {
     enforceType(func, 'function');
     var result = [];
