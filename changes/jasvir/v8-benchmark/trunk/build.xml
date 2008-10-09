@@ -73,6 +73,7 @@
   <path id="classpath.tests.compile">
     <pathelement path="${third_party}/java/junit/junit.jar"/>
     <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
+    <pathelement path="${third_party}/java/bsf/bsf.jar"/>
     <pathelement path="${third_party}/java/rhino/js.jar"/>
     <pathelement path="${third_party}/java/jsdk2.1/servlet.jar"/>
   </path>
@@ -314,10 +315,12 @@
     <minify>
       <job output="${www}/benchmarks/v8-cajoled-minified.js">
         <include file="${src}/com/google/caja/cajita.js"/>
+        <include file="${src}/com/google/caja/valija-cajita.js"/>
+        <include file="${src}/com/google/caja/cajita.js"/>
         <include file="${src}/com/google/caja/plugin/unicode.js"/>
         <include file="${src}/com/google/caja/plugin/html-emitter.js"/>
         <include file="${src}/com/google/caja/plugin/domita.js"/>
-        <include file="${src}/com/google/caja/opensocial/applet/setup-valija.js"/>
+        <include file="${src}/com/google/caja/default-stub.js"/>
         <include file="${www}/benchmarks/v8-cajoled.js"/>
       </job>
     </minify>
