@@ -163,10 +163,10 @@ var valijaMaker = (function(outers) {
       for (var i = 0; i < meths.length; i++) {
         var k = meths[i];
         if (k !== 'valueOf') {
-	  var v = cajita.getProtoPropertyValue(func, k);
-	  if (typeof v !== 'function' && typeof v.call === 'function') {
-	    v = dis(v.call);
-	  }
+          var v = cajita.getProtoPropertyValue(func, k);
+          if (typeof v !== 'function' && typeof v.call === 'function') {
+            v = dis(v.call);
+          }
           proto[k] = v;
         }
       }

@@ -1062,11 +1062,11 @@ var ___;
     switch(typeOf(value)) {
       case 'function': {
         if (isSimpleFunc(value) || isCtor(value)) {
-	  if (isFrozen(value)) {
+          if (isFrozen(value)) {
             return value;
-	  }
+          }
           // TODO(metaweta): make this a cajita-uncatchable exception
-	  fail('Internal: non-frozen function encountered: ', value);
+          fail('Internal: non-frozen function encountered: ', value);
         } else if (isXo4aFunc(value)) {
           // TODO(metaweta): make this a cajita-uncatchable exception
           // TODO(erights): non-user-hostile error message
@@ -1978,7 +1978,7 @@ var ___;
   handleGeneric(String.prototype, 'replace', function(searcher, replacement) {
     enforceMatchable(searcher);
     if ('object' === typeOf(replacement) && 
-	replacement !== null &&
+        replacement !== null &&
         canCallPub(replacement, 'bind')) {
       replacement = ___.callPub(replacement, 'bind', [USELESS]);
     }
