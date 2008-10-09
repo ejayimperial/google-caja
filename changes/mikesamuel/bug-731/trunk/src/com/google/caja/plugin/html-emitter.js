@@ -65,7 +65,9 @@ HtmlEmitter.prototype = {
   },
   /** emits an attribute: {@code key="value"}. */
   a: function (name, value) {
-    this.top_().setAttribute(name, value);
+    // The third parameter causes IE to not treat name as case-sensitive.
+    // See bug 781 for details.
+    this.top_().setAttribute(name, value, 0);
     return this;
   },
   /** emits PCDATA text. */
