@@ -349,6 +349,12 @@ var getImports = (function () {
                   + '"');
         case 'object': case 'function':
           if (o === null) { break; }
+          // Approximate test for disfunction:
+          // repr() doesn't know which vat is calling it, so it can't
+          // get access to the appropriate Disfunction object for an
+          // instanceof test.  At worst, an object will print out as
+          // [Object object].
+          if (o.call && o.apply && o.bind) { return cajita.callPub(o, "toString"); }
           if (cajita.isJSONContainer(o)) {
             var els = [];
             if ('length' in o
@@ -367,7 +373,7 @@ var getImports = (function () {
       }
       return String(o);
     } catch (e) {
-      return "This object is recursive, so we're not going to try to print it.";
+      return "This object is recursive, so we can't print it correctly.";
     }
   }
 
