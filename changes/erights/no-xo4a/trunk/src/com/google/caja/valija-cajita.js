@@ -130,12 +130,6 @@ var valijaMaker = (function(outers) {
 
   myPOE.set(cajita.getFuncCategory(Object), ObjectShadow);
 
-  function makeDefaultMethod(name) {
-    return dis(function($dis, var_args) {
-      return $dis[name].apply($dis, Array.slice(arguments, 1));
-    });
-  }
-
   /**
    * Returns the monkey-patchable POE shadow of <tt>func</tt>'s
    * category, creating it and its parents as needed.
@@ -165,11 +159,15 @@ var valijaMaker = (function(outers) {
         }
       }
 
-      var meths = cajita.getMethodNames(func);
+      var meths = cajita.getProtoPropertyNames(func);
       for (var i = 0; i < meths.length; i++) {
         var k = meths[i];
         if (k !== 'valueOf') {
-          proto[k] = makeDefaultMethod(k);
+	  var v = cajita.getProtoPropertyValue(func, k);
+	  if (typeof v !== 'function' && typeof v.call === 'function') {
+	    v = dis(v.call);
+	  }
+          proto[k] = v;
         }
       }
 

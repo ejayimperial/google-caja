@@ -1476,7 +1476,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "typeof g[0];",
         weldPrelude("g") +
-        "typeof ___.readPub(g, 0);");
+        "___.typeOf(___.readPub(g, 0));");
     checkFails("typeof ___;", "Variables cannot end in \"__\"");
   }
 

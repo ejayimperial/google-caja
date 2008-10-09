@@ -169,6 +169,16 @@ var ___;
   // Some very basic primordial methods
   ////////////////////////////////////////////////////////////////////////
 
+  function typeOf(obj) {
+    var result = typeof obj;
+    if (result !== 'function') { return result; }
+    if (result instanceof Function) { return 'function'; }
+    if (obj instanceof RegExp) { return 'object'; }
+    if (obj === RegExp.prototype) { return 'object'; }
+    // TODO(erights): Detect cross-frame RegExps
+    return 'function';
+  }
+
   var myOriginalHOP = Object.prototype.hasOwnProperty;
 
   /**
@@ -261,7 +271,7 @@ var ___;
   function fail(var_args) {
     // TODO(metaweta): Ask mike samuel about this vs. log-to-console.js
     if ((typeof console !== 'undefined') && 
-        (typeof console.trace === 'function')) {
+        (typeOf(console.trace) === 'function')) {
       console.trace();
     }
     var message = Array.slice(arguments, 0).join('');
@@ -288,7 +298,7 @@ var ___;
   }
 
   /**
-   * Enforces <tt>typeof specimen === typename</tt>, in which case
+   * Enforces <tt>typeOf(specimen) === typename</tt>, in which case
    * specimen is returned.
    * <p>
    * If not, throws an informative TypeError
@@ -297,8 +307,8 @@ var ___;
    * specimen used only to generate friendlier error messages.
    */
   function enforceType(specimen, typename, opt_name) {
-    if (typeof specimen !== typename) {
-      fail('expected ', typename, ' instead of ', typeof specimen,
+    if (typeOf(specimen) !== typename) {
+      fail('expected ', typename, ' instead of ', typeOf(specimen),
            ': ', (opt_name || specimen));
     }
     return specimen;
@@ -335,13 +345,13 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
 
   function debugReference(obj) {
-    switch (typeof obj) {
+    switch (typeOf(obj)) {
       case 'object': {
         if (obj === null) { return '<null>'; }
         return '[' + (directConstructor(obj).name || 'Object') + ']';
       }
       default: { 
-        return '(' + obj + ':' + (typeof obj) + ')'; 
+        return '(' + obj + ':' + typeOf(obj) + ')'; 
       }
     }
   }
@@ -460,10 +470,7 @@ var ___;
   function directConstructor(obj) {
     if (obj === null) { return (void 0); }
     if (obj === void 0) { return (void 0); }
-    // TODO(erights): This won't work for a cross-frame RegExp,
-    // but we can't use isInstanceOf(), because it depends on 
-    // directConstructor().
-    if (typeof obj === 'function' && !(obj instanceof RegExp)) {
+    if (typeOf(obj) === 'function') {
       // Since functions return undefined,
       // directConstructor() doesn't provide access to the
       // forbidden Function constructor.
@@ -505,7 +512,7 @@ var ___;
                oldConstr); 
         }
       }
-      if (typeof result !== 'function' || !(obj instanceof result)) {
+      if (typeOf(result) !== 'function' || !(obj instanceof result)) {
         fail('Discovery of direct constructors for foreign begotten ',
              'objects not implemented on this platform.\n');
       }
@@ -574,8 +581,8 @@ var ___;
   }
 
   /**
-   * A JSON container is an object whose direct constructor is
-   * Object or Array.
+   * A JSON container is a non-prototypical object whose direct
+   * constructor is Object or Array.
    * <p>
    * These are the kinds of non-primitive objects that can be
    * expressed in the JSON language.
@@ -584,7 +591,8 @@ var ___;
     var constr = directConstructor(obj);
     if (constr === (void 0)) { return false; }
     var typeTag = constr.typeTag___;
-    return typeTag === 'Object' || typeTag === 'Array';
+    if (typeTag !== 'Object' && typeTag !== 'Array') { return false; }
+    return !isPrototypical(obj);
   }
 
   /**
@@ -665,7 +673,7 @@ var ___;
       }
     }
     obj.FROZEN___ = true;
-    if (typeof obj === 'function') {
+    if (typeOf(obj) === 'function') {
       // Do last to avoid possible infinite recursion.
       if (obj.prototype) { primFreeze(obj.prototype); }
     }
@@ -678,7 +686,7 @@ var ___;
    */
   function freeze(obj) {
     if (!isJSONContainer(obj)) {
-      if (typeof obj === 'function' && !isInstanceOf(obj, RegExp)) {
+      if (typeOf(obj) === 'function') {
         enforce(isFrozen(obj), 'Internal: non-frozen function: ' + obj);
         return obj;
       }
@@ -836,13 +844,13 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
 
   function isCtor(constr)    {
-    return (typeof(constr) === 'function') && !!constr.CONSTRUCTOR___;
+    return (typeOf(constr) === 'function') && !!constr.CONSTRUCTOR___;
   }
   function isSimpleFunc(fun) {
-    return (typeof fun === 'function')  && !!fun.SIMPLEFUNC___;
+    return (typeOf(fun) === 'function')  && !!fun.SIMPLEFUNC___;
   }
   function isXo4aFunc(func) {
-    return (typeof func === 'function') && !!func.XO4A___;
+    return (typeOf(func) === 'function') && !!func.XO4A___;
   }
 
   /**
@@ -907,17 +915,17 @@ var ___;
     }
     var result = {
       call: simpleFrozenFunc(function(self, var_args) {
-	return xfunc.apply(self, Array.slice(arguments, 1));
+        return xfunc.apply(self, Array.slice(arguments, 1));
       }),
       apply: simpleFrozenFunc(function(self, args) {
         return xfunc.apply(self, args);
       }),
       bind: simpleFrozenFunc(function(self, var_args) {
-	return xfunc.bind.apply(xfunc, arguments);
+        return xfunc.bind.apply(xfunc, arguments);
       }),
       length: xfunc.length -1,
       toString: simpleFrozenFunc(function() {
-	return xfunc.toString();
+        return xfunc.toString();
       })
     };
     if (opt_name !== void 0) {
@@ -1034,15 +1042,15 @@ var ___;
   }
 
   /**
-   * Returns true if the object is known to be the prototype of some
-   * other object.
+   * Returns true if the object is known to be the 'prototype'
+   * property of some function.
    * <p>
    * May give false negatives, but won't give false positives.
    */
   function isPrototypical(o) {
-    if (typeof o !== 'object') { return false; }
+    if (typeOf(o) !== 'object') { return false; }
     var c = o.constructor;
-    if (typeof c !== 'function') { return false; }
+    if (typeOf(c) !== 'function') { return false; }
     return c.prototype === o;
   }
 
@@ -1051,13 +1059,14 @@ var ___;
    * prototypical object.
    */
   function asFirstClass(value) {
-    switch(typeof value) {
+    switch(typeOf(value)) {
       case 'function': {
-        if (((isSimpleFunc(value) ||
-              isCtor(value)) &&
-             isFrozen(value)) ||
-            isInstanceOf(value, RegExp)) {
-          return value;
+        if (isSimpleFunc(value) || isCtor(value)) {
+	  if (isFrozen(value)) {
+            return value;
+	  }
+          // TODO(metaweta): make this a cajita-uncatchable exception
+	  fail('Internal: non-frozen function encountered: ', value);
         } else if (isXo4aFunc(value)) {
           // TODO(metaweta): make this a cajita-uncatchable exception
           // TODO(erights): non-user-hostile error message
@@ -1430,7 +1439,7 @@ var ___;
    */
   function canSetStatic(ctor, staticMemberName) {
     staticMemberName = '' + staticMemberName;
-    if (typeof ctor !== 'function') {
+    if (typeOf(ctor) !== 'function') {
       log('Cannot set static member of non function', ctor);
       return false;
     }
@@ -1564,7 +1573,7 @@ var ___;
    */
   function tameException(ex) {
     try {
-      switch (typeof ex) {
+      switch (typeOf(ex)) {
         case 'object': {
           if (ex === null) { return null; }
           if (isInstanceOf(ex, Error)) {
@@ -1609,7 +1618,7 @@ var ___;
           return void 0;
         }
         default: {
-          log('Unrecognized exception type ' + (typeof ex));
+          log('Unrecognized exception type ' + (typeOf(ex)));
           return void 0;
         }
       }
@@ -1849,7 +1858,7 @@ var ___;
   }
   useGetHandler(Object.prototype, 'toString', function() {
     if (hasOwnProp(this, 'toString') && 
-        typeof this.toString === 'function' &&
+        typeOf(this.toString) === 'function' &&
         !hasOwnProp(this, 'TOSTRING___')) {
       // This case is a kludge that doesn't work for undiagnosed reasons.
 //    this.TOSTRING___ = xo4a(this.toString, 'toString');
@@ -1871,11 +1880,11 @@ var ___;
     this.TOSTRING___ = meth;
     this.toString = function(var_args) {
       var args = Array.slice(arguments, 0);
-      if (typeof meth === 'function') {
+      if (typeOf(meth) === 'function') {
         return meth.apply(this, args);
       }
       var methApply = readPub(meth, 'apply');
-      if (typeof methApply === 'function') {
+      if (typeOf(methApply) === 'function') {
         return methApply.call(meth, this, args);
       }
       var result = Object.toString.call(this);
@@ -1968,13 +1977,14 @@ var ___;
   });
   handleGeneric(String.prototype, 'replace', function(searcher, replacement) {
     enforceMatchable(searcher);
-    if ('object' === typeof replacement && replacement !== null
-        && canCallPub(replacement, 'bind')) {
+    if ('object' === typeOf(replacement) && 
+	replacement !== null &&
+        canCallPub(replacement, 'bind')) {
       replacement = ___.callPub(replacement, 'bind', [USELESS]);
     }
     return this.replace(
             searcher,
-            (typeof replacement === 'function'
+            (typeOf(replacement) === 'function'
              ? ___.asSimpleFunc(replacement)
              : '' + replacement));
   });
@@ -2165,7 +2175,7 @@ var ___;
         ___.tameException(exception);
 
         var message = 'unknown';
-        if ('object' === typeof exception && exception !== null) {
+        if ('object' === typeOf(exception) && exception !== null) {
           message = String(exception.message || exception.desc || message);
         }
 
@@ -2305,11 +2315,11 @@ var ___;
    * parameter is truthy.
    */
   function stamp(trademark, obj, opt_allow_constructed) {
-    enforce (typeof trademark === 'object',
+    enforce (typeOf(trademark) === 'object',
         'The supplied trademark is not an object.');
     enforce (!isFrozen(obj), 'The supplied object ' + obj + ' is frozen.');
     if (!isJSONContainer(obj) &&
-        (typeof obj !== 'function') &&
+        (typeOf(obj) !== 'function') &&
         !obj.underConstruction___ &&
         !opt_allow_constructed) {
       fail('The supplied object ', obj,
@@ -2510,8 +2520,8 @@ var ___;
   function inheritsFrom(obj, allegedParent) {
     if (null === obj) { return false; }
     if (void 0 === obj) { return false; }
-    if (typeof obj === 'function') { return false; }
-    if (typeof allegedParent !== 'object') { return false; }
+    if (typeOf(obj) === 'function') { return false; }
+    if (typeOf(allegedParent) !== 'object') { return false; }
     if (null === allegedParent) { return false; }
     function F() {}
     F.prototype = allegedParent;
@@ -2537,46 +2547,49 @@ var ___;
     '^(.*)_(?:canRead|canCall|getter|handler)___$');
 
   /**
-   * Returns a list of all canReadPub properties, whether or not
-   * they are canEnumPub. 
+   * Returns a list of all caja-readable own properties, whether or
+   * not they are caja-enumerable. 
    */
   function getOwnPropertyNames(obj) {
     var result = [];
     var seen = {};
+    // TODO(erights): revisit once we do es3.1ish attribute control.
+    var implicit = isJSONContainer(obj);
     for (var k in obj) {
       if (hasOwnProp(obj, k)) {
-	if (!endsWith__.test(k)) {
-	  if (canReadPub(obj, k) && !hasOwnProp(seen, k)) {
-	    seen[k] = true;
-	    result.push(k);
-	  }
-	} else {
-	  var match = Attribute.exec(k);
-	  if (match !== null) {
+        if (implicit && !endsWith__.test(k)) {
+          if (!hasOwnProp(seen, k)) {
+            seen[k] = true;
+            result.push(k);
+          }
+        } else {
+          var match = Attribute.exec(k);
+          if (match !== null) {
             var base = match[1];
             if (!hasOwnProp(seen, base)) {
               seen[base] = true;
               result.push(base);
-	    }
+            }
           }
-	}
+        }
       }
     }
     return result;
   }
 
-  function getMethodNames(func) {
+  /**
+   *
+   */
+  function getProtoPropertyNames(func) {
     enforceType(func, 'function');
-    var result = [];
-    var protoNames = getOwnPropertyNames(func.prototype);
-    for (var i = 0; i < protoNames.length; i++) {
-      var k = protoNames[i];
-      var v = func.prototype[k];
-      if (typeof v === 'function') {
-        result.push(k);
-      }
-    }
-    return result;
+    return getOwnPropertyNames(func.prototype);
+  }
+
+  /**
+   *
+   */
+  function getProtoPropertyValue(func, name) {
+    return asFirstClass(readPub(func.prototype, name));
   }
 
   /**
@@ -2640,12 +2653,13 @@ var ___;
     inheritsFrom: inheritsFrom,
     getSuperCtor: getSuperCtor,
     getOwnPropertyNames: getOwnPropertyNames,
-    getMethodNames: getMethodNames,
+    getProtoPropertyNames: getProtoPropertyNames,
+    getProtoPropertyValue: getProtoPropertyValue,
     beget: beget
   };
 
   forOwnKeys(cajita, simpleFrozenFunc(function(k, v) {
-    switch (typeof v) {
+    switch (typeOf(v)) {
       case 'object': {
         if (v !== null) { primFreeze(v); }
         break;
@@ -2694,7 +2708,7 @@ var ___;
   };
 
   forOwnKeys(sharedImports, simpleFrozenFunc(function(k, v) {
-    switch (typeof v) {
+    switch (typeOf(v)) {
       case 'object': {
         if (v !== null) { primFreeze(v); }
         break;
@@ -2740,6 +2754,7 @@ var ___;
     canSetStatic: canSetStatic,   setStatic: setStatic,
 
     // Other
+    typeOf: typeOf,
     hasOwnProp: hasOwnProp,
     same: same,
     args: args,
@@ -2785,7 +2800,7 @@ var ___;
     if (k in ___) {
       fail('internal: initialization conflict: ', k);
     }
-    if (typeof v === 'function') {
+    if (typeOf(v) === 'function') {
       grantSimpleFunc(cajita, k);
     }
     ___[k] = v;

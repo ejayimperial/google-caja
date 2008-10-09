@@ -281,7 +281,7 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
     assertConsistent(
         "var x = {blue:'green'};" +
         "Array.prototype.push.apply(x, [3,4,5]);" +
-        "x;");
+        "cajita.getOwnPropertyNames(x).sort().toString();");
   }
 
   @Override
