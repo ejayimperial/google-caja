@@ -909,7 +909,8 @@ attachDocumentStub = (function () {
       return String(this.event___.type);
     };
     TameEvent.prototype.getTarget = function () {
-      return tameNode(this.event___.target, true);
+      var event = this.event___;
+      return tameNode(event.target || event.srcElement, true);
     };
     TameEvent.prototype.getPageX = function () {
       return Number(this.event___.pageX);
