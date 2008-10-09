@@ -29,6 +29,9 @@
  * - <code>===</code> and <code>!==</code> on tamed DOM nodes will not behave
  *   the same as with untamed nodes.  Specifically, it is not always true that
  *   {@code document.getElementById('foo') === document.getElementById('foo')}.
+ * - Properties backed by setters/getters like {@code HTMLElement.innerHTML}
+ *   will not appear to uncajoled code as DOM nodes do, since they are
+ *   implemented using cajita property handlers.
  *
  * @author mikesamuel@gmail.com
  */
@@ -835,7 +838,8 @@ attachDocumentStub = (function () {
       return href;
     };
     ___.ctor(TameAElement, TameElement, 'TameAElement');
-    ___.all2(___.grantTypedGeneric, TameAElement.prototype, ['getHref', 'setHref']);
+    ___.all2(___.grantTypedGeneric, TameAElement.prototype,
+             ['getHref', 'setHref']);
     exportFields(TameAElement, ['href']);
 
     function TameFormElement(node, editable) {
@@ -875,10 +879,13 @@ attachDocumentStub = (function () {
     TameInputElement.prototype.getForm = function () {
       return tameNode(this.node___.form, this.editable___);
     };
+    TameInputElement.prototype.getType = function () {
+      return this.getAttribute('type');
+    };
     ___.ctor(TameInputElement, TameElement, 'TameInputElement');
     ___.all2(___.grantTypedGeneric, TameInputElement.prototype,
-             ['getValue', 'setValue', 'focus', 'getForm']);
-    exportFields(TameInputElement, ['value', 'form']);
+             ['getValue', 'setValue', 'focus', 'getForm', 'getType']);
+    exportFields(TameInputElement, ['form', 'value', 'type']);
 
 
     function TameImageElement(node, editable) {
@@ -905,7 +912,8 @@ attachDocumentStub = (function () {
       return String(this.event___.type);
     };
     TameEvent.prototype.getTarget = function () {
-      return tameNode(this.event___.target, true);
+      var event = this.event___;
+      return tameNode(event.target || event.srcElement, true);
     };
     TameEvent.prototype.getPageX = function () {
       return Number(this.event___.pageX);
@@ -1227,6 +1235,7 @@ attachDocumentStub = (function () {
           outers[k] = v === tameWindow ? outers : v;
         }
       }
+      outers.window = outers;
     } else {
       cajita.freeze(tameWindow);
       imports.window = tameWindow;
@@ -1261,8 +1270,8 @@ function plugin_dispatchEvent___(thisNode, event, pluginId, handler) {
     return ___.callPub(
         handler, 'call',
         [___.USELESS,
-         imports.tameNode___(thisNode, true),
-         imports.tameEvent___(event)]);
+         imports.tameEvent___(event),
+         imports.tameNode___(thisNode, true)]);
   } catch (ex) {
     if (ex && ex.cajitaStack___ && 'undefined' !== (typeof console)) {
       console.error('Event dispatch %s: %s',

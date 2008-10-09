@@ -224,4 +224,7 @@ jsunitRegister('testEmptyAndValuelessAttributes',
   assertEquals(
       '<input checked="checked" type="checkbox" id="" class="">',
       html_sanitize('<input checked type=checkbox id= class="">'));
+  assertEquals(
+      '<input checked="checked" type="checkbox" id="" class="">',
+      html_sanitize('<input checked type=checkbox id= class = "">'));
 });
