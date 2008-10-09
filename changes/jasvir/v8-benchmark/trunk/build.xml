@@ -324,6 +324,13 @@
         <include file="${www}/benchmarks/v8-cajoled.js"/>
       </job>
     </minify>
+    <script language="javascript" classpathref="classpath.tests.compile">
+      function PrintVarz(score) {
+        print('<varz name="cajoled-runtime" value="' + score + '"/>');
+      }
+
+      BenchmarkSuite.RunSuites({ NotifyScore: PrintVarz });
+    </script>
   </target>
 
   <target name="jars" depends="pluginc,CajoledValija,MinifiedJs"
