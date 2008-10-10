@@ -169,10 +169,22 @@ var ___;
   // Some very basic primordial methods
   ////////////////////////////////////////////////////////////////////////
 
+  /**
+   * A reliable typeof for use by Cajita code, and by uncajoled code
+   * (like parts of cajita.js) that require a reliable typeof.
+   * <p>
+   * ES3 and forward specify that <tt>typeof new RegExp("x")</tt>
+   * evaluate to <tt>'object'</tt>. Unfortunately, on some of Cajita's
+   * current target platforms (including at least Safari 3 and Rhino),
+   * it returns <tt>'function'</tt> instead. Since the distinction
+   * between functions and non-functions is crucial to Cajita, we
+   * translate the Cajita <tt>typeof</tt> operator into calls to this
+   * <tt>typeOf</tt> function.
+   */
   function typeOf(obj) {
     var result = typeof obj;
     if (result !== 'function') { return result; }
-    if (result instanceof Function) { return 'function'; }
+    if (obj instanceof Function) { return 'function'; }
     if (obj instanceof RegExp) { return 'object'; }
     if (obj === RegExp.prototype) { return 'object'; }
     // TODO(erights): Detect cross-frame RegExps
