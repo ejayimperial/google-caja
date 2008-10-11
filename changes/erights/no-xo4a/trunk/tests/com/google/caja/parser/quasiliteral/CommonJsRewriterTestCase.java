@@ -230,7 +230,7 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
                      "  (typeof {})," +
                      "  (typeof (function () {}))," +
                      "  (typeof { x: 4.0 }.x)," +
-                     "  (typeof { 2: NaN }[1 + 1])" +
+                     "  (typeof { 2: NaN }[1 + 1])," +
                      "].toString();");
     rewriteAndExecute("assertEquals(typeof new RegExp('.*'), 'object');");
   }

@@ -184,10 +184,10 @@ var ___;
   function typeOf(obj) {
     var result = typeof obj;
     if (result !== 'function') { return result; }
-    if (obj instanceof Function) { return 'function'; }
-    if (obj instanceof RegExp) { return 'object'; }
-    if (obj === RegExp.prototype) { return 'object'; }
-    // TODO(erights): Detect cross-frame RegExps
+    var ctor = obj.constructor;
+    if (ctor.typeTag___ === 'RegExp' && obj instanceof ctor) {
+      return 'object';
+    }
     return 'function';
   }
 
@@ -343,10 +343,10 @@ var ___;
     }
     // Could pre-compute precision limit, but probably not faster
     // enough to be worth it.
-    if (Math.floor(specimen-1) !== specimen-1) {
+    if (Math.floor(specimen - 1) !== specimen - 1) {
       fail('Beyond precision limit: ', specimen);
     }
-    if (Math.floor(specimen-1) >= specimen) {
+    if (Math.floor(specimen - 1) >= specimen) {
       fail('Must not be infinite: ', specimen);
     }
     return specimen;
@@ -562,6 +562,8 @@ var ___;
   }
 
   /**
+   * Is <tt>obj</tt> an instance of a function whose category is
+   * the same as the category of <tt>ctor</tt>? 
    */
   function isInstanceOf(obj, ctor) {
     if (obj instanceof ctor) { return true; }
@@ -739,26 +741,26 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
 
   /** Tests whether the fast-path canRead flag is set. */
-  function canRead(obj, name)   { return !!obj[name + '_canRead___']; }
+  function canRead(obj, name)   { return !! obj[name + '_canRead___']; }
 
   /** Tests whether the fast-path canEnum flag is set. */
-  function canEnum(obj, name)   { return !!obj[name + '_canEnum___']; }
+  function canEnum(obj, name)   { return !! obj[name + '_canEnum___']; }
   /**
    * Tests whether the fast-path canCall flag is set, or grantCall() has been
    * called.
    */
   function canCall(obj, name)   {
-    return !!(obj[name + '_canCall___'] || obj[name + '_grantCall___']);
+    return !! (obj[name + '_canCall___'] || obj[name + '_grantCall___']);
   }
   /**
    * Tests whether the fast-path canSet flag is set, or grantSet() has been
    * called.
    */
   function canSet(obj, name) {
-    return !!(obj[name + '_canSet___'] || obj[name + '_grantSet___']);
+    return !! (obj[name + '_canSet___'] || obj[name + '_grantSet___']);
   }
   /** Tests whether the fast-path canDelete flag is set. */
-  function canDelete(obj, name) { return !!obj[name + '_canDelete___']; }
+  function canDelete(obj, name) { return !! obj[name + '_canDelete___']; }
 
   /**
    * Sets the fast-path canRead flag.
@@ -856,13 +858,13 @@ var ___;
   ////////////////////////////////////////////////////////////////////////
 
   function isCtor(constr)    {
-    return (typeOf(constr) === 'function') && !!constr.CONSTRUCTOR___;
+    return (typeOf(constr) === 'function') && !! constr.CONSTRUCTOR___;
   }
   function isSimpleFunc(fun) {
-    return (typeOf(fun) === 'function')  && !!fun.SIMPLEFUNC___;
+    return (typeOf(fun) === 'function')  && !! fun.SIMPLEFUNC___;
   }
   function isXo4aFunc(func) {
-    return (typeOf(func) === 'function') && !!func.XO4A___;
+    return (typeOf(func) === 'function') && !! func.XO4A___;
   }
 
   /**
@@ -935,7 +937,7 @@ var ___;
       bind: simpleFrozenFunc(function(self, var_args) {
         return xfunc.bind.apply(xfunc, arguments);
       }),
-      length: xfunc.length -1,
+      length: xfunc.length - 1,
       toString: simpleFrozenFunc(function() {
         return xfunc.toString();
       })
@@ -1759,7 +1761,7 @@ var ___;
 
   /**
    * Mark func as exophoric and use it as a virtual generic
-   * exophoric function by installing appropriate get and call handlers.
+   * exophoric function.
    * <p>
    * Since exophoric functions are not first-class, reading
    * proto[name] returns the corresponding malfunction -- a record
@@ -2541,7 +2543,13 @@ var ___;
   }
 
   /**
-   * 
+   * Return func.prototype's directConstructor.
+   * <p>
+   * When following the "classical" inheritance pattern (simulating
+   * class-style inheritance as a pattern of prototypical
+   * inheritance), func may represent (the constructor of) a class; in
+   * which case getSuperCtor() returns (the constructor of) its
+   * immediate superclass.
    */
   function getSuperCtor(func) {
     enforceType(func, 'function');
@@ -2590,7 +2598,13 @@ var ___;
   }
 
   /**
-   *
+   * Return the names of the accessible own properties of
+   * func.prototype.
+   * <p>
+   * Since prototypical objects are not themselves accessible in
+   * Cajita, this means in effect: the properties contributed by
+   * func.prototype that would be accessible on objects that inherit
+   * from func.prototype.
    */
   function getProtoPropertyNames(func) {
     enforceType(func, 'function');
@@ -2598,7 +2612,14 @@ var ___;
   }
 
   /**
-   *
+   * Return the value associated with func.prototype[name].
+   * <p>
+   * Since prototypical objects are not themselves accessible in
+   * Cajita, this means in effect: If x inherits name from
+   * func.prototype, what would the value of x[name] be? If the value
+   * associated with func.prototype[name] is an exophoric function
+   * (resulting from taming a generic method), then return the
+   * corresponding malfunction. See reifyIfXo4a().
    */
   function getProtoPropertyValue(func, name) {
     return asFirstClass(readPub(func.prototype, name));

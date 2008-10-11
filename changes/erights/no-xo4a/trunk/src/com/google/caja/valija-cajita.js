@@ -321,7 +321,7 @@ var valijaMaker = (function(outers) {
 
     result.prototype = cajita.beget(ObjectPrototype);
     result.prototype.constructor = result;
-    result.length = callFn.length -1;
+    result.length = callFn.length - 1;
     // TODO(erights): Why are we testing for the empty string here?
     if (opt_name !== void 0 && opt_name !== '') {
       result.name = opt_name;
@@ -430,3 +430,4 @@ var valijaMaker = (function(outers) {
 if (typeof loader !== 'undefined') {
   loader.provide(valijaMaker);
 }
+
