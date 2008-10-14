@@ -13,7 +13,7 @@
                    IMPORTS___.emitCss___([ '@media print, screen {\n  .', ' .p4 {\n    font-weight: bold\n  }\n}' ].join(IMPORTS___.getIdClass___()));
                    IMPORTS___.emitCss___([ '.', ' .p1 {\n  color: red\n}' ].join(IMPORTS___.getIdClass___()));
                    {
-                     IMPORTS___.c_1___ = ___.simpleFrozenFunc(function (thisNode___, event) {
+                     IMPORTS___.c_1___ = ___.simpleFrozenFunc(function (event, thisNode___) {
                                                                 ___.asSimpleFunc(handleClicky)();
                                                               });
                    }

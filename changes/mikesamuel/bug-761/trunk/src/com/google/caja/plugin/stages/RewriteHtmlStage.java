@@ -143,12 +143,17 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     }
     // The script contents.
     CharProducer jsStream;
+    FilePosition scriptPos;
     if (src == null) {  // Parse the script tag body.
-      jsStream = textNodesToCharProducer(scriptTag.children(), true);
+      List<? extends DomTree> textNodes = scriptTag.children();
+      jsStream = textNodesToCharProducer(textNodes, true);
       if (jsStream == null) {
         parent.removeChild(scriptTag);
         return;
       }
+      scriptPos = FilePosition.span(
+          textNodes.get(0).getFilePosition(),
+          textNodes.get(textNodes.size() - 1).getFilePosition());
     } else {  // Load the src attribute
       URI srcUri;
       try {
@@ -173,6 +178,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
             src.getFilePosition(), MessagePart.Factory.valueOf("" + srcUri));
         return;
       }
+      scriptPos = null;
     }
 
     // Parse the body and create a block that will be placed inline in
@@ -180,7 +186,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
     Block parsedScriptBody;
     try {
       parsedScriptBody = parseJs(jsStream.getCurrentPosition().source(),
-                                 jsStream, jobs.getMessageQueue());
+                                 jsStream, scriptPos, jobs.getMessageQueue());
     } catch (ParseException ex) {
       ex.toMessageQueue(jobs.getMessageQueue());
       parsedScriptBody = null;
@@ -336,7 +342,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
         List<CssTree> mediaChildren = new ArrayList<CssTree>();
         for (String mediaType : mediaTypes) {
           mediaChildren.add(
-              new CssTree.Medium(type.getFilePosition(), mediaType));
+              new CssTree.Medium(media.getFilePosition(), mediaType));
         }
         mediaChildren.addAll(rules);
         CssTree.Media mediaBlock = new CssTree.Media(
@@ -384,7 +390,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
 
     body.appendChild(scriptElement);
   }
-  
+
   /**
    * A CharProducer that produces characters from the concatenation of all
    * the text nodes in the given node list.
@@ -449,10 +455,10 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
    * Vbscript engines. 'XML' refers to an embedded XML
    * document/fragment.
    * <p>
-   * Values: JScript [DEFAULT] | javascript | vbs | vbscript | XML 
+   * Values: JScript [DEFAULT] | javascript | vbs | vbscript | XML
    */
   private static boolean isJavaScriptLanguage(String language) {
-    
+
     language = language.toLowerCase();
     return language.startsWith("javascript") || language.startsWith("jscript");
   }
@@ -488,10 +494,12 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
   private static enum DupePolicy { YIELD_NULL, YIELD_FIRST, }
 
   public static Block parseJs(
-      InputSource is, CharProducer cp, MessageQueue localMessageQueue)
+      InputSource is, CharProducer cp, FilePosition scriptPos,
+      MessageQueue localMessageQueue)
       throws ParseException {
     JsLexer lexer = new JsLexer(cp);
     JsTokenQueue tq = new JsTokenQueue(lexer, is);
+    tq.setInputRange(scriptPos);
     if (tq.isEmpty()) { return null; }
     Parser p = new Parser(tq, localMessageQueue);
     Block body = p.parse();

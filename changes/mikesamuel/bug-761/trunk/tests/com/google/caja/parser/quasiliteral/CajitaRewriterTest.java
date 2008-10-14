@@ -295,9 +295,11 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
    */
   public void testBadDelete() throws Exception {
     rewriteAndExecute(
-        "testImports.badContainer = {secret_: 3469};",
-        "assertThrows(function() {delete badContainer['secret_'];});",
-        "assertEquals(testImports.badContainer.secret_, 3469);");
+        "testImports.badContainer = {secret__: 3469};",
+        "assertThrows(function() {delete badContainer['secret__'];});",
+        "assertEquals(testImports.badContainer.secret__, 3469);");
+    rewriteAndExecute(
+        "assertThrows(function() {delete ({})['proto___'];});");
   }
 
   /**
@@ -1495,17 +1497,6 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         weldPrelude("g") +
         "typeof ___.readPub(g, 0);");
     checkFails("typeof ___;", "Variables cannot end in \"__\"");
-    assertConsistent("[ (typeof noSuchGlobal), (typeof 's')," +
-                     "  (typeof 4)," +
-                     "  (typeof null)," +
-                     "  (typeof (void 0))," +
-                     "  (typeof [])," +
-                     "  (typeof {})," +
-                     "  (typeof new RegExp('.*'))," +
-                     "  (typeof (function () {}))," +
-                     "  (typeof { x: 4.0 }.x)," +
-                     "  (typeof { 2: NaN }[1 + 1])" +
-                     "].toString();");
   }
 
   public void testLabeledStatement() throws Exception {

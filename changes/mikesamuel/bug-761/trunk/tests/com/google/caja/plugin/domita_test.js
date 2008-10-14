@@ -42,29 +42,51 @@ function assertFailsSafe(canFail, assertionsIfPasses) {
  */
 function canonInnerHtml(s) {
   // Sort attributes.
+  var htmlAttribute = new RegExp('^\\s*(\\w+)(?:\\s*=\\s*("[^\\"]*"'
+                                 + '|\'[^\\\']*\'|[^\\\'\\"\\s>]+))?');
+  var quot = new RegExp('"', 'g');
+  var htmlStartTag = new RegExp('(<\\w+)\\s+([^\\s>][^>]*)>', 'g');
+  var htmlTag = new RegExp('(<\/?)(\\w+)(\\s+[^\\s>][^>]*)?>', 'g');
+  var ignorableWhitespace = new RegExp('^[ \\t]*(\\r\\n?|\\n)|\\s+$', 'g');
+  var tagEntityOrText = new RegExp(
+      '(?:(</?\\w[^>]*>|&[a-zA-Z#]|[^<&>]+)|([<&>]))', 'g');
   s = s.replace(
-      new RegExp('(<\\w+)\\s+([^\\s>][^>]*)>', 'g'),
+      htmlStartTag,
       function (_, tagStart, tagBody) {
         var attrs = [];
-        for (var m; (m = tagBody.match(
-                 new RegExp('^\\s*(\\w+)(?:\\s*=\\s*("[^\\"]*"'
-                            + '|\'[^\\\']*\'|[^\\\'\\"\\s>]+))?')));) {
-          var value = m[2] && !(new RegExp('^["\']')).test(m[2])
-              ? '"' + m[2] + '"'
-              : m[2];
-          attrs.push(m[1] + (value ? '=' + value : ''));
+        for (var m; (m = tagBody.match(htmlAttribute));) {
+          var name = m[1];
+          var value = m[2];
+          var hasValue = value != null;
+          if (hasValue && (new RegExp('^["\']')).test(value)) {
+            value = value.substring(1, value.length - 1);
+          }
+          attrs.push(
+              hasValue
+              ? name + '="' + value.replace(quot, '&quot;') + '"'
+              : name);
           tagBody = tagBody.substring(m[0].length);
         }
         attrs.sort();
-        return tagStart + ' ' +attrs.join(' ') + '>';
+        return tagStart + ' ' + attrs.join(' ') + '>';
       });
   s = s.replace(
-      new RegExp('(<\/?)(\\w+)([^>]*)>', 'g'),
+      htmlTag,
       function (_, open, name, body) {
-        return open + name.toLowerCase() + body + '>';
+        return open + name.toLowerCase() + (body || '') + '>';
       });
   // Remove ignorable whitespace.
-  return s.replace(new RegExp('^[ \\t]*(\\r\\n?|\\n)|\\s+$', 'g'), '');
+  s = s.replace(ignorableWhitespace, '');
+  // Normalize escaping of text nodes since Safari doesn't escape loose >.
+  s = s.replace(
+      tagEntityOrText,
+      function (_, good, bad) {
+        return good
+            ? good
+            : (bad.replace(new RegExp('&', 'g'), '&amp;')
+               .replace(new RegExp('>', 'g'), '&gt;'));
+      });
+  return s;
 }
 
 jsunitRegister('testGetElementById',
@@ -117,7 +139,7 @@ jsunitRegister('testCreateElement',
   assertEquals('howdy <there>', text.data);
   newNode.appendChild(text);
   assertEquals(3, newNode.firstChild.nodeType);
-  assertEquals('howdy &lt;there&gt;', newNode.innerHTML);
+  assertEquals('howdy &lt;there&gt;', canonInnerHtml(newNode.innerHTML));
 
   pass('test-create-element');
 });
@@ -159,10 +181,10 @@ jsunitRegister('testForms',
   container.innerHTML = '<form onsubmit="foo()">'
       + '<input type="submit" value="Submit"></form>';
 
-  assertEquals('<form onsubmit=\''
+  assertEquals('<form onsubmit="'
                + 'try { plugin_dispatchEvent___'
-               + '(this, event || window.event, 0, "foo");'
-               + ' } finally { return false; }\'>'
+               + '(this, event || window.event, 0, &quot;foo&quot;);'
+               + ' } finally { return false; }">'
                + '<input type="submit" value="Submit"></form>',
                canonInnerHtml(directAccess.getInnerHTML(container)));
 
@@ -214,12 +236,42 @@ jsunitRegister('testAddEventListener',
   var container = document.getElementById('test-add-event-listener');
   container.addEventListener(
       'click',
-      function (node, event) {
+      function (event) {
         console.log('received event');
-        assertEquals('P', node.tagName);
+        assertEquals('B', event.target.tagName);
         assertEquals('click', event.type);
         pass('test-add-event-listener');
       });
+});
+
+jsunitRegister('testRemoveEventListener',
+               function testRemoveEventListener() {
+  var container = document.getElementById('test-remove-event-listener');
+  var firstFired = false;
+  var failed = false;
+  function second(event) {
+    console.log('received event');
+    if (failed) { return; }
+    assertEquals('B', event.target.tagName);
+    assertEquals('click', event.type);
+    event.target.innerHTML = 'All done!';
+    pass('test-remove-event-listener');
+  }
+  function first(event) {
+    if (firstFired) {
+      event.target.innerHTML = '<b>FAILED - event handler was not removed!</b>';
+      failed = true;
+      return;
+    }
+    firstFired = true;
+    console.log('received event');
+    assertEquals('B', event.target.tagName);
+    assertEquals('click', event.type);
+    event.target.innerHTML = 'Thank you, click me again please';
+    container.removeEventListener('click', first);
+    container.addEventListener('click', second);
+  }
+  container.addEventListener('click', first);
 });
 
 jsunitRegister('testGetElementsByTagName',
@@ -286,6 +338,37 @@ jsunitRegister('testReadOnlyNotEditable',
   pass('test-read-only');
 });
 
+jsunitRegister('testInsertBefore',
+               function testInsertBefore() {
+  var el = document.getElementById('test-insert-before');
+  function assertChildren(var_args) {
+    var children = [];
+    for (var child = el.firstChild; child; child = child.nextSibling) {
+      children.push(child.nodeValue);
+    }
+    assertEquals([].join.call(arguments, ','), children.join(','));
+  }
+  var one = document.createTextNode('one');
+  var two = document.createTextNode('two');
+  var three = document.createTextNode('three');
+  var four = document.createTextNode('four');
+  el.insertBefore(three, null);
+  assertChildren('zero', 'three');
+  el.insertBefore(one, three);
+  assertChildren('zero', 'one', 'three');
+  el.insertBefore(two, null);
+  assertChildren('zero', 'one', 'three', 'two');
+  el.insertBefore(four, two);
+  assertChildren('zero', 'one', 'three', 'four', 'two');
+  el.insertBefore(two, one);
+  assertChildren('zero', 'two', 'one', 'three', 'four');
+  el.insertBefore(one, two);
+  assertChildren('zero', 'one', 'two', 'three', 'four');
+  el.insertBefore(four, void 0);
+  assertChildren('zero', 'one', 'two', 'three', 'four');
+  pass('test-insert-before');
+});
+
 jsunitRegister('testNodeLists',
                function testNodeLists() {
   function $(id) { return document.getElementById(id); }
@@ -344,4 +427,134 @@ jsunitRegister('testNavigator',
       window.navigator.userAgent,
       window.navigator.appCodeName + '/' + window.navigator.appVersion);
   pass('test-navigator');
+});
+
+jsunitRegister('testOpaqueNodes',
+               function testOpaqueNodes() {
+  var noText = document.createTextNode('');
+  // See bug 589.  We need to keep unsafe nodes in the DOM so that DOM
+  // navigation works, but we can't allow inspection or editing of such nodes.
+  var container = document.getElementById('test-opaque-nodes');
+
+  var child = container.firstChild;
+  assertEquals(8, child.nodeType);
+  assertEquals('#comment', child.nodeName);
+  assertEquals(' Comment ', child.nodeValue);
+
+  child = child.nextSibling;
+  assertEquals(3, child.nodeType);
+  assertEquals('#text', child.nodeName);
+  assertEquals('a', child.nodeValue);
+  child.nodeValue = 'Foo';
+  assertEquals('Foo', child.nodeValue);
+
+  child = child.nextSibling;
+  assertEquals(-1, child.nodeType);
+  assertEquals('#', child.nodeName);
+  assertEquals('', child.nodeValue);
+  expectFailure(function () { child.appendChild(noText); },
+                'opaque node was editable');
+
+  child = child.nextSibling;
+  assertEquals(3, child.nodeType);
+  assertEquals('#text', child.nodeName);
+  assertEquals('b', child.nodeValue);
+  child.nodeValue = 'Foo';
+  assertEquals('Foo', child.nodeValue);
+
+  child = child.nextSibling;
+  assertEquals(-1, child.nodeType);
+  assertEquals('#', child.nodeName);
+  assertEquals('', child.nodeValue);
+  expectFailure(function () { child.appendChild(noText); },
+                'opaque node was editable');
+
+  child = child.nextSibling;
+  assertEquals(3, child.nodeType);
+  assertEquals('#text', child.nodeName);
+  assertEquals('c', child.nodeValue);
+  child.nodeValue = 'Foo';
+  assertEquals('Foo', child.nodeValue);
+
+  pass('test-opaque-nodes');
+});
+
+jsunitRegister('testEmitCss',
+               function testCss() {
+  directAccess.emitCssHook(['.', ' a { color: #00ff00 }']);
+  var computedColor = directAccess.getComputedStyle(
+      document.getElementById('not-blue'), 'color').toLowerCase();
+  if (!(computedColor === 'green' || computedColor === '#00ff00'
+        || computedColor === '#0f0' || computedColor === 'rgb(0, 255, 0)'
+        || computedColor === 'rgb(0, 100%, 0)')) {
+    fail(computedColor + ' is not green');
+  } else {
+    pass('test-emit-css');
+  }
+});
+
+jsunitRegister('testBug731',
+               function testBug731() {
+  // Tests that attributes set before node added to DOM so that side-effects
+  // such as network requests happen all at once.  This is especially important
+  // on IE.
+
+  // TODO(mikesamuel): rewrite in cajoled HTML once test HTML in
+  // domita_test.html is cajoled.
+  directAccess.getHtmlEmitter(document.getElementById('test-bug-731'))
+      .b('form')
+      .f(false)
+      .b('input')
+      .a('id', 'bug-731-xyz___')
+      .a('type', 'radio')
+      .f(true)
+      .e('form');
+  var bug_731_input = document.getElementById('bug-731');
+  assertEquals('radio', bug_731_input.type);
+  pass('test-bug-731');
+});
+
+jsunitRegister('testDomClassHierarchy',
+               function testDomClassHierarchy() {
+  assertTrue(document instanceof window.Node);
+  assertTrue(document instanceof window.HTMLDocument);
+
+  assertTrue(document.createElement('div') instanceof window.Node);
+  assertTrue(document.createElement('div') instanceof window.Element);
+  assertTrue(document.createElement('div') instanceof window.HTMLDivElement);
+
+  assertTrue(document.createElement('input') instanceof window.Node);
+  assertTrue(document.createElement('input') instanceof window.Element);
+  assertTrue(
+      document.createElement('input') instanceof window.HTMLInputElement);
+
+  assertTrue(document.createElement('a') instanceof window.Node);
+  assertTrue(document.createElement('a') instanceof window.Element);
+  assertTrue(document.createElement('a') instanceof window.HTMLAnchorElement);
+
+  assertTrue(document.createElement('img') instanceof window.Node);
+  assertTrue(document.createElement('img') instanceof window.Element);
+  assertTrue(document.createElement('img') instanceof window.HTMLImageElement);
+
+  // TODO(ihab.awad): Add negative tests when virtual hierarchy is improved:
+  // assertFalse(
+  //     document.createElement('img') instanceof window.HTMLDivElement);
+
+  document.getElementById('test-dom-class-hierarchy').addEventListener(
+      'click',
+      function(event) {
+        assertTrue(event instanceof window.Event);
+        pass('test-dom-class-hierarchy');
+      });
+});
+
+jsunitRegister('testCaseInsensitiveAttrs',
+               function testCaseInsensitiveAttrs() {
+//  var container = document.getElementById('test-case-insensitive-attrs');
+  var tableNode = document.getElementById('is-red');
+  console.log('tableNode = ' + tableNode);
+  tableNode.setAttribute('bgColor', 'red');
+  tableNode.addEventListener('click', function(event) {
+    pass('test-case-insensitive-attrs');
+  });
 });

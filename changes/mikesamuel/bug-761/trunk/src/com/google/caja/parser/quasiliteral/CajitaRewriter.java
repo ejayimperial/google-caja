@@ -61,8 +61,10 @@ import static com.google.caja.parser.js.SyntheticNodes.s;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Rewrites a JavaScript parse tree to comply with default Caja rules.
@@ -226,10 +228,27 @@ public class CajitaRewriter extends Rewriter {
             expanded.add(expand(c, s2, mq));
           }
           List<ParseTreeNode> importedVars = new ArrayList<ParseTreeNode>();
-          for (String k : s2.getImportedVariables()) {
+
+          Set<String> importNames = s2.getImportedVariables();
+          // Order imports so that Array and Object appear first, and so that
+          // they appear before any use of the [] and {} shorthand syntaxes
+          // since those are specified in ES262 by looking up the identifiers
+          // "Array" and "Object" in the local scope.
+          // SpiderMonkey actually implements this behavior.
+          Set<String> orderedImportNames = new LinkedHashSet<String>();
+          if (importNames.contains("Array")) {
+            orderedImportNames.add("Array");
+          }
+          if (importNames.contains("Object")) {
+            orderedImportNames.add("Object");
+          }
+          orderedImportNames.addAll(importNames);
+
+          for (String k : orderedImportNames) {
             Identifier kid = new Identifier(k);
             Expression permitsUsed = s2.getPermitsUsed(kid);
-            if (null == permitsUsed) {
+            if (null == permitsUsed
+                || "Array".equals(k) || "Object".equals(k)) {
               importedVars.add(
                   QuasiBuilder.substV(
                       "var @vIdent = ___.readImport(IMPORTS___, @vName);",

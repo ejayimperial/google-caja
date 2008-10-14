@@ -80,22 +80,30 @@ var html = (function () {
   var INSIDE_TAG_TOKEN = new RegExp(
       // Don't capture space.
       '^\\s*(?:'
-      // Capture an attribute name in group 1, and value in groups 2-4.
+      // Capture an attribute name in group 1, and value in group 2.
       + ('(?:'
          + '([a-z][a-z-]*)'
          + ('(?:'
             + '\\s*=\\s*'
-            + ('(?:'
-               + '\"([^\"]*)\"'
-               + '|\'([^\']*)\''
-               + '|([^>\"\'\\s]*)'
+            + ('('
+               // A double quoted string.
+               + '\"[^\"]*\"'
+               // A single quoted string.
+               + '|\'[^\']*\''
+               // The positive lookahead is used to make sure that in
+               // <foo bar= baz=boo>, the value for bar is blank, not "baz=boo".
+               + '|(?=[a-z][a-z-]*\\s*=)'
+               // An unquoted value that is not an attribute name.
+               // We know it is not an attribute name because the previous
+               // zero-width match would've eliminated that possibility.
+               + '|[^>\"\'\\s]*'
                + ')'
                )
             + ')'
             ) + '?'
          + ')'
          )
-      // End of tag captured in group 5.
+      // End of tag captured in group 3.
       + '|(/?>)'
       // Don't capture cruft
       + '|[^\\w\\s>]+)',
@@ -159,9 +167,15 @@ var html = (function () {
           if (m[1]) { // attribute
             // setAttribute with uppercase names doesn't work on IE6.
             var attribName = m[1].toLowerCase();
-            var encodedValue = m[2] || m[3] || m[4];
+            var encodedValue = m[2];
             var decodedValue;
             if (encodedValue !== null && encodedValue !== void 0) {
+              switch (encodedValue.charCodeAt(0)) {  // Strip quotes
+                case 34: case 39:
+                  encodedValue = encodedValue.substring(
+                      1, encodedValue.length - 1);
+                  break;
+              }
               decodedValue = unescapeEntities(encodedValue);
             } else {
               // Use name as value for valueless attribs, so
@@ -170,7 +184,7 @@ var html = (function () {
               decodedValue = attribName;
             }
             attribs.push(attribName, decodedValue);
-          } else if (m[5]) {
+          } else if (m[3]) {
             if (eflags !== void 0) {  // False if not in whitelist.
               if (openTag) {
                 handler.startTag && handler.startTag(tagName, attribs, param);
@@ -253,7 +267,9 @@ html.makeHtmlSanitizer = function (sanitizeAttributes) {
           if (ignoring) { return; }
           if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
           var eflags = html4.ELEMENTS[tagName];
-          if (eflags & html4.eflags.UNSAFE) {
+          if (eflags & html4.eflags.FOLDABLE) {
+            return;
+          } else if (eflags & html4.eflags.UNSAFE) {
             ignoring = !(eflags & html4.eflags.EMPTY);
             return;
           }
@@ -281,7 +297,8 @@ html.makeHtmlSanitizer = function (sanitizeAttributes) {
           }
           if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
           var eflags = html4.ELEMENTS[tagName];
-          if (!(eflags & (html4.eflags.UNSAFE | html4.eflags.EMPTY))) {
+          if (!(eflags & (html4.eflags.UNSAFE | html4.eflags.EMPTY
+                          | html4.eflags.FOLDABLE))) {
             var index;
             if (eflags & html4.eflags.OPTIONAL_ENDTAG) {
               for (index = stack.length; --index >= 0;) {

@@ -112,8 +112,16 @@ final class DomProcessingEvents {
         int start = top.b + 1;
         List<DomProcessingEvent> content = events.subList(start, i);
         if (content.isEmpty()) { continue; }
+        int depth = 0;
         for (DomProcessingEvent ce : content) {
-          if (!ce.canOptimizeToInnerHtml()) { continue eventloop; }
+          if (ce instanceof BeginElementEvent) {
+            ++depth;
+          } else if (ce instanceof EndElementEvent
+                     || (ce instanceof FinishAttrsEvent
+                         && ((FinishAttrsEvent) ce).unary)) {
+            --depth;
+          }
+          if (!ce.canOptimizeToInnerHtml(depth)) { continue eventloop; }
         }
         StringBuilder innerHtml = new StringBuilder();
         for (DomProcessingEvent ce : content) {
@@ -147,8 +155,12 @@ final class DomProcessingEvents {
      * True iff the event's state is entirely statically determinable, so can
      * be replaced by a call to innerHTML when part of a run of events that
      * include entire balanced tag sets and text nodes.
+     * @param depth the number of containing elements also being optimized.
+     *   This allows us to handle elements that cannot be inserted via innerHTML
+     *   due to browser quirks.  See the unittests for specific examples.
+     *   If depth is -1, then acts conservatively.
      */
-    abstract boolean canOptimizeToInnerHtml();
+    abstract boolean canOptimizeToInnerHtml(int depth);
     /**
      * Appends HTML to the given buffer.
      * Only callable if {@link #canOptimizeToInnerHtml}.
@@ -160,7 +172,7 @@ final class DomProcessingEvents {
       String cn = getClass().getSimpleName();
       StringBuilder sb = new StringBuilder();
       sb.append('(').append(cn, cn.lastIndexOf('.') + 1, cn.length());
-      if (canOptimizeToInnerHtml()) {
+      if (canOptimizeToInnerHtml(-1)) {
         sb.append(' ');
         toInnerHtml(sb);
       }
@@ -175,7 +187,9 @@ final class DomProcessingEvents {
     @Override void toJavascript(BlockAndEmitter out) {
       out.emitCall("b", TreeConstruction.stringLiteral(name));
     }
-    @Override boolean canOptimizeToInnerHtml() { return true; }
+    @Override boolean canOptimizeToInnerHtml(int depth) {
+      return depth > 1 || !"option".equals(name);
+    }
     @Override void toInnerHtml(StringBuilder out) {
       out.append('<').append(name);
     }
@@ -195,7 +209,7 @@ final class DomProcessingEvents {
     @Override void toJavascript(BlockAndEmitter out) {
       out.emitCall("a", TreeConstruction.stringLiteral(name), value);
     }
-    @Override boolean canOptimizeToInnerHtml() {
+    @Override boolean canOptimizeToInnerHtml(int depth) {
       return value instanceof StringLiteral;
     }
     @Override void toInnerHtml(StringBuilder out) {
@@ -218,7 +232,7 @@ final class DomProcessingEvents {
     @Override void toJavascript(BlockAndEmitter out) {
       out.emitCall("f", new BooleanLiteral(unary));
     }
-    @Override boolean canOptimizeToInnerHtml() { return true; }
+    @Override boolean canOptimizeToInnerHtml(int depth) { return true; }
     @Override void toInnerHtml(StringBuilder out) {
       out.append(unary ? " />" : ">");
     }
@@ -234,7 +248,7 @@ final class DomProcessingEvents {
     @Override void toJavascript(BlockAndEmitter out) {
       out.emitCall("e", TreeConstruction.stringLiteral(name));
     }
-    @Override boolean canOptimizeToInnerHtml() { return true; }
+    @Override boolean canOptimizeToInnerHtml(int depth) { return true; }
     @Override void toInnerHtml(StringBuilder out) {
       out.append("</").append(name).append('>');
     }
@@ -251,7 +265,7 @@ final class DomProcessingEvents {
       out.emitCall(getEmitterMethodName(),
                    TreeConstruction.stringLiteral(text));
     }
-    @Override boolean canOptimizeToInnerHtml() { return true; }
+    @Override boolean canOptimizeToInnerHtml(int depth) { return true; }
     protected abstract String getEmitterMethodName();
     @Override boolean checkContext(boolean inTag) {
       if (inTag) { throw new IllegalStateException(this.toString()); }
@@ -281,7 +295,7 @@ final class DomProcessingEvents {
     @Override void toJavascript(BlockAndEmitter out) {
       out.getBlock().appendChild(stmt);
     }
-    @Override boolean canOptimizeToInnerHtml() { return false; }
+    @Override boolean canOptimizeToInnerHtml(int depth) { return false; }
     @Override void toInnerHtml(StringBuilder out) {
       throw new UnsupportedOperationException();
     }
