@@ -56,7 +56,7 @@ public class ExpressionSanitizerCaja {
       }
     }
 
-    if (!input.equals(result)) {
+    if (!input.children().equals(result.children())) {
       MutableParseTreeNode.Mutation mut = ((MutableParseTreeNode) input)
           .createMutation();
       for (ParseTreeNode child : input.children()) {
