@@ -24,8 +24,8 @@ public final class PluginMeta {
   private final PluginEnvironment env;
   /** True if the output should include debugging info. */
   private boolean debugMode;
-  /** True if the Cajoler should enable "warts". */
-  private boolean wartsMode;
+  /** True if the source should be treated as Valija */
+  private boolean valijaMode;
 
   public PluginMeta() {
     this(PluginEnvironment.CLOSED_PLUGIN_ENVIRONMENT);
@@ -53,8 +53,8 @@ public final class PluginMeta {
 
   public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
 
-  /** True iff the Cajoler should enable cajoling "warts". */
-  public boolean isWartsMode() { return wartsMode; }
+  /** True if the source should be treated as Valija. */
+  public boolean isValijaMode() { return valijaMode; }
 
-  public void setWartsMode(boolean wartsMode) { this.wartsMode = wartsMode; }
+  public void setValijaMode(boolean valijaMode) { this.valijaMode = valijaMode; }
 }

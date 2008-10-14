@@ -104,15 +104,15 @@
 
   <!--== Tasks Used Below ==-->
   <taskdef resource="emma_ant.properties"
-    classpathref="classpath.extensions" />
+   classpathref="classpath.extensions" />
 
   <taskdef name="junit"
-    classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"
-    classpathref="classpath.extensions" />
+   classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"
+   classpathref="classpath.extensions" />
 
   <taskdef name="jsdoctoolkit"
-    classname="uk.co.darrenhurley.ant.tasks.JsDocToolkit"
-    classpathref="classpath.jsdocs" />
+   classname="uk.co.darrenhurley.ant.tasks.JsDocToolkit"
+   classpathref="classpath.jsdocs" />
 
   <!--== rules.  Lowercase are public.  Uppercase are used internally. ==-->
   <target name="default" depends="jars"
@@ -155,7 +155,8 @@
       - forking, check your JAVA and JAVA_HOME environment variables and make
       - sure ant is using jdk1.6.
      -->
-    <junit printsummary="yes" fork="yes" maxmemory="512m">
+    <junit printsummary="yes" fork="yes" maxmemory="512m"
+     errorProperty="runtests.error" failureProperty="runtests.failure">
       <assertions><enable/></assertions>  <!-- ignored unless fork="yes" -->
       <classpath refid="classpath.tests.run"/>
       <formatter type="xml" usefile="true" unless="emma.enabled"/>
@@ -186,6 +187,10 @@
       <report format="frames" todir="${reports}/tests"
        styledir="${third_party}/ant/etc"/>
     </junitreport>
+    <fail message="One or more tests failed. For details, see ${reports}/tests/index.html"
+      if="runtests.error"/>
+    <fail message="One or more tests failed to compile. For details, see ${reports}/tests/index.html"
+      if="runtests.failure"/>
   </target>
 
   <target name="docs" description="Builds all Caja documentation."
@@ -210,7 +215,7 @@
    depends="RuleDoclet">
     <mkdir dir="${ruledocs}"/>
     <ruledoclet output="html" outputdir="${ruledocs}"
-     rewriter="com.google.caja.parser.quasiliteral.DefaultCajaRewriter"/>
+     rewriter="com.google.caja.parser.quasiliteral.CajitaRewriter"/>
   </target>
 
   <target name="jsdocs" description="Builds jsdoc documentation.">
@@ -219,19 +224,17 @@
      encoding="utf-8" template="jsdoc"
      includeundocumented="true" includeprivate="true" includeunderscored="true"
      outputdir="${jsdocs}">
-      <source file="${src}/com/google/caja/JSON.js"/>
       <source file="${src}/com/google/caja/Brand-cajita.js"/>
-      <source file="${src}/com/google/caja/Mint-cajita.js"/>
-      <source file="${src}/com/google/caja/Q-caja.js"/>
-      <source file="${src}/com/google/caja/caja.js"/>
-      <source file="${src}/com/google/caja/caja-debugmode.js"/>
-      <source file="${src}/com/google/caja/caja-prototype.js"/>
+      <source file="${src}/com/google/caja/cajita.js"/>
+      <source file="${src}/com/google/caja/cajita-debugmode.js"/>
       <source file="${src}/com/google/caja/log-to-console.js"/>
       <source file="${src}/com/google/caja/permissive.js"/>
       <source file="${src}/com/google/caja/triv-logger.js"/>
+      <source file="${src}/com/google/caja/valija-cajita.js"/>
       <source file="${src}/com/google/caja/plugin/html4-defs.js"/>
       <source file="${src}/com/google/caja/plugin/html-sanitizer.js"/>
       <source file="${src}/com/google/caja/plugin/html-emitter.js"/>
+      <source file="${src}/com/google/caja/plugin/bridal.js"/>
       <source file="${src}/com/google/caja/plugin/domita.js"/>
       <source file="${src}/com/google/caja/plugin/unicode.js"/>
     </jsdoctoolkit>
@@ -259,6 +262,8 @@
      classpathref="classpath.run"/>
     <taskdef name="minify" classname="com.google.caja.tools.MinifyAntTask"
      classpathref="classpath.run"/>
+    <taskdef name="innocent" classname="com.google.caja.tools.InnocentAntTask"
+     classpathref="classpath.run"/>
     <taskdef name="genrule" classname="com.google.caja.tools.GenRuleAntTask"
      classpathref="classpath.run"/>
     <!-- Generate a schema of CSS properties for client side CSS validation. -->
@@ -281,7 +286,7 @@
     </genrule>
   </target>
 
-  <target name="jars" depends="pluginc,MinifiedJs"
+  <target name="jars" depends="pluginc,CajoledValija,MinifiedJs"
    description="Place all jars needed to run the cajoler under ${jars}">
     <copy todir="${jars}">
       <fileset dir="${third_party}/java/jakarta_commons">
@@ -311,17 +316,31 @@
    description="Puts all the demo files together for easy browsing."/>
 
   <!-- Cajoles test resources that contain cajita to javascript. -->
-  <target name="CajoledTests" depends="pluginc,dirs">
-    <cajole>
+  <target name="CajoledTests" depends="pluginc,dirs,CajoledValija">
+    <cajole languageMode="cajita">
       <job output="${lib}/com/google/caja/plugin/domita_test_cajoled.js">
-        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
         <include file="${tests}/com/google/caja/plugin/asserts.js"/>
+        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
+      </job>
+    </cajole>
+    <cajole languageMode="valija">
+      <job output="${lib}/com/google/caja/plugin/domita_test_valijad.js">
+        <include file="${tests}/com/google/caja/plugin/asserts.js"/>
+        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
       </job>
     </cajole>
     <copy todir="${lib}">
       <fileset dir="${src}" includes="**/*.html"/>
       <fileset dir="${tests}" includes="**/*.html"/>
     </copy>
+  </target>
+
+  <target name="CajoledValija" depends="pluginc">
+    <cajole languageMode="cajita">
+      <job output="${lib}/com/google/caja/plugin/valija-cajoled.js">
+        <include file="${src}/com/google/caja/valija-cajita.js" />
+      </job>
+    </cajole>
   </target>
 
   <target name="MinifiedJs" depends="pluginc">
@@ -334,9 +353,10 @@
     </minify>
     <minify>
       <job output="${lib}/com/google/caja/plugin/domita-minified.js">
-        <include file="${src}/com/google/caja/caja.js"/>
+        <include file="${src}/com/google/caja/cajita.js"/>
         <include file="${src}/com/google/caja/plugin/unicode.js"/>
         <include file="${src}/com/google/caja/plugin/html-emitter.js"/>
+        <include file="${src}/com/google/caja/plugin/bridal.js"/>
         <include file="${src}/com/google/caja/plugin/domita.js"/>
       </job>
     </minify>
@@ -356,11 +376,14 @@
       - that builds a symlink tree? -->
     <copy todir="${lib}">
       <fileset dir="${src}">
-        <include name="**/caja/caja.js"/>
-        <include name="**/caja/caja-debugmode.js"/>
+        <include name="**/caja/cajita.js"/>
+        <include name="**/caja/cajita-debugmode.js"/>
         <include name="**/caja/log-to-console.js"/>
+        <include name="**/caja/valija-cajita.js"/>
         <include name="**/caja/demos/calendar/*.js"/>
         <include name="**/caja/opensocial/applet/testbed.js"/>
+        <include name="**/caja/opensocial/applet/setup-valija.js"/>
+        <include name="**/caja/plugin/bridal.js"/>
         <include name="**/caja/plugin/domita.js"/>
         <include name="**/caja/plugin/html4-defs.js"/>
         <include name="**/caja/plugin/html-emitter.js"/>
@@ -404,8 +427,7 @@
   </target>
 
   <target name="RuleDoclet" depends="Quasiliterals">
-    <!-- HtmlRuleDoclet requires DOMImplementation from java 1.6 -->
-    <javac destdir="${lib}" debug="true" target="1.5" source="1.6">
+    <javac destdir="${lib}" debug="true" target="1.5" source="1.5">
       <src path="${src}"/>
       <classpath refid="classpath.compile"/>
       <include name="**/caja/quasiliteral/*Doclet.java"/>
@@ -431,6 +453,7 @@
     </javac>
     <copy todir="${lib}">
       <fileset dir="${src}">
+        <include name="**/caja/plugin/bridal.js"/>
         <include name="**/caja/plugin/domita.js"/>
         <include name="**/caja/plugin/html4-defs.js"/>
         <include name="**/caja/plugin/html-sanitizer.js"/>
@@ -575,7 +598,7 @@
 
   <target name="lolcat-search" depends="dirs,pluginc,MinifiedJs"
    description="IM IN UR BUILD DEMOING UR GADGETZ">
-    <cajole>
+    <cajole languageMode="cajita">
       <job output="${www}/lolcat-search/searchbox-cajoled.js">
         <include
          file="${demos}/lolcat-search/searchbox.html"/>
@@ -636,11 +659,12 @@
     <mkdir dir="${www}/testbed"/>
     <copy todir="${www}/testbed">
       <fileset dir="${src}/com/google/caja">
-        <include name="caja.js"/>
-        <include name="caja-debugmode.js"/>
+        <include name="cajita.js"/>
+        <include name="cajita-debugmode.js"/>
         <include name="log-to-console.js"/>
       </fileset>
       <fileset dir="${src}/com/google/caja/plugin">
+        <include name="bridal.js"/>
         <include name="domita.js"/>
         <include name="html4-defs.js"/>
         <include name="html-emitter.js"/>
@@ -649,6 +673,11 @@
       </fileset>
       <fileset dir="${lib}/com/google/caja/plugin">
         <include name="css-defs.js"/>
+        <include name="valija-cajoled.js"/>
+      </fileset>
+      <fileset dir="${third_party}/js/prettify">
+        <include name="prettify.js"/>
+        <include name="prettify.css"/>
       </fileset>
       <fileset dir="${src}/com/google/caja/opensocial/applet">
         <include name="*.html"/>
@@ -660,9 +689,49 @@
         <include name="json_simple.jar"/>
       </fileset>
     </copy>
+
+    <copy file="${src}/com/google/caja/opensocial/applet/index.html" tofile="${www}/testbed/debug.html"/>
+    <replace file="${www}/testbed/debug.html">
+     <replacetoken><![CDATA[<script type="text/javascript" src="cajita-combined-min.js"></script>]]></replacetoken>
+     <replacevalue><![CDATA[
+       <script type="text/javascript" src="cajita.js"></script>
+       <script type="text/javascript" src="log-to-console.js"></script>
+       <script type="text/javascript" src="cajita-debugmode.js"></script>
+       <script type="text/javascript" src="unicode.js"></script>
+       <script type="text/javascript" src="css-defs.js"></script>
+       <script type="text/javascript" src="html4-defs.js"></script>
+       <script type="text/javascript" src="html-sanitizer.js"></script>
+       <script type="text/javascript" src="html-emitter.js"></script>
+       <script type="text/javascript" src="setup-valija.js"></script>
+       <script type="text/javascript" src="bridal.js"></script>
+       <script type="text/javascript" src="domita.js"></script>
+       <script type="text/javascript" src="prettify.js"></script>
+       <script type="text/javascript" src="testbed.js"></script>
+       <script type="text/javascript" src="valija-cajoled.js"></script>
+       ]]>
+     </replacevalue>
+    </replace>
+    <minify>
+      <job output="${www}/testbed/cajita-combined-min.js">
+        <include file="${src}/com/google/caja/cajita.js"/>
+        <include file="${src}/com/google/caja/log-to-console.js"/>
+        <include file="${src}/com/google/caja/cajita-debugmode.js"/>
+        <include file="${src}/com/google/caja/plugin/unicode.js"/>
+        <include file="${lib}/com/google/caja/plugin/css-defs.js"/>
+        <include file="${src}/com/google/caja/plugin/html4-defs.js"/>
+        <include file="${src}/com/google/caja/plugin/html-sanitizer.js"/>
+        <include file="${src}/com/google/caja/plugin/html-emitter.js"/>
+        <include file="${src}/com/google/caja/opensocial/applet/setup-valija.js"/>
+        <include file="${src}/com/google/caja/plugin/bridal.js"/>
+        <include file="${src}/com/google/caja/plugin/domita.js"/>
+        <include file="${third_party}/js/prettify/prettify.js"/>
+        <include file="${src}/com/google/caja/opensocial/applet/testbed.js"/>
+        <include file="${lib}/com/google/caja/plugin/valija-cajoled.js"/>
+      </job>
+    </minify>
   </target>
 
-  <target name="calendar" depends="dirs,pluginc,MinifiedJs"
+  <target name="calendar" depends="dirs,pluginc,MinifiedJs,jars"
    description="A calendar that can mine data from a read only DOM.">
     <mkdir dir="${www}/calendar"/>
 
@@ -703,7 +772,7 @@
         <include file="${demos}/calendar/main.js"/>
       </job>
     </minify>
-    <cajole debug="false">
+    <cajole debug="false" languageMode="valija">
       <job output="${lib}/com/google/caja/demos/calendar/calendar-cajoled.js">
         <include file="${demos}/calendar/util.js"/>
         <include file="${demos}/calendar/bitset.js"/>
@@ -738,8 +807,8 @@
 
     <copy todir="${www}/calendar">
       <fileset dir="${src}/com/google/caja">
-        <include name="caja.js"/>
-        <include name="caja-debugmode.js"/>
+        <include name="cajita.js"/>
+        <include name="cajita-debugmode.js"/>
       </fileset>
       <fileset dir="${lib}/com/google/caja/demos/calendar">
         <include name="*-minified.js"/>
@@ -753,6 +822,7 @@
       <fileset dir="${lib}/com/google/caja/plugin">
         <include name="domita-minified.js"/>
         <include name="html-sanitizer-minified.js"/>
+        <include name="valija-cajoled.js"/>
       </fileset>
       <fileset dir="${third_party}/js/firebug">
         <include name="firebugx.js"/>

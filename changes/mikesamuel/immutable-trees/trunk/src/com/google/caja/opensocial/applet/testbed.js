@@ -17,7 +17,7 @@
  * Supporting scripts for the cajoling testbed.
  *
  * <p>
- * This supports an input forms that can be instantiated multiple times to
+ * This supports input forms that can be instantiated multiple times to
  * simulate multiple gadgets in the same frame.
  * Different forms are distinguished by a unique suffix, and use the following
  * identifiers:
@@ -30,10 +30,10 @@
  *   <dd>Container for cajoled output.</dd>
  *   <dt><code>'eval-results' + uiSuffix</code></dt>
  *   <dd>Container for result of last expression in source code.</dd>
- *   <dt><code>'caja-stacks' + uiSuffix</code></dt>
+ *   <dt><code>'cajita-stacks' + uiSuffix</code></dt>
  *   <dd>Parent of container for debug mode stack traces a la
- *     <tt>caja-debugmode.js</tt>.</dd>
- *   <dt><code>'caja-stack' + uiSuffix</code></dt>
+ *     <tt>cajita-debugmode.js</tt>.</dd>
+ *   <dt><code>'cajita-stack' + uiSuffix</code></dt>
  *   <dd>Container for debug mode stack traces.</dd>
  *   <dt><code>'caja-html' + uiSuffix</code></dt>
  *   <dd>Container for HTML rendered by cajoled code.</dd>
@@ -56,6 +56,9 @@
 
 /** UI suffixes of all registered testbeds. */
 var testbeds = [];
+
+/** URL to use when no proxy URL is provided */
+var BOGUS_PROXY_URL = 'http://bogus-proxy.google.com';
 
 /** A registry of the public APIs of each of the testbed applets. */
 var gadgetPublicApis = {
@@ -110,20 +113,19 @@ var getTestbedServer = (function () {
 
   var testbedServer;
   return function getTestbedServer() {
-    if (testbedServer === undefined) {
+    if (testbedServer === void 0) {
       var backend = getCgiParams().backend;
       testbedServer = (backend && backend.length === 1)
           ? backend[0]
-          : 'http://bogus-proxy.google.com';
+          : BOGUS_PROXY_URL;
     }
     return testbedServer;
-  }
+  };
 })();
 
-
 /**
- * Reads caja code and configuration from the testbed form, cajoles it, and
- * displays the output in the current HTML page.
+ * Reads caja code and configuration from the testbed form, cajoles
+ * it, runs it, and displays the output in the current HTML page.
  * @param {HTMLFormElement} form
  */
 var cajole = (function () {
@@ -135,32 +137,35 @@ var cajole = (function () {
    * @param {string} uiSuffix suffix of testbed identifiers as described above.
    */
   function loadCaja(htmlText, uiSuffix) {
-    var m = htmlText.match(
-        /^\s*<script\b[^>]*>([\s\S]*)<\/script\b[^>]*>\s*$/i);
-    if (m) {
-      var script = m[1];
+    var scriptStart = htmlText.indexOf("{"), scriptEnd = htmlText.lastIndexOf("}");
+    var script = htmlText.slice(scriptStart, scriptEnd+1);
+
+    if (scriptStart > -1 && scriptEnd > -1) {
       var imports = getImports(uiSuffix);
 
       imports.clearHtml___();
-      var stackTrace = document.getElementById('caja-stacks' + uiSuffix)
+      var stackTrace = document.getElementById('cajita-stacks' + uiSuffix);
       stackTrace.style.display = 'none';
 
-      // Set up the module handler
-      ___.getNewModuleHandler().setImports(imports);
       // Provide an object into which the module can export its public API.
       imports.exports = {};
+      if (document.getElementById("VALIJA_MODE" + uiSuffix).checked) {
+        imports.$v = valijaMaker(imports);
+      }
+      // Set up the outer new module handler
+      ___.setNewModuleHandler(imports.outerNewModuleHandler___);
 
       // Load the script
       try {
         eval(script);
         gadgetPublicApis['gadget' + uiSuffix] = ___.primFreeze(imports.exports);
       } catch (ex) {
-        var cajaStack = ex.cajaStack___
-            && ___.unsealCallerStack(ex.cajaStack___);
-        if (cajaStack) {
+        var cajitaStack = ex.cajitaStack___
+            && ___.unsealCallerStack(ex.cajitaStack___);
+        if (cajitaStack) {
           stackTrace.style.display = '';
-          document.getElementById('caja-stack' + uiSuffix).appendChild(
-              document.createTextNode(cajaStack.join('\n')));
+          document.getElementById('cajita-stack' + uiSuffix).appendChild(
+              document.createTextNode(cajitaStack.join('\n')));
         }
         throw ex;
       }
@@ -175,6 +180,7 @@ var cajole = (function () {
     var logForm = document.getElementById('logForm');
     if (!logForm) {
       var testbedServer = getTestbedServer();
+      if (testbedServer === BOGUS_PROXY_URL) { return; }
       logForm = document.createElement('FORM');
       logForm.id = 'logForm';
       logForm.method = 'POST';
@@ -203,12 +209,13 @@ var cajole = (function () {
     var inputs = form.elements;
     var features = ['testbedServer=' + getTestbedServer().replace(/,/g, '%2C')];
     // See CajaApplet.Feature
-    caja.each({ EMBEDDABLE: true, DEBUG_SYMBOLS: true, WARTS_MODE: true },
-              ___.simpleFrozenFunc(function (featureName) {
-                if (inputs[featureName + uiSuffix].checked) {
-                  features.push(featureName);
-                }
-              }));
+    cajita.forOwnKeys(
+        { EMBEDDABLE: true, DEBUG_SYMBOLS: true, VALIJA_MODE: true },
+        ___.simpleFrozenFunc(function (featureName) {
+          if (inputs[featureName + uiSuffix].checked) {
+          features.push(featureName);
+          }
+        }));
     features = features.join(',');
 
     var src = inputs.src.value.replace(/^\s+|\s+$/g, '');
@@ -331,46 +338,78 @@ var getImports = (function () {
    * one that can be evaled.
    */
   function repr(o) {
-    switch (typeof o) {
-      case 'string':
-        return ('"'
-                + o.replace(/[^\x20\x21\x23-\x5b\x5d-\x7f]/g, escapeOne)
-                + '"');
-      case 'object': case 'function':
-        if (o === null) { break; }
-        if (caja.isJSONContainer(o)) {
-          var els = [];
-          if ('length' in o
-              && !(Object.prototype.propertyIsEnumerable.call(o, 'length'))
-              ) {
-            for (var i = 0; i < o.length; ++i) {
-              els.push(repr(o[i]));
-            }
-            return '[' + els.join(', ') + ']';
-          } else {
-            caja.each(o, reprKeyValuePair(els));
-            return els.length ? '{ ' + els.join(', ') + ' }' : '{}';
-          }
-        }
-        return '\u00ab' + o + '\u00bb';
+    if (Object.prototype.toSource && typeof o === 'object' && o !== null) {
+      return Object.prototype.toSource.call(o);
     }
-    return String(o);
+    try {
+      switch (typeof o) {
+        case 'string':
+          return ('"'
+                  + o.replace(/[^\x20\x21\x23-\x5b\x5d-\x7f]/g, escapeOne)
+                  + '"');
+        case 'object': case 'function':
+          if (o === null) { break; }
+          // Approximate test for disfunction:
+          // repr() doesn't know which vat is calling it, so it can't
+          // get access to the appropriate Disfunction object for an
+          // instanceof test.  At worst, an object will print out as
+          // [Object object].
+          if (o.call && o.apply && o.bind) { return cajita.callPub(o, "toString"); }
+          if (cajita.isJSONContainer(o)) {
+            var els = [];
+            if ('length' in o
+                && !(Object.prototype.propertyIsEnumerable.call(o, 'length'))
+                ) {
+              for (var i = 0; i < o.length; ++i) {
+                els.push(repr(o[i]));
+              }
+              return '[' + els.join(', ') + ']';
+            } else {
+              cajita.forOwnKeys(o, reprKeyValuePair(els));
+              return els.length ? '{ ' + els.join(', ') + ' }' : '{}';
+            }
+          }
+          return '\u00ab' + o + '\u00bb';
+      }
+      return String(o);
+    } catch (e) {
+      return "This object is recursive, so we can't print it correctly.";
+    }
   }
 
-  /** Javascript support for ExpressionLanguageStage.java */
-  function yielder(uiSuffix) {
-    return function yield(o) {
-      var type = document.createElement('span');
-      type.className = 'type';
-      type.appendChild(document.createTextNode(typeString(o)));
+  function makeOuterNewModuleHandler(imports, uiSuffix) {
+    var superHandler = ___.makeNormalNewModuleHandler();
+    superHandler.setImports(imports);
+    var inner = ___.beget(superHandler);
+    inner.handle = ___.simpleFrozenFunc(function(newModule) {
+      try {
+	return ___.callPub(superHandler, 'handle', 
+			   [___.simpleFrozenFunc(newModule)]);
+      } finally {
+	var outcome = superHandler.getLastOutcome();
+	var type = document.createElement('span');
+	type.className = 'type';
+	type.appendChild(document.createTextNode(typeString(outcome[1])));
 
-      var entry = document.createElement('div');
-      entry.className = 'result';
-      entry.appendChild(type);
-      entry.appendChild(document.createTextNode(repr(o)));
-
-      document.getElementById('eval-results' + uiSuffix).appendChild(entry);
-    };
+	var entry = document.createElement('div');
+	entry.className = 'result';
+	entry.appendChild(type);
+	entry.appendChild(document.createTextNode(repr(outcome[1])));
+	if (!outcome[0]) {
+	  // TODO(erights): color something red
+	}
+	document.getElementById('eval-results' +
+				uiSuffix).appendChild(entry);
+      }
+    });
+    ___.freeze(inner);
+    var outer = ___.beget(superHandler);
+    outer.handle = ___.simpleFrozenFunc(function(newModule) {
+      ___.setNewModuleHandler(inner);
+      return ___.callPub(superHandler, 'handle', 
+          [___.simpleFrozenFunc(newModule)]);
+    });
+    return ___.freeze(outer);
   }
 
   function getImports(uiSuffix) {
@@ -379,7 +418,9 @@ var getImports = (function () {
     }
 
     var testImports = ___.copy(___.sharedImports);
-    testImports.yield = ___.simpleFrozenFunc(yielder(uiSuffix));
+    if (document.getElementById("VALIJA_MODE" + uiSuffix).checked) {
+      testImports.outers = testImports;
+    }
     var idClass = 'xyz' + ___.getId(testImports) + '___';
     attachDocumentStub(
          '-' + idClass,
@@ -398,7 +439,7 @@ var getImports = (function () {
       var htmlContainer = document.getElementById('caja-html' + uiSuffix);
       htmlContainer.className = idClass;
       htmlContainer.innerHTML = '';
-      testImports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
+      testImports.htmlEmitter___ = new HtmlEmitter(htmlContainer);      
     };
     /**
      * Put styles inside a node that is cleared for each gadget so that
@@ -415,6 +456,10 @@ var getImports = (function () {
               ? gadgetPublicApis[moduleName]
               : void 0;
         });
+
+    testImports.outerNewModuleHandler___ = 
+      makeOuterNewModuleHandler(testImports, uiSuffix);
+
     return importsByUiSuffix[uiSuffix] = testImports;
   }
 

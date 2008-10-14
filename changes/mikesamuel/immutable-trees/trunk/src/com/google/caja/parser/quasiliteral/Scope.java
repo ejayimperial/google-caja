@@ -18,6 +18,8 @@ import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.Keyword;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
+import com.google.caja.parser.js.Expression;
+import com.google.caja.parser.js.ModuleEnvelope;
 import com.google.caja.parser.js.SyntheticNodes;
 import com.google.caja.parser.js.CatchStmt;
 import com.google.caja.parser.js.Declaration;
@@ -39,6 +41,7 @@ import com.google.caja.util.Pair;
 import static com.google.caja.parser.js.SyntheticNodes.s;
 import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -77,16 +80,6 @@ public class Scope {
     DECLARED_FUNCTION(FUNCTION),
 
     /**
-     * A constructor declaration, i.e., one which mentions 'this' in its body.
-     * Example: "foo" in the following --
-     *
-     * <pre>
-     * function foo() { this.x = 3; }
-     * </pre>
-     */
-    CONSTRUCTOR(DECLARED_FUNCTION),
-
-    /**
      * A variable containing arbitrary data (including functions).
      * Examples: "x", "y", "z" and "t" in the following --
      *
@@ -97,7 +90,7 @@ public class Scope {
      * var t = function foo() { };
      * </pre>
      */
-    DATA(),
+    DATA,
 
     /**
      * A variable defined in a catch block.
@@ -185,8 +178,7 @@ public class Scope {
   private final Scope parent;
   private final MessageQueue mq;
   private final ScopeType type;
-  private final boolean sideEffecting;
-  private boolean containsThis = false;
+  private boolean hasFreeThis = false;
   private boolean containsArguments = false;
   private int tempVariableCounter = 0;
   private final Map<String, Pair<LocalType, FilePosition>> locals
@@ -195,7 +187,8 @@ public class Scope {
   // TODO(ihab.awad): importedVariables is only used by the root-most scope; it is
   // empty everywhere else. Define subclasses of Scope so that this confusing
   // overlapping of instance variables does not occur.
-  private final Set<String> importedVariables = new TreeSet<String>();
+  private final SortedSet<String> importedVariables = new TreeSet<String>();
+  private final Permit permitsUsed;
 
   public static Scope fromProgram(Block root, MessageQueue mq) {
     Scope s = new Scope(ScopeType.PROGRAM, mq, true);
@@ -224,7 +217,9 @@ public class Scope {
     return s;
   }
 
-  private static Scope fromFunctionConstructor(Scope parent, FunctionConstructor root, boolean sideEffecting) {
+  private static Scope fromFunctionConstructor(Scope parent,
+                                               FunctionConstructor root,
+                                               boolean sideEffecting) {
     Scope s = new Scope(ScopeType.FUNCTION_BODY, parent, sideEffecting);
 
     // A function's name is bound to it in its body. After executing
@@ -248,14 +243,14 @@ public class Scope {
     this.type = type;
     this.parent = null;
     this.mq = mq;
-    this.sideEffecting = sideEffecting;
+    this.permitsUsed = new Permit();
   }
 
   private Scope(ScopeType type, Scope parent, boolean sideEffecting) {
     this.type = type;
     this.parent = parent;
     this.mq = parent.mq;
-    this.sideEffecting = sideEffecting;
+    this.permitsUsed = parent.permitsUsed;
   }
 
   /**
@@ -265,6 +260,17 @@ public class Scope {
    */
   public Scope getParent() {
     return parent;
+  }
+
+  /**
+   * Determines whether this is an outer scope. A scope is outer if it is not
+   * (transitively) contained in any function scopes. Any declarations in this
+   * scope are therefore visible throughout the program.
+   */
+  public boolean isOuter() {
+    if (type == ScopeType.FUNCTION_BODY) { return false; }
+    if (parent == null) return true;
+    return parent.isOuter();
   }
 
   /**
@@ -357,7 +363,7 @@ public class Scope {
    * @return whether this block has a free "this".
    */
   public boolean hasFreeThis() {
-    return containsThis;
+    return hasFreeThis;
   }
 
   /**
@@ -437,19 +443,7 @@ public class Scope {
   }
 
   /**
-   * In this scope or some enclosing scope, is a given name defined
-   * as a constructor?
-   *
-   * @param name an identifier.
-   * @return whether 'name' is defined as a constructor within this
-   *   scope. If 'name' is not defined, return false.
-   */
-  public boolean isConstructor(String name) {
-    return isDefinedAs(name, LocalType.CONSTRUCTOR);
-  }
-
-  /**
-   * Is a given symbol imported by this module?
+   * Is a given symbol imported by this Cajita module?
    *
    * @param name an identifier.
    * @return whether 'name' is a free variable of the enclosing module.
@@ -458,6 +452,18 @@ public class Scope {
     if (locals.containsKey(name)) return false;
     if (parent == null) { return importedVariables.contains(name); }
     return parent.isImported(name);
+  }
+
+  /**
+   * Is a given symbol an outer in this Valija code?
+   *
+   * @param name an identifier.
+   * @return whether 'name' is (a free variable or declared at the top level scope) or not.
+   */
+  public boolean isOuter(String name) {
+    if (parent == null) { return true;}
+    if (locals.containsKey(name)) return false;
+    return parent.isOuter(name);
   }
 
   private LocalType getType(String name) {
@@ -478,11 +484,8 @@ public class Scope {
   }
 
   private static LocalType computeDeclarationType(Scope s, Declaration decl) {
-    if (decl instanceof FunctionDeclaration) {
-      Scope s2 = fromFunctionConstructor(s, ((FunctionDeclaration)decl).getInitializer(), false);
-      return s2.hasFreeThis() ? LocalType.CONSTRUCTOR : LocalType.DECLARED_FUNCTION;
-    }
-    return LocalType.DATA;
+    return decl instanceof FunctionDeclaration ?
+          LocalType.DECLARED_FUNCTION : LocalType.DATA;
   }
 
   private static void walkBlock(final Scope s, ParseTreeNode root) {
@@ -491,21 +494,20 @@ public class Scope {
 
     // Record in this scope all the declarations that have been harvested
     // by the visitor.
-    if (s.sideEffecting) {
-      for (Declaration decl : v.getDeclarations()) {
+    for (Declaration decl : v.getDeclarations()) {
         declare(s, decl.getIdentifier(), computeDeclarationType(s, decl));
-      }
     }
 
     // Now resolve all the references harvested by the visitor. If they have
     // not been defined in the scope chain (including the declarations we just
     // harvested), then they must be free variables, so record them as such.
-    for (String name : v.getReferences()) {
+    for (Reference ref : v.getReferences()) {
+      String name = ref.getIdentifierName();
       if (ReservedNames.ARGUMENTS.equals(name)) {
         s.containsArguments = true;
       } else if (Keyword.THIS.toString().equals(name)) {
-        s.containsThis = true;
-      } else if (!s.isDefined(name) && s.sideEffecting) {
+        s.hasFreeThis = true;
+      } else if (!s.isDefined(name)) {
         addImportedVariable(s, name);
       }
     }
@@ -519,11 +521,11 @@ public class Scope {
   // using it because, due to the MEMBER_ACCESS case, we need more control
   // over when to stop traversing the children of a node.
   private static class SymbolHarvestVisitor {
-    private final SortedSet<String> references = new TreeSet<String>();
+    private final List<Reference> references = new ArrayList<Reference>();
     private final List<Declaration> declarations = new ArrayList<Declaration>();
     private final List<String> exceptionVariables = new ArrayList<String>();
 
-    public SortedSet<String> getReferences() { return references; }
+    public List<Reference> getReferences() { return references; }
 
     public List<Declaration> getDeclarations() { return declarations; }
 
@@ -539,6 +541,8 @@ public class Scope {
         visitOperation((Operation)node);
       } else if (node instanceof Reference) {
         visitReference((Reference) node);
+      } else if (node instanceof ModuleEnvelope) {
+        visitModuleEnvelope((ModuleEnvelope) node);
       } else {
         visitChildren(node);
       }
@@ -591,10 +595,30 @@ public class Scope {
     private void visitReference(Reference node) {
       if (!node.getIdentifier().getAttributes().is(SyntheticNodes.SYNTHETIC) &&
           !exceptionVariables.contains(node.getIdentifierName())) {
-        references.add(node.getIdentifierName());
+        references.add(node);
       }
     }
+
+    /** @param node unused */
+    private void visitModuleEnvelope(ModuleEnvelope node) {
+      // don't look inside a module envelope
+    }
   }
+
+  /**
+   * JavaScript identifiers where masking may change the behavior of synthetic
+   * code or cause lots of confusion.
+   */
+  public static final Set<String> UNMASKABLE_IDENTIFIERS = new HashSet<String>(
+      Arrays.asList(
+          "Array",      // Masking Array can change the behavior of [0, 1, ...]
+          "Infinity",
+          "NaN",
+          "Object",     // Masking Object can change the behavior of { k: v }
+          "arguments",  // Can muck with arguments to synthetic values.
+          "caja",       // Used for caja extensions.
+          "undefined"
+          ));
 
   /**
    * Add a symbol to the symbol table for this scope with the given type.
@@ -604,10 +628,10 @@ public class Scope {
   private static void declare(Scope s, Identifier ident, LocalType type) {
     String name = ident.getName();
 
-    if ("caja".equals(name)) {
-      s.mq.getMessages().add(new Message(
-          RewriterMessageType.CANNOT_REDECLARE_CAJA,
-          ident.getFilePosition()));
+    if (UNMASKABLE_IDENTIFIERS.contains(name)) {
+      s.mq.addMessage(
+          RewriterMessageType.CANNOT_MASK_IDENTIFIER,
+          ident.getFilePosition(), MessagePart.Factory.valueOf(name));
     }
 
     Pair<LocalType, FilePosition> oldDefinition = s.locals.get(name);
@@ -637,8 +661,7 @@ public class Scope {
       // itself.  We recognize a self-mask when we come across a "new"
       // function in the same scope as a declared function or constructor.
       if (maskedType != type
-          && !((maskedType == LocalType.DECLARED_FUNCTION ||
-                maskedType == LocalType.CONSTRUCTOR)
+          && !(maskedType == LocalType.DECLARED_FUNCTION
                && type == LocalType.FUNCTION)) {
         // Since different interpreters disagree about how exception
         // declarations affect local variable declarations, we need to
@@ -662,5 +685,30 @@ public class Scope {
     }
 
     s.locals.put(name, Pair.pair(type, ident.getFilePosition()));
+  }
+
+  /**
+   * If varName is not a statically permitted base name, return null;
+   * otherwise return a JSON description of all the statically
+   * permitted paths rooted in varName which this module's compilation
+   * assumed were safe.
+   */
+  public Expression getPermitsUsed(Identifier varName) {
+    // TODO(erights): Permit should generate a JSON AST directly,
+    // rather than generating a string which we then parse.
+    Permit subPermit = permitsUsed.canRead(varName);
+    if (null == subPermit) { return null; }
+    return (Expression)substV(
+        "(" + subPermit.getPermitsUsedAsJSONString() + ")");
+  }
+
+  public Permit permitRead(ParseTreeNode o) {
+    if (o instanceof Reference) {
+      Reference r = (Reference) o;
+      if (isImported(r.getIdentifierName())) {
+        return permitsUsed.canRead(o);
+      }
+    }
+    return null;
   }
 }

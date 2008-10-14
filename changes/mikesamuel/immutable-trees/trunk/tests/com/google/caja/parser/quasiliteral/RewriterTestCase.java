@@ -19,16 +19,11 @@ import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.ParseTreeNodeContainer;
 
-import static com.google.caja.parser.quasiliteral.QuasiBuilder.substV;
-
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Declaration;
-import com.google.caja.parser.js.Expression;
-import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
-import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.SyntheticNodes;
@@ -47,11 +42,7 @@ import java.util.Arrays;
  * @author ihab.awad@gmail.com
  */
 public abstract class RewriterTestCase extends CajaTestCase {
-
-  /**
-   * Create a new Rewriter for use by this test case.
-   */
-  protected abstract Rewriter newRewriter();
+  protected Rewriter rewriter = null;
 
   /**
    * Given some code, execute it without rewriting and return the value of the
@@ -77,19 +68,16 @@ public abstract class RewriterTestCase extends CajaTestCase {
   // TODO(ihab.awad): Refactor tests to use checkAddsMessage(...) instead
   protected void checkFails(String input, String error) throws Exception {
     mq.getMessages().clear();
-    newRewriter().expand(js(fromString(input)), mq);
+    getRewriter().expand(new Block(Arrays.asList(js(fromString(input, is)))), mq);
 
     assertFalse(
         "Expected error, found none: " + error,
         mq.getMessages().isEmpty());
 
     StringBuilder messageText = new StringBuilder();
-    for (Message m : mq.getMessages()) {
-      m.format(mc, messageText);
-      messageText.append("\n");
-    }
+    mq.getMessages().get(0).format(mc, messageText);
     assertTrue(
-        "Messages do not contain \"" + error + "\": " + messageText.toString(),
+        "First error is not \"" + error + "\": " + messageText.toString(),
         messageText.toString().contains(error));
   }
 
@@ -105,7 +93,7 @@ public abstract class RewriterTestCase extends CajaTestCase {
       MessageLevel highest)
       throws Exception {
     mq.getMessages().clear();
-    ParseTreeNode actualResultNode = newRewriter().expand(inputNode, mq);
+    ParseTreeNode actualResultNode = getRewriter().expand(inputNode, mq);
     for (Message m : mq.getMessages()) {
       if (m.getMessageLevel().compareTo(highest) >= 0) {
         fail(m.toString());
@@ -137,7 +125,7 @@ public abstract class RewriterTestCase extends CajaTestCase {
       ParseTreeNode inputNode,
       MessageTypeInt type)  {
     mq.getMessages().clear();
-    newRewriter().expand(inputNode, mq);
+    getRewriter().expand(inputNode, mq);
     if (containsConsistentMessage(mq.getMessages(),type)) {
       fail("Unexpected add message of type " + type);
     }
@@ -148,13 +136,17 @@ public abstract class RewriterTestCase extends CajaTestCase {
         MessageTypeInt type,
         MessageLevel level)  {
     mq.getMessages().clear();
-    newRewriter().expand(inputNode, mq);
+    getRewriter().expand(inputNode, mq);
     if (containsConsistentMessage(mq.getMessages(),type, level)) {
       fail("Unexpected add message of type " + type + " and level " + level);
     }
   }
 
   // TODO(ihab.awad): Change dependents to use checkAddsMessage and just call js(fromString("..."))
+
+  // TODO(ihab.awad): Change checkAddsMessage and similar functions to check
+  // only the first message added to the message queue
+
   protected void assertAddsMessage(String src, MessageTypeInt type, MessageLevel level)
       throws Exception {
     checkAddsMessage(js(fromString(src)), type, level);
@@ -171,7 +163,7 @@ public abstract class RewriterTestCase extends CajaTestCase {
         MessageTypeInt type,
         MessageLevel level)  {
     mq.getMessages().clear();
-    newRewriter().expand(inputNode, mq);
+    getRewriter().expand(inputNode, mq);
     if (!containsConsistentMessage(mq.getMessages(), type, level)) {
       fail("Failed to add message of type " + type + " and level " + level);
     }
@@ -187,7 +179,10 @@ public abstract class RewriterTestCase extends CajaTestCase {
     return false;
   }
 
-  protected boolean containsConsistentMessage(List<Message> list, MessageTypeInt type, MessageLevel level) {
+  protected boolean containsConsistentMessage(
+      List<Message> list,
+      MessageTypeInt type,
+      MessageLevel level) {
     for (Message m : list) {
       System.out.println("**" + m.getMessageType() + "|" + m.getMessageLevel());
       if ( m.getMessageType().equals(type) && m.getMessageLevel().equals(level) ) {
@@ -210,7 +205,7 @@ public abstract class RewriterTestCase extends CajaTestCase {
    * uncajoled.
    *
    * @param caja executed in the context of asserts.js for its value.  The
-   *    value is computed from the last statement in caja.
+   *    value is computed from the last statement in cajita.
    */
   protected void assertConsistent(String caja)
       throws IOException, ParseException {
@@ -229,30 +224,6 @@ public abstract class RewriterTestCase extends CajaTestCase {
     assertEquals(message, plainResult, rewrittenResult);
   }
 
-  protected <T extends ParseTreeNode> T replaceLastStatementWithEmit(
-      T node, String lValueExprString) throws ParseException {
-    if (node instanceof ExpressionStmt) {
-      ParseTreeNode lValueExpr =
-          js(fromString(lValueExprString))  // a Block
-          .children().get(0)                // an ExpressionStmt
-          .children().get(0);               // an Expression
-      ExpressionStmt es = (ExpressionStmt) node;
-      Expression e = es.getExpression();
-      Operation emitter = (Operation) substV(
-          "@lValueExpr = @e;",
-          "lValueExpr", syntheticTree(lValueExpr),
-          "e", e);
-      es.replaceChild(emitter, e);
-    } else {
-      List<? extends ParseTreeNode> children = node.children();
-      if (!children.isEmpty()) {
-        replaceLastStatementWithEmit(
-            children.get(children.size() - 1), lValueExprString);
-      }
-    }
-    return node;
-  }
-
   protected final <T extends ParseTreeNode> T syntheticTree(T node) {
     for (ParseTreeNode c : node.children()) { syntheticTree(c); }
     return makeSynthetic(node);
@@ -264,7 +235,15 @@ public abstract class RewriterTestCase extends CajaTestCase {
   }
 
   protected ParseTreeNode rewriteStatements(Statement... nodes) {
-    return newRewriter().expand(new Block(Arrays.asList(nodes)), mq);
+    return getRewriter().expand(new Block(Arrays.asList(nodes)), mq);
+  }
+
+  protected Rewriter getRewriter() {
+    return rewriter;
+  }
+
+  protected void setRewriter(Rewriter r) {
+    rewriter = r;
   }
 
   protected ParseTreeNode emulateIE6FunctionConstructors(ParseTreeNode node) {

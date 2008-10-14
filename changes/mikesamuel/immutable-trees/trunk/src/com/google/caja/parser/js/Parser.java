@@ -47,7 +47,7 @@ import java.util.Set;
  * The grammar below is a context-free representation of the grammar this
  * parser parses.  It disagrees with EcmaScript 262 where implementations
  * disagree with EcmaScript 262.  The rules for semicolon insertion and
- * the possible backtracing in expressions needed to properly handle
+ * the possible backtracking in expressions needed to properly handle
  * backtracking are commented thoroughly in code, since semicolon insertion
  * requires information from both the lexer and parser and is not determinable
  * with finite lookahead.
@@ -524,8 +524,7 @@ public final class Parser extends ParserBase {
           // Check for semicolon insertion without lookahead since return is a
           // restricted production.  See the grammar above and ES262 S7.9.1
           if (semicolonInserted() || tq.lookaheadToken(Punctuation.SEMI)) {
-            value = new UndefinedLiteral();
-            value.setFilePosition(FilePosition.endOf(tq.lastPosition()));
+            value = null;
           } else {
             value = parseExpressionInt(false);
           }
@@ -889,24 +888,32 @@ public final class Parser extends ParserBase {
     return new RealLiteral(toNumber(t));
   }
 
-  private long toInteger(Token<JsTokenType> t) {
+  private strictfp long toInteger(Token<JsTokenType> t) {
     Long longValue = Long.decode(t.text);
 
     // Make sure that the number fits in a 51 bit mantissa
     long lv = longValue.longValue();
-    if (lv < 0) { lv = ~lv; }
-    if (0 != (lv & ~((1L << 51) - 1))) {
-      // Could cast to double and back to long and see if precision lost
-      // inside a strict fp block?
+    if (0 != ((lv < 0 ? ~lv : lv) & ~((1L << 51) - 1))) {
       mq.addMessage(MessageType.UNREPRESENTABLE_INTEGER_LITERAL,
                     t.pos, MessagePart.Factory.valueOf(t.text));
+      double dv = lv;  // strictfp affects this.
+      return (long) dv;
     }
-
-    return longValue.longValue();
+    return lv;
   }
 
-  private IntegerLiteral toIntegerLiteral(Token<JsTokenType> t) {
-    return new IntegerLiteral(toInteger(t));
+  private NumberLiteral toIntegerLiteral(Token<JsTokenType> t) {
+    Long longValue = Long.decode(t.text);
+
+    // Make sure that the number fits in a 51 bit mantissa
+    long lv = longValue.longValue();
+    if (0 != ((lv < 0 ? ~lv : lv) & ~((1L << 51) - 1))) {
+      mq.addMessage(MessageType.UNREPRESENTABLE_INTEGER_LITERAL,
+                    t.pos, MessagePart.Factory.valueOf(t.text));
+      return new RealLiteral(lv);
+    }
+
+    return new IntegerLiteral(lv);
   }
 
   @SuppressWarnings("fallthrough")
@@ -991,28 +998,22 @@ public final class Parser extends ParserBase {
       case WORD:
       {
         String identifier = t.text;
-        if (UndefinedLiteral.VALUE_NAME.equals(identifier)) {
-          // Can't leave this as a reference or we'd have to allow references
-          // to have declared types that are not signature types
-          e = new UndefinedLiteral();
-        } else {
-          Keyword kw = Keyword.fromString(identifier);
-          if (null != kw) {
-            if (Keyword.THIS != kw) {
-              mq.addMessage(MessageType.RESERVED_WORD_USED_AS_IDENTIFIER,
-                            tq.lastPosition(),
-                            Keyword.fromString(identifier));
-            }
-          } else if (!isIdentifier(identifier)) {
-            mq.addMessage(MessageType.INVALID_IDENTIFIER,
+        Keyword kw = Keyword.fromString(identifier);
+        if (null != kw) {
+          if (Keyword.THIS != kw) {
+            mq.addMessage(MessageType.RESERVED_WORD_USED_AS_IDENTIFIER,
                           tq.lastPosition(),
-                          MessagePart.Factory.valueOf(identifier));
+                          Keyword.fromString(identifier));
           }
-          Identifier idNode = new Identifier(decodeIdentifier(identifier));
-          finish(idNode, m);
-          e = new Reference(idNode);
-          e.setFilePosition(idNode.getFilePosition());
+        } else if (!isIdentifier(identifier)) {
+          mq.addMessage(MessageType.INVALID_IDENTIFIER,
+                        tq.lastPosition(),
+                        MessagePart.Factory.valueOf(identifier));
         }
+        Identifier idNode = new Identifier(decodeIdentifier(identifier));
+        finish(idNode, m);
+        e = new Reference(idNode);
+        e.setFilePosition(idNode.getFilePosition());
         break;
       }
       case PUNCTUATION:
@@ -1032,8 +1033,10 @@ public final class Parser extends ParserBase {
               Mark cm = tq.mark();  // If lastComma, mark of the last comma.
               while (tq.checkToken(Punctuation.COMMA)) {
                 if (empty) {
-                  UndefinedLiteral vl = new UndefinedLiteral();
+                  Operation vl = Operation.undefined();
                   finish(vl, cm);
+                  ((IntegerLiteral) vl.children().get(0))
+                    .setFilePosition(vl.getFilePosition());
                   elements.add(vl);
                 } else {
                   empty = true;

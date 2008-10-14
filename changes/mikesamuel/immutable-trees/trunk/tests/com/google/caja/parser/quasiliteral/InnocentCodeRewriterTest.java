@@ -25,6 +25,11 @@ import java.io.IOException;
  * @author ihab.awad@gmail.com
  */
 public class InnocentCodeRewriterTest extends RewriterTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    setRewriter(new InnocentCodeRewriter(true));
+  }
 
   // Tests block-level forEach statements
   public void testForEachPlain() throws Exception {
@@ -37,7 +42,7 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
         "    continue;" +
         "  }" +
         "  k = x0___;" +
-        "  k;" +
+        "  { k; }" +
         "}");
 
     // Checks that test.number is only incremented once when
@@ -99,7 +104,7 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
         "      continue;" +
         "    }" +
         "    k = x0___;" +
-        "    k;" +
+        "    { k; }" +
         "  }" +
         "}");
 
@@ -151,9 +156,8 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
   @Override
   protected Object executePlain(String caja) throws IOException {
     mq.getMessages().clear();
-    // Make sure the tree assigns the result to the unittestResult___ var.
     return RhinoTestBed.runJs(
-        new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
+        new RhinoTestBed.Input(getClass(), "/com/google/caja/cajita.js"),
         new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
   }
@@ -163,8 +167,7 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
       throws IOException, ParseException {
     mq.getMessages().clear();
 
-    Statement cajaTree = replaceLastStatementWithEmit(
-        js(fromString(trans, is)), "unittestResult___;");
+    Statement cajaTree = js(fromString(trans, is));
     String transJs = render(
         rewriteStatements(js(fromResource("../../plugin/asserts.js")),
                           cajaTree));
@@ -174,7 +177,7 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
     Object result = RhinoTestBed.runJs(
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
-        new RhinoTestBed.Input(getClass(), "/com/google/caja/caja.js"),
+        new RhinoTestBed.Input(getClass(), "/com/google/caja/cajita.js"),
         new RhinoTestBed.Input(pre, getName()),
         new RhinoTestBed.Input(transJs, getName()),
         new RhinoTestBed.Input(post, getName()));
@@ -182,10 +185,4 @@ public class InnocentCodeRewriterTest extends RewriterTestCase {
     assertNoErrors();
     return result;
   }
-
-  @Override
-  protected Rewriter newRewriter() {
-    return new InnocentCodeRewriter(true);
-  }
-
 }

@@ -42,15 +42,11 @@ public class ParseTreeNodes {
    * @param clazz the concrete class of {@code ParseTreeNode} to instantiate.
    * @param value the value for the new node
    *        (see {@link com.google.caja.parser.ParseTreeNode#getValue()}).
-   * @param children the children of the new node.  The constructor recursively
-   *        traverses the children, replacing all ParseTreeNodeContainers with
-   *        their children.  This flattens containers in containers.
-   *        (see {@link com.google.caja.parser.ParseTreeNode#children()})).
+   * @param children the children of the new node.
    * @return the newly constructed {@code ParseTreeNode}.
    */
   public static <T extends ParseTreeNode> T newNodeInstance(
       Class<T> clazz, Object value, List<? extends ParseTreeNode> children) {
-    children = flattenNodeList(children);
     Constructor<T> ctor = findCloneCtor(clazz);
     try {
       return ctor.newInstance(value, children);
@@ -143,7 +139,7 @@ public class ParseTreeNodes {
     throw new RuntimeException("Cannot find clone ctor for node " + clazz);
   }
 
-  @SuppressWarnings({"unchecked", "cast"})
+  @SuppressWarnings("unchecked")
   private static <T extends ParseTreeNode>
   Constructor<T> fromCtorCache(Class<T> clazz) {
     return (Constructor<T>) cloneCtorCache.get(clazz);

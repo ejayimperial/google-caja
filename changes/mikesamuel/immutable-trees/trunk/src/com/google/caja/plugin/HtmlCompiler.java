@@ -43,6 +43,7 @@ import com.google.caja.parser.js.ExpressionStmt;
 import com.google.caja.parser.js.FormalParam;
 import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.Identifier;
+import com.google.caja.parser.js.ModuleEnvelope;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Parser;
@@ -200,7 +201,6 @@ public class HtmlCompiler {
             if (HtmlTokenType.ATTRNAME != child.getType()) { break; }
             DomTree.Attrib attrib = (DomTree.Attrib) child;
             String name = attrib.getAttribName();
-            DomTree.Value valueT = attrib.getAttribValueNode();
 
             name = assertHtmlIdentifier(name, attrib);
 
@@ -211,13 +211,30 @@ public class HtmlCompiler {
               compileStyleAttrib(attrib, out);
             } else {
               AttributeXform xform = xformForAttribute(tagName, name);
+
+              DomTree.Attrib temp = (wrapper == null) ?
+                  attrib :
+                  new DomTree.Attrib(
+                    new DomTree.Value(
+                      Token.<HtmlTokenType>instance(
+                        wrapper.a + attrib.getAttribValue() + wrapper.b,
+                        HtmlTokenType.ATTRVALUE,
+                        attrib.getFilePosition())),
+                    attrib.getToken(),
+                    attrib.getFilePosition());
+
               if (null == xform) {
-                String value = wrapper.a + valueT.getValue() + wrapper.b;
-                out.attr(name, value);
+                out.attr(name, temp.getAttribValue());
               } else {
+                List<DomTree> newchildren = new ArrayList<DomTree>(el.children());
+                newchildren.remove(attrib);
+                newchildren.add(temp);
+                DomTree parent = new DomTree.Tag(newchildren, el.getToken(),el.getFilePosition());
+
                 xform.apply(
                     new AncestorChain<DomTree.Attrib>(
-                        new AncestorChain<DomTree>(el), attrib),
+                        new AncestorChain<DomTree>(
+                          parent), temp),
                     this, out);
               }
             }
@@ -436,14 +453,14 @@ public class HtmlCompiler {
     TryStmt envelope = (TryStmt) QuasiBuilder.substV(
         ""
         + "try {"
-        + "  @scriptBody"
+        + "  @moduleEnv;"
         + "} catch (ex___) {"
         + "  ___./*@synthetic*/ getNewModuleHandler()"
         + "      ./*@synthetic*/ handleUncaughtException("
         + "      ex___, onerror, @sourceFile, @line);"
         + "}",
 
-        "scriptBody", scriptBody,
+        "moduleEnv", new ModuleEnvelope(scriptBody),
         "sourceFile", StringLiteral.valueOf(sourcePath),
         "line", StringLiteral.valueOf(String.valueOf(pos.startLineNo())));
     envelope.setFilePosition(pos);
@@ -565,8 +582,8 @@ public class HtmlCompiler {
         FunctionConstructor handlerFn = new FunctionConstructor(
             new Identifier(null),
             Arrays.asList(
-                new FormalParam(s(new Identifier(ReservedNames.THIS_NODE))),
-                new FormalParam(s(new Identifier("event")))),
+                new FormalParam(s(new Identifier("event"))),
+                new FormalParam(s(new Identifier(ReservedNames.THIS_NODE)))),
             handler);
 
         String handlerFnName = htmlc.syntheticId();
