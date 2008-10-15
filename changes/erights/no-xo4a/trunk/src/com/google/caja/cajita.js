@@ -173,7 +173,7 @@ var ___;
    * A reliable typeof for use by Cajita code, and by uncajoled code
    * (like parts of cajita.js) that require a reliable typeof.
    * <p>
-   * ES3 and forward specify that <tt>typeof new RegExp("x")</tt>
+   * Cajita specifies that <tt>typeof new RegExp("x")</tt>
    * evaluate to <tt>'object'</tt>. Unfortunately, on some of Cajita's
    * current target platforms (including at least Safari 3 and Rhino),
    * it returns <tt>'function'</tt> instead. Since the distinction
@@ -185,7 +185,7 @@ var ___;
     var result = typeof obj;
     if (result !== 'function') { return result; }
     var ctor = obj.constructor;
-    if (ctor.typeTag___ === 'RegExp' && obj instanceof ctor) {
+    if (typeof ctor === 'function' && ctor.typeTag___ === 'RegExp' && obj instanceof ctor) {
       return 'object';
     }
     return 'function';
@@ -935,9 +935,9 @@ var ___;
         return xfunc.apply(self, args);
       }),
       bind: simpleFrozenFunc(function(self, var_args) {
-        return xfunc.bind.apply(xfunc, arguments);
+        return simpleFrozenFunc(xfunc.bind.apply(xfunc, arguments));
       }),
-      length: xfunc.length - 1,
+      length: xfunc.length,
       toString: simpleFrozenFunc(function() {
         return xfunc.toString();
       })

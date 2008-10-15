@@ -164,6 +164,8 @@ var valijaMaker = (function(outers) {
         var k = meths[i];
         if (k !== 'valueOf') {
           var v = cajita.getProtoPropertyValue(func, k);
+          // TODO(erights): If the resolution of bug #814 is for 'typeof malfunction' to 
+          // be 'function', then the following test should be rewritten.
           if (typeof v !== 'function' && typeof v.call === 'function') {
             v = dis(v.call);
           }

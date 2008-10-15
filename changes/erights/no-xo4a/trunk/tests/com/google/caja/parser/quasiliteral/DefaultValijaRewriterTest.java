@@ -276,6 +276,16 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
   public void testReformedGenerics() throws Exception {
     assertConsistent(
         "var x = [33];" +
+        "x.foo = [].push;" +
+        "x.foo(44);" +
+        "x.toString();");
+    assertConsistent(
+        "var x = {blue:'green'};" +
+        "x.foo = [].push;" +
+        "x.foo(44);" +
+        "cajita.getOwnPropertyNames(x).sort().toString();");
+    assertConsistent(
+        "var x = [33];" +
         "Array.prototype.push.apply(x, [3,4,5]);" +
         "x.toString();");
     assertConsistent(

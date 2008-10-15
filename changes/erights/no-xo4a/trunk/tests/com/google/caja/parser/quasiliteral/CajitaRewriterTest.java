@@ -1460,7 +1460,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "___.readPub(g, 0) instanceof ___.primFreeze(foo);");
     checkSucceeds(
         "g[0] instanceof Object;",
-        weldPrelude("Object", "{}") +
+        weldPrelude("Object") +
         weldPrelude("g") +
         "___.readPub(g, 0) instanceof Object;");
 
@@ -1992,29 +1992,14 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
   }
 
   public void testReformedGenerics() throws Exception {
-    assertConsistent(
-        "var x = [33];" +
-        "x.foo = [].push;" +
-        "x.foo.call(x, 44);" +
-        "x.toString();");
     rewriteAndExecute(
         "var x = [33];" +
         "x.foo = [].push;" +
         "assertThrows(function(){x.foo(44)});");
-    assertConsistent(
-        "var x = {blue:'green'};" +
-        "x.foo = [].push;" +
-        "x.foo.call(x, 44);" +
-        "x.toString();");
     rewriteAndExecute(
         "var x = {blue:'green'};" +
         "x.foo = [].push;" +
         "assertThrows(function(){x.foo(44)});");
-    assertConsistent(
-        "var x = {blue:'green'};" +
-        "x.foo = [].push;" +
-        "x.foo.call(x, 44);" +
-        "cajita.getOwnPropertyNames(x).sort().toString();");
   }
 
   @Override

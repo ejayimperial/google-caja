@@ -236,12 +236,42 @@ jsunitRegister('testAddEventListener',
   var container = document.getElementById('test-add-event-listener');
   container.addEventListener(
       'click',
-      function (node, event) {
+      function (event) {
         console.log('received event');
-        assertEquals('P', node.tagName);
+        assertEquals('B', event.target.tagName);
         assertEquals('click', event.type);
         pass('test-add-event-listener');
       });
+});
+
+jsunitRegister('testRemoveEventListener',
+               function testRemoveEventListener() {
+  var container = document.getElementById('test-remove-event-listener');
+  var firstFired = false;
+  var failed = false;
+  function second(event) {
+    console.log('received event');
+    if (failed) { return; }
+    assertEquals('B', event.target.tagName);
+    assertEquals('click', event.type);
+    event.target.innerHTML = 'All done!';
+    pass('test-remove-event-listener');
+  }
+  function first(event) {
+    if (firstFired) {
+      event.target.innerHTML = '<b>FAILED - event handler was not removed!</b>';
+      failed = true;
+      return;
+    }
+    firstFired = true;
+    console.log('received event');
+    assertEquals('B', event.target.tagName);
+    assertEquals('click', event.type);
+    event.target.innerHTML = 'Thank you, click me again please';
+    container.removeEventListener('click', first);
+    container.addEventListener('click', second);
+  }
+  container.addEventListener('click', first);
 });
 
 jsunitRegister('testGetElementsByTagName',
@@ -449,6 +479,20 @@ jsunitRegister('testOpaqueNodes',
   pass('test-opaque-nodes');
 });
 
+jsunitRegister('testChildNodes',
+               function testChildNodes() {
+  var container = document.getElementById('test-child-nodes');
+  container.innerHTML = '<b>foo</b> <i>bar</i> <u>baz</u>';
+  var childNodes = container.childNodes;
+  assertEquals(5, childNodes.length);
+  assertEquals('B', childNodes[0].nodeName);
+  assertEquals('#text', childNodes[1].nodeName);
+  assertEquals('I', childNodes[2].nodeName);
+  assertEquals('#text', childNodes[3].nodeName);
+  assertEquals('U', childNodes[4].nodeName);
+  pass('test-child-nodes');
+});
+
 jsunitRegister('testEmitCss',
                function testCss() {
   directAccess.emitCssHook(['.', ' a { color: #00ff00 }']);
@@ -461,4 +505,70 @@ jsunitRegister('testEmitCss',
   } else {
     pass('test-emit-css');
   }
+});
+
+jsunitRegister('testBug731',
+               function testBug731() {
+  // Tests that attributes set before node added to DOM so that side-effects
+  // such as network requests happen all at once.  This is especially important
+  // on IE.
+
+  // TODO(mikesamuel): rewrite in cajoled HTML once test HTML in
+  // domita_test.html is cajoled.
+  directAccess.getHtmlEmitter(document.getElementById('test-bug-731'))
+      .b('form')
+      .f(false)
+      .b('input')
+      .a('id', 'bug-731-xyz___')
+      .a('type', 'radio')
+      .f(true)
+      .e('form');
+  var bug_731_input = document.getElementById('bug-731');
+  assertEquals('radio', bug_731_input.type);
+  pass('test-bug-731');
+});
+
+jsunitRegister('testDomClassHierarchy',
+               function testDomClassHierarchy() {
+  assertTrue(document instanceof window.Node);
+  assertTrue(document instanceof window.HTMLDocument);
+
+  assertTrue(document.createElement('div') instanceof window.Node);
+  assertTrue(document.createElement('div') instanceof window.Element);
+  assertTrue(document.createElement('div') instanceof window.HTMLDivElement);
+
+  assertTrue(document.createElement('input') instanceof window.Node);
+  assertTrue(document.createElement('input') instanceof window.Element);
+  assertTrue(
+      document.createElement('input') instanceof window.HTMLInputElement);
+
+  assertTrue(document.createElement('a') instanceof window.Node);
+  assertTrue(document.createElement('a') instanceof window.Element);
+  assertTrue(document.createElement('a') instanceof window.HTMLAnchorElement);
+
+  assertTrue(document.createElement('img') instanceof window.Node);
+  assertTrue(document.createElement('img') instanceof window.Element);
+  assertTrue(document.createElement('img') instanceof window.HTMLImageElement);
+
+  // TODO(ihab.awad): Add negative tests when virtual hierarchy is improved:
+  // assertFalse(
+  //     document.createElement('img') instanceof window.HTMLDivElement);
+
+  document.getElementById('test-dom-class-hierarchy').addEventListener(
+      'click',
+      function(event) {
+        assertTrue(event instanceof window.Event);
+        pass('test-dom-class-hierarchy');
+      });
+});
+
+jsunitRegister('testCaseInsensitiveAttrs',
+               function testCaseInsensitiveAttrs() {
+//  var container = document.getElementById('test-case-insensitive-attrs');
+  var tableNode = document.getElementById('is-red');
+  console.log('tableNode = ' + tableNode);
+  tableNode.setAttribute('bgColor', 'red');
+  tableNode.addEventListener('click', function(event) {
+    pass('test-case-insensitive-attrs');
+  });
 });
