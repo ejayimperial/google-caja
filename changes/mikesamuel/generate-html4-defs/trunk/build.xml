@@ -168,6 +168,8 @@
       <sysproperty key="emma.coverage.out.file"
        value="${reports}/coverage/coverage.ec"/>
       <sysproperty key="emma.coverage.out.merge" value="false"/>
+      <sysproperty key="user.language" value="tr"/>
+      <sysproperty key="user.region" value="TR"/>
       <test name="com.google.caja.AllTests" if="emma.enabled"/>
     </junit>
     <!-- Generate the code coverage report. -->
@@ -234,6 +236,7 @@
       <source file="${lib}/com/google/caja/plugin/html4-defs.js"/>
       <source file="${src}/com/google/caja/plugin/html-sanitizer.js"/>
       <source file="${src}/com/google/caja/plugin/html-emitter.js"/>
+      <source file="${src}/com/google/caja/plugin/bridal.js"/>
       <source file="${src}/com/google/caja/plugin/domita.js"/>
       <source file="${src}/com/google/caja/plugin/unicode.js"/>
     </jsdoctoolkit>
@@ -349,13 +352,15 @@
     <cajole languageMode="cajita">
       <job output="${lib}/com/google/caja/plugin/domita_test_cajoled.js">
         <include file="${tests}/com/google/caja/plugin/asserts.js"/>
-        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
+        <include
+         file="${tests}/com/google/caja/plugin/domita_test_untrusted.html"/>
       </job>
     </cajole>
     <cajole languageMode="valija">
       <job output="${lib}/com/google/caja/plugin/domita_test_valijad.js">
         <include file="${tests}/com/google/caja/plugin/asserts.js"/>
-        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
+        <include
+         file="${tests}/com/google/caja/plugin/domita_test_untrusted.html"/>
       </job>
     </cajole>
     <copy todir="${lib}">
@@ -385,6 +390,7 @@
         <include file="${src}/com/google/caja/cajita.js"/>
         <include file="${src}/com/google/caja/plugin/unicode.js"/>
         <include file="${src}/com/google/caja/plugin/html-emitter.js"/>
+        <include file="${src}/com/google/caja/plugin/bridal.js"/>
         <include file="${src}/com/google/caja/plugin/domita.js"/>
       </job>
     </minify>
@@ -411,6 +417,7 @@
         <include name="**/caja/demos/calendar/*.js"/>
         <include name="**/caja/opensocial/applet/testbed.js"/>
         <include name="**/caja/opensocial/applet/setup-valija.js"/>
+        <include name="**/caja/plugin/bridal.js"/>
         <include name="**/caja/plugin/domita.js"/>
         <include name="**/caja/plugin/html-emitter.js"/>
         <include name="**/caja/plugin/html-sanitizer.js"/>
@@ -479,6 +486,7 @@
     </javac>
     <copy todir="${lib}">
       <fileset dir="${src}">
+        <include name="**/caja/plugin/bridal.js"/>
         <include name="**/caja/plugin/domita.js"/>
         <include name="**/caja/plugin/html-sanitizer.js"/>
         <include name="**/caja/plugin/unicode.js"/>
@@ -688,6 +696,7 @@
         <include name="log-to-console.js"/>
       </fileset>
       <fileset dir="${src}/com/google/caja/plugin">
+        <include name="bridal.js"/>
         <include name="domita.js"/>
         <include name="html-emitter.js"/>
         <include name="html-sanitizer.js"/>
@@ -726,11 +735,11 @@
        <script type="text/javascript" src="html4-defs.js"></script>
        <script type="text/javascript" src="html-sanitizer.js"></script>
        <script type="text/javascript" src="html-emitter.js"></script>
+       <script type="text/javascript" src="setup-valija.js"></script>
+       <script type="text/javascript" src="bridal.js"></script>
        <script type="text/javascript" src="domita.js"></script>
-       <script type="text/javascript" src="testbed.js"></script>
        <script type="text/javascript" src="prettify.js"></script>
        <script type="text/javascript" src="testbed.js"></script>
-       <script type="text/javascript" src="setup-valija.js"></script>
        <script type="text/javascript" src="valija-cajoled.js"></script>
        ]]>
      </replacevalue>
@@ -745,11 +754,12 @@
         <include file="${lib}/com/google/caja/plugin/html4-defs.js"/>
         <include file="${src}/com/google/caja/plugin/html-sanitizer.js"/>
         <include file="${src}/com/google/caja/plugin/html-emitter.js"/>
+        <include
+         file="${src}/com/google/caja/opensocial/applet/setup-valija.js"/>
+        <include file="${src}/com/google/caja/plugin/bridal.js"/>
         <include file="${src}/com/google/caja/plugin/domita.js"/>
         <include file="${third_party}/js/prettify/prettify.js"/>
         <include file="${src}/com/google/caja/opensocial/applet/testbed.js"/>
-        <include
-         file="${src}/com/google/caja/opensocial/applet/setup-valija.js"/>
         <include file="${lib}/com/google/caja/plugin/valija-cajoled.js"/>
       </job>
     </minify>

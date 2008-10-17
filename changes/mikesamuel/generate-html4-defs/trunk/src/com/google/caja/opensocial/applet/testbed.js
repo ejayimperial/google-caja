@@ -123,91 +123,6 @@ var getTestbedServer = (function () {
   };
 })();
 
-/** Fills out the form with a "Conway's Game of Life" gadget. */
-function lifecode(form) {
-  form.elements.src.value =
-      "<!-- Cellular automaton gadget. This code is in the public domain. -->\n" +
-      "<script>var handle = null;</script>\n" +
-      "<textarea id=\"area\">It's alive!</textarea>\n" +
-      "<input type=\"button\" value=\"go\"\n" +
-      "       onclick=\"if (handle === null) { handle = setInterval(update, 1000); }\">\n" +
-      "<input type=\"button\" value=\"stop\"\n" +
-      "       onclick=\"if (handle !== null) { clearInterval(handle); handle = null; }\">\n" +
-      "<script>\n" +
-      "// Size of the grid\nvar size = 40;\n" +
-      "// Text area for displaying the CA\n" +
-      "var ta = document.getElementById('area');\n" +
-      "ta.setAttribute('rows', size);\n" +
-      "ta.setAttribute('cols', size*2);\n\n" +
-      "// Set up the internal version of the grid\n" +
-      "// ca[t][x][y]\n" +
-      "// t alternates between 0 and 1\n" +
-      "var ca = [];\n" +
-      "var t, x, y;\n" +
-      "for (t = 0; t < 2; ++t) {\n" +
-      "  ca[t] = [];\n" +
-      "  for (x = 0; x < size; ++x) {\n" +
-      "    ca[t][x] = new Array(size);\n" +
-      "  }\n" +
-      "}\n\n" +
-      "// Start with a pi heptomino\n" +
-      "var s = Math.floor(size / 2);\n" +
-      "ca[0][s][s] = 1;\n" +
-      "ca[0][s+1][s] = 1;\n" +
-      "ca[0][s+2][s] = 1;\n" +
-      "ca[0][s][s+1] = 1;\n" +
-      "ca[0][s+2][s+1] = 1;\n" +
-      "ca[0][s][s+2] = 1;\n" +
-      "ca[0][s+2][s+2] = 1;\n\n\n" +
-      "// Compute number of neighbors (on a torus)\n" +
-      "function count(ca, t, x, y) {\n" +
-      "  var sum = 0, i, j;\n" +
-      "  for (i = -1; i < 2; ++i) {\n" +
-      "    for (j = -1; j < 2; ++j) {\n" +
-      "      if (!i && !j) continue;\n" +
-      "\n" +
-      "      var k = x + i;\n" +
-      "      if (k < 0) { k += size; }\n" +
-      "      else if (k >= size) { k -= size; }\n" +
-      "\n" +
-      "      var m = y + j;\n" +
-      "      if (m < 0) { m += size; }\n" +
-      "      else if (m >= size) { m -= size; }\n" +
-      "\n" +
-      "      sum += !!(ca[t][k][m]);\n" +
-      "    }\n" +
-      "  }\n" +
-      "  return sum;\n" +
-      "}\n\n" +
-      "// Display loop\n" +
-      "function display(ca, t) {\n" +
-      "  var x, y, str = \"\";\n" +
-      "  for (y = 0; y < size; ++y) {\n" +
-      "    for (x = 0; x < size; ++x) {\n" +
-      "      str += ca[t][x][y] ? \"()\" : \"  \";\n" +
-      "    }\n" +
-      "    str += \"\\n\";\n" +
-      "  }\n" +
-      "  ta.innerHTML = str;\n" +
-      "}\n\n" +
-      "// Update loop\n" +
-      "function update() {\n" +
-      "  for (x = 0; x < size; ++x) {\n" +
-      "    for (y = 0; y < size; ++y) {\n" +
-      "      var c = count(ca, t, x, y);\n" +
-      "      // Conway's rules\n" +
-      "      if (c === 2) { ca[1-t][x][y] = ca[t][x][y]; }\n" +
-      "      else if (c === 3) { ca[1-t][x][y] = 1; }\n" +
-      "      else { ca[1-t][x][y] = 0; }\n" +
-      "    }\n" +
-      "  }\n" +
-      "  t = 1 - t;\n" +
-      "  display(ca, t);\n" +
-      "}\n" +
-      "t=0;\n" +
-      "</script>";
-}
-
 /**
  * Reads caja code and configuration from the testbed form, cajoles
  * it, runs it, and displays the output in the current HTML page.
@@ -222,10 +137,10 @@ var cajole = (function () {
    * @param {string} uiSuffix suffix of testbed identifiers as described above.
    */
   function loadCaja(htmlText, uiSuffix) {
-    var m = htmlText.match(
-        /^\s*<script\b[^>]*>([\s\S]*)<\/script\b[^>]*>\s*$/i);
-    if (m) {
-      var script = m[1];
+    var scriptStart = htmlText.indexOf("{"), scriptEnd = htmlText.lastIndexOf("}");
+    var script = htmlText.slice(scriptStart, scriptEnd+1);
+
+    if (scriptStart > -1 && scriptEnd > -1) {
       var imports = getImports(uiSuffix);
 
       imports.clearHtml___();
@@ -434,6 +349,12 @@ var getImports = (function () {
                   + '"');
         case 'object': case 'function':
           if (o === null) { break; }
+          // Approximate test for disfunction:
+          // repr() doesn't know which vat is calling it, so it can't
+          // get access to the appropriate Disfunction object for an
+          // instanceof test.  At worst, an object will print out as
+          // [Object object].
+          if (o.call && o.apply && o.bind) { return cajita.callPub(o, "toString"); }
           if (cajita.isJSONContainer(o)) {
             var els = [];
             if ('length' in o
@@ -452,7 +373,7 @@ var getImports = (function () {
       }
       return String(o);
     } catch (e) {
-      return "This object is recursive, so we're not going to try to print it.";
+      return "This object is recursive, so we can't print it correctly.";
     }
   }
 
@@ -462,23 +383,23 @@ var getImports = (function () {
     var inner = ___.beget(superHandler);
     inner.handle = ___.simpleFrozenFunc(function(newModule) {
       try {
-	return ___.callPub(superHandler, 'handle', 
-			   [___.simpleFrozenFunc(newModule)]);
+        return ___.callPub(superHandler, 'handle', 
+                           [___.simpleFrozenFunc(newModule)]);
       } finally {
-	var outcome = superHandler.getLastOutcome();
-	var type = document.createElement('span');
-	type.className = 'type';
-	type.appendChild(document.createTextNode(typeString(outcome[1])));
+        var outcome = superHandler.getLastOutcome();
+        var type = document.createElement('span');
+        type.className = 'type';
+        type.appendChild(document.createTextNode(typeString(outcome[1])));
 
-	var entry = document.createElement('div');
-	entry.className = 'result';
-	entry.appendChild(type);
-	entry.appendChild(document.createTextNode(repr(outcome[1])));
-	if (!outcome[0]) {
-	  // TODO(erights): color something red
-	}
-	document.getElementById('eval-results' +
-				uiSuffix).appendChild(entry);
+        var entry = document.createElement('div');
+        entry.className = 'result';
+        entry.appendChild(type);
+        entry.appendChild(document.createTextNode(repr(outcome[1])));
+        if (!outcome[0]) {
+          // TODO(erights): color something red
+        }
+        document.getElementById('eval-results' + uiSuffix)
+            .appendChild(entry);
       }
     });
     ___.freeze(inner);
@@ -486,7 +407,7 @@ var getImports = (function () {
     outer.handle = ___.simpleFrozenFunc(function(newModule) {
       ___.setNewModuleHandler(inner);
       return ___.callPub(superHandler, 'handle', 
-			 [___.simpleFrozenFunc(newModule)]);
+                         [___.simpleFrozenFunc(newModule)]);
     });
     return ___.freeze(outer);
   }
@@ -496,7 +417,10 @@ var getImports = (function () {
       return importsByUiSuffix[uiSuffix];
     }
 
-    var testImports = ___.copy(___.sharedImports);    
+    var testImports = ___.copy(___.sharedImports);
+    if (document.getElementById("VALIJA_MODE" + uiSuffix).checked) {
+      testImports.outers = testImports;
+    }
     var idClass = 'xyz' + ___.getId(testImports) + '___';
     attachDocumentStub(
          '-' + idClass,

@@ -62,21 +62,12 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
                                    String value,
                                    String tempObj,
                                    String tempValue) {
-    return weldSet(obj, varName, value, "Pub", tempObj, tempValue);
-  }
-
-  private static String weldSet(String obj,
-                                String varName,
-                                String value,
-                                String pubOrProp,
-                                String tempObj,
-                                String tempValue) {
     return
         tempObj + " = " + obj + "," +
         tempValue + " = " + value + "," +
         "    " + tempObj + "." + varName + "_canSet___ ?" +
         "    " + tempObj + "." + varName + " = " + tempValue + ":" +
-        "    ___.set" + pubOrProp + "(" + tempObj + ", '" + varName + "', " + tempValue + ")";
+        "    ___.setPub(" + tempObj + ", '" + varName + "', " + tempValue + ")";
   }
 
   /**
@@ -110,16 +101,16 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
 
   public void testToString() throws Exception {
     assertConsistent(
-        "var z={toString:function(){return 'blah';}};" +
+        "var z = { toString: function () { return 'blah'; } };" +
         "try {" +
-        "  ''+z;" +
+        "  '' + z;" +
         "} catch (e) {" +
         "  throw new Error('PlusPlus error: ' + e);" +
         "}");
     assertConsistent(
         "  function foo() {"
-        +  "  var x = 1;"
-        +  "  return {"
+        + "  var x = 1;"
+        + "  return {"
         + "    toString: function () {"
         + "      return x;"
         + "    }"
@@ -285,9 +276,11 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
    */
   public void testBadDelete() throws Exception {
     rewriteAndExecute(
-        "testImports.badContainer = {secret_: 3469};",
-        "assertThrows(function() {delete badContainer['secret_'];});",
-        "assertEquals(testImports.badContainer.secret_, 3469);");
+        "testImports.badContainer = {secret__: 3469};",
+        "assertThrows(function() {delete badContainer['secret__'];});",
+        "assertEquals(testImports.badContainer.secret__, 3469);");
+    rewriteAndExecute(
+        "assertThrows(function() {delete ({})['proto___'];});");
   }
 
   /**
@@ -1467,7 +1460,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "___.readPub(g, 0) instanceof ___.primFreeze(foo);");
     checkSucceeds(
         "g[0] instanceof Object;",
-        weldPrelude("Object", "{}") +
+        weldPrelude("Object") +
         weldPrelude("g") +
         "___.readPub(g, 0) instanceof Object;");
 
@@ -1483,7 +1476,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "typeof g[0];",
         weldPrelude("g") +
-        "typeof ___.readPub(g, 0);");
+        "___.typeOf(___.readPub(g, 0));");
     checkFails("typeof ___;", "Variables cannot end in \"__\"");
   }
 
@@ -1872,8 +1865,8 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
   public void testFunction() throws Exception {
     rewriteAndExecute(
         "var success=false;" +
-          "try{var f=new Function('1');}catch(e){success=true;}" +
-          "if (!success)fail('Function constructor is accessible.')");
+        "try{var f=new Function('1');}catch(e){success=true;}" +
+        "if (!success)fail('Function constructor is accessible.')");
   }
 
   /**
@@ -1998,6 +1991,17 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "})();");
   }
 
+  public void testReformedGenerics() throws Exception {
+    rewriteAndExecute(
+        "var x = [33];" +
+        "x.foo = [].push;" +
+        "assertThrows(function(){x.foo(44)});");
+    rewriteAndExecute(
+        "var x = {blue:'green'};" +
+        "x.foo = [].push;" +
+        "assertThrows(function(){x.foo(44)});");
+  }
+
   @Override
   protected Object executePlain(String caja) throws IOException {
     mq.getMessages().clear();
@@ -2014,7 +2018,8 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
 
     List<Statement> children = new ArrayList<Statement>();
     children.add(js(fromString(caja, is)));
-    String cajoledJs = render(rewriteStatements(new ModuleEnvelope(new Block(children))));
+    String cajoledJs = render(rewriteStatements(
+        new ModuleEnvelope(new Block(children))));
 
     assertNoErrors();
 
