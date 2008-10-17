@@ -168,6 +168,8 @@
       <sysproperty key="emma.coverage.out.file"
        value="${reports}/coverage/coverage.ec"/>
       <sysproperty key="emma.coverage.out.merge" value="false"/>
+      <sysproperty key="user.language" value="tr"/>
+      <sysproperty key="user.region" value="TR"/>
       <test name="com.google.caja.AllTests" if="emma.enabled"/>
     </junit>
     <!-- Generate the code coverage report. -->
@@ -320,13 +322,15 @@
     <cajole languageMode="cajita">
       <job output="${lib}/com/google/caja/plugin/domita_test_cajoled.js">
         <include file="${tests}/com/google/caja/plugin/asserts.js"/>
-        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
+        <include
+         file="${tests}/com/google/caja/plugin/domita_test_untrusted.html"/>
       </job>
     </cajole>
     <cajole languageMode="valija">
       <job output="${lib}/com/google/caja/plugin/domita_test_valijad.js">
         <include file="${tests}/com/google/caja/plugin/asserts.js"/>
-        <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
+        <include
+         file="${tests}/com/google/caja/plugin/domita_test_untrusted.html"/>
       </job>
     </cajole>
     <copy todir="${lib}">

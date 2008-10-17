@@ -14,7 +14,6 @@
 
 package com.google.caja.parser.quasiliteral;
 
-import com.google.caja.lexer.Keyword;
 import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.parser.EmptyParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
@@ -365,6 +364,15 @@ public abstract class Rule implements MessagePart {
   }
 
   /**
+   * Substitutes bindings into the Quasi-pattern from
+   * {@link RuleDescription#substitutes}.
+   * @param args quasi hole names and ParseTreeNodes per QuasiBuilder.substV.
+   */
+  protected ParseTreeNode substV(Object... args) {
+    return QuasiBuilder.substV(getRuleDescription().substitutes(), args);
+  }
+
+  /**
    * Split the target of a read/set operation into an LHS, an RHS, and
    * an ordered list of temporary variables needed to ensure proper order
    * of execution.
@@ -377,7 +385,7 @@ public abstract class Rule implements MessagePart {
       Expression operand, Scope scope, MessageQueue mq) {
     return deconstructReadAssignOperand(operand, scope, mq, true);
   }
-  
+
   ReadAssignOperands deconstructReadAssignOperand(
     Expression operand, Scope scope, MessageQueue mq, boolean checkImported) {
     if (operand instanceof Reference) {
