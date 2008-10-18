@@ -292,6 +292,6 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
   public void testPrivilegeEscalation() throws Exception {
     assertConsistent(
         "var defaultThis = typeof eval === 'undefined' ? cajita.USELESS : eval('this');" +
-        "[].valueOf.apply(null, []) === defaultThis;");
+        "assertTrue([].valueOf.apply(null, []) === defaultThis);");
   }
 }
