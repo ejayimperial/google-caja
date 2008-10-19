@@ -287,6 +287,7 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
         "var a = [];\n" +
         "cajita.forAllKeys({x:3}, function(k, v) {a.push(k, v);});" +
         "assertEquals(a.toString(), 'x,3');");
+    assertConsistent("(function(){}).bind.call(function(a, b) {return a + b;}, {}, 3)(4);");
   }
 
   public void testPrivilegeEscalation() throws Exception {

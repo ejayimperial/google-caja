@@ -68,11 +68,9 @@ var valijaMaker = (function(outers) {
   /**
    * Simulates a monkey-patchable <tt>Function.prototype</tt>.
    * <p>
-   * Currently the call(), apply(), and bind() methods are
-   * genuine functions on each Disfunction instance, rather being
-   * disfunctions inherited from DisfunctionPrototype. This is needed
-   * for call() and apply(), but bind() could probably become an
-   * inherited disfunction.
+   * The call() and apply() methods are specific functions on each
+   * Disfunction instance, in addition to being generic Disfunctions
+   * inherited from DisfunctionPrototype. 
    */
   var DisfunctionPrototype = cajita.beget(ObjectPrototype);
 
@@ -117,7 +115,7 @@ var valijaMaker = (function(outers) {
       return printRep;
     }
     return 'disfunction(var_args){\n   [cajoled code]\n}';
-  });
+  }, 'toString');
 
   outers.Function = Disfunction;
 
@@ -165,12 +163,12 @@ var valijaMaker = (function(outers) {
         if (k !== 'valueOf') {
           var v = cajita.getProtoPropertyValue(func, k);
           // TODO(erights): If the resolution of bug #814 is for
-	  // 'typeof malfunction' to be 'function', then the following
-	  // test should be rewritten. 
+          // 'typeof malfunction' to be 'function', then the following
+          // test should be rewritten. 
           if (typeof v === 'object' && 
-	      v !== null && 
-	      typeof v.call === 'function') {
-            v = dis(v.call);
+              v !== null && 
+              typeof v.call === 'function') {
+            v = dis(v.call, k);
           }
           proto[k] = v;
         }
@@ -240,6 +238,9 @@ var valijaMaker = (function(outers) {
   function read(obj, name) {
     if (typeof obj === 'function') {
       return getShadow(obj)[name];
+    }
+    if (obj === null || obj === undefined) {
+      throw new TypeError('Cannot read property "' + name + '" from ' + obj);
     }
     if (hasOwnProp(obj, name)) {
       return obj[name];
@@ -316,14 +317,6 @@ var valijaMaker = (function(outers) {
     result.apply = function(self, args) {
       return callFn.apply(cajita.USELESS, [self].concat(Array.slice(args, 0)));
     };
-    result.bind = function(self, var_args) {
-      var leftArgs = Array.slice(arguments, 0);
-      return function(var_args) {
-        return callFn.apply(cajita.USELESS,
-                            leftArgs.concat(Array.slice(arguments, 0)));
-      };
-    };
-
     result.prototype = cajita.beget(ObjectPrototype);
     result.prototype.constructor = result;
     result.length = callFn.length - 1;
@@ -333,6 +326,21 @@ var valijaMaker = (function(outers) {
     }
     return result;
   }
+
+  DisfunctionPrototype.call = dis(function($dis, self, var_args) {
+    return $dis.apply(self, Array.slice(arguments, 2));
+  }, 'call');
+  DisfunctionPrototype.apply = dis(function($dis, self, args) {
+    // TODO(erights): infinite regress detection
+    return $dis.apply(self, args);
+  }, 'apply');
+  DisfunctionPrototype.bind = dis(function($dis, self, var_args) {
+    var leftArgs = Array.slice(arguments, 2);
+    return function(var_args) {
+      return $dis.apply(self, leftArgs.concat(Array.slice(arguments, 0)));
+    };
+  }, 'bind');
+  
 
   function getOuters() {
     cajita.enforceType(outers, 'object');

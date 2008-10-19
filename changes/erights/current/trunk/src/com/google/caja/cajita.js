@@ -185,7 +185,9 @@ var ___;
     var result = typeof obj;
     if (result !== 'function') { return result; }
     var ctor = obj.constructor;
-    if (typeof ctor === 'function' && ctor.typeTag___ === 'RegExp' && obj instanceof ctor) {
+    if (typeof ctor === 'function' && 
+        ctor.typeTag___ === 'RegExp' && 
+        obj instanceof ctor) {
       return 'object';
     }
     return 'function';
@@ -929,19 +931,19 @@ var ___;
     }
     var result = {
       call: simpleFrozenFunc(function(self, var_args) {
-	if (self === null || self === undefined) { self = USELESS; }
+        if (self === null || self === undefined) { self = USELESS; }
         return xfunc.apply(self, Array.slice(arguments, 1));
       }),
       apply: simpleFrozenFunc(function(self, args) {
-	if (self === null || self === undefined) { self = USELESS; }
+        if (self === null || self === undefined) { self = USELESS; }
         return xfunc.apply(self, args);
       }),
       bind: simpleFrozenFunc(function(self, var_args) {
-	var args = arguments;
-	if (self === null || self === undefined) { 
-	  self = USELESS;
-	  args = [self].concat(Array.slice(args, 0));
-	}
+        var args = arguments;
+        if (self === null || self === undefined) { 
+          self = USELESS;
+          args = [self].concat(Array.slice(args, 0));
+        }
         return simpleFrozenFunc(xfunc.bind.apply(xfunc, args));
       }),
       length: xfunc.length,
@@ -1063,16 +1065,29 @@ var ___;
   }
 
   /**
+   * Is <tt>funoid</tt> an applicator -- a non-function object with a
+   * callable <tt>apply</tt> method, such as a malfunction or
+   * disfunction? 
+   * <p>
+   * If so, then it can be used as a function in some contexts.
+   */
+  function isApplicator(funoid) {
+    if (typeof funoid !== 'object') { return false; }
+    if (funoid === null) { return false; }
+    return canCallPub(funoid, 'apply');
+  }
+
+  /**
    * Coerces fun to a genuine simple-function.
    * <p>
-   * Accepts either a genuine simple-function or a non-function object
-   * (such as a malfunction or disfunction) with a callable 'bind'
-   * method. In the latter case, the object's 'bind' method is called
-   * to produce a genuine simple-function.
+   * If fun is an applicator, then return a simple-function that invokes
+   * fun's apply method. Otherwise, asSimpleFunc().
    */
   function toSimpleFunc(fun) {
-    if (typeof fun === 'object' && fun !== null && canCallPub(fun, 'bind')) {
-      fun = callPub(fun, 'bind', [USELESS]);
+    if (isApplicator(fun)) { 
+      return simpleFrozenFunc(function(var_args) {
+        return callPub(fun, 'apply', [USELESS, Array.slice(arguments, 0)]);
+      });
     }
     return asSimpleFunc(fun);
   }
@@ -1318,6 +1333,13 @@ var ___;
    * <tt>break;</tt>, by doing a <pre>return cajita.BREAK;</pre>
    */
   var BREAK = Token('BREAK');
+
+  /**
+   * A unique value that should never be made accessible to untrusted
+   * code, for distinguishing the absence of a result from any 
+   * returable result.
+   */
+  var NO_RESULT = Token('NO_RESULT');
 
   /**
    * For each sensible key/value pair in obj, call fn with that
@@ -2013,15 +2035,9 @@ var ___;
   });
   handleGeneric(String.prototype, 'replace', function(searcher, replacement) {
     enforceMatchable(searcher);
-    // Since replacement might be neither a simple-function nor an
-    // object that's coerceable to a simple-function, we can't simplify
-    // the conditional below with a call to toSimpleFunc().
-    var typ = typeOf(replacement);
-    if ('function' === typ) {
-        replacement = asSimpleFunc(replacement);
-    } else if ('object' === typ && 
-               replacement !== null && 
-               canCallPub(replacement, 'bind')) {
+    if (isSimpleFunc(replacement)) {
+      replacement = asSimpleFunc(replacement);
+    } else if (isApplicator(replacement)) {
       replacement = toSimpleFunc(replacement);
     } else {
       replacement = '' + replacement;
@@ -2180,18 +2196,26 @@ var ___;
         }
       }),
       handle: simpleFrozenFunc(function(newModule) {
+        lastOutcome = void 0;
         try {
           var result = newModule(___, imports);
-          lastOutcome = [true, result];
-          return result;
+          if (result !== NO_RESULT) {
+            lastOutcome = [true, result];
+          }
         } catch (ex) {
-          // TODO(erights): I hope that this outcome reporting can be
-          // adequate to replace the in-place rewrite currently being
-          // done by HtmlCompiler.java as explained below.
           lastOutcome = [false, ex];
-          throw ex;
+        }
+        if (lastOutcome) {
+          if (lastOutcome[0]) {
+            return lastOutcome[1];
+          } else {
+            throw lastOutcome[1];
+          }
+        } else {
+          return void 0;
         }
       }),
+
       /**
        * This emulates HTML5 exception handling for scripts as discussed at
        * http://code.google.com/p/google-caja/wiki/UncaughtExceptionHandling
@@ -2211,6 +2235,8 @@ var ___;
        */
       handleUncaughtException: function (exception, onerror, source, lineNum) {
 
+        lastOutcome = [false, exception];
+
         // Cause exception to be rethrown if it is uncatchable.
         tameException(exception);
 
@@ -2223,9 +2249,10 @@ var ___;
         // exceptions, it would go here before onerror is invoked.
 
         // See the HTML5 discussion for the reasons behind this rule.
+        if (isApplicator(onerror)) { onerror = toSimpleFunc(onerror); }
         var shouldReport = (
             isSimpleFunc(onerror)
-            ? simpleFunc(onerror)(message, String(source), String(lineNum))
+            ? asSimpleFunc(onerror)(message, String(source), String(lineNum))
             : onerror !== null);
         if (shouldReport !== false) {
           cajita.log(source + ':' + lineNum + ': ' + message);
@@ -2849,6 +2876,7 @@ var ___;
     obtainNewModule: obtainNewModule,
     makeNormalNewModuleHandler: makeNormalNewModuleHandler,
     loadModule: loadModule,
+    NO_RESULT: NO_RESULT,
 
     getId: getId,
     getImports: getImports,
