@@ -26,6 +26,7 @@ import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Callback;
+import com.google.caja.util.Name;
 import com.google.caja.util.Pair;
 import com.google.caja.util.SyntheticAttributes;
 
@@ -197,15 +198,15 @@ public abstract class CssPropertySignature implements ParseTreeNode {
 
   /** A signature that defers to a CSS 2 property signature. */
   public static final class PropertyRefSignature extends CssPropertySignature {
-    public final String name;
-    private PropertyRefSignature(String name) {
+    public final Name name;
+    private PropertyRefSignature(Name name) {
       super(Collections.<CssPropertySignature>emptyList());
       this.name = name;
     }
 
-    public String getValue() { return name; }
+    public Name getValue() { return name; }
 
-    public String getPropertyName() { return name; }
+    public Name getPropertyName() { return name; }
 
     public void render(RenderContext r) {
       r.getOut().consume("\'" + name + "\'");
@@ -214,17 +215,17 @@ public abstract class CssPropertySignature implements ParseTreeNode {
 
   /** A signature that defers to a CSS 2 symbol. */
   public static final class SymbolSignature extends CssPropertySignature {
-    public final String symbolName;
-    private SymbolSignature(String symbolName) {
+    public final Name symbolName;
+    private SymbolSignature(Name symbolName) {
       super(Collections.<CssPropertySignature>emptyList());
       this.symbolName = symbolName;
     }
-    public String getValue() { return symbolName; }
+    public Name getValue() { return symbolName; }
 
     public void render(RenderContext r) {
       TokenConsumer out = r.getOut();
       out.consume("<");
-      out.consume(symbolName);
+      out.consume(symbolName.getCanonicalForm());
       out.consume(">");
     }
   }
@@ -464,9 +465,10 @@ public abstract class CssPropertySignature implements ParseTreeNode {
         if (Character.isLetter(ch0)) { // a literal identifier
           sig = new LiteralSignature(s);
         } else if (ch0 == '\'') {  // a quoted literal
-          sig = new PropertyRefSignature(s.substring(1, s.length() - 1));
+          sig = new PropertyRefSignature(
+              Name.css(s.substring(1, s.length() - 1)));
         } else if (ch0 == '<') {  // a symbol
-          sig = new SymbolSignature(s.substring(1, s.length() - 1));
+          sig = new SymbolSignature(Name.css(s.substring(1, s.length() - 1)));
         } else { // a literal number or punctuation mark
           sig = new LiteralSignature(s);
         }

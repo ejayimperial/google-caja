@@ -409,6 +409,7 @@ public abstract class Rule implements MessagePart {
           return sideEffectingReadAssignOperand(
               op.children().get(0), toStringLiteral(op.children().get(1)),
               scope, mq);
+        default: break;
       }
     }
     throw new IllegalArgumentException("Not an lvalue : " + operand);

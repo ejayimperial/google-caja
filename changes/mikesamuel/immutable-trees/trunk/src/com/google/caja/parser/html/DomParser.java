@@ -27,6 +27,7 @@ import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
+import com.google.caja.util.Name;
 import com.google.caja.util.Strings;
 
 import java.io.Reader;
@@ -122,6 +123,8 @@ public final class DomParser {
           continue;
         case TEXT:
           if ("".equals(child.getValue().trim())) { continue; }
+          break;
+        default: break;
       }
       throw new ParseException(new Message(
           DomParserMessageType.MISPLACED_CONTENT, child.getFilePosition()));
@@ -219,11 +222,6 @@ public final class DomParser {
             } else {
               attribs = new ArrayList<DomTree.Attrib>();
               end = parseTagAttributes(attribs);
-
-              for (DomTree.Attrib attrib : attribs) {
-                attrib.setAttribName(
-                    out.canonicalizeAttributeName(attrib.getAttribName()));
-              }
             }
             attribs = Collections.unmodifiableList(attribs);
             try {
@@ -297,7 +295,10 @@ public final class DomParser {
     } else {
       value = Token.instance(name.text, HtmlTokenType.ATTRVALUE, name.pos);
     }
-    return new DomTree.Attrib(new DomTree.Value(value), name, name);
+    DomTree.Attrib a = new DomTree.Attrib(
+        asXml ? Name.xml(name.text) : Name.html(name.text),
+        new DomTree.Value(value), name, name);
+    return a;
   }
 
   /**
@@ -329,6 +330,7 @@ public final class DomParser {
       case TAGBEGIN:  // A namespaced tag name.
         if (firstNonSpace.text.indexOf(':') >= 0) { return true; }
         break;
+      default: break;
     }
     // If we have a file extension, and this XML starts the file, instead
     // of being parsed from a CDATA section inside a larger document, then

@@ -15,7 +15,6 @@
 package com.google.caja.plugin;
 
 import com.google.caja.parser.AncestorChain;
-import com.google.caja.parser.MutableParseTreeNode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.quasiliteral.CajitaRewriter;
 import com.google.caja.parser.quasiliteral.DefaultValijaRewriter;
