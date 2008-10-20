@@ -247,9 +247,12 @@ var cajole = (function () {
 function runPlain(form) {
   var uiSuffix = form.id.replace(/^[^\.]+/, '');
   var src = form.elements.src.value.replace(/^\s+|\s+$/g, '');
-  w=document.getElementById("ifr"+uiSuffix);
-  w.contentDocument.write(src);
-  w.contentDocument.close();
+  var d=document.getElementById("ifr"+uiSuffix).contentDocument;
+  if (!d) { d = document.frames["ifr"+uiSuffix].document; }
+  if (d) {
+    d.write(src);
+    d.close();
+  }
 }
 
 /**
