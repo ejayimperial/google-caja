@@ -246,7 +246,7 @@ var cajole = (function () {
 
 /**
  * Runs the given code uncajoled in an iframe.
- * @param {form} form the form object containing the code to run.
+ * @param {HTMLFormElement} form the form object containing the code to run.
  */
 function runPlain(form) {
   // Get the part of the form name from the dot onward
