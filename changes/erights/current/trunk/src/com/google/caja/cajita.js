@@ -872,14 +872,15 @@ var ___;
   /**
    * Mark <tt>constr</tt> as a constructor.
    * <p>
-   * If <tt>opt_Sup</tt> is provided, set constr.super to a function which
-   * calls the super constructor to do its part in initializing the object.
-   * <p>
    * A function is tamed and classified by calling one of
    * <tt>ctor()</tt>, <tt>method()</tt>, or <tt>simpleFunc()</tt>. Each
    * of these checks that the function hasn't already been classified by
    * any of the others. A function which has not been so classified is an
    * <i>untamed function</i>.
+   * <p>
+   * If <tt>opt_Sup</tt> is provided, record that const.prototype
+   * inherits from opt_Sup.prototype. This bookkeeping helps
+   * directConstrctor(). 
    * <p>
    * <tt>opt_name</tt>, if provided, should be the name of the constructor
    * function. Currently, this is used only to generate friendlier
