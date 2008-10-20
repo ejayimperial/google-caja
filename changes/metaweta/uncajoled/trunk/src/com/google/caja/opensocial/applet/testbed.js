@@ -244,8 +244,14 @@ var cajole = (function () {
   return cajole;
 })();
 
+/**
+ * Runs the given code uncajoled in an iframe.
+ * @param {form} form the form object containing the code to run.
+ */
 function runPlain(form) {
+  // Get the part of the form name from the dot onward
   var uiSuffix = form.id.replace(/^[^\.]+/, '');
+  // Strip off whitespace before & after the given text
   var src = form.elements.src.value.replace(/^\s+|\s+$/g, '');
   var d=document.getElementById("ifr"+uiSuffix).contentDocument;
   if (!d) { d = document.frames["ifr"+uiSuffix].document; }
