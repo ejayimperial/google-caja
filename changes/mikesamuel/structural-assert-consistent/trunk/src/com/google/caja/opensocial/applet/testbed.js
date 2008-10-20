@@ -245,6 +245,23 @@ var cajole = (function () {
 })();
 
 /**
+ * Runs the given code uncajoled in an iframe.
+ * @param {HTMLFormElement} form the form object containing the code to run.
+ */
+function runPlain(form) {
+  // Get the part of the form name from the dot onward
+  var uiSuffix = form.id.replace(/^[^\.]+/, '');
+  // Strip off whitespace before & after the given text
+  var src = form.elements.src.value.replace(/^\s+|\s+$/g, '');
+  var d=document.getElementById("ifr"+uiSuffix).contentDocument;
+  if (!d) { d = document.frames["ifr"+uiSuffix].document; }
+  if (d) {
+    d.write(src);
+    d.close();
+  }
+}
+
+/**
  * Concatenates all text node leaves of the given DOM subtree to produce the
  * equivalent of IE's innerText attribute.
  * @param {Node} node
@@ -383,23 +400,23 @@ var getImports = (function () {
     var inner = ___.beget(superHandler);
     inner.handle = ___.simpleFrozenFunc(function(newModule) {
       try {
-	return ___.callPub(superHandler, 'handle', 
-			   [___.simpleFrozenFunc(newModule)]);
+        return ___.callPub(superHandler, 'handle', 
+                           [___.simpleFrozenFunc(newModule)]);
       } finally {
-	var outcome = superHandler.getLastOutcome();
-	var type = document.createElement('span');
-	type.className = 'type';
-	type.appendChild(document.createTextNode(typeString(outcome[1])));
+        var outcome = superHandler.getLastOutcome();
+        var type = document.createElement('span');
+        type.className = 'type';
+        type.appendChild(document.createTextNode(typeString(outcome[1])));
 
-	var entry = document.createElement('div');
-	entry.className = 'result';
-	entry.appendChild(type);
-	entry.appendChild(document.createTextNode(repr(outcome[1])));
-	if (!outcome[0]) {
-	  // TODO(erights): color something red
-	}
-	document.getElementById('eval-results' +
-				uiSuffix).appendChild(entry);
+        var entry = document.createElement('div');
+        entry.className = 'result';
+        entry.appendChild(type);
+        entry.appendChild(document.createTextNode(repr(outcome[1])));
+        if (!outcome[0]) {
+          // TODO(erights): color something red
+        }
+        document.getElementById('eval-results' + uiSuffix)
+            .appendChild(entry);
       }
     });
     ___.freeze(inner);
@@ -407,7 +424,7 @@ var getImports = (function () {
     outer.handle = ___.simpleFrozenFunc(function(newModule) {
       ___.setNewModuleHandler(inner);
       return ___.callPub(superHandler, 'handle', 
-          [___.simpleFrozenFunc(newModule)]);
+                         [___.simpleFrozenFunc(newModule)]);
     });
     return ___.freeze(outer);
   }

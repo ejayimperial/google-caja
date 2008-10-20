@@ -14,6 +14,8 @@
 
 package com.google.caja.opensocial.service;
 
+import com.google.caja.util.Strings;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,7 +33,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -159,8 +160,10 @@ public class CajolingServiceTest extends TestCase {
             moduleEnvelope,
             "<script type=\"text/javascript\">{\n"
             + "  ___.loadModule(function (___, IMPORTS___) {\n"
+            + "                   var moduleResult___;\n"
             + "                   IMPORTS___.htmlEmitter___"
             + ".b('p').f(false).ih('Hello, World!').e('p');\n"
+            + "                   return moduleResult___;\n"
             + "                 });\n"
             + "}</script>"),
         request("?url=http://foo/bar.xml&mime-type=*/*"));
@@ -219,6 +222,7 @@ final class TestHttpServletRequest implements HttpServletRequest {
   public boolean isRequestedSessionIdFromURL() {
     throw new UnsupportedOperationException();
   }
+  @Deprecated
   public boolean isRequestedSessionIdFromUrl() {
     throw new UnsupportedOperationException();
   }
@@ -249,6 +253,7 @@ final class TestHttpServletRequest implements HttpServletRequest {
   public BufferedReader getReader() {
     throw new UnsupportedOperationException();
   }
+  @Deprecated
   public String getRealPath(String arg0) {
     throw new UnsupportedOperationException();
   }
@@ -279,10 +284,12 @@ final class TestHttpServletResponse implements HttpServletResponse {
   public String encodeRedirectURL(String arg0) {
     throw new UnsupportedOperationException();
   }
+  @Deprecated
   public String encodeRedirectUrl(String url) { return encodeRedirectURL(url); }
   public String encodeURL(String arg0) {
     throw new UnsupportedOperationException();
   }
+  @Deprecated
   public String encodeUrl(String url) { return encodeURL(url); }
   public void sendError(int code) {
     setStatus(code);
@@ -302,7 +309,7 @@ final class TestHttpServletResponse implements HttpServletResponse {
   }
   public void setHeader(String k, String v) {
     if (output != null) { throw new IllegalStateException(); }
-    headers.put(k.toLowerCase(Locale.ENGLISH), v);
+    headers.put(Strings.toLowerCase(k), v);
   }
   public void setIntHeader(String arg0, int arg1) {
     throw new UnsupportedOperationException();
@@ -311,6 +318,7 @@ final class TestHttpServletResponse implements HttpServletResponse {
     if (output != null) { throw new IllegalStateException(); }
     this.status = status;
   }
+  @Deprecated
   public void setStatus(int status, String desc) {
     assert !desc.matches("\\s");
     setStatus(status);
