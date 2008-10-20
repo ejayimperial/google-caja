@@ -880,7 +880,7 @@ var ___;
    * <p>
    * If <tt>opt_Sup</tt> is provided, record that const.prototype
    * inherits from opt_Sup.prototype. This bookkeeping helps
-   * directConstrctor(). 
+   * directConstrctor().
    * <p>
    * <tt>opt_name</tt>, if provided, should be the name of the constructor
    * function. Currently, this is used only to generate friendlier
@@ -895,29 +895,29 @@ var ___;
       fail("Exophoric functions can't be constructors: ", constr);
     }
     constr.CONSTRUCTOR___ = true;
-    derive(constr, opt_Sup);
+    if (opt_Sup) {
+      derive(constr, opt_Sup);
+    }
     if (opt_name) {
       constr.NAME___ = String(opt_name);
     }
     return constr;  // translator freezes constructor later
   }
 
-  function derive(constr, opt_Sup) {
-    if (opt_Sup) {
-      opt_Sup = asCtor(opt_Sup);
-      if (isFrozen(constr)) {
-        fail('Derived constructor already frozen: ', constr);
-      }
-      if (!isFrozen(constr.prototype)) {
-        // Some platforms, like Safari, actually conform to the part
-        // of the ES3 spec which states that the constructor property
-        // of implicitly created prototypical objects are not
-        // deletable. But this prevents the inheritance-walking
-        // algorithm (kludge) in directConstructor from working. Thus,
-        // we set proto___ here so that directConstructor can skip
-        // that impossible case.
-        constr.prototype.proto___ = opt_Sup.prototype;
-      }
+  function derive(constr, sup) {
+    sup = asCtor(sup);
+    if (isFrozen(constr)) {
+      fail('Derived constructor already frozen: ', constr);
+    }
+    if (!isFrozen(constr.prototype)) {
+      // Some platforms, like Safari, actually conform to the part
+      // of the ES3 spec which states that the constructor property
+      // of implicitly created prototypical objects are not
+      // deletable. But this prevents the inheritance-walking
+      // algorithm (kludge) in directConstructor from working. Thus,
+      // we set proto___ here so that directConstructor can skip
+      // that impossible case.
+      constr.prototype.proto___ = sup.prototype;
     }
   }
 
