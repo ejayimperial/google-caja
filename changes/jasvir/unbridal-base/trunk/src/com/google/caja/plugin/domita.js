@@ -429,6 +429,9 @@ attachDocumentStub = (function () {
     function tameNode(node, editable) {
       if (node === null || node === void 0) { return null; }
       // TODO(mikesamuel): make sure it really is a DOM node
+      // ...
+      // If it is a node, apply bridal browser fix
+      bridal.bind(node);
       switch (node.nodeType) {
         case 1:  // Element
           var tagName = node.tagName.toLowerCase();
@@ -1185,7 +1188,7 @@ attachDocumentStub = (function () {
      */
     imports.emitCss___ = function (cssText) {
       this.getCssContainer___().appendChild(
-          document.createStylesheet(cssText));
+          bridal.createStylesheet(document, cssText));
     };
     /** The node to which gadget stylesheets should be added. */
     imports.getCssContainer___ = function () {
