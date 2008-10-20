@@ -51,6 +51,7 @@ import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.util.Criterion;
+import com.google.caja.util.Name;
 import com.google.caja.util.Pair;
 
 import java.io.IOException;
@@ -61,7 +62,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -579,7 +579,7 @@ class JsdocRewriter {
       List<? extends Annotation> annotations) {
     HtmlSchema schema = HtmlSchema.getDefault(mq);
 
-    List<String> open = new ArrayList<String>();
+    List<Name> open = new ArrayList<Name>();
     List<Annotation> normalized = new ArrayList<Annotation>();
     for (int i = 0, n = annotations.size(); i < n; ++i) {
       Annotation a = annotations.get(i);
@@ -590,7 +590,7 @@ class JsdocRewriter {
           m.appendReplacement(sb, "");
           if (m.group(1) != null) {
             boolean end = "</".equals(m.group(1));
-            String name = m.group(2).toLowerCase(Locale.ENGLISH);
+            Name name = Name.html(m.group(2));
             HTML.Element el = schema.lookupElement(name);
             if (el != null) {
               if (end) {

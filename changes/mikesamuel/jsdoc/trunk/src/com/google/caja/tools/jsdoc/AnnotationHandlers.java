@@ -43,6 +43,7 @@ import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.Join;
+import com.google.caja.util.Name;
 import com.google.caja.util.Pair;
 
 import java.io.IOException;
@@ -475,7 +476,7 @@ public final class AnnotationHandlers {
             return null;
           }
           if (link != null) {
-            DomTree.Attrib href = link.getAttribute("href");
+            DomTree.Attrib href = link.getAttribute(Name.html("href"));
             if (href != null) {
               URI uri = parseDocUri(
                   href.getAttribValue(), schemeSet,
