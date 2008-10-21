@@ -922,6 +922,13 @@ attachDocumentStub = (function () {
     }
     extend(TameInputElement, TameElement);
     nodeClasses.HTMLInputElement = TameInputElement;
+    TameInputElement.prototype.getChecked = function () {
+      return this.node___.checked;
+    };
+    TameInputElement.prototype.setChecked = function (checked) {
+      if (!this.editable___) { throw new Error(); }
+      return (this.node___.checked = !!checked);
+    };
     TameInputElement.prototype.getValue = function () {
       var value = this.node___.value;
       return value === null || value === void 0 ? null : String(value);
@@ -949,7 +956,7 @@ attachDocumentStub = (function () {
     ___.ctor(TameInputElement, TameElement, 'TameInputElement');
     ___.all2(___.grantTypedGeneric, TameInputElement.prototype,
              ['getValue', 'setValue', 'focus', 'getForm', 'getType']);
-    exportFields(TameInputElement, ['form', 'value', 'type']);
+    exportFields(TameInputElement, ['checked', 'form', 'value', 'type']);
 
 
     function TameImageElement(node, editable) {

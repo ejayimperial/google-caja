@@ -95,6 +95,8 @@
 <form class="testcontainer" id="test-input-default-values">
   <input type="text" value="one">
   <input id="x" type="text" value="two">
+  <input checked type="checkbox">
+  <input type="checkbox">
 </form>
 
 <script type="text/javascript">
@@ -660,22 +662,32 @@ jsunitRegister('testBug731',
 jsunitRegister('testInputDefaultValue',
                function testInputDefaultValue() {
   var form = document.getElementById('test-input-default-values');
-  var input1 = form.elements[0];
-  var input2 = form.elements[1];
+  var text1 = form.elements[0];
+  var text2 = form.elements[1];
+  var check1 = form.elements[2];
+  var check2 = form.elements[3];
 
-  assertEquals('one', input1.value);
-  assertEquals('two', input2.value);
+  assertEquals('one', text1.value);
+  assertEquals('two', text2.value);
+  assertTrue(check1.checked);
+  assertFalse(check2.checked);
 
-  input1.value = 'First';
-  input2.value = 'Second';
+  text1.value = 'First';
+  text2.value = 'Second';
+  check1.checked = false;
+  check2.checked = true;
 
-  assertEquals('First', input1.value);
-  assertEquals('Second', input2.value);
+  assertEquals('First', text1.value);
+  assertEquals('Second', text2.value);
+  assertFalse(check1.checked);
+  assertTrue(check2.checked);
 
   form.reset();
 
-  assertEquals('one', input1.value);
-  assertEquals('two', input2.value);
+  assertEquals('one', text1.value);
+  assertEquals('two', text2.value);
+  assertTrue(check1.checked);
+  assertFalse(check2.checked);
 
   pass('test-input-default-values');
 });
