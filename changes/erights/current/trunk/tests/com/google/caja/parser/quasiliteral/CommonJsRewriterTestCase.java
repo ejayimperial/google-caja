@@ -276,7 +276,7 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
     assertConsistent(
         "var v = [1, 2, 3, 7, 4, 5];" +
         "var cmp = function(a, b) {" +
-        "  return (a < b) ? -1 : (b < a) ? +1 : 0;" +
+        "  return (a < b) ? +1 : (b < a) ? -1 : 0;" +
         "};" +
         "v.sort(cmp).toString();");
     rewriteAndExecute(

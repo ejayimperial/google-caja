@@ -1339,6 +1339,8 @@ var ___;
    * A unique value that should never be made accessible to untrusted
    * code, for distinguishing the absence of a result from any 
    * returable result.
+   * <p>
+   * See makeNewModuleHandler's getLastOutcome().
    */
   var NO_RESULT = Token('NO_RESULT');
 
@@ -2186,9 +2188,36 @@ var ___;
       setImports: simpleFrozenFunc(function(newImports) { 
         imports = newImports; 
       }),
+
+      /**
+       * An outcome is a pair of a success flag and a value. 
+       * <p>
+       * If the success flag is true, then the value is the normal
+       * result of calling the module function. If the success flag is
+       * false, then the value is the thrown error by which the module
+       * abruptly terminated.
+       * <p>
+       * An html page is cajoled to a module that runs to completion,
+       * but which reports as its outcome the outcome of its last
+       * script block. In order to reify that outcome and report it
+       * later, the html page initializes moduleResult___ to
+       * NO_RESULT, the last script block is cajoled to set
+       * moduleResult___ to something other than NO_RESULT on success
+       * but to call handleUncaughtException() on
+       * failure, and the html page returns moduleResult___ on
+       * completion. handleUncaughtException() records a failed
+       * outcome. This newModuleHandler's handle() method will not
+       * overwrite an already reported outcome with NO_RESULT, so the
+       * last script-block's outcome will be preserved.
+       */
       getLastOutcome: simpleFrozenFunc(function() { 
         return lastOutcome; 
       }),
+
+      /**
+       * If the last outcome is a success, returns its value;
+       * otherwise <tt>undefined</tt>.
+       */
       getLastValue: simpleFrozenFunc(function() {
         if (lastOutcome && lastOutcome[0]) {
           return lastOutcome[1];
@@ -2196,6 +2225,14 @@ var ___;
           return void 0;
         }
       }),
+
+      /**
+       * Runs the newModule's module function.
+       * <p>
+       * Updates the last outcome to report the module function's
+       * reported outcome. Propogate this outcome by terminating in
+       * the same manner. 
+       */
       handle: simpleFrozenFunc(function(newModule) {
         lastOutcome = void 0;
         try {
