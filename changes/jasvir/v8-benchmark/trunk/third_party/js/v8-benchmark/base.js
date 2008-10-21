@@ -49,9 +49,9 @@ function BenchmarkResult(benchmark, time) {
 
 // Automatically convert results to numbers. Used by the geometric
 // mean computation.
-BenchmarkResult.prototype.valueOf = function() {
+BenchmarkResult.prototype.explicitValueOf = function() {
   return this.time;
-}
+};
 
 
 // Suites of benchmarks consist of a name and the set of benchmarks in
@@ -106,7 +106,7 @@ BenchmarkSuite.RunSuites = function(runner) {
     }
   }
   RunStep();
-}
+};
 
 
 // Counts the total number of registered benchmarks. Useful for
@@ -118,17 +118,22 @@ BenchmarkSuite.CountBenchmarks = function() {
     result += suites[i].benchmarks.length;
   }
   return result;
-}
+};
 
 
 // Computes the geometric mean of a set of numbers.
 BenchmarkSuite.GeometricMean = function(numbers) {
   var log = 0;
   for (var i = 0; i < numbers.length; i++) {
-    log += Math.log(numbers[i]);
+    var numberLikeObj = numbers[i];
+    if ('object' === typeof numberLikeObj
+        && 'function' === typeof numberLikeObj.explicitValueOf) {
+      numberLikeObj = numberLikeObj.explicitValueOf('number');
+    }
+    log += Math.log(numberLikeObj);
   }
   return Math.pow(Math.E, log / numbers.length);
-}
+};
 
 
 // Notifies the runner that we're done running a single benchmark in
@@ -136,7 +141,7 @@ BenchmarkSuite.GeometricMean = function(numbers) {
 BenchmarkSuite.prototype.NotifyStep = function(result) {
   this.results.push(result);
   if (this.runner.NotifyStep) this.runner.NotifyStep(result.benchmark.name);
-}
+};
 
 
 // Notifies the runner that we're done with running a suite and that
@@ -148,7 +153,7 @@ BenchmarkSuite.prototype.NotifyResult = function() {
   if (this.runner.NotifyResult) {
     this.runner.NotifyResult(this.name, Math.round(100 * score));
   }
-}
+};
 
 
 // Runs a single benchmark for at least a second and computes the
@@ -162,7 +167,7 @@ BenchmarkSuite.prototype.RunSingle = function(benchmark) {
   }
   var usec = (elapsed * 1000) / n;
   this.NotifyStep(new BenchmarkResult(benchmark, usec));
-}
+};
 
 
 // This function starts running a suite, but stops between each
@@ -184,4 +189,4 @@ BenchmarkSuite.prototype.RunStep = function(runner) {
     return null;
   }
   return RunNext();
-}
+};

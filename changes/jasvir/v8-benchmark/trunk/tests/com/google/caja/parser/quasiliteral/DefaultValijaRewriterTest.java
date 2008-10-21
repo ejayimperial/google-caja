@@ -50,9 +50,9 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
   }
 
   public void testProtoCall() throws Exception {
-    assertConsistent("'' + Array.prototype.sort.call([3, 1, 2]);");
-    assertConsistent("'' + [3, 1, 2].sort();");
-    assertConsistent("'' + [3, 1, 2].sort.call([4, 2, 7]);");
+    assertConsistent("Array.prototype.sort.call([3, 1, 2]);");
+    assertConsistent("[3, 1, 2].sort();");
+    assertConsistent("[3, 1, 2].sort.call([4, 2, 7]);");
 
     assertConsistent("String.prototype.indexOf.call('foo', 'o');");
     assertConsistent("'foo'.indexOf('o');");
@@ -101,12 +101,12 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
   }
 
   public void testArray() throws Exception {
-    assertConsistent("[3, 2, 1].sort().toString();");
-    assertConsistent("[3, 2, 1].sort.call([4, 2, 7]).toString();");
+    assertConsistent("[3, 2, 1].sort();");
+    assertConsistent("[3, 2, 1].sort.call([4, 2, 7]);");
   }
 
   public void testObject() throws Exception {
-    assertConsistent("({ x: 1, y: 2 }).toString();");
+    assertConsistent("({ x: 1, y: 2 });");
   }
 
   public void testIndexOf() throws Exception {
@@ -137,24 +137,15 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
          ""
          + "var msg;"
          + "try {"
-         + "  var x_ = 1;"
-         + "  x_;"
+         + "  var x__ = 1;"
+         + "  x__;"
          + "} catch (ex) {"
          + "  msg = ex.message;"
          + "}"
-         + "assertEquals('Not settable: ([Object]).x_', msg);"
-         );
-     rewriteAndExecute(
-         ""
-         + "var msg;"
-         + "try {"
-         + "  var o = { p_: 1 };"
-         + "  o.p_;"
-         + "} catch (ex) {"
-         + "  msg = ex.message;"
-         + "}"
-         + "assertEquals('Not settable: ([Object]).p_', msg);"
-         );
+         + "assertEquals('Not settable: ([Object]).x__', msg);");
+     checkFails(
+         "var o = { p__: 1 };",
+         "Properties cannot end in \"__\"");
   }
 
   public void testDate() throws Exception {
@@ -167,7 +158,7 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         + "assertEquals('number', typeof time);");
   }
 
-  public void testMultiDeclaration() throws Exception {
+  public void testMultiDeclaration2() throws Exception {
     rewriteAndExecute("var a, b, c;");
     rewriteAndExecute(
         ""
@@ -177,8 +168,9 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
 
   public void testDelete() throws Exception {
     assertConsistent(
-        "(function () { var a = { x: 1 }; delete a.x; return a.x; })();");
-    assertConsistent("var a = { x: 1 }; delete a.x; a.x;");
+        "(function () { var a = { x: 1 }; delete a.x; return typeof a.x; })();"
+        );
+    assertConsistent("var a = { x: 1 }; delete a.x; typeof a.x;");
   }
 
   public void testIn() throws Exception {
@@ -189,7 +181,7 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         "})();");
     assertConsistent(
         "var a = { x: 1 };\n" +
-        "'' + ('x' in a) + ('y' in a);");
+        "[('x' in a), ('y' in a)];");
   }
 
   public void testForIn2() throws Exception {
@@ -279,7 +271,35 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
   }
 
   public void testStatic() throws Exception {
-    assertConsistent("'' + Array.slice([3, 4, 5, 6], 1);");
+    assertConsistent("Array.slice([3, 4, 5, 6], 1);");
+  }
+
+  public void testConcatArgs() throws Exception {
+    rewriteAndExecute("", "(function(x, y){ return [x, y]; })",
+        "var f = ___.getNewModuleHandler().getLastValue();"
+        + "function g(var_args) { return f.apply(___.USELESS, arguments); }"
+        + "assertEquals(g(3, 4).toString(), [3, 4].toString());");
+  }
+
+  public void testReformedGenerics() throws Exception {
+    assertConsistent(
+        "var x = [33];" +
+        "x.foo = [].push;" +
+        "x.foo(44);" +
+        "x;");
+    assertConsistent(
+        "var x = {blue:'green'};" +
+        "x.foo = [].push;" +
+        "x.foo(44);" +
+        "cajita.getOwnPropertyNames(x).sort();");
+    assertConsistent(
+        "var x = [33];" +
+        "Array.prototype.push.apply(x, [3,4,5]);" +
+        "x;");
+    assertConsistent(
+        "var x = {blue:'green'};" +
+        "Array.prototype.push.apply(x, [3,4,5]);" +
+        "cajita.getOwnPropertyNames(x).sort();");
   }
 
   @Override

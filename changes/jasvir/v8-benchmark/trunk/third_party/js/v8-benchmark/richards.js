@@ -35,7 +35,7 @@
 // Martin Richards.
 
 
-var Richards = new BenchmarkSuite('Richards', 34886, [
+var Richards = new BenchmarkSuite('Richards', 348860, [
   new Benchmark("Richards", runRichards)
 ]);
 
@@ -154,7 +154,7 @@ Scheduler.prototype.addHandlerTask = function (id, priority, queue) {
  * @param {Packet} queue the queue of work to be processed by the task
  */
 Scheduler.prototype.addDeviceTask = function (id, priority, queue) {
-  this.addTask(id, priority, queue, new DeviceTask(this))
+  this.addTask(id, priority, queue, new DeviceTask(this));
 };
 
 /**
@@ -384,7 +384,7 @@ IdleTask.prototype.run = function (packet) {
 };
 
 IdleTask.prototype.toString = function () {
-  return "IdleTask"
+  return "IdleTask";
 };
 
 /**

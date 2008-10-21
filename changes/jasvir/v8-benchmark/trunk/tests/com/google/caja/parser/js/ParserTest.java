@@ -29,15 +29,16 @@ import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.MoreAsserts;
+import com.google.caja.util.Strings;
 import com.google.caja.util.TestUtil;
-
-import junit.framework.AssertionFailedError;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import junit.framework.AssertionFailedError;
 
 /**
  *
@@ -115,8 +116,8 @@ public class ParserTest extends CajaTestCase {
 
     // Since we're doing these checks for security, double check that someone
     // hasn't adjusted the golden file.
-    String golden = TestUtil.readResource(getClass(), "rendergolden6.txt")
-        .toLowerCase();
+    String golden = Strings.toLowerCase(
+         TestUtil.readResource(getClass(), "rendergolden6.txt"));
     assertFalse(golden.contains("]]>"));
     assertFalse(golden.contains("<!"));
     assertFalse(golden.contains("<script"));
@@ -252,6 +253,31 @@ public class ParserTest extends CajaTestCase {
     assertMessage(
         MessageType.UNREPRESENTABLE_INTEGER_LITERAL, MessageLevel.WARNING);
     assertEquals(new Double(9223372036854776000d), l.getValue());
+  }
+
+  public void testRedundantEscapeSequences() throws Exception {
+    // Should issue a warning if there is an escape sequence in a string where
+    // the escaped character is not interpreted differently, and the escaped
+    // character has a special meaning in a regular expression.
+
+    jsExpr(fromString(" new RegExp('foo\\s+bar') "));
+    assertMessage(
+        MessageType.REDUNDANT_ESCAPE_SEQUENCE, MessageLevel.LINT,
+        FilePosition.instance(is, 1, 1, 13, 13, 1, 1, 24, 24),
+        MessagePart.Factory.valueOf("\\s"));
+    mq.getMessages().clear();
+
+    jsExpr(fromString(" new RegExp('foo\\\\s+bar') "));
+    assertMessagesLessSevereThan(MessageLevel.LINT);
+    mq.getMessages().clear();
+
+    jsExpr(fromString(" '<\\/script>' "));
+    assertMessagesLessSevereThan(MessageLevel.LINT);
+    mq.getMessages().clear();
+
+    jsExpr(fromString(" '\\v' "));
+    assertMessage(MessageType.AMBIGUOUS_ESCAPE_SEQUENCE, MessageLevel.WARNING);
+    mq.getMessages().clear();
   }
 
   public void assertExpectedSemi() {

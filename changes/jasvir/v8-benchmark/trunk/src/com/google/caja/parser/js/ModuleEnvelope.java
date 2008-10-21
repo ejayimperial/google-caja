@@ -54,6 +54,8 @@ public final class ModuleEnvelope extends AbstractStatement<Block> {
   @Override
   public Object getValue() { return null; }
 
+  public Block getModuleBody() { return children().get(0); }
+
   public void render(RenderContext rc) {
     // FIXME(erights): must emit valid javascript or throw an exception
     rc.getOut().consume("<<<<");

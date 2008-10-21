@@ -31,7 +31,7 @@
 
 
 // The code has been adapted for use as a benchmark by Google.
-var Crypto = new BenchmarkSuite('Crypto', 203037, [
+var Crypto = new BenchmarkSuite('Crypto', 2030370, [
   new Benchmark("Encrypt", encrypt),
   new Benchmark("Decrypt", decrypt)
 ]);
@@ -156,7 +156,7 @@ setupEngine = function(fn, bits) {
   BI_FV = Math.pow(2,BI_FP);
   BI_F1 = BI_FP-dbits;
   BI_F2 = 2*dbits-BI_FP;
-}
+};
 
 
 // Digit conversions

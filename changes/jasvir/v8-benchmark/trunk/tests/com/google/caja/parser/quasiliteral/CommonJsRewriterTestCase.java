@@ -42,7 +42,7 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
     rewriteAndExecute(
         "cajita.log('___.args = ' + ___.args);",
         "function f(a) {" +
-          "try{" +
+          "try {" +
             "arguments[0] = 1;" +
             "if (a) fail('Mutable arguments');" +
           "} catch (e) {" +
@@ -221,6 +221,42 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
         + "f();");
   }
 
+  public void testCommonReformedGenerics() throws Exception {
+    assertConsistent(
+        "var x = [33];" +
+        "x.foo = [].push;" +
+        "x.foo.call(x, 44);" +
+        "x;");
+    assertConsistent(
+        "var x = [33];" +
+        "x.foo = [].push;" +
+        "x.foo.apply(x, [6,7,8]);" +
+        "x;");
+    assertConsistent(
+        "var x = [33];" +
+        "x.foo = [].push;" +
+        "x.foo.bind(x)(6,7,8);" +
+        "x;");
+    assertConsistent(
+        "var x = [33];" +
+        "x.foo = [].push;" +
+        "x.foo.bind(x,6)(7,8);" +
+        "x;");
+    assertConsistent(
+        "[].push.length;");
+    assertConsistent(
+        "var x = {blue:'green'};" +
+        "x.foo = [].push;" +
+        "x.foo.call(x, 44);" +
+        "delete x.foo;" +
+        "x;");
+    assertConsistent(
+        "var x = {blue:'green'};" +
+        "x.foo = [].push;" +
+        "x.foo.call(x, 44);" +
+        "cajita.getOwnPropertyNames(x).sort();");
+  }
+
   public void testTypeofConsistent() throws Exception {
     assertConsistent("[ (typeof noSuchGlobal), (typeof 's')," +
                      "  (typeof 4)," +
@@ -228,10 +264,10 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
                      "  (typeof (void 0))," +
                      "  (typeof [])," +
                      "  (typeof {})," +
-                     "  (typeof new RegExp('.*'))," +
                      "  (typeof (function () {}))," +
                      "  (typeof { x: 4.0 }.x)," +
                      "  (typeof { 2: NaN }[1 + 1])" +
-                     "].toString();");
+                     "];");
+    rewriteAndExecute("assertEquals(typeof new RegExp('.*'), 'object');");
   }
 }

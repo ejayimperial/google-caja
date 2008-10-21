@@ -15,30 +15,19 @@
 package com.google.caja.plugin;
 
 import com.google.caja.lexer.FilePosition;
-import com.google.caja.lexer.HtmlTokenType;
-import com.google.caja.lexer.InputSource;
-import com.google.caja.lexer.TokenQueue;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.quasiliteral.CajitaRewriter;
-import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.DomTree;
 import com.google.caja.parser.js.Block;
 import com.google.caja.render.JsPrettyPrinter;
-import com.google.caja.reporting.EchoingMessageQueue;
-import com.google.caja.reporting.MessageContext;
 import com.google.caja.reporting.MessageLevel;
-import com.google.caja.reporting.MessagePart;
-import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
 import com.google.caja.util.RhinoTestBed;
 import com.google.caja.util.TestUtil;
 import com.google.caja.util.CajaTestCase;
 
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.net.URI;
 import junit.framework.AssertionFailedError;
 
 /**
@@ -218,13 +207,18 @@ public class HtmlCompiledPluginTest extends CajaTestCase {
           new RhinoTestBed.Input(
               "var valijaMaker = {};\n" +
               "var testImports = ___.copy(___.sharedImports);\n" +
-              "testImports.loader = {provide:___.simpleFunc(function(v){valijaMaker=v;})};\n" +
+              "testImports.loader = {\n" +
+              "  provide: ___.simpleFunc(function(v) { valijaMaker = v; })\n" +
+              "};\n" +
               "testImports.outers = ___.copy(___.sharedImports);\n" +
               "___.getNewModuleHandler().setImports(testImports);",
               getName() + "valija-setup"),
           new RhinoTestBed.Input(
-              "___.loadModule(function (___, IMPORTS___) {" + valijaCajoled + "\n});",
+              "___.loadModule(function (___, IMPORTS___) {\n" +
+              valijaCajoled + "\n" +
+              "});",
               "valija-cajoled"),
+          new RhinoTestBed.Input(getClass(), "bridal.js"),
           new RhinoTestBed.Input(getClass(), "html-emitter.js"),
           new RhinoTestBed.Input(getClass(), "container.js"),
           // The gadget

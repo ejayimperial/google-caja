@@ -8,7 +8,7 @@
 // untouched. This file also contains a copy of the Prototype
 // JavaScript framework which is used by the ray tracer.
 
-var RayTrace = new BenchmarkSuite('RayTrace', 932666, [
+var RayTrace = new BenchmarkSuite('RayTrace', 9326660, [
   new Benchmark('RayTrace', renderScene)
 ]);
 
@@ -42,16 +42,16 @@ var Prototype = {
 
   ScriptFragment: '(?:<script.*?>)((\n|\r|.)*?)(?:<\/script>)',
   emptyFunction: function() {},
-  K: function(x) { return x }
-}
+  K: function(x) { return x; }
+};
 
 var Class = {
   create: function() {
     return function() {
       this.initialize.apply(this, arguments);
-    }
+    };
   }
-}
+};
 
 var Abstract = new Object();
 
@@ -60,7 +60,7 @@ Object.extend = function(destination, source) {
     destination[property] = source[property];
   }
   return destination;
-}
+};
 
 Object.extend(Object, {
   inspect: function(object) {
@@ -97,15 +97,15 @@ Function.prototype.bind = function() {
   var __method = this, args = $A(arguments), object = args.shift();
   return function() {
     return __method.apply(object, args.concat($A(arguments)));
-  }
-}
+  };
+};
 
 Function.prototype.bindAsEventListener = function(object) {
   var __method = this, args = $A(arguments), object = args.shift();
   return function(event) {
     return __method.apply(object, [( event || window.event)].concat(args).concat($A(arguments)));
-  }
-}
+  };
+};
 
 Object.extend(Number.prototype, {
   toColorPart: function() {
@@ -138,7 +138,7 @@ var Try = {
 
     return returnValue;
   }
-}
+};
 
 /*--------------------------------------------------------------------------*/
 
@@ -172,10 +172,10 @@ PeriodicalExecuter.prototype = {
       }
     }
   }
-}
+};
 String.interpret = function(value){
   return value == null ? '' : String(value);
-}
+};
 
 Object.extend(String.prototype, {
   gsub: function(pattern, replacement) {
@@ -237,7 +237,7 @@ Object.extend(String.prototype, {
   },
 
   evalScripts: function() {
-    return this.extractScripts().map(function(script) { return eval(script) });
+    return this.extractScripts().map(function(script) { return eval(script); });
   },
 
   escapeHTML: function() {
@@ -251,7 +251,7 @@ Object.extend(String.prototype, {
     var div = document.createElement('div');
     div.innerHTML = this.stripTags();
     return div.childNodes[0] ? (div.childNodes.length > 1 ?
-      $A(div.childNodes).inject('',function(memo,node){ return memo+node.nodeValue }) :
+      $A(div.childNodes).inject('',function(memo,node){ return memo+node.nodeValue; }) :
       div.childNodes[0].nodeValue) : '';
   },
 
@@ -322,8 +322,8 @@ Object.extend(String.prototype, {
 String.prototype.gsub.prepareReplacement = function(replacement) {
   if (typeof replacement == 'function') return replacement;
   var template = new Template(replacement);
-  return function(match) { return template.evaluate(match) };
-}
+  return function(match) { return template.evaluate(match); };
+};
 
 String.prototype.parseQuery = String.prototype.toQueryParams;
 
@@ -342,7 +342,7 @@ Template.prototype = {
       return before + String.interpret(object[match[3]]);
     });
   }
-}
+};
 
 var $break    = new Object();
 var $continue = new Object();
@@ -423,7 +423,7 @@ var Enumerable = {
       var stringValue = value.toString();
       if (stringValue.match(pattern))
         results.push((iterator || Prototype.K)(value, index));
-    })
+    });
     return results;
   },
 
@@ -537,7 +537,7 @@ var Enumerable = {
   inspect: function() {
     return '#<Enumerable:' + this.toArray().inspect() + '>';
   }
-}
+};
 
 Object.extend(Enumerable, {
   map:     Enumerable.collect,
@@ -556,7 +556,7 @@ var $A = Array.from = function(iterable) {
       results.push(iterable[i]);
     return results;
   }
-}
+};
 
 Object.extend(Array.prototype, Enumerable);
 
@@ -655,7 +655,7 @@ if(window.opera){
       }
     }
     return array;
-  }
+  };
 }
 var Hash = function(obj) {
   Object.extend(this, obj || {});
@@ -725,7 +725,7 @@ Object.extend(Hash.prototype, {
         if (result === undefined) result = value;
         else {
           if (result.constructor != Array) result = [result];
-          result.push(value)
+          result.push(value);
         }
       }
       delete this[arguments[i]];
@@ -776,19 +776,19 @@ Object.extend(ObjectRange.prototype, {
 
 var $R = function(start, end, exclusive) {
   return new ObjectRange(start, end, exclusive);
-}
+};
 
 var Ajax = {
   getTransport: function() {
     return Try.these(
-      function() {return new XMLHttpRequest()},
-      function() {return new ActiveXObject('Msxml2.XMLHTTP')},
-      function() {return new ActiveXObject('Microsoft.XMLHTTP')}
+      function() {return new XMLHttpRequest();},
+      function() {return new ActiveXObject('Msxml2.XMLHTTP');},
+      function() {return new ActiveXObject('Microsoft.XMLHTTP');}
     ) || false;
   },
 
   activeRequestCount: 0
-}
+};
 
 Ajax.Responders = {
   responders: [],
@@ -837,14 +837,14 @@ Ajax.Base.prototype = {
       contentType:  'application/x-www-form-urlencoded',
       encoding:     'UTF-8',
       parameters:   ''
-    }
+    };
     Object.extend(this.options, options || {});
 
     this.options.method = this.options.method.toLowerCase();
     if (typeof this.options.parameters == 'string')
       this.options.parameters = this.options.parameters.toQueryParams();
   }
-}
+};
 
 Ajax.Request = Class.create();
 Ajax.Request.Events =
@@ -884,7 +884,7 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
         this.options.asynchronous);
 
       if (this.options.asynchronous)
-        setTimeout(function() { this.respondToReadyState(1) }.bind(this), 10);
+        setTimeout(function() { this.respondToReadyState(1); }.bind(this), 10);
 
       this.transport.onreadystatechange = this.onStateChange.bind(this);
       this.setRequestHeaders();
@@ -937,7 +937,7 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
         for (var i = 0, length = extras.length; i < length; i += 2)
           headers[extras[i]] = extras[i+1];
       else
-        $H(extras).each(function(pair) { headers[pair.key] = pair.value });
+        $H(extras).each(function(pair) { headers[pair.key] = pair.value; });
     }
 
     for (var name in headers)
@@ -984,14 +984,14 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
   getHeader: function(name) {
     try {
       return this.transport.getResponseHeader(name);
-    } catch (e) { return null }
+    } catch (e) { return null; }
   },
 
   evalJSON: function() {
     try {
       var json = this.getHeader('X-JSON');
       return json ? eval('(' + json + ')') : null;
-    } catch (e) { return null }
+    } catch (e) { return null; }
   },
 
   evalResponse: function() {
@@ -1015,7 +1015,7 @@ Object.extend(Object.extend(Ajax.Updater.prototype, Ajax.Request.prototype), {
     this.container = {
       success: (container.success || container),
       failure: (container.failure || (container.success ? null : container))
-    }
+    };
 
     this.transport = Ajax.getTransport();
     this.setOptions(options);
@@ -1162,7 +1162,7 @@ Element.extend.cache = {
   findOrStore: function(value) {
     return this[value] = this[value] || function() {
       return value.apply(null, [this].concat($A(arguments)));
-    }
+    };
   }
 };
 
@@ -1196,7 +1196,7 @@ Element.Methods = {
   update: function(element, html) {
     html = typeof html == 'undefined' ? '' : html.toString();
     $(element).innerHTML = html.stripScripts();
-    setTimeout(function() {html.evalScripts()}, 10);
+    setTimeout(function() {html.evalScripts();}, 10);
     return element;
   },
 
@@ -1211,7 +1211,7 @@ Element.Methods = {
       element.parentNode.replaceChild(
         range.createContextualFragment(html.stripScripts()), element);
     }
-    setTimeout(function() {html.evalScripts()}, 10);
+    setTimeout(function() {html.evalScripts();}, 10);
     return element;
   },
 
@@ -1587,18 +1587,18 @@ if (document.all && !window.opera){
           depth = 4;
       }
       $A(element.childNodes).each(function(node){
-        element.removeChild(node)
+        element.removeChild(node);
       });
-      depth.times(function(){ div = div.firstChild });
+      depth.times(function(){ div = div.firstChild; });
 
       $A(div.childNodes).each(
-        function(node){ element.appendChild(node) });
+        function(node){ element.appendChild(node); });
     } else {
       element.innerHTML = html.stripScripts();
     }
-    setTimeout(function() {html.evalScripts()}, 10);
+    setTimeout(function() {html.evalScripts();}, 10);
     return element;
-  }
+  };
 };
 
 Object.extend(Element, Element.Methods);
@@ -1635,7 +1635,7 @@ Element.addMethods = function(methods) {
     });
     _nativeExtensions = true;
   }
-}
+};
 
 var Toggle = new Object();
 Toggle.display = Element.toggle;
@@ -1644,7 +1644,7 @@ Toggle.display = Element.toggle;
 
 Abstract.Insertion = function(adjacency) {
   this.adjacency = adjacency;
-}
+};
 
 Abstract.Insertion.prototype = {
   initialize: function(element, content) {
@@ -1668,7 +1668,7 @@ Abstract.Insertion.prototype = {
       this.insertContent([this.range.createContextualFragment(this.content)]);
     }
 
-    setTimeout(function() {content.evalScripts()}, 10);
+    setTimeout(function() {content.evalScripts();}, 10);
   },
 
   contentFromAnonymousTable: function() {
@@ -1676,7 +1676,7 @@ Abstract.Insertion.prototype = {
     div.innerHTML = '<table><tbody>' + this.content + '</tbody></table>';
     return $A(div.childNodes[0].childNodes[0].childNodes);
   }
-}
+};
 
 var Insertion = new Object();
 
@@ -1824,7 +1824,7 @@ Selector.prototype = {
         var value = 'element.readAttribute(' + attribute.name.inspect() + ')';
         var splitValueBy = function(delimiter) {
           return value + ' && ' + value + '.split(' + delimiter.inspect() + ')';
-        }
+        };
 
         switch (attribute.operator) {
           case '=':       conditions.push(value + ' == ' + attribute.value.inspect()); break;
@@ -1868,7 +1868,7 @@ Selector.prototype = {
   toString: function() {
     return this.expression;
   }
-}
+};
 
 Object.extend(Selector, {
   matchElements: function(elements, expression) {
@@ -1981,7 +1981,7 @@ Form.Methods = {
     form.findFirstElement().activate();
     return form;
   }
-}
+};
 
 Object.extend(Form, Form.Methods);
 
@@ -1997,7 +1997,7 @@ Form.Element = {
     $(element).select();
     return element;
   }
-}
+};
 
 Form.Element.Methods = {
   serialize: function(element) {
@@ -2049,7 +2049,7 @@ Form.Element.Methods = {
     element.disabled = false;
     return element;
   }
-}
+};
 
 Object.extend(Form.Element, Form.Element.Methods);
 var Field = Form.Element;
@@ -2101,11 +2101,11 @@ Form.Element.Serializers = {
     // extend element because hasAttribute may not be native
     return Element.extend(opt).hasAttribute('value') ? opt.value : opt.text;
   }
-}
+};
 
 /*--------------------------------------------------------------------------*/
 
-Abstract.TimedObserver = function() {}
+Abstract.TimedObserver = function() {};
 Abstract.TimedObserver.prototype = {
   initialize: function(element, frequency, callback) {
     this.frequency = frequency;
@@ -2129,7 +2129,7 @@ Abstract.TimedObserver.prototype = {
       this.lastValue = value;
     }
   }
-}
+};
 
 Form.Element.Observer = Class.create();
 Form.Element.Observer.prototype = Object.extend(new Abstract.TimedObserver(), {
@@ -2147,7 +2147,7 @@ Form.Observer.prototype = Object.extend(new Abstract.TimedObserver(), {
 
 /*--------------------------------------------------------------------------*/
 
-Abstract.EventObserver = function() {}
+Abstract.EventObserver = function() {};
 Abstract.EventObserver.prototype = {
   initialize: function(element, callback) {
     this.element  = $(element);
@@ -2185,7 +2185,7 @@ Abstract.EventObserver.prototype = {
       }
     }
   }
-}
+};
 
 Form.Element.EventObserver = Class.create();
 Form.Element.EventObserver.prototype = Object.extend(new Abstract.EventObserver(), {
@@ -2450,7 +2450,7 @@ var Position = {
       setHeight:  true,
       offsetTop:  0,
       offsetLeft: 0
-    }, arguments[2] || {})
+    }, arguments[2] || {});
 
     // find page position of source
     source = $(source);
@@ -2517,7 +2517,7 @@ var Position = {
     element.style.height = element._originalHeight;
     element.style.width  = element._originalWidth;
   }
-}
+};
 
 // Safari returns margins on body which is incorrect if the child is absolutely
 // positioned.  For performance reasons, redefine Position.cumulativeOffset for
@@ -2535,7 +2535,7 @@ if (/Konqueror|Safari|KHTML/.test(navigator.userAgent)) {
     } while (element);
 
     return [valueL, valueT];
-  }
+  };
 }
 
 Element.addMethods();
@@ -2674,7 +2674,7 @@ Flog.RayTracer.Color.prototype = {
 
         return "rgb("+ r +","+ g +","+ b +")";
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2701,7 +2701,7 @@ Flog.RayTracer.Light.prototype = {
     toString : function () {
         return 'Light [' + this.position.x + ',' + this.position.y + ',' + this.position.z + ']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2765,7 +2765,7 @@ Flog.RayTracer.Vector.prototype = {
     toString : function () {
         return 'Vector [' + this.x + ',' + this.y + ',' + this.z + ']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2783,7 +2783,7 @@ Flog.RayTracer.Ray.prototype = {
     toString : function () {
         return 'Ray [' + this.position + ',' + this.direction + ']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2806,7 +2806,7 @@ Flog.RayTracer.Scene.prototype = {
         this.lights = new Array();
         this.background = new Flog.RayTracer.Background(new Flog.RayTracer.Color(0,0,0.5), 0.2);
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2840,7 +2840,7 @@ Flog.RayTracer.Material.BaseMaterial.prototype = {
     toString : function () {
         return 'Material [gloss=' + this.gloss + ', transparency=' + this.transparency + ', hasTexture=' + this.hasTexture +']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2926,7 +2926,7 @@ Flog.RayTracer.Shape.BaseShape.prototype = {
     toString : function () {
         return 'Material [gloss=' + this.gloss + ', transparency=' + this.transparency + ', hasTexture=' + this.hasTexture +']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -2976,7 +2976,7 @@ Flog.RayTracer.Shape.Sphere.prototype = {
     toString : function () {
         return 'Sphere [position=' + this.position + ', radius=' + this.radius + ']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -3030,7 +3030,7 @@ Flog.RayTracer.Shape.Plane.prototype = {
     toString : function () {
         return 'Plane [' + this.position + ', d=' + this.d + ']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -3053,7 +3053,7 @@ Flog.RayTracer.IntersectionInfo.prototype = {
     toString : function () {
         return 'Intersection [' + this.position + ']';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -3097,7 +3097,7 @@ Flog.RayTracer.Camera.prototype = {
     toString : function () {
         return 'Ray []';
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};
@@ -3112,7 +3112,7 @@ Flog.RayTracer.Background.prototype = {
         this.color = color;
         this.ambience = ambience;
     }
-}
+};
 /* Fake a Flog.* namespace */
 if(typeof(Flog) == 'undefined') var Flog = {};
 if(typeof(Flog.RayTracer) == 'undefined') Flog.RayTracer = {};

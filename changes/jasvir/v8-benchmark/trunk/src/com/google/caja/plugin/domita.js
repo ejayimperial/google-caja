@@ -49,7 +49,15 @@
  * @param {Object} imports the gadget's global scope.
  */
 attachDocumentStub = (function () {
+  // Array Remove - By John Resig (MIT Licensed)
+  function arrayRemove(array, from, to) {
+    var rest = array.slice((to || from) + 1 || array.length);
+    array.length = from < 0 ? array.length + from : from;
+    return array.push.apply(array, rest);
+  }
+  
   var tameNodeTrademark = {};
+  var tameEventTrademark = {};
 
   // Define a wrapper type for known safe HTML, and a trademarker.
   // This does not actually use the trademarking functions since trademarks
@@ -479,6 +487,59 @@ attachDocumentStub = (function () {
       return cajita.freeze(tamed);
     }
 
+    function makeEventHandlerWrapper(thisNode, listener) {
+      if ('function' !== typeof listener
+          // Allow disfunctions
+          && !('object' === (typeof listener) && listener !== null
+               && ___.canCallPub(listener, 'call'))) {
+        throw new Error('Expected function not ' + typeof listener);
+      }
+      function wrapper(event) {
+        return plugin_dispatchEvent___(
+            thisNode, event || window.event, ___.getId(imports), listener);
+      }
+      wrapper.originalListener___ = listener;
+      return wrapper;
+    }
+
+    // Implementation of EventTarget::addEventListener
+    function tameAddEventListener(name, listener, useCapture) {
+      if (!this.editable___) { throw new Error(); }
+      if (!this.wrappedListeners___) { this.wrappedListeners___ = []; }
+      name = String(name);
+      var wrappedListener = makeEventHandlerWrapper(this.node___, listener);
+      this.wrappedListeners___.push(wrappedListener);
+      bridal.addEventListener(this.node___, name, wrappedListener, useCapture);
+    }
+
+    // Implementation of EventTarget::removeEventListener
+    function tameRemoveEventListener(name, listener, useCapture) {
+      if (!this.editable___) { throw new Error(); }
+      if (!this.wrappedListeners___) { return; }
+      var wrappedListener;
+      for (var i = this.wrappedListeners___.length; --i >= 0;) {
+        if (this.wrappedListeners___[i].originalListener___ === listener) {
+          wrappedListener = this.wrappedListeners___[i];
+          this.wrappedListeners___ =
+              arrayRemove(this.wrappedListeners___, i, i);
+          break;
+        }
+      }
+      if (!wrappedListener) { return; }
+      name = String(name);
+      bridal.removeEventListener(this.node___, name, wrappedListener, useCapture);
+    }
+
+    // Implementation of EventTarget::dispatchEvent
+    function tameDispatchEvent(evt) {
+      cajita.guard(tameEventTrademark, evt);
+      // TODO(ihab.awad): Complete and test implementation
+    }
+
+    // A map of tamed node classes, keyed by DOM Level 2 standard name, which
+    // will be exposed to the client.
+    var nodeClasses = {};
+
     /**
      * Base class for a Node wrapper.  Do not create directly -- use the
      * tameNode factory instead.
@@ -489,6 +550,7 @@ attachDocumentStub = (function () {
       this.editable___ = editable;
       ___.stamp(tameNodeTrademark, this, true);
     }
+    nodeClasses.Node = TameNode;
     TameNode.prototype.getNodeType = function () {
       return this.node___.nodeType;
     };
@@ -559,6 +621,9 @@ attachDocumentStub = (function () {
       return tameNodeList(
           this.node___.getElementsByTagName(String(tagName)), this.editable___);
     };
+    TameNode.prototype.getChildNodes = function() {
+      return tameNodeList(this.node___.childNodes);
+    };
     ___.ctor(TameNode, void 0, 'TameNode');
     var tameNodeMembers = [
         'getNodeType', 'getNodeValue', 'getNodeName',
@@ -567,7 +632,8 @@ attachDocumentStub = (function () {
         'getElementsByTagName'];
     var tameNodeFields = [
         'nodeType', 'nodeValue', 'nodeName', 'firstChild',
-        'lastChild', 'nextSibling', 'previousSibling', 'parentNode'];
+        'lastChild', 'nextSibling', 'previousSibling', 'parentNode',
+        'childNodes'];
     ___.all2(___.grantTypedGeneric, TameNode.prototype, tameNodeMembers);
     exportFields(TameNode, tameNodeFields);
 
@@ -582,6 +648,7 @@ attachDocumentStub = (function () {
     TameOpaqueNode.prototype.getPreviousSibling
         = TameNode.prototype.getPreviousSibling;
     TameOpaqueNode.prototype.getParentNode = TameNode.prototype.getParentNode;
+    TameOpaqueNode.prototype.getChildNodes = TameNode.prototype.getChildNodes;
     for (var i = tameNodeMembers.length; --i >= 0;) {
       var k = tameNodeMembers[i];
       if (!TameOpaqueNode.prototype.hasOwnProperty(k)) {
@@ -598,6 +665,7 @@ attachDocumentStub = (function () {
       TameNode.call(this, node, editable);
     }
     extend(TameTextNode, TameNode);
+    nodeClasses.TextNode = TameTextNode;
     TameTextNode.prototype.setNodeValue = function (value) {
       if (!this.editable___) { throw new Error(); }
       this.node___.nodeValue = String(value || '');
@@ -618,6 +686,7 @@ attachDocumentStub = (function () {
       TameNode.call(this, node, editable);
     }
     extend(TameCommentNode, TameNode);
+    nodeClasses.CommentNode = TameCommentNode;
     TameCommentNode.prototype.toString = function () {
       return '#comment';
     };
@@ -628,6 +697,8 @@ attachDocumentStub = (function () {
       TameNode.call(this, node, editable);
     }
     extend(TameElement, TameNode);
+    nodeClasses.Element = TameElement;
+    nodeClasses.HTMLElement = TameElement;
     TameElement.prototype.getId = function () {
       return this.getAttribute('id') || '';
     };
@@ -666,17 +737,7 @@ attachDocumentStub = (function () {
       var sanitizedValue = rewriteAttribute(
           this.node___.tagName, name, type, value);
       if (sanitizedValue !== null) {
-        switch (name) {
-          case 'style':
-            if (typeof this.node___.style.cssText === 'string') {
-              // Setting the 'style' attribute does not work for IE, but
-              // setting cssText works on IE 6, Firefox, and IE 7.
-              this.node___.style.cssText = sanitizedValue;
-              return value;
-            }
-            break;
-        }
-        this.node___.setAttribute(name, sanitizedValue);
+        bridal.setAttribute(this.node___, name, sanitizedValue);
       }
       return value;
     };
@@ -750,30 +811,6 @@ attachDocumentStub = (function () {
       }
     };
 
-    function makeEventHandlerWrapper(thisNode, listener) {
-      if ('function' !== typeof listener
-          // Allow disfunctions
-          && !('object' === (typeof listener) && listener !== null
-               && ___.canCallPub(listener, 'call'))) {
-        throw new Error('Expected function not ' + typeof listener);
-      }
-      return function (event) {
-        return plugin_dispatchEvent___(
-            thisNode, event || window.event, ___.getId(imports), listener);
-      };
-    }
-    TameElement.prototype.addEventListener = function (name, listener, bubble) {
-      if (!this.editable___) { throw new Error(); }
-      name = String(name);
-      var wrappedListener = makeEventHandlerWrapper(this.node___, listener);
-      if (this.node___.addEventListener) {
-        this.node___.addEventListener(
-            name, wrappedListener,
-            bubble === void 0 ? void 0 : Boolean(bubble));
-      } else {
-        this.node___.attachEvent('on' + name, wrappedListener);
-      }
-    };
     TameElement.prototype.getOffsetLeft = function () {
       return this.node___.offsetLeft;
     };
@@ -789,10 +826,14 @@ attachDocumentStub = (function () {
     TameElement.prototype.toString = function () {
       return '<' + this.node___.tagName + '>';
     };
+    TameElement.prototype.addEventListener = tameAddEventListener;
+    TameElement.prototype.removeEventListener = tameRemoveEventListener;
+    TameElement.prototype.dispatchEvent = tameDispatchEvent;
     ___.ctor(TameElement, TameNode, 'TameElement');
     ___.all2(
        ___.grantTypedGeneric, TameElement.prototype,
-       ['addEventListener', 'getAttribute', 'setAttribute',
+       ['addEventListener', 'removeEventListener', 'dispatchEvent',
+        'getAttribute', 'setAttribute',
         'getClassName', 'setClassName', 'getId', 'setId',
         'getInnerHTML', 'setInnerHTML', 'updateStyle', 'getStyle', 'setStyle',
         'getTagName', 'getOffsetLeft', 'getOffsetTop', 'getOffsetWidth',
@@ -830,6 +871,7 @@ attachDocumentStub = (function () {
       TameElement.call(this, node, editable);
     }
     extend(TameAElement, TameElement);
+    nodeClasses.HTMLAnchorElement = TameAElement;
     TameAElement.prototype.getHref = function () {
       return this.node___.href;
     };
@@ -838,13 +880,15 @@ attachDocumentStub = (function () {
       return href;
     };
     ___.ctor(TameAElement, TameElement, 'TameAElement');
-    ___.all2(___.grantTypedGeneric, TameAElement.prototype, ['getHref', 'setHref']);
+    ___.all2(___.grantTypedGeneric, TameAElement.prototype,
+             ['getHref', 'setHref']);
     exportFields(TameAElement, ['href']);
 
     function TameFormElement(node, editable) {
       TameElement.call(this, node, editable);
     }
     extend(TameFormElement, TameElement);
+    nodeClasses.HTMLFormElement = TameFormElement;
     TameFormElement.prototype.getElements = function () {
       return tameNodeList(this.node___.elements, this.editable___, 'name');
     };
@@ -857,6 +901,7 @@ attachDocumentStub = (function () {
       TameElement.call(this, node, editable);
     }
     extend(TameInputElement, TameElement);
+    nodeClasses.HTMLInputElement = TameInputElement;
     TameInputElement.prototype.getValue = function () {
       var value = this.node___.value;
       return value === null || value === void 0 ? null : String(value);
@@ -864,7 +909,7 @@ attachDocumentStub = (function () {
     TameInputElement.prototype.setValue = function (newValue) {
       if (!this.editable___) { throw new Error(); }
       this.node___.value = (
-          newValue === null || newValue === void 0 ? '' : '' + value);
+          newValue === null || newValue === void 0 ? '' : '' + newValue);
       return newValue;
     };
     TameInputElement.prototype.focus = function () {
@@ -878,16 +923,20 @@ attachDocumentStub = (function () {
     TameInputElement.prototype.getForm = function () {
       return tameNode(this.node___.form, this.editable___);
     };
+    TameInputElement.prototype.getType = function () {
+      return this.getAttribute('type');
+    };
     ___.ctor(TameInputElement, TameElement, 'TameInputElement');
     ___.all2(___.grantTypedGeneric, TameInputElement.prototype,
-             ['getValue', 'setValue', 'focus', 'getForm']);
-    exportFields(TameInputElement, ['value', 'form']);
+             ['getValue', 'setValue', 'focus', 'getForm', 'getType']);
+    exportFields(TameInputElement, ['form', 'value', 'type']);
 
 
     function TameImageElement(node, editable) {
       TameElement.call(this, node, editable);
     }
     extend(TameImageElement, TameElement);
+    nodeClasses.HTMLImageElement = TameImageElement;
     TameImageElement.prototype.getSrc = function () {
       return this.node___.src;
     };
@@ -903,12 +952,15 @@ attachDocumentStub = (function () {
 
     function TameEvent(event) {
       this.event___ = event;
+      ___.stamp(tameEventTrademark, this, true);      
     }
+    nodeClasses.Event = TameEvent;
     TameEvent.prototype.getType = function () {
       return String(this.event___.type);
     };
     TameEvent.prototype.getTarget = function () {
-      return tameNode(this.event___.target, true);
+      var event = this.event___;
+      return tameNode(event.target || event.srcElement, true);
     };
     TameEvent.prototype.getPageX = function () {
       return Number(this.event___.pageX);
@@ -968,6 +1020,8 @@ attachDocumentStub = (function () {
       this.doc___ = doc;
       this.editable___ = editable;
     }
+    extend(TameDocument, TameNode);
+    nodeClasses.HTMLDocument = TameDocument;
     TameDocument.prototype.createElement = function (tagName) {
       if (!this.editable___) { throw new Error(); }
       tagName = String(tagName).toLowerCase();
@@ -979,7 +1033,7 @@ attachDocumentStub = (function () {
         var attribs = elementPolicies[tagName]([]);
         if (attribs) {
           for (var i = 0; i < attribs.length; i += 2) {
-            newEl.setAttribute(attribs[i], attribs[i + 1]);
+            bridal.setAttribute(newEl, attribs[i], attribs[i + 1]);
           }
         }
       }
@@ -1044,6 +1098,7 @@ attachDocumentStub = (function () {
       this.style___ = style;
       this.editable___ = editable;
     }
+    nodeClasses.Style = TameStyle;
     for (var styleProperty in css.properties) {
       if (!cajita.canEnumOwn(css.properties, styleProperty)) { continue; }
       (function (propertyName) {
@@ -1119,24 +1174,18 @@ attachDocumentStub = (function () {
      * @param {string} cssText a well-formed stylesheet production.
      */
     imports.emitCss___ = function (cssText) {
-      // Courtesy Stoyan Stefanov who documents the derivation of this at
-      // http://www.phpied.com/dynamic-script-and-style-elements-in-ie/ and
-      // http://yuiblog.com/blog/2007/06/07/style/
-      var styleSheet = document.createElement('style');
-      styleSheet.setAttribute('type', 'text/css');
-      if (styleSheet.styleSheet) {   // IE
-        styleSheet.styleSheet.cssText = cssText;
-      } else {                // the world
-        styleSheet.appendChild(document.createTextNode(cssText));
-      }
-      this.getCssContainer___().appendChild(styleSheet);
+      this.getCssContainer___().appendChild(
+          bridal.createStylesheet(document, cssText));
     };
     /** The node to which gadget stylesheets should be added. */
     imports.getCssContainer___ = function () {
       return document.getElementsByTagName('head')[0];
     };
 
-    var idClass = idSuffix.replace(/^-/, '');
+    if (!/^-/.test(idSuffix)) {
+      throw new Error('id suffix "' + idSuffix + '" must start with "-"');
+    }
+    var idClass = idSuffix.substring(1);
     /** A per-gadget class used to separate style rules. */
     imports.getIdClass___ = function () {
       return idClass;
@@ -1220,9 +1269,78 @@ attachDocumentStub = (function () {
       //        unavailable
     };
 
+    // Iterate over all node classes, assigning them to the Window object
+    // under their DOM Level 2 standard name.
+    cajita.forOwnKeys(nodeClasses, ___.simpleFunc(function(name, ctor) {
+      ___.primFreeze(ctor);
+      tameWindow[name] = ctor;
+      ___.grantRead(tameWindow, name);
+    }));
+
+    // TODO(ihab.awad): Build a more sophisticated virtual class hierarchy by
+    // creating a table of actual subclasses and instantiating tame nodes by
+    // table lookups. This will allow the client code to see a truly consistent
+    // DOM class hierarchy.
+    var defaultNodeClasses = [
+      'HTMLAppletElement',
+      'HTMLAreaElement',
+      'HTMLBaseElement',
+      'HTMLBaseFontElement',
+      'HTMLBodyElement',
+      'HTMLBRElement',
+      'HTMLButtonElement',
+      'HTMLDirectoryElement',
+      'HTMLDivElement',
+      'HTMLDListElement',
+      'HTMLFieldSetElement',
+      'HTMLFontElement',
+      'HTMLFrameElement',
+      'HTMLFrameSetElement',
+      'HTMLHeadElement',
+      'HTMLHeadingElement',
+      'HTMLHRElement',
+      'HTMLHtmlElement',
+      'HTMLIFrameElement',
+      'HTMLIsIndexElement',
+      'HTMLLabelElement',
+      'HTMLLegendElement',
+      'HTMLLIElement',
+      'HTMLLinkElement',
+      'HTMLMapElement',
+      'HTMLMenuElement',
+      'HTMLMetaElement',
+      'HTMLModElement',
+      'HTMLObjectElement',
+      'HTMLOListElement',
+      'HTMLOptGroupElement',
+      'HTMLOptionElement',
+      'HTMLParagraphElement',
+      'HTMLParamElement',
+      'HTMLPreElement',
+      'HTMLQuoteElement',
+      'HTMLScriptElement',
+      'HTMLSelectElement',
+      'HTMLStyleElement',
+      'HTMLTableCaptionElement',
+      'HTMLTableCellElement',
+      'HTMLTableColElement',
+      'HTMLTableElement',
+      'HTMLTableRowElement',
+      'HTMLTableSectionElement',
+      'HTMLTextAreaElement',
+      'HTMLTitleElement',
+      'HTMLUListElement'
+    ];
+
+    var defaultNodeClassCtor = ___.primFreeze(TameElement);
+    for (var i = 0; i < defaultNodeClasses.length; i++) {
+      tameWindow[defaultNodeClasses[i]] = defaultNodeClassCtor;
+      ___.grantRead(tameWindow, defaultNodeClasses[i]);
+    }
+
     var outers = imports.outers;
     if (___.isJSONContainer(outers)) {
-      // For Caja, attach window object members to outers instead so that the
+      // For Valija, attach window object members to outers instead so that the
       // the members of window show up as global variables as well.
       for (var k in tameWindow) {
         if (!___.hasOwnProp(outers, k) && ___.canEnumPub(tameWindow, k)) {
@@ -1265,8 +1383,8 @@ function plugin_dispatchEvent___(thisNode, event, pluginId, handler) {
     return ___.callPub(
         handler, 'call',
         [___.USELESS,
-         imports.tameNode___(thisNode, true),
-         imports.tameEvent___(event)]);
+         imports.tameEvent___(event),
+         imports.tameNode___(thisNode, true)]);
   } catch (ex) {
     if (ex && ex.cajitaStack___ && 'undefined' !== (typeof console)) {
       console.error('Event dispatch %s: %s',
