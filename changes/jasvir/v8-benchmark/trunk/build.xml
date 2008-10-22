@@ -364,7 +364,7 @@
   <target name="CajoledTests" depends="pluginc,dirs,CajoledValija">
     <transform>
       <include file="${tests}/com/google/caja/plugin/asserts.js"/>
-      <include file="${tests}/com/google/caja/plugin/domita_test.js"/>
+      <include file="${tests}/com/google/caja/plugin/domita_test_untrusted.html"/>
 
       <output file="${lib}/com/google/caja/plugin/domita_test_cajoled.js"
        language="cajita"/>
