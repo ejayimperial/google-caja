@@ -33,11 +33,11 @@ public class BenchmarkRunner extends CajaTestCase {
     double scoreUncajoled = runUncajoled(filename);
     double scoreCajoled = runCajoled(filename);
     System.out.println(
-        "VarZ:benchmark." + getName() + ".uncajoled=" + scoreUncajoled);
+        "VarZ:benchmark." + getName() + ".speed.uncajoled.nodebug.rhino.cold=" + scoreUncajoled);
     System.out.println(
-        "VarZ:benchmark." + getName() + ".cajoled=" + scoreCajoled);
+        "VarZ:benchmark." + getName() + ".speed.valija.nodebug.rhino.cold=" + scoreCajoled);
     System.out.println(
-        "VarZ:benchmark." + getName() + ".diff="
+        "VarZ:benchmark." + getName() + ".speeddiff.valija.nodebug.rhino.cold="
         + (scoreCajoled / scoreUncajoled));
   }
 
