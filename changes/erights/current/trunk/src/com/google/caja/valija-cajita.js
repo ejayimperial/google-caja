@@ -68,9 +68,12 @@ var valijaMaker = (function(outers) {
   /**
    * Simulates a monkey-patchable <tt>Function.prototype</tt>.
    * <p>
-   * The call() and apply() methods are specific functions on each
-   * Disfunction instance, in addition to being generic Disfunctions
-   * inherited from DisfunctionPrototype. 
+   * $v.dis(aFunction) creates a disfunction instance inheriting from
+   * DisfunctionPrototype, each with its own specific call() and
+   * apply() methods which capture and use the function provided to
+   * dis(). In addition, DisfunctionPrototype provides generic call(),
+   * apply(), and bind() disfunctions, in order to simulate
+   * Function.prototype.
    */
   var DisfunctionPrototype = cajita.beget(ObjectPrototype);
 
@@ -163,7 +166,7 @@ var valijaMaker = (function(outers) {
         if (k !== 'valueOf') {
           var v = cajita.getProtoPropertyValue(func, k);
           // TODO(erights): If the resolution of bug #814 is for
-          // 'typeof malfunction' to be 'function', then the following
+          // 'typeof aPseudoFunction' to be 'function', then the following
           // test should be rewritten. 
           if (typeof v === 'object' && 
               v !== null && 
@@ -327,13 +330,37 @@ var valijaMaker = (function(outers) {
     return result;
   }
 
+  /**
+   * The Valija code <tt>Function.prototype.call</tt> evaluates to a
+   * generic disfunction which can be applied to anything with a
+   * callable <tt>apply</tt> method, such as simple-functions,
+   * pseudo-functions, and disfunctions.
+   */
   DisfunctionPrototype.call = dis(function($dis, self, var_args) {
     return $dis.apply(self, Array.slice(arguments, 2));
   }, 'call');
+
+  /**
+   * The Valija code <tt>Function.prototype.apply</tt> evaluates to a
+   * generic disfunction which can be applied to anything with a
+   * callable <tt>apply</tt> method, such as simple-functions,
+   * pseudo-functions, and disfunctions.
+   * <p>
+   * Since other objects may inherit from DisfunctionPrototype, and
+   * since disfunctions actually do, this generic apply method
+   * requires that $dis provides a directly cajita-callable apply
+   * method, so that it will fail if it simply inherits this one.
+   */
   DisfunctionPrototype.apply = dis(function($dis, self, args) {
-    // TODO(erights): infinite regress detection
     return $dis.apply(self, args);
   }, 'apply');
+
+  /**
+   * The Valija code <tt>Function.prototype.bind</tt> evaluates to a
+   * generic disfunction which can be applied to anything with a
+   * callable <tt>apply</tt> method, such as simple-functions,
+   * pseudo-functions, and disfunctions.
+   */
   DisfunctionPrototype.bind = dis(function($dis, self, var_args) {
     var leftArgs = Array.slice(arguments, 2);
     return function(var_args) {

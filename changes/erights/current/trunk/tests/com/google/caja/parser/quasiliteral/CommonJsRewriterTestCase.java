@@ -226,34 +226,35 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
         "var x = [33];" +
         "x.foo = [].push;" +
         "x.foo.call(x, 44);" +
-        "x.toString();");
+        "x;");
     assertConsistent(
         "var x = [33];" +
         "x.foo = [].push;" +
         "x.foo.apply(x, [6,7,8]);" +
-        "x.toString();");
+        "x;");
     assertConsistent(
         "var x = [33];" +
         "x.foo = [].push;" +
         "x.foo.bind(x)(6,7,8);" +
-        "x.toString();");
+        "x;");
     assertConsistent(
         "var x = [33];" +
         "x.foo = [].push;" +
         "x.foo.bind(x,6)(7,8);" +
-        "x.toString();");
+        "x;");
     assertConsistent(
         "[].push.length;");
     assertConsistent(
         "var x = {blue:'green'};" +
         "x.foo = [].push;" +
         "x.foo.call(x, 44);" +
-        "x.toString();");
+        "delete x.foo;" +
+        "x;");
     assertConsistent(
         "var x = {blue:'green'};" +
         "x.foo = [].push;" +
         "x.foo.call(x, 44);" +
-        "cajita.getOwnPropertyNames(x).sort().toString();");
+        "cajita.getOwnPropertyNames(x).sort();");
   }
 
   public void testTypeofConsistent() throws Exception {
@@ -266,10 +267,17 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
                      "  (typeof (function () {}))," +
                      "  (typeof { x: 4.0 }.x)," +
                      "  (typeof { 2: NaN }[1 + 1])" +
-                     "].toString();");
+                     "];");
     rewriteAndExecute("assertEquals(typeof new RegExp('.*'), 'object');");
   }
 
+  /**
+   * Tests that callbacks from the Cajita runtime and from the tamed ES3 API
+   * to either Cajita or Valija code works.
+   * <p>
+   * The uncajoled branch of the tests below establish that the callbacks
+   * work uncajoled when they are tamed as simple frozen functions.
+   */
   public void testCommonCallback() throws Exception {
     assertConsistent(
         "'abc'.replace('b', function() {return 'xy';});");
@@ -278,21 +286,81 @@ public abstract class CommonJsRewriterTestCase extends RewriterTestCase {
         "var cmp = function(a, b) {" +
         "  return (a < b) ? +1 : (b < a) ? -1 : 0;" +
         "};" +
-        "v.sort(cmp).toString();");
-    rewriteAndExecute(
+        "v.sort(cmp);");
+    rewriteAndExecute("",
         "var a = [];\n" +
         "cajita.forOwnKeys({x:3}, function(k, v) {a.push(k, v);});" +
+        "assertEquals(a.toString(), 'x,3');",
+        "var a = [];\n" +
+        "cajita.forOwnKeys({x:3}, ___.simpleFrozenFunc(function(k, v) {a.push(k, v);}));" +
         "assertEquals(a.toString(), 'x,3');");
-    rewriteAndExecute(
+    rewriteAndExecute("",
         "var a = [];\n" +
         "cajita.forAllKeys({x:3}, function(k, v) {a.push(k, v);});" +
+        "assertEquals(a.toString(), 'x,3');",
+        "var a = [];\n" +
+        "cajita.forAllKeys({x:3}, ___.simpleFrozenFunc(function(k, v) {a.push(k, v);}));" +
         "assertEquals(a.toString(), 'x,3');");
     assertConsistent("(function(){}).bind.call(function(a, b) {return a + b;}, {}, 3)(4);");
   }
 
-  public void testPrivilegeEscalation() throws Exception {
-    assertConsistent(
-        "var defaultThis = typeof eval === 'undefined' ? cajita.USELESS : eval('this');" +
-        "assertTrue([].valueOf.apply(null, []) === defaultThis);");
+  /**
+   * Tests that neither Cajita nor Valija code can cause a privilege
+   * escalation by calling a tamed exophoric function with null as the
+   * this-value.
+   * <p>
+   * The uncajoled branch of the tests below establish that a null does cause
+   * a privilege escalation for normal non-strict JavaScript.
+   */
+  public void testNoPrivilegeEscalation() throws Exception {
+    rewriteAndExecute("",
+        "assertTrue([].valueOf.call(null) === cajita.USELESS);",
+        "assertTrue([].valueOf.call(null) === this);");
+    rewriteAndExecute("",
+        "assertTrue([].valueOf.apply(null, []) === cajita.USELESS);",
+        "assertTrue([].valueOf.apply(null, []) === this);");
+    rewriteAndExecute("",
+        "assertTrue([].valueOf.bind(null)() === cajita.USELESS);",
+        "assertTrue([].valueOf.bind(null)() === this);");
+  }
+
+  /**
+   * Tests that the special handling of null on tamed exophora works.
+   *
+   * The reification of tamed exophoric functions contains
+   * special cases for when the first argument to call, bind, or apply
+   * is null or undefined, in order to protect against privilege escalation.
+   * {@code #testNoPrivilegeEscalation()} tests that we do prevent the
+   * privilege escalation. Here, we test that this special case preserves
+   * correct functionality.
+   */
+  public void testTamedXo4aOkOnNull() throws Exception {
+    rewriteAndExecute("this.foo = 8;",
+
+        "var x = cajita.beget(cajita.USELESS);" +
+        "assertFalse(({foo: 7}).hasOwnProperty.call(null, 'foo'));" +
+        "assertTrue(cajita.USELESS.isPrototypeOf(x));" +
+        "assertTrue(({foo: 7}).isPrototypeOf.call(null, x));",
+
+        "assertTrue(({}).hasOwnProperty.call(null, 'foo'));" +
+        "assertFalse(({bar: 7}).hasOwnProperty.call(null, 'bar'));");
+    rewriteAndExecute("this.foo = 8;",
+
+        "var x = cajita.beget(cajita.USELESS);" +
+        "assertFalse(({foo: 7}).hasOwnProperty.apply(null, ['foo']));" +
+        "assertTrue(cajita.USELESS.isPrototypeOf(x));" +
+        "assertTrue(({foo: 7}).isPrototypeOf.apply(null, [x]));",
+
+        "assertTrue(({}).hasOwnProperty.apply(null, ['foo']));" +
+        "assertFalse(({bar: 7}).hasOwnProperty.apply(null, ['bar']));");
+    rewriteAndExecute("this.foo = 8;",
+
+        "var x = cajita.beget(cajita.USELESS);" +
+        "assertFalse(({foo: 7}).hasOwnProperty.bind(null)('foo'));" +
+        "assertTrue(cajita.USELESS.isPrototypeOf(x));" +
+        "assertTrue(({foo: 7}).isPrototypeOf.bind(null)(x));",
+
+        "assertTrue(({}).hasOwnProperty.bind(null)('foo'));" +
+        "assertFalse(({bar: 7}).hasOwnProperty.bind(null)('bar'));");
   }
 }

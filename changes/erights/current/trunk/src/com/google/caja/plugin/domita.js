@@ -737,16 +737,6 @@ attachDocumentStub = (function () {
       var sanitizedValue = rewriteAttribute(
           this.node___.tagName, name, type, value);
       if (sanitizedValue !== null) {
-        switch (name) {
-          case 'style':
-            if (typeof this.node___.style.cssText === 'string') {
-              // Setting the 'style' attribute does not work for IE, but
-              // setting cssText works on IE 6, Firefox, and IE 7.
-              this.node___.style.cssText = sanitizedValue;
-              return value;
-            }
-            break;
-        }
         bridal.setAttribute(this.node___, name, sanitizedValue);
       }
       return value;
@@ -919,7 +909,7 @@ attachDocumentStub = (function () {
     TameInputElement.prototype.setValue = function (newValue) {
       if (!this.editable___) { throw new Error(); }
       this.node___.value = (
-          newValue === null || newValue === void 0 ? '' : '' + value);
+          newValue === null || newValue === void 0 ? '' : '' + newValue);
       return newValue;
     };
     TameInputElement.prototype.focus = function () {

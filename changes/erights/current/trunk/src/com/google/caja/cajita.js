@@ -880,7 +880,7 @@ var ___;
    * <p>
    * If <tt>opt_Sup</tt> is provided, record that const.prototype
    * inherits from opt_Sup.prototype. This bookkeeping helps
-   * directConstrctor().
+   * directConstructor().
    * <p>
    * <tt>opt_name</tt>, if provided, should be the name of the constructor
    * function. Currently, this is used only to generate friendlier
@@ -923,7 +923,7 @@ var ___;
 
   /**
    * Enables first-class reification of exophoric functions as
-   * malfunctions -- frozen records with call, bind, and apply
+   * pseudo-functions -- frozen records with call, bind, and apply
    * simpleFunctions. 
    */
   function reifyIfXo4a(xfunc, opt_name) {
@@ -943,7 +943,7 @@ var ___;
         var args = arguments;
         if (self === null || self === undefined) { 
           self = USELESS;
-          args = [self].concat(Array.slice(args, 0));
+          args = [self].concat(Array.slice(args, 1));
         }
         return simpleFrozenFunc(xfunc.bind.apply(xfunc, args));
       }),
@@ -1067,7 +1067,7 @@ var ___;
 
   /**
    * Is <tt>funoid</tt> an applicator -- a non-function object with a
-   * callable <tt>apply</tt> method, such as a malfunction or
+   * callable <tt>apply</tt> method, such as a pseudo-function or
    * disfunction? 
    * <p>
    * If so, then it can be used as a function in some contexts.
@@ -1338,7 +1338,7 @@ var ___;
   /**
    * A unique value that should never be made accessible to untrusted
    * code, for distinguishing the absence of a result from any 
-   * returable result.
+   * returnable result.
    * <p>
    * See makeNewModuleHandler's getLastOutcome().
    */
@@ -1796,14 +1796,14 @@ var ___;
    * safely be called with its <tt>this</tt> bound to other objects.
    * <p>
    * Since exophoric functions are not first-class, reading
-   * proto[name] returns the corresponding malfunction -- a record
+   * proto[name] returns the corresponding pseudo-function -- a record
    * with simple-functions for its call, bind, and apply.
    */
   function grantGeneric(proto, name) {
     var func = xo4a(proto[name], name);
     grantCall(proto, name);
-    var malfunc = reifyIfXo4a(func, name);
-    useGetHandler(proto, name, function() { return malfunc; });
+    var pseudoFunc = reifyIfXo4a(func, name);
+    useGetHandler(proto, name, function() { return pseudoFunc; });
   }
 
   /**
@@ -1811,14 +1811,14 @@ var ___;
    * exophoric function.
    * <p>
    * Since exophoric functions are not first-class, reading
-   * proto[name] returns the corresponding malfunction -- a record
+   * proto[name] returns the corresponding pseudo-function -- a record
    * with simple-functions for its call, bind, and apply.
    */
   function handleGeneric(obj, name, func) {
     xo4a(func);
     useCallHandler(obj, name, func);
-    var malfunc = reifyIfXo4a(func, name);
-    useGetHandler(obj, name, function() { return malfunc; });
+    var pseudoFunc = reifyIfXo4a(func, name);
+    useGetHandler(obj, name, function() { return pseudoFunc; });
   }
 
   /**
@@ -2710,7 +2710,7 @@ var ___;
    * func.prototype, what would the value of x[name] be? If the value
    * associated with func.prototype[name] is an exophoric function
    * (resulting from taming a generic method), then return the
-   * corresponding malfunction. See reifyIfXo4a().
+   * corresponding pseudo-function. See reifyIfXo4a().
    */
   function getProtoPropertyValue(func, name) {
     return asFirstClass(readPub(func.prototype, name));
