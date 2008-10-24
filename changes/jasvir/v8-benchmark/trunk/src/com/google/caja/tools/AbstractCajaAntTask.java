@@ -37,7 +37,7 @@ import org.apache.tools.ant.Task;
  * @author mikesamuel@gmail.com
  */
 public abstract class AbstractCajaAntTask extends Task {
-  /** Inputs files to compile. */
+  /** Input files to compile. */
   private final List<Include> includes = new ArrayList<Include>();
   /** Files that the inputs might include. */
   private final List<Depend> depends = new ArrayList<Depend>();
@@ -53,7 +53,7 @@ public abstract class AbstractCajaAntTask extends Task {
   @Override
   public void execute() throws BuildException {
     if (includes.isEmpty()) {
-      throw new BuildException("caja task must have one or more <includes>s");
+      throw new BuildException("caja task must have one or more <include>s");
     }
     try {
       for (Include include : includes) { include.requireExecutable(); }
@@ -129,6 +129,7 @@ public abstract class AbstractCajaAntTask extends Task {
     return depend;
   }
   
+  /** Invoked reflectively whenever {@code <output>} is seen. */
   public final Output createOutput() {
     Output output = makeOutput();
     outputs.add(output);

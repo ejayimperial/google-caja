@@ -67,8 +67,7 @@
 # (7) Build some stuff
 #       $ ant
 # (8) Test stuff
-#       Right click on tests/com.google.caja/AllTests and select "Run As" > "JUnit Test"
-#          or
+#       Right click on project and select "Run As" > "JUnit Test"
 #       $ ant runtests
 #
 #

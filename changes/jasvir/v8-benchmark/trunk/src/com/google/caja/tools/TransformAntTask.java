@@ -35,7 +35,7 @@ import org.apache.tools.ant.BuildException;
  * cajoles input1.js and input2.css to foo/bar.js allowing the inputs to
  * reference {@code baz/boo.css}, e.g. via an {@code @import}.
  * <p>
- * A single {@code <cajole>} element can have multiple {@code <output>s}.
+ * A single {@code <transform>} element can have multiple {@code <output>s}.
  * <p>
  * The cajole element current serves no purpose, but can be extended to provide
  * options over a bunch of jobs, such as a debugging/production mode switch.

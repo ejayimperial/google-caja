@@ -73,7 +73,6 @@
   <path id="classpath.tests.compile">
     <pathelement path="${third_party}/java/junit/junit.jar"/>
     <pathelement path="${third_party}/java/json_simple/json_simple.jar"/>
-    <pathelement path="${third_party}/java/bsf/bsf.jar"/>
     <pathelement path="${third_party}/java/rhino/js.jar"/>
     <pathelement path="${third_party}/java/jsdk2.1/servlet.jar"/>
   </path>
@@ -366,9 +365,9 @@
       <include file="${tests}/com/google/caja/plugin/asserts.js"/>
       <include file="${tests}/com/google/caja/plugin/domita_test_untrusted.html"/>
 
-      <output file="${lib}/com/google/caja/plugin/domita_test_cajoled.js"
+      <output file="${lib}/com/google/caja/plugin/domita_test.co.js"
        language="cajita"/>
-      <output file="${lib}/com/google/caja/plugin/domita_test_valijad.js"
+      <output file="${lib}/com/google/caja/plugin/domita_test.vo.js"
        language="valija"/>
     </transform>
     <copy todir="${lib}">
@@ -378,7 +377,7 @@
   </target>
   <target name="CajoledValija" depends="pluginc">
     <transform>
-      <output file="${lib}/com/google/caja/plugin/valija-cajoled.js"
+      <output file="${lib}/com/google/caja/plugin/valija.co.js"
        language="cajita"/>
       <include file="${src}/com/google/caja/valija-cajita.js"/>
     </transform>
@@ -639,14 +638,14 @@
   <target name="lolcat-search" depends="dirs,pluginc,MinifiedJs"
    description="IM IN UR BUILD DEMOING UR GADGETZ">
     <transform>
-      <output file="${www}/lolcat-search/searchbox-cajoled.js"
+      <output file="${www}/lolcat-search/searchbox.co.js"
        language="cajita"/>
       <include file="${demos}/lolcat-search/searchbox.html"/>
       <depend file="${demos}/lolcat-search/searchbox.css"/>
       <depend file="${demos}/lolcat-search/searchbox.js"/>
     </transform>
     <transform>
-      <output file="${www}/lolcat-search/kittens-cajoled.js" language="cajita"/>
+      <output file="${www}/lolcat-search/kittens.co.js" language="cajita"/>
       <include file="${demos}/lolcat-search/kittens.html"/>
       <depend file="${demos}/lolcat-search/katTranzlator.js"/>
       <depend file="${demos}/lolcat-search/kittens.css"/>
@@ -707,7 +706,7 @@
       </fileset>
       <fileset dir="${lib}/com/google/caja/plugin">
         <include name="css-defs.js"/>
-        <include name="valija-cajoled.js"/>
+        <include name="valija.co.js"/>
       </fileset>
       <fileset dir="${third_party}/js/prettify">
         <include name="prettify.js"/>
@@ -741,7 +740,7 @@
        <script type="text/javascript" src="domita.js"></script>
        <script type="text/javascript" src="prettify.js"></script>
        <script type="text/javascript" src="testbed.js"></script>
-       <script type="text/javascript" src="valija-cajoled.js"></script>
+       <script type="text/javascript" src="valija.co.js"></script>
        ]]>
      </replacevalue>
     </replace>
@@ -760,7 +759,7 @@
       <include file="${src}/com/google/caja/plugin/domita.js"/>
       <include file="${third_party}/js/prettify/prettify.js"/>
       <include file="${src}/com/google/caja/opensocial/applet/testbed.js"/>
-      <include file="${lib}/com/google/caja/plugin/valija-cajoled.js"/>
+      <include file="${lib}/com/google/caja/plugin/valija.co.js"/>
     </transform>
   </target>
 
@@ -778,7 +777,7 @@
     <transform>
       <output file="${lib}/com/google/caja/demos/calendar/calendar-minified.js"
        language="javascript" renderer="minify"/>
-      <output file="${lib}/com/google/caja/demos/calendar/calendar-cajoled.js"
+      <output file="${lib}/com/google/caja/demos/calendar/calendar.vo.js"
        language="valija" debug="false"/>
       <include file="${demos}/calendar/util.js"/>
       <include file="${demos}/calendar/bitset.js"/>
@@ -815,7 +814,8 @@
       </fileset>
       <fileset dir="${lib}/com/google/caja/demos/calendar">
         <include name="*-minified.js"/>
-        <include name="*-cajoled.js"/>
+        <include name="*.vo.js"/>
+        <include name="*.co.js"/>
       </fileset>
       <fileset dir="${demos}/calendar">
         <include name="demo.html"/>
@@ -825,7 +825,7 @@
       <fileset dir="${lib}/com/google/caja/plugin">
         <include name="domita-minified.js"/>
         <include name="html-sanitizer-minified.js"/>
-        <include name="valija-cajoled.js"/>
+        <include name="valija.co.js"/>
       </fileset>
       <fileset dir="${third_party}/js/firebug">
         <include name="firebugx.js"/>

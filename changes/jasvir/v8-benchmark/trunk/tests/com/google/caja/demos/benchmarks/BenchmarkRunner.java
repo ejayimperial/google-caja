@@ -20,6 +20,9 @@ import com.google.caja.plugin.PluginMeta;
 import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.RhinoTestBed;
 
+/**
+ * Unit test which executes the V8 benchmark and collates the result for rendering with varz
+ * }
 public class BenchmarkRunner extends CajaTestCase {
   public void testRichards() throws Exception { runBenchmark("richards.js"); }
   public void testDeltaBlue() throws Exception { runBenchmark("deltablue.js"); }
@@ -29,6 +32,12 @@ public class BenchmarkRunner extends CajaTestCase {
     runBenchmark("earley-boyer.js");
   }
 
+  /**
+   * Runs the given benchmark
+   * Accumulates the result and formats it for consumption by varz
+   * Format:
+   * VarZ:benchmark.<benchmark name>.<speed|size>.<language>.<debug?>.<engine>.<primed?>
+   */
   private void runBenchmark(String filename) throws Exception {
     double scoreUncajoled = runUncajoled(filename);
     double scoreCajoled = runCajoled(filename);
@@ -87,7 +96,7 @@ public class BenchmarkRunner extends CajaTestCase {
             + "testImports.outers = ___.copy(___.sharedImports);\n"
             + "___.getNewModuleHandler().setImports(testImports);",
             getName() + "valija-setup"),
-        new RhinoTestBed.Input(getClass(), "../../plugin/valija-cajoled.js"),
+        new RhinoTestBed.Input(getClass(), "../../plugin/valija.co.js"),
         new RhinoTestBed.Input(
             // Set up the imports environment.
             ""
