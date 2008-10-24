@@ -429,9 +429,10 @@ attachDocumentStub = (function () {
     function tameNode(node, editable) {
       if (node === null || node === void 0) { return null; }
       // TODO(mikesamuel): make sure it really is a DOM node
-      // ...
+
       // If it is a node, apply bridal browser fix
       bridal.bind(node);
+      
       switch (node.nodeType) {
         case 1:  // Element
           var tagName = node.tagName.toLowerCase();
@@ -512,7 +513,7 @@ attachDocumentStub = (function () {
       name = String(name);
       var wrappedListener = makeEventHandlerWrapper(this.node___, listener);
       this.wrappedListeners___.push(wrappedListener);
-      addEventListener(this.node___, name, wrappedListener, useCapture);
+      bridal.addEventListener(this.node___, name, wrappedListener, useCapture);
     }
 
     // Implementation of EventTarget::removeEventListener
@@ -530,7 +531,7 @@ attachDocumentStub = (function () {
       }
       if (!wrappedListener) { return; }
       name = String(name);
-      this.node___.removeEventListener(name, wrappedListener, useCapture);
+      bridal.removeEventListener(this.node___, name, wrappedListener, useCapture);
     }
 
     // Implementation of EventTarget::dispatchEvent
@@ -740,17 +741,7 @@ attachDocumentStub = (function () {
       var sanitizedValue = rewriteAttribute(
           this.node___.tagName, name, type, value);
       if (sanitizedValue !== null) {
-        switch (name) {
-          case 'style':
-            if (typeof this.node___.style.cssText === 'string') {
-              // Setting the 'style' attribute does not work for IE, but
-              // setting cssText works on IE 6, Firefox, and IE 7.
-              this.node___.style.cssText = sanitizedValue;
-              return value;
-            }
-            break;
-        }
-        this.node___.setAttribute(name, sanitizedValue);
+        bridal.setAttribute(this.node___, name, sanitizedValue);
       }
       return value;
     };
@@ -922,7 +913,7 @@ attachDocumentStub = (function () {
     TameInputElement.prototype.setValue = function (newValue) {
       if (!this.editable___) { throw new Error(); }
       this.node___.value = (
-          newValue === null || newValue === void 0 ? '' : '' + value);
+          newValue === null || newValue === void 0 ? '' : '' + newValue);
       return newValue;
     };
     TameInputElement.prototype.focus = function () {
@@ -1046,7 +1037,7 @@ attachDocumentStub = (function () {
         var attribs = elementPolicies[tagName]([]);
         if (attribs) {
           for (var i = 0; i < attribs.length; i += 2) {
-            newEl.setAttribute(attribs[i], attribs[i + 1]);
+            bridal.setAttribute(newEl, attribs[i], attribs[i + 1]);
           }
         }
       }

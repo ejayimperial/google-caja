@@ -23,7 +23,18 @@
  */
 
 var bridal = (function() {
-                
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Private section
+  ////////////////////////////////////////////////////////////////////////////
+
+  var features = {
+    attachEvent:
+        !!(document.createElement('div').attachEvent),
+    setAttributeExtraParam:
+        new RegExp('Internet Explorer').test(navigator.appName)
+  };
+
   ////////////////////////////////////////////////////////////////////////////
   // Public section
   ////////////////////////////////////////////////////////////////////////////
@@ -38,7 +49,58 @@ var bridal = (function() {
     base2.DOM.bind(document);
   }
 
-    /**
+  /**
+   * Add an event listener function to an element.
+   *
+   * <p>Replaces
+   * W3C <code>Element::addEventListener</code> and
+   * IE <code>Element::attachEvent</code>.
+   *
+   * @param element a native DOM element.
+   * @param type a string identifying the event type.
+   * @param handler a function acting as an event handler.
+   * @param useCapture whether the user wishes to initiate capture.
+   */
+  function addEventListener(element, type, handler, useCapture) {
+    if (features.attachEvent) {
+      // TODO(ihab.awad): How do we emulate 'useCapture' here?
+      element.attachEvent('on' + type, handler);
+    } else {
+      element.addEventListener(
+          type, handler,
+          useCapture === void 0 ? void 0 : Boolean(useCapture));
+    }
+  }
+  function base2_addEventListener(element, type, handler, useCapture) {
+    element.addEventListener(type, handler, useCapture);
+  }
+
+  
+  /**
+   * Remove an event listener function from an element.
+   *
+   * <p>Replaces
+   * W3C <code>Element::removeEventListener</code> and
+   * IE <code>Element::detachEvent</code>.
+   *
+   * @param element a native DOM element.
+   * @param type a string identifying the event type.
+   * @param handler a function acting as an event handler.
+   * @param useCapture whether the user wishes to initiate capture.
+   */
+  function removeEventListener(element, type, handler, useCapture) {
+    if (features.attachEvent) {
+      // TODO(ihab.awad): How do we emulate 'useCapture' here?
+      element.detachEvent('on' + type, handler);
+    } else {
+      element.removeEventListener(type, handler, useCapture);
+    }
+  }
+  function base2_removeEventListener(element, type, handler, useCapture) {
+    element.removeEventListener(type, handler, useCapture);
+  }
+  
+  /**
    * Create a <code>style</code> element for a document containing some
    * specified CSS text. Does not add the element to the document: the client
    * may do this separately if desired.
@@ -64,9 +126,39 @@ var bridal = (function() {
     return styleSheet;
   }
 
+  /**
+   * Set an attribute on a DOM node.
+   *
+   * <p>Replaces DOM <code>Node::setAttribute</code>.
+   *
+   * @param node a DOM document.
+   * @param name a string containing the name of an attribute.
+   * @param value a string containing the value of an attribute.
+   */
+  function setAttribute(node, name, value) {
+    if (name === 'style'
+        && (typeof node.style.cssText) === 'string') {
+      // Setting the 'style' attribute does not work for IE, but
+      // setting cssText works on IE 6, Firefox, and IE 7.
+      node.style.cssText = value;
+    } else if (name === 'class') {
+      node.className = value;
+    } else if (features.setAttributeExtraParam) {
+      node.setAttribute(name, value, 0);
+    } else {
+      node.setAttribute(name, value);
+    }
+    return value;
+  }
+  function base2_setAttribute(node, name, value) {
+    node.setAttribute(name, value);
+  }
+
   return {
     bind: bind,
+    addEventListener: base2_addEventListener,
+    removeEventListener: base2_removeEventListener,
     createStylesheet: createStylesheet,
+    setAttribute: base2_setAttribute
   };
-
 })();
