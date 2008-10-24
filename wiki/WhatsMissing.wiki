@@ -56,7 +56,7 @@ Valija allows nested {{{function}}} declarations, but not yet with the block-sco
 
   * *{{{eval()}}}*
   * *{{{Function()}}} constructor*
-  * *All identifiers ending in an underscore ("{{{_}}}")*
+  * *All identifiers ending in a double underscore ("{{{__}}}")*
   * *Distinction between a function's invoke behavior and its {{{call}}} or {{{apply}}} methods* -- In Valija, we translate all calls into calls to the {{{call}}} or {{{apply}}} method of the invoked thing, which need not itself be a function.
   * *Function members inherited from {{{Function.prototype}}}* --- {{{call}}}, {{{bind}}}, {{{apply}}}, and {{{length}}} are normally inherited from {{{Function.prototype}}}. In Valija, they are on each disfunction instance.
 
