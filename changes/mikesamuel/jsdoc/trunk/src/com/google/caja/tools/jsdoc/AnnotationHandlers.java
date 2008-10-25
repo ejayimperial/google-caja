@@ -335,7 +335,7 @@ public final class AnnotationHandlers {
   }
 
   private static final Pattern QUALIFIED_NAME_PATTERN = Pattern.compile(
-      "(?<![\\p{Alnum}])"  // Does not start with a number
+      "(?<![\\p{Digit}])"  // Does not start with a number
       + "[_\\p{L}$][\\p{Alnum}$_]*"  // Identifiers separated by dots
       + "(?:\\s*\\.\\s*[_\\p{L}$][\\p{Alnum}$_]*)*");
   /**
@@ -353,13 +353,16 @@ public final class AnnotationHandlers {
         // If it looks like a qualified name, assume it is.
         if (QUALIFIED_NAME_PATTERN.matcher(value).matches()) {
           Expression target = toIdentifierChain(value, a.getFilePosition(), mq);
-          return (Expression) QuasiBuilder.substV(
-              "jsdoc___.linkTo(apiElement, apiElementName, @target, @name)",
-              "target", target,
-              "name", StringLiteral.valueOf(value));
+          if (target != null) {
+            return (Expression) QuasiBuilder.substV(
+                "jsdoc___.linkTo(apiElement, apiElementName, @target, @name)",
+                "target", target,
+                "name", StringLiteral.valueOf(value));
+          }
+        }
         // Else if it looks like a URL, assume it is.
-        } else if (value.indexOf('/') >= 0 || value.indexOf(':') > 0
-                   || value.indexOf('#') >= 0) {
+        if (value.indexOf('/') >= 0 || value.indexOf(':') > 0
+            || value.indexOf('#') >= 0 || value.endsWith(".js")) {
           URI uri = parseDocUri(value, schemes, a.getFilePosition(), mq);
           if (uri != null) {
             return StringLiteral.valueOf(uri.toString());

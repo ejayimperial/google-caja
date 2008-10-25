@@ -395,7 +395,8 @@ class JsdocRewriter {
 
   private ParseTreeNode documentReturnStmt(ReturnStmt js) {
     Expression doc = getDocCommentJson(js);
-    return new ReturnStmt(documentExpression(js.children().get(0), doc));
+    if (js.getReturnValue() == null) { return js; }
+    return new ReturnStmt(documentExpression(js.getReturnValue(), doc));
   }
 
   private Loop documentLoop(Loop js) {

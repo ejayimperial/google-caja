@@ -55,7 +55,7 @@ attachDocumentStub = (function () {
     array.length = from < 0 ? array.length + from : from;
     return array.push.apply(array, rest);
   }
-  
+
   var tameNodeTrademark = {};
   var tameEventTrademark = {};
 
@@ -169,25 +169,25 @@ attachDocumentStub = (function () {
    * Add setter and getter hooks so that the caja {@code node.innerHTML = '...'}
    * works as expected.
    */
-  function exportFields(ctor, fields) {
+  function exportFields(object, fields) {
     for (var i = fields.length; --i >= 0;) {
       var field = fields[i];
       var fieldUCamel = field.charAt(0).toUpperCase() + field.substring(1);
       var getterName = 'get' + fieldUCamel;
       var setterName = 'set' + fieldUCamel;
       var count = 0;
-      if (ctor.prototype.hasOwnProperty(getterName)) {
+      if (object[getterName]) {
         ++count;
         ___.useGetHandler(
-           ctor.prototype, field, ctor.prototype[getterName]);
+           object, field, object[getterName]);
       }
-      if (ctor.prototype.hasOwnProperty(setterName)) {
+      if (object[setterName]) {
         ++count;
         ___.useSetHandler(
-           ctor.prototype, field, ctor.prototype[setterName]);
+           object, field, object[setterName]);
       }
       if (!count) {
-        throw new Error('Failed to export field ' + field + ' on ' + ctor);
+        throw new Error('Failed to export field ' + field + ' on ' + object);
       }
     }
   }
@@ -379,7 +379,7 @@ attachDocumentStub = (function () {
           var fnName = match[2];
           var pluginId = ___.getId(imports);
           value = (doesReturn ? 'return ' : '') + 'plugin_dispatchEvent___('
-              + 'this, event || window.event, ' + pluginId + ', "'
+              + 'this, event, ' + pluginId + ', "'
               + fnName + '");';
           if (attribName === 'onsubmit') {
             value = 'try { ' + value + ' } finally { return false; }';
@@ -496,7 +496,7 @@ attachDocumentStub = (function () {
       }
       function wrapper(event) {
         return plugin_dispatchEvent___(
-            thisNode, event || window.event, ___.getId(imports), listener);
+            thisNode, event, ___.getId(imports), listener);
       }
       wrapper.originalListener___ = listener;
       return wrapper;
@@ -540,15 +540,24 @@ attachDocumentStub = (function () {
     // will be exposed to the client.
     var nodeClasses = {};
 
+    var tameNodeFields = [
+        'nodeType', 'nodeValue', 'nodeName', 'firstChild',
+        'lastChild', 'nextSibling', 'previousSibling', 'parentNode',
+        'childNodes'];
+
     /**
      * Base class for a Node wrapper.  Do not create directly -- use the
      * tameNode factory instead.
      * @constructor
      */
     function TameNode(node, editable) {
+      if (!node) {
+        throw new Error('Creating tame node with undefined native delegate');
+      }
       this.node___ = node;
       this.editable___ = editable;
       ___.stamp(tameNodeTrademark, this, true);
+      exportFields(this, tameNodeFields);
     }
     nodeClasses.Node = TameNode;
     TameNode.prototype.getNodeType = function () {
@@ -630,12 +639,7 @@ attachDocumentStub = (function () {
         'appendChild', 'insertBefore', 'removeChild', 'replaceChild',
         'getFirstChild', 'getLastChild', 'getNextSibling', 'getPreviousSibling',
         'getElementsByTagName'];
-    var tameNodeFields = [
-        'nodeType', 'nodeValue', 'nodeName', 'firstChild',
-        'lastChild', 'nextSibling', 'previousSibling', 'parentNode',
-        'childNodes'];
     ___.all2(___.grantTypedGeneric, TameNode.prototype, tameNodeMembers);
-    exportFields(TameNode, tameNodeFields);
 
     function TameOpaqueNode(node, editable) {
       TameNode.call(this, node, editable);
@@ -658,11 +662,11 @@ attachDocumentStub = (function () {
       }
     }
     ___.all2(___.grantTypedGeneric, TameOpaqueNode.prototype, tameNodeMembers);
-    exportFields(TameOpaqueNode, tameNodeFields);
 
     function TameTextNode(node, editable) {
       assert(node.nodeType === 3);
       TameNode.call(this, node, editable);
+      exportFields(this, ['nodeValue', 'data']);
     }
     extend(TameTextNode, TameNode);
     nodeClasses.TextNode = TameTextNode;
@@ -679,7 +683,6 @@ attachDocumentStub = (function () {
     ___.ctor(TameTextNode, void 0, 'TameNode');
     ___.all2(___.grantTypedGeneric, TameTextNode.prototype,
              ['setNodeValue', 'getData', 'setData']);
-    exportFields(TameTextNode, ['nodeValue', 'data']);
 
     function TameCommentNode(node, editable) {
       assert(node.nodeType === 8);
@@ -695,6 +698,9 @@ attachDocumentStub = (function () {
     function TameElement(node, editable) {
       assert(node.nodeType === 1);
       TameNode.call(this, node, editable);
+      exportFields(this,
+                   ['className', 'id', 'innerHTML', 'tagName', 'style',
+                    'offsetLeft', 'offsetTop', 'offsetWidth', 'offsetHeight']);
     }
     extend(TameElement, TameNode);
     nodeClasses.Element = TameElement;
@@ -737,16 +743,6 @@ attachDocumentStub = (function () {
       var sanitizedValue = rewriteAttribute(
           this.node___.tagName, name, type, value);
       if (sanitizedValue !== null) {
-        switch (name) {
-          case 'style':
-            if (typeof this.node___.style.cssText === 'string') {
-              // Setting the 'style' attribute does not work for IE, but
-              // setting cssText works on IE 6, Firefox, and IE 7.
-              this.node___.style.cssText = sanitizedValue;
-              return value;
-            }
-            break;
-        }
         bridal.setAttribute(this.node___, name, sanitizedValue);
       }
       return value;
@@ -850,9 +846,6 @@ attachDocumentStub = (function () {
         'getInnerHTML', 'setInnerHTML', 'updateStyle', 'getStyle', 'setStyle',
         'getTagName', 'getOffsetLeft', 'getOffsetTop', 'getOffsetWidth',
         'getOffsetHeight']);
-    exportFields(TameElement,
-                 ['className', 'id', 'innerHTML', 'tagName', 'style',
-                  'offsetLeft', 'offsetTop', 'offsetWidth', 'offsetHeight']);
 
     // Register set handlers for onclick, onmouseover, etc.
     (function () {
@@ -881,6 +874,7 @@ attachDocumentStub = (function () {
 
     function TameAElement(node, editable) {
       TameElement.call(this, node, editable);
+      exportFields(this, ['href']);
     }
     extend(TameAElement, TameElement);
     nodeClasses.HTMLAnchorElement = TameAElement;
@@ -894,26 +888,52 @@ attachDocumentStub = (function () {
     ___.ctor(TameAElement, TameElement, 'TameAElement');
     ___.all2(___.grantTypedGeneric, TameAElement.prototype,
              ['getHref', 'setHref']);
-    exportFields(TameAElement, ['href']);
 
+    // http://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-40002357
     function TameFormElement(node, editable) {
       TameElement.call(this, node, editable);
+      exportFields(this, ['action', 'elements', 'method', 'target']);
     }
     extend(TameFormElement, TameElement);
     nodeClasses.HTMLFormElement = TameFormElement;
+    TameFormElement.prototype.getAction = function () {
+      return this.getAttribute('action');
+    };
     TameFormElement.prototype.getElements = function () {
       return tameNodeList(this.node___.elements, this.editable___, 'name');
     };
+    TameFormElement.prototype.getMethod = function () {
+      return this.getAttribute('method');
+    };
+    TameFormElement.prototype.getTarget = function () {
+      return this.getAttribute('target');
+    };
+    TameFormElement.prototype.reset = function () {
+      if (!this.editable___) { throw new Error(); }
+      this.node___.reset();
+    };
+    TameFormElement.prototype.submit = function () {
+      if (!this.editable___) { throw new Error(); }
+      this.node___.submit();
+    };
     ___.ctor(TameFormElement, TameElement, 'TameFormElement');
-    ___.all2(___.grantTypedGeneric, TameFormElement.prototype, ['getElements']);
-    exportFields(TameFormElement, ['elements']);
+    ___.all2(___.grantTypedGeneric, TameFormElement.prototype,
+             ['reset', 'submit']);
 
 
     function TameInputElement(node, editable) {
       TameElement.call(this, node, editable);
+      exportFields(this, ['checked', 'form', 'value', 'type']);
     }
     extend(TameInputElement, TameElement);
     nodeClasses.HTMLInputElement = TameInputElement;
+    TameInputElement.prototype.getChecked = function () {
+      return this.node___.checked;
+    };
+    TameInputElement.prototype.setChecked = function (checked) {
+      if (!this.editable___) { throw new Error(); }
+      return (this.node___.checked = !!checked);
+    };
     TameInputElement.prototype.getValue = function () {
       var value = this.node___.value;
       return value === null || value === void 0 ? null : String(value);
@@ -941,11 +961,11 @@ attachDocumentStub = (function () {
     ___.ctor(TameInputElement, TameElement, 'TameInputElement');
     ___.all2(___.grantTypedGeneric, TameInputElement.prototype,
              ['getValue', 'setValue', 'focus', 'getForm', 'getType']);
-    exportFields(TameInputElement, ['form', 'value', 'type']);
 
 
     function TameImageElement(node, editable) {
       TameElement.call(this, node, editable);
+      exportFields(this, ['src']);
     }
     extend(TameImageElement, TameElement);
     nodeClasses.HTMLImageElement = TameImageElement;
@@ -959,12 +979,14 @@ attachDocumentStub = (function () {
     ___.ctor(TameImageElement, TameElement, 'TameImageElement');
     ___.all2(___.grantTypedGeneric, TameImageElement.prototype,
              ['getSrc', 'setSrc']);
-    exportFields(TameImageElement, ['src']);
 
 
     function TameEvent(event) {
       this.event___ = event;
-      ___.stamp(tameEventTrademark, this, true);      
+      ___.stamp(tameEventTrademark, this, true);
+      exportFields(this, ['type', 'target', 'pageX', 'pageY', 'altKey',
+                          'ctrlKey', 'metaKey', 'shiftKey', 'button',
+                          'clientX', 'clientY', 'keyCode', 'which']);
     }
     nodeClasses.Event = TameEvent;
     TameEvent.prototype.getType = function () {
@@ -1023,9 +1045,6 @@ attachDocumentStub = (function () {
               'getAltKey', 'getCtrlKey', 'getMetaKey', 'getShiftKey',
               'getButton', 'getClientX', 'getClientY',
               'getKeyCode', 'getWhich']);
-    exportFields(TameEvent, ['type', 'target', 'pageX', 'pageY', 'altKey',
-                             'ctrlKey', 'metaKey', 'shiftKey', 'button',
-                             'clientX', 'clientY', 'keyCode', 'which']);
 
 
     function TameDocument(doc, editable) {
@@ -1062,9 +1081,13 @@ attachDocumentStub = (function () {
       return tameNode(node, this.editable___);
     };
     TameDocument.prototype.toString = function () { return '[Fake Document]'; };
+    TameDocument.prototype.write = function(text) {
+      // TODO(ihab.awad): Needs implementation
+      cajita.log('Called document.write() with: ' + text);
+    };
     ___.ctor(TameDocument, void 0, 'TameDocument');
     ___.all2(___.grantTypedGeneric, TameDocument.prototype,
-             ['createElement', 'createTextNode', 'getElementById']);
+             ['createElement', 'createTextNode', 'getElementById', 'write']);
 
     imports.tameNode___ = tameNode;
     imports.tameEvent___ = function (event) { return new TameEvent(event); };
@@ -1248,11 +1271,6 @@ attachDocumentStub = (function () {
     // obeyed.
     var tameWindow = {
       document: imports.document,
-      top: tameWindow,
-      self: tameWindow,
-      opener: tameWindow,
-      parent: tameWindow,
-      window: tameWindow,
       location: tameLocation,
       navigator: tameNavigator,
       setTimeout: tameSetTimeout,
@@ -1280,6 +1298,10 @@ attachDocumentStub = (function () {
       // pageXOffset, pageYOffset: used if document.body.scroll{Left,Top}
       //        unavailable
     };
+
+    // Attach reflexive properties to 'window' object
+    tameWindow.top = tameWindow.self = tameWindow.opener = tameWindow.parent
+        = tameWindow.window = tameWindow;
 
     // Iterate over all node classes, assigning them to the Window object
     // under their DOM Level 2 standard name.
@@ -1374,6 +1396,7 @@ attachDocumentStub = (function () {
  * Function called from rewritten event handlers to dispatch an event safely.
  */
 function plugin_dispatchEvent___(thisNode, event, pluginId, handler) {
+  event = (event || window.event);
   (typeof console !== 'undefined' && console.log) &&
   console.log(
       'Dispatch %s event thisNode=%o, event=%o, pluginId=%o, handler=%o',
