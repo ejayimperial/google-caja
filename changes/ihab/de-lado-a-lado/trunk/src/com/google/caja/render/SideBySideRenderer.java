@@ -138,6 +138,7 @@ public abstract class SideBySideRenderer implements TokenConsumer {
     String[] lines = originalSourceLines.get(src);
     if (lines == null || startLine >= lines.length) { return ""; }
     endLine = Math.min(endLine, lines.length - 1);
+    startLine = Math.min(startLine, endLine);
 
     return Join.join(
         "\n", Arrays.asList(lines).subList(startLine, endLine + 1));
