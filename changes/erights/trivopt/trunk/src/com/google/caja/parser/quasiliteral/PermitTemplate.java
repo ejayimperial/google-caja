@@ -81,6 +81,7 @@ final class PermitTemplate {
           "canReadPub", CanCall,
           "readPub", CanCall,
           "hasOwnPropertyOf", CanCall,
+          "readOwn", CanCall,
           "canEnumPub", CanCall,
           "canEnumOwn", CanCall,
           "canInnocentEnum", CanCall,

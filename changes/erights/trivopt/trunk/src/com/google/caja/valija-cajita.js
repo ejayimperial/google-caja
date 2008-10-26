@@ -231,18 +231,20 @@ var valijaMaker = (function(outers) {
     }
   }
 
+  var pumpkin = {};
+
   /**
    * Handle Valija <tt><i>obj</i>[<i>name</i>]</tt>.
    */
   function read(obj, name) {
+    var result = cajita.readOwn(obj, name, pumpkin);
+    if (result !== pumpkin) { return result; }
+
     if (typeof obj === 'function') {
       return getShadow(obj)[name];
     }
     if (obj === null || obj === undefined) {
       throw new TypeError('Cannot read property "' + name + '" from ' + obj);
-    }
-    if (cajita.hasOwnPropertyOf(obj, name)) {
-      return obj[name];
     }
 
     // BUG TODO(erights): figure out why things break when the

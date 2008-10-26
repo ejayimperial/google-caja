@@ -1717,6 +1717,27 @@ public class CajitaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
+          name="callDeclaredFunc",
+          synopsis="When calling a declared function name, leave the freezing to asSimpleFunc.",
+          reason="",
+          matches="@fname(@as*)",
+          substitutes="___.asSimpleFunc(@fname)(@as*)")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null &&
+            scope.isDeclaredFunctionReference(bindings.get("fname"))) {
+          return QuasiBuilder.substV(
+              "___.asSimpleFunc(@fname)(@as*)",
+              "fname", bindings.get("fname"),
+              "as", expandAll(bindings.get("as"), scope, mq));
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
           name="callFunc",
           synopsis="",
           reason="",
