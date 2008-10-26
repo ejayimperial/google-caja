@@ -377,6 +377,8 @@ var valijaMaker = (function(outers) {
   }
 
   function readOuter(name) {
+    var result = cajita.readOwn(own, name, pumpkin);
+    if (result !== pumpkin) { return result; }
     if (canReadRev(name, outers)) {
       return read(outers, name);
     } else {
