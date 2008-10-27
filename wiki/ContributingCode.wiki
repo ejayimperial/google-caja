@@ -1,0 +1,108 @@
+#summary How to contribute to code to Caja
+
+= Introduction =
+
+To contribute to Caja, you will need to install python2.4 and gvn.
+
+= Directory structure =
+
+Use the following directory structure for your changes:
+
+{{{
+ svn-changes
+     |
+     +----my-change-1
+     |        |
+     |        +----google-caja
+     |                 |
+     |                 +----src
+     |
+     +----my-change-2
+              |
+              +----google-caja
+                       |
+                       +----src
+}}}
+
+In this way, the myvn script you will use for creating and submitting changelists can provide a changelist name for you for common commands.  For example, `myvn change` will behave like `gvn change -c my-change-1` if run under `svn-changes/my-change-1/google-caja` as will other gvn commands like `mail`, `describe` and `snapshot` unless a changelist name is explicitly provided.
+
+= Life of a Changelist =
+
+  # Create a client directory
+{{{
+$ mkdir -p svn-changes/my-change-name
+}}}
+  # Checkout the src
+{{{
+$ cd svn-changes/my-change-name
+$ myvn checkout
+$ cd google-caja/
+}}}
+  # Muck around with some source files
+{{{
+      See Eclipse steps below
+}}}
+  # Prepare a changelist
+{{{
+$ myvn change
+}}}
+    Should pop up an editor.  Check the `EDITOR`, or `SVNEDITOR` environment
+    variables if it doesn't
+  # Send it off for review
+{{{
+$ myvn mail --reviewers your-friendly-neighborhood-cajador@gmail.com
+}}}
+    This will automatically CC google-caja-discuss
+  # File a bug to track the review
+{{{
+$ myvn bug
+}}}
+    and copy and paste the url into your browser.
+  # Update your changes based on feedback and snapshot
+{{{
+$ myvn snapshot
+}}}
+  # Maybe add or remove files
+{{{
+$ myvn change
+}}}
+  # Commit the change
+{{{
+$ myvn submit
+}}}
+  # Show the change description
+{{{
+$ myvn describe
+}}}
+  # Delete the change branch
+{{{
+$ myvn change --delete
+}}}
+
+= Eclipse =
+
+  # Generate the project
+{{{
+$ myvn eclipse
+}}}
+  # Open Eclipse
+  # Choose New Java Project
+  # From Existing Source
+  # Enter the .../svn-changes/my-change-1/google-caja/ path
+  # Finish
+  # Build some stuff
+{{{
+$ ant
+}}}
+  # Test stuff
+    Right click on project and select "Run As" > "JUnit Test"
+{{{
+$ ant runtests
+}}}
+
+= Other Commands =
+
+`changed`      -  files changed in the snapshotted CL.  Pipeable to xargs
+`diffstats`    -  number of lines added/changed/removed
+`files`        -  files changed in svn.  Pipeable to xargs 
+`filetypes`    -  sets `svn:mime-type` of modified files based on file suffix
