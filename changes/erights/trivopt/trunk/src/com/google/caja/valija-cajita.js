@@ -243,7 +243,7 @@ var valijaMaker = (function(outers) {
     if (typeof obj === 'function') {
       return getShadow(obj)[name];
     }
-    if (obj === null || obj === undefined) {
+    if (obj === null || obj === void 0) {
       throw new TypeError('Cannot read property "' + name + '" from ' + obj);
     }
 

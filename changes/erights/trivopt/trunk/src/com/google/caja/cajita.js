@@ -969,16 +969,16 @@ var ___;
     }
     var result = {
       call: simpleFrozenFunc(function(self, var_args) {
-        if (self === null || self === undefined) { self = USELESS; }
+        if (self === null || self === void 0) { self = USELESS; }
         return xfunc.apply(self, Array.slice(arguments, 1));
       }),
       apply: simpleFrozenFunc(function(self, args) {
-        if (self === null || self === undefined) { self = USELESS; }
+        if (self === null || self === void 0) { self = USELESS; }
         return xfunc.apply(self, args);
       }),
       bind: simpleFrozenFunc(function(self, var_args) {
         var args = arguments;
-        if (self === null || self === undefined) { 
+        if (self === null || self === void 0) { 
           self = USELESS;
           args = [self].concat(Array.slice(args, 1));
         }
@@ -1204,10 +1204,10 @@ var ___;
    */
   function canReadPub(obj, name) {
     name = String(name);
-    if (endsWith__.test(name)) { return false; }
     if (obj === null) { return false; }
     if (obj === void 0) { return false; }
-    if (canRead(obj, name)) { return true; }
+    if (obj[name + '_canRead___']) { return true; }
+    if (endsWith__.test(name)) { return false; }
     if (name === 'toString') { return false; }
     if (!isJSONContainer(obj)) { return false; }
     if (!myOriginalHOP.call(obj, name)) { return false; }
@@ -1379,9 +1379,11 @@ var ___;
    * canReadProp. Otherwise according to whitelisting.
    */
   function canEnumPub(obj, name) {
+    if (obj === null) { return false; }
+    if (obj === void 0) { return false; }
     name = String(name);
+    if (obj[name + '_canEnum___']) { return true; }
     if (endsWith__.test(name)) { return false; }
-    if (canEnum(obj, name)) { return true; }
     if (!isJSONContainer(obj)) { return false; }
     if (!myOriginalHOP.call(obj, name)) { return false; }
     fastpathEnumOnly(obj, name);
@@ -1512,12 +1514,12 @@ var ___;
    * which we can memoize.
    */
   function canCallPub(obj, name) {
-    name = String(name);
-    if (endsWith__.test(name)) { return false; }
     if (obj === null) { return false; }
     if (obj === void 0) { return false; }
+    name = String(name);
     if (canCall(obj, name)) { return true; }
     if (!canReadPub(obj, name)) { return false; }
+    if (endsWith__.test(name)) { return false; }
     if (name === 'toString') { return false; }
     var func = obj[name];
     if (!isSimpleFunc(func) && !isXo4aFunc(func)) {
@@ -1532,9 +1534,8 @@ var ___;
    */
   function callPub(obj, name, args) {
     name = String(name);
-    if (canCallPub(obj, name)) {
-      var meth = obj[name];
-      return meth.apply(obj, args);
+    if ((obj && obj[name + '_canCall___']) || canCallPub(obj, name)) {
+      return obj[name].apply(obj, args);
     }
     if (obj.handleCall___) { return obj.handleCall___(name, args); }
     fail('not callable:', debugReference(obj), '.', name);
@@ -1557,8 +1558,8 @@ var ___;
    */
   function canSetPub(obj, name) {
     name = String(name);
-    if (endsWith__.test(name)) { return false; }
     if (canSet(obj, name)) { return true; }
+    if (endsWith__.test(name)) { return false; }
     if (name === 'valueOf') { return false; }
     if (name === 'toString') { return false; }
     return !isFrozen(obj) && isJSONContainer(obj);
@@ -1573,7 +1574,9 @@ var ___;
       return obj[name] = val;
     }
     name = String(name);
-    if (canSetPub(obj, name)) {
+    if (obj && obj[name + '_canSet___']) {
+      return obj[name] = val;
+    } else if (canSetPub(obj, name)) {
       fastpathSet(obj, name);
       return obj[name] = val;
     } else {
