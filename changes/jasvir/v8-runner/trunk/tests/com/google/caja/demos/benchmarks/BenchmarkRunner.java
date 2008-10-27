@@ -21,7 +21,7 @@ import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.RhinoTestBed;
 
 /**
- * Unit test which executes the V8 benchmark and collates the result for rendering with varz 
+ * Unit test which executes the V8 benchmark and collates the result for rendering with varz
  */
 public class BenchmarkRunner extends CajaTestCase {
   public void testRichards() throws Exception { runBenchmark("richards.js"); }

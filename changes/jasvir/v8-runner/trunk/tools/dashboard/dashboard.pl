@@ -109,8 +109,8 @@ our $ANT = "$ANT_HOME/bin/ant";              requireExe $ANT;
 our $JAVA_HOME = $ENV{JAVA_HOME} or "/usr/lib/jvm/java-6-sun/";
                                              requireDir $JAVA_HOME;
 our $JAVA = "$JAVA_HOME/bin/java";           requireExe $JAVA;
-our $SVN = "/opt/googlesvn/bin/svn";                   requireExe $SVN;
-our $SVNVERSION = "/opt/googlesvn/bin/svnversion";     requireExe $SVNVERSION;
+our $SVN = "/usr/bin/svn";                   requireExe $SVN;
+our $SVNVERSION = "/usr/bin/svnversion";     requireExe $SVNVERSION;
 our $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
 
 
