@@ -1,5 +1,5 @@
+#summary How to install Caja and run it from the command line.
 #labels Phase-Deploy,Featured
- #summary How to install Caja and run it from the command line.
 
 = Getting Started with Caja =
 
@@ -114,6 +114,12 @@ Now create an eclipse project:
 {{{
 $ ./tools/myvn eclipse
 }}}
+
+You may have to create {{{~/.gvn/config}}} containing:
+
+`username=`_`your code.google.com user name`_
+
+before this works.
 
 From inside eclipse, import the project from the File -> Import -> Existing Project into Workspace option.  Select the Caja checkout directory as the root directory and import the project.
 
