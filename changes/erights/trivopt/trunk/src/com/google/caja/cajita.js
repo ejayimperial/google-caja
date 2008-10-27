@@ -55,7 +55,7 @@ TypeError.typeTag___ = 'TypeError';
 URIError.typeTag___ = 'URIError';
 
 
-if (Array.prototype.indexOf === (void 0)) {
+if (Array.prototype.indexOf === void 0) {
   /**
    * Returns the first index at which the specimen is found (by
    * "===") or -1 if none.
@@ -71,7 +71,7 @@ if (Array.prototype.indexOf === (void 0)) {
   };
 }
 
-if (Array.prototype.lastIndexOf === (void 0)) {
+if (Array.prototype.lastIndexOf === void 0) {
   /**
    * Returns the last index at which the specimen is found (by
    * "===") or -1 if none.
@@ -86,7 +86,7 @@ if (Array.prototype.lastIndexOf === (void 0)) {
   };
 }
 
-if (Date.prototype.toISOString === (void 0)) {
+if (Date.prototype.toISOString === void 0) {
   /** In anticipation of ES3.1 */
   Date.prototype.toISOString = function() {
     function f(n) {
@@ -101,19 +101,19 @@ if (Date.prototype.toISOString === (void 0)) {
   };
 }
 
-if (Date.prototype.toJSON === (void 0)) {
+if (Date.prototype.toJSON === void 0) {
   /** In anticipation of ES3.1 */
   Date.prototype.toJSON = Date.prototype.toISOString;
 }
 
-if (Array.slice === (void 0)) {
+if (Array.slice === void 0) {
   /** In anticipation of ES4, and because it's useful. */
   Array.slice = function(self, start, end) {
     return Array.prototype.slice.call(self, start || 0, end || self.length);
   };
 }
 
-if (Function.prototype.bind === (void 0)) {
+if (Function.prototype.bind === void 0) {
   /**
    * In anticipation of ES3.1.
    * <p>
@@ -227,7 +227,7 @@ var ___;
    * then compares if they are otherwise computationally identical.
    */
   function same(x, y) {
-    if (x === null || x === (void 0) || y === null || y === (void 0)) {
+    if (x === null || x === void 0 || y === null || y === void 0) {
       return x === y;
     }
     return x.getIdent___() === y.getIdent___();
@@ -385,7 +385,7 @@ var ___;
      */
     handleRead: function(obj, name) {
       log('Not readable: (' + debugReference(obj) + ').' + name);
-      return (void 0);
+      return void 0;
     },
 
     /**
@@ -482,19 +482,19 @@ var ___;
    * If obj is a function or not an object, return undefined.
    */
   function directConstructor(obj) {
-    if (obj === null) { return (void 0); }
-    if (obj === void 0) { return (void 0); }
+    if (obj === null) { return void 0; }
+    if (obj === void 0) { return void 0; }
     if (typeOf(obj) === 'function') {
       // Since functions return undefined,
       // directConstructor() doesn't provide access to the
       // forbidden Function constructor.
-      return (void 0);
+      return void 0;
     }
     obj = Object(obj);
     var result;
     if (myOriginalHOP.call(obj, 'proto___')) {
       var proto = obj.proto___;
-      if (proto === null) { return (void 0); }
+      if (proto === null) { return void 0; }
       if (isPrototypical(proto)) {
         result = proto.constructor;
       } else {
@@ -559,7 +559,7 @@ var ___;
    */
   function isDirectInstanceOf(obj, ctor) {
     var constr = directConstructor(obj);
-    if (constr === (void 0)) { return false; }
+    if (constr === void 0) { return false; }
     return getFuncCategory(constr) === getFuncCategory(ctor);
   }
 
@@ -605,7 +605,7 @@ var ___;
    */
   function isJSONContainer(obj) {
     var constr = directConstructor(obj);
-    if (constr === (void 0)) { return false; }
+    if (constr === void 0) { return false; }
     var typeTag = constr.typeTag___;
     if (typeTag !== 'Object' && typeTag !== 'Array') { return false; }
     return !isPrototypical(obj);
@@ -749,10 +749,7 @@ var ___;
    * Tests whether the fast-path canRead flag is set.
    */
   function canRead(obj, name)   {
-    if (obj === (void 0) || obj === null) {
-      throw new TypeError(
-          'canRead called with empty target for name: ' + name);
-    }
+    if (obj === void 0 || obj === null) { return false; }
     return !! obj[name + '_canRead___'];
   }
 
@@ -760,10 +757,7 @@ var ___;
    * Tests whether the fast-path canEnum flag is set.
    */
   function canEnum(obj, name)   {
-    if (obj === (void 0) || obj === null) {
-      throw new TypeError(
-          'canEnum called with empty target for name: ' + name);
-    }
+    if (obj === void 0 || obj === null) { return false; }
     return !! obj[name + '_canEnum___']; 
   }
 
@@ -772,10 +766,7 @@ var ___;
    * called.
    */
   function canCall(obj, name)   {
-    if (obj === (void 0) || obj === null) {
-      throw new TypeError(
-          'canCall called with empty target for name: ' + name);
-    }
+    if (obj === void 0 || obj === null) { return false; }
     return !! (obj[name + '_canCall___'] || obj[name + '_grantCall___']);
   }
   /**
@@ -783,10 +774,7 @@ var ___;
    * called.
    */
   function canSet(obj, name) {
-    if (obj === (void 0) || obj === null) {
-      throw new TypeError(
-          'canSet called with empty target for name: ' + name);
-    }
+    if (obj === void 0 || obj === null) { return false; }
     return !! (obj[name + '_canSet___'] || obj[name + '_grantSet___']);
   }
 
@@ -794,10 +782,7 @@ var ___;
    * Tests whether the fast-path canDelete flag is set.
    */
   function canDelete(obj, name) {
-    if (obj === (void 0) || obj === null) {
-      throw new TypeError(
-          'canDelete called with empty target for name: ' + name);
-    }
+    if (obj === void 0 || obj === null) { return false; }
     return !! obj[name + '_canDelete___']; 
   }
 
@@ -1228,7 +1213,7 @@ var ___;
    */
   function inPub(name, obj) {
     if (obj === null || obj === void 0) {
-      return name in obj; // force the stock error
+      throw new TypeError('invalid "in" operand: ' + obj);
     }
     obj = Object(obj);
     if (canReadPub(obj, name)) {
@@ -1270,6 +1255,9 @@ var ___;
     }
     name = String(name);
     if (canReadPub(obj, name)) { return obj[name]; }
+    if (obj === null || obj === void 0) {
+      throw new TypeError("Can't read " + name + " on " + obj);
+    }
     return obj.handleRead___(name);
   }
 
@@ -1536,7 +1524,10 @@ var ___;
    */
   function callPub(obj, name, args) {
     name = String(name);
-    if ((obj && obj[name + '_canCall___']) || canCallPub(obj, name)) {
+    if (obj === null || obj === void 0) {
+      throw new TypeError("Can't call " + name + " on " + obj);
+    }
+    if (obj[name + '_canCall___'] || canCallPub(obj, name)) {
       return obj[name].apply(obj, args);
     }
     if (obj.handleCall___) { return obj.handleCall___(name, args); }
@@ -1580,7 +1571,10 @@ var ___;
       return obj[name] = val;
     }
     name = String(name);
-    if (obj && obj[name + '_canSet___']) {
+    if (obj === null || obj === void 0) {
+      throw new TypeError("Can't name " + name + " on " + obj);
+    }
+    if (obj[name + '_canSet___']) {
       return obj[name] = val;
     } else if (canSetPub(obj, name)) {
       fastpathSet(obj, name);
@@ -1659,6 +1653,9 @@ var ___;
    */
   function deletePub(obj, name) {
     name = String(name);
+    if (obj === null || obj === void 0) {
+      throw new TypeError("Can't delete " + name + " on " + obj);
+    }
     if (canDeletePub(obj, name)) {
       // See deleteFieldEntirely for reasons why we don't cache deletability.
       return deleteFieldEntirely(obj, name);
@@ -2060,7 +2057,7 @@ var ___;
   
   /// Object
 
-  ctor(Object, (void 0), 'Object');
+  ctor(Object, void 0, 'Object');
   grantToString(Object.prototype);
   all2(grantGeneric, Object.prototype, [
     'toLocaleString', 'valueOf', 'isPrototypeOf'
@@ -2455,7 +2452,7 @@ var ___;
    */
   function getImports(id) {
     var result = registeredImports[enforceType(id, 'number', 'id')];
-    if (result === (void 0)) {
+    if (result === void 0) {
       fail('imports#', id, ' unregistered');
     }
     return result;
@@ -2474,7 +2471,7 @@ var ___;
     enforceType(imports, 'object', 'imports');
     if ('id___' in imports) {
       var id = enforceType(imports.id___, 'number', 'id');
-      registeredImports[id] = (void 0);
+      registeredImports[id] = void 0;
     }
   }
 
@@ -2690,13 +2687,13 @@ var ___;
         case 'function': {
           if (null === key) { return myValues.prim_null; } 
           var index = key[myMagicIndexName];
-          if ((void 0) === index) { return (void 0); }
+          if (void 0 === index) { return void 0; }
           if (myKeys[index] !== key) {
             // In case of collision
             for (index = 0; index < myKeys.length; index++) {
               if (myKeys[index] === key) { break; }
             }
-            if (index === myKeys.length) { return (void 0); }
+            if (index === myKeys.length) { return void 0; }
             // predictive MRU cache
             key[myMagicIndexName] = index;
           }
@@ -2749,7 +2746,7 @@ var ___;
         return result;
       }
     }
-    return (void 0);
+    return void 0;
   }
 
   var attribute = new RegExp(
@@ -2903,7 +2900,7 @@ var ___;
     'true': true,
     'NaN': NaN,
     'Infinity': Infinity,
-    'undefined': (void 0),
+    'undefined': void 0,
     parseInt: simpleFrozenFunc(parseInt),
     parseFloat: simpleFrozenFunc(parseFloat),
     isNaN: simpleFrozenFunc(isNaN),
