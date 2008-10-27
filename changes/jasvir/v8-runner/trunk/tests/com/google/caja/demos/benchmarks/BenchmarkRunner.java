@@ -21,18 +21,16 @@ import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.RhinoTestBed;
 
 /**
- * Unit test which executes the V8 benchmark and collates the result for rendering with varz
+ * Unit test which executes the V8 benchmark and collates the result for rendering with varz 
  */
 public class BenchmarkRunner extends CajaTestCase {
   public void testRichards() throws Exception { runBenchmark("richards.js"); }
   public void testDeltaBlue() throws Exception { runBenchmark("deltablue.js"); }
   public void testCrypto() throws Exception { runBenchmark("crypto.js"); }
-  
-  // TODO(jasvir): These currently cause cajoling errors
-  //  public void testRayTrace() throws Exception { runBenchmark("raytrace.js"); }
-  //  public void testEarleyBoyer() throws Exception {
-  //    runBenchmark("earley-boyer.js");
-  //  }
+  public void testRayTrace() throws Exception { runBenchmark("raytrace.js"); }
+  public void testEarleyBoyer() throws Exception {
+    runBenchmark("earley-boyer.js");
+  }
 
   /**
    * Runs the given benchmark

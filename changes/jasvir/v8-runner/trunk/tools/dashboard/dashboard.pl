@@ -109,8 +109,8 @@ our $ANT = "$ANT_HOME/bin/ant";              requireExe $ANT;
 our $JAVA_HOME = $ENV{JAVA_HOME} or "/usr/lib/jvm/java-6-sun/";
                                              requireDir $JAVA_HOME;
 our $JAVA = "$JAVA_HOME/bin/java";           requireExe $JAVA;
-our $SVN = "/usr/bin/svn";                   requireExe $SVN;
-our $SVNVERSION = "/usr/bin/svnversion";     requireExe $SVNVERSION;
+our $SVN = "/opt/googlesvn/bin/svn";                   requireExe $SVN;
+our $SVNVERSION = "/opt/googlesvn/bin/svnversion";     requireExe $SVNVERSION;
 our $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
 
 
@@ -145,6 +145,7 @@ sub collectCodeStats() {
 
   print STDERR "running benchmarks\n";
   track(\&build, ['benchmarks'], 'tests', \@status_log);
+  extractBenchmarkSummary("$REPORTS_DIR/benchmarks/TESTS-TestSuites.xml", \@status_log);
 
   print STDERR "running tests\n";
   track(\&build, ['runtests'], 'tests', \@status_log);
@@ -162,7 +163,7 @@ sub collectCodeStats() {
   print STDERR "copying docs\n";
   outputTree($DOCS_DIR, 'docs', 'java/index.html', \@status_log);
   linkOutput('jsdocs', 'docs/js/index.html', \@status_log);
-  linkOutput('ruledocs', 'docs/rules/DefaultCajaRewriter.html', \@status_log);
+  linkOutput('ruledocs', 'docs/rules/CajitaRewriter.html', \@status_log);
 
   print STDERR "copying test reports\n";
   outputTree("$REPORTS_DIR/tests", 'tests', 'index.html', \@status_log);
@@ -318,6 +319,40 @@ sub extractTestSummary($$) {
   push(@{$status_log_ref}, qq'<varz name="junit.failures" value="$failures"/>');
   push(@{$status_log_ref},
        qq'<varz name="junit.pct" value="'
+       . sprintf("%3.1f", 100 * ($failures + $errors) / $tests)
+       . qq'"/>');
+}
+
+sub extractBenchmarkSummary($$) {
+  my ($xml_file, $status_log_ref) = @_;
+
+  my ($tests, $errors, $failures) = (0, 0, 0);
+  open(IN, "<$xml_file") or die "$xml_file: $!";
+  while (<IN>) {
+    chomp;
+    if (m/<testsuite\b(.*)/) {
+      my $testsummary = $1;
+      die "Malformed $xml_file: $_" unless $testsummary =~ s/>.*//;
+      die "Malformed $xml_file: $_" unless $testsummary =~ m/\btests="(\d+)"/;
+      $tests += $1;
+      die "Malformed $xml_file: $_" unless $testsummary =~ m/\berrors="(\d+)"/;
+      $errors += $1;
+      die "Malformed $xml_file: $_" unless $testsummary =~ m/\bfailures="(\d+)"/;
+      $failures += $1;
+      die "Malformed $xml_file: $_" unless $testsummary =~ m/\bfailures="(\d+)"/;
+      $failures += $1;
+    }
+    if (m/\bVarZ:([\w\.\-]+)=(\d+(?:\.\d+)?)\b/) {
+      push(@{$status_log_ref}, qq'<varz name="$1" value="$2"/>');
+    }
+  }
+  close(IN);
+
+  push(@{$status_log_ref}, qq'<varz name="benchmarks.total" value="$tests"/>');
+  push(@{$status_log_ref}, qq'<varz name="benchmarks.errors" value="$errors"/>');
+  push(@{$status_log_ref}, qq'<varz name="benchmarks.failures" value="$failures"/>');
+  push(@{$status_log_ref},
+       qq'<varz name="benchmarks.pct" value="'
        . sprintf("%3.1f", 100 * ($failures + $errors) / $tests)
        . qq'"/>');
 }
