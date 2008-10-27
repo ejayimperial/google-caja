@@ -102,7 +102,7 @@ $ ant runtests
 
 = Other Commands =
 
-`changed`      -  files changed in the snapshotted CL.  Pipeable to xargs
-`diffstats`    -  number of lines added/changed/removed
-`files`        -  files changed in svn.  Pipeable to xargs 
-`filetypes`    -  sets `svn:mime-type` of modified files based on file suffix
+  * `changed`      -  files changed in the snapshotted CL.  Pipeable to xargs
+  * `diffstats`    -  number of lines added/changed/removed
+  * `files`        -  files changed in svn.  Pipeable to xargs 
+  * `filetypes`    -  sets `svn:mime-type` of modified files based on file suffix
