@@ -231,6 +231,12 @@ var valijaMaker = (function(outers) {
     }
   }
 
+  /**
+   * A unique object to be passed as the third argument to
+   * cajita.readOwn(), so that it can pass it back to us to indicate a
+   * quickly testable failure, or pass back anything else instead to
+   * indicate a quickly testable success.
+   */
   var pumpkin = {};
 
   /**

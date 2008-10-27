@@ -1070,7 +1070,6 @@ var ___;
    * <tt>primFreeze(fun)</tt>. 
    */
   function asSimpleFunc(fun) {
-//  if (isSimpleFunc(fun)) { // inlined below
     if (fun && fun.SIMPLEFUNC___) {
       // fastpath shortcut
       if (fun.FROZEN___ === fun) {
@@ -1280,7 +1279,10 @@ var ___;
    * <tt>pumpkin</tt>. 
    * <p>
    * Provides a fastpath for Valija's <tt>read()</tt> function
-   * <tt>$v.r()</tt>.
+   * <tt>$v.r()</tt>. The reason for returning the passed in pumpkin
+   * rather that, for example, <tt>undefined</tt>, is so that the
+   * caller can pass in a known unique value and distinguish it, on
+   * return, from any possible valid value.
    */
   function readOwn(obj, name, pumpkin) {
     if (typeof obj !== 'object' || !obj) { return pumpkin; }
@@ -1567,6 +1569,10 @@ var ___;
 
   /** A client of obj attempts to assign to one of its properties. */
   function setPub(obj, name, val) {
+    // asFirstClass() here would be a useful safety check, to prevent
+    // the further propogation of, for example, a leaked toxic
+    // function. However, its security benefit is questionable, and
+    // the check is expensive in this position.
 //  val = asFirstClass(val);
     if (typeof name === 'number' &&
         obj instanceof Array &&
@@ -2530,6 +2536,9 @@ var ___;
   function initializeMap(list) {
     var result = {};
     for (var i = 0; i < list.length; i+=2) {
+      // Call asFirstClass() here to prevent, for example, a toxic
+      // function being used at the toString property of an object
+      // literal.
       setPub(result, list[i], asFirstClass(list[i+1]));
     }
     return result;
@@ -2743,9 +2752,8 @@ var ___;
     return (void 0);
   }
 
-  // TODO(ihab.awad): Fix so matches newlines too! See bug 762.
-  var Attribute = new RegExp(
-    '^(.*)_(?:canRead|canCall|getter|handler)___$');
+  var attribute = new RegExp(
+      '^([\\s\\S]*)_(?:canRead|canCall|getter|handler)___$');
 
   /**
    * Returns a list of all caja-readable own properties, whether or
@@ -2764,7 +2772,7 @@ var ___;
             result.push(k);
           }
         } else {
-          var match = Attribute.exec(k);
+          var match = attribute.exec(k);
           if (match !== null) {
             var base = match[1];
             if (!myOriginalHOP.call(seen, base)) {
