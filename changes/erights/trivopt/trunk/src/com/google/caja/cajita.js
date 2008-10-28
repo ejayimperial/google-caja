@@ -1268,12 +1268,16 @@ var ___;
    * <p>
    * Provides a fastpath for Valija's <tt>read()</tt> function
    * <tt>$v.r()</tt>. The reason for returning the passed in pumpkin
-   * rather that, for example, <tt>undefined</tt>, is so that the
+   * rather than, for example, <tt>undefined</tt>, is so that the
    * caller can pass in a known unique value and distinguish it, on
    * return, from any possible valid value.
    */
   function readOwn(obj, name, pumpkin) {
-    if (typeof obj !== 'object' || !obj) { return pumpkin; }
+    if (typeof obj !== 'object' || !obj) {
+      if (typeOf(obj) !== 'object') {
+        return pumpkin;
+      }
+    }
     if (typeof name === 'number') {
       if (myOriginalHOP.call(obj, name)) { return obj[name]; }
       return pumpkin;
@@ -1566,6 +1570,7 @@ var ___;
     // the check is expensive in this position.
 //  val = asFirstClass(val);
     if (typeof name === 'number' &&
+        // See issue 875
         obj instanceof Array &&
         obj.FROZEN___ !== obj) {
       return obj[name] = val;
