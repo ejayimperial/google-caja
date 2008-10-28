@@ -113,6 +113,8 @@ our $SVN = "/usr/bin/svn";                   requireExe $SVN;
 our $SVNVERSION = "/usr/bin/svnversion";     requireExe $SVNVERSION;
 our $XSLTPROC = "/usr/bin/xsltproc";         requireExe $XSLTPROC;
 
+# Data formats
+our $VARZ_FORMAT = qr/\bVarZ:([\w\.\-]+)=(\d+(?:\.\d+)?)\b/;
 
 sub collectCodeStats() {
   my @status_log = ();
@@ -198,7 +200,7 @@ sub track($$$$) {
        qq'<varz name="target.$name.time" value="$dt"/>');
 
   # Extract profiling data.
-  my @varz = $log =~ m/\bVarZ:([\w\.\-]+)=(\d+(?:\.\d+)?)\b/g;
+  my @varz = $log =~ m/$VARZ_FORMAT/g;
   for (my $i = 0; $i <= $#varz; $i += 2) {
     push(@{$status_log_ref}, qq'<varz name="$varz[$i]" value="$varz[$i+1]"/>');
   }
@@ -342,7 +344,7 @@ sub extractBenchmarkSummary($$) {
       die "Malformed $xml_file: $_" unless $testsummary =~ m/\bfailures="(\d+)"/;
       $failures += $1;
     }
-    if (m/\bVarZ:([\w\.\-]+)=(\d+(?:\.\d+)?)\b/) {
+    if ($_ =~ $VARZ_FORMAT) {
       push(@{$status_log_ref}, qq'<varz name="$1" value="$2"/>');
     }
   }
