@@ -1577,7 +1577,7 @@ var ___;
     }
     name = String(name);
     if (obj === null || obj === void 0) {
-      throw new TypeError("Can't name " + name + " on " + obj);
+      throw new TypeError("Can't set " + name + " on " + obj);
     }
     if (obj[name + '_canSet___']) {
       return obj[name] = val;
