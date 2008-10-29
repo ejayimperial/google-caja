@@ -4,7 +4,7 @@ var isTestPageLoaded = false;
 
 //hack for NS62 bug
 (function () {
-    if (typeof window === 'undefined') { return; }
+    if (typeof top === 'undefined') { return; }
     var tempTop = top;
     if (!tempTop) {
         tempTop = window;
