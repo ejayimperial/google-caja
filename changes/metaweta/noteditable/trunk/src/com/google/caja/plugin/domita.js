@@ -507,6 +507,8 @@ attachDocumentStub = (function () {
       return wrapper;
     }
 
+    var NOT_EDITABLE = "Node not editable.";
+
     // Implementation of EventTarget::addEventListener
     function tameAddEventListener(name, listener, useCapture) {
       if (!this.editable___) { throw new Error(NOT_EDITABLE); }
@@ -550,8 +552,6 @@ attachDocumentStub = (function () {
         'lastChild', 'nextSibling', 'previousSibling', 'parentNode',
         'childNodes'];
 
-    var NOT_EDITABLE = "Node not editable.";
-
     /**
      * Base class for a Node wrapper.  Do not create directly -- use the
      * tameNode factory instead.
@@ -562,7 +562,6 @@ attachDocumentStub = (function () {
         throw new Error('Creating tame node with undefined native delegate');
       }
       this.node___ = node;
-      if (!editable) { debugger; }
       this.editable___ = editable;
       ___.stamp(tameNodeTrademark, this, true);
       exportFields(this, tameNodeFields);
