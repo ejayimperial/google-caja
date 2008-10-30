@@ -1,3 +1,4 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <!--
  - Copyright (C) 2008 Google Inc.
  -
@@ -70,7 +71,7 @@
               provide: ___.simpleFunc(function (v) { valijaMaker = v; })
             });
         ___.getNewModuleHandler().setImports(testImports);
-        loadScript('valija-cajoled.js');
+        loadScript('valija.co.js');
       }
     })();</script>
 
@@ -110,6 +111,9 @@
       // Give unfiltered DOM access so we can check the results of actions.
       testImports.directAccess = ___.primFreeze({
         // Allow testing of emitHtml by exposing it for testing
+        click: ___.simpleFrozenFunc(function (tameNode) {
+          tameNode.node___.click();
+        }),
         emitCssHook: ___.simpleFrozenFunc(function (css) {
           testImports.emitCss___(css.join('xyz___'));
         }),
