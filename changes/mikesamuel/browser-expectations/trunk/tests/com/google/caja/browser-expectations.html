@@ -21,12 +21,12 @@
     <script src="cajita.js" onerror="console.error(this.src)"></script>
     <script src="plugin/jsunit.js"></script>
     <script src="plugin/asserts.js"></script>
-
-    <script>
-
-    </script>
   </head>
   <body onload="jsunitRun()">
+    This file contains tests of our expectations of browser behavior.
+    The tests are not cajoled or transformed in any way.  They just assert
+    that browsers that we support conform to certain norms.
+
     <script>
     jsunitRegister('testNumericOperators', function testNumericOperators() {
       var values = [
@@ -111,8 +111,8 @@
     jsunitRegister('testFinallyReturns', function testFinallyReturns() {
       // In our onsubmit handler checking, we use a finally block to make
       // sure that the form will not actually submit.
-      // Make sure that it is the finally blocks value that is received, not the
-      // try blocks.
+      // Make sure that it is the finally block's value that is received, not
+      // the try block's.
       assertEquals(
           'finally',
           (function () {
