@@ -141,6 +141,7 @@ attachDocumentStub = (function () {
 
     for (var i = 0; declarations && i < declarations.length; i++) {
       var propertyAndValue = declarations[i].split(':');
+      if (propertyAndValue.length !== 2) { continue; }
       var property = trimCssSpaces(propertyAndValue[0]).toLowerCase();
       var value = trimCssSpaces(propertyAndValue[1]);
       // TODO(mikesamuel): make a separate function to map between
