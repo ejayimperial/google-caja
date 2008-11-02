@@ -36,3 +36,5 @@ but if {{{x}}} is not a parameter to the function in which the increment appears
 {{{
   'number' === (typeof ((function (x) { return (function () { return x++; })(); })('foo')));
 }}}
+
+See PostIncrementAndDecrementCanReturnNonNumber for more detail on this example.
