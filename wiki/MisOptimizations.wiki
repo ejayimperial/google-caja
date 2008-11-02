@@ -32,7 +32,7 @@ In IE6 and IE7:
 {{{
   'string' === (typeof ((function (x) { return x++; })('foo')));
 }}}
-but if {{{x}}} is not a parameter to the function in which the increment appears, the result is {{{NaN}}} as in
+but if {{{x}}} is not a parameter or local variable of the function in which the increment appears, the result is {{{NaN}}} as in
 {{{
   'number' === (typeof ((function (x) { return (function () { return x++; })(); })('foo')));
 }}}
