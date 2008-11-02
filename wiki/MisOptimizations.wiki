@@ -34,5 +34,5 @@ In IE6 and IE7:
 }}}
 but if {{{x}}} is not a parameter to the function in which the increment appears, the result is {{{NaN}}} as in
 {{{
-  'number' === (typeof ((function (x) { return (function () { return x++; })(); })()));
+  'number' === (typeof ((function (x) { return (function () { return x++; })(); })('foo')));
 }}}
