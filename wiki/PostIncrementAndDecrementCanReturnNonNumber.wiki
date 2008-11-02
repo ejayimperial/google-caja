@@ -23,6 +23,8 @@ For example, `(function() { var x = 'foo'; return x++; })();` will return `'foo'
 
 This means that a property access of the form `a[x++]` or `a[x--]` might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
 
+For discussion of the general problem of which this is a special case, see MisOptimizations.
+
 
 == Versions ==
   * JScript in Internet Explorer 6 and 7 (version 8 has not been tested)
