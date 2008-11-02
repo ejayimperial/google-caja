@@ -1,7 +1,7 @@
 #summary Interpreter&Browser properties that can be exploited to escalate privileges.
 = Properties of Interpreters or the Browser Environment that allow Privilege Escalation =
 
-Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, quirks of existing interpreters, and browser specific extensions that could allow privilege escalation  so that we can come up with tests for a safe javascript rewriter.
+Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, quirks of existing interpreters, and browser specific extensions that could allow privilege escalation  so that we can come up with tests for a safe !JavaScript rewriter or verifier.
 
 == Attack Vectors at the EcmaScript/Javascript level ==
   * GlobalObjectPoisoning -- Global object poisoning
@@ -29,8 +29,8 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * HiddenControlFlowHazard -- Seemingly safe Caja data computations may result in a control-flow transfer to a potential adversary.
   * RegexpsLeakMatchGlobally -- Any regular expression can match against the last string passed to any other
   * EvalBreaksClosureEncapsulation -- Eval extensions allow reaching into the scope chain of closures
-  * MisOptimizations -- Some interpreters try to optimize javascript before execution subtly changing the semantics of builtin operators
-
+  * PostIncrementAndDecrementCanReturnNonNumber -- Incorrect implementations of postincrement and postdecrement can cause confusion as to which property is being accessed
+  * MisOptimizations -- Some interpreters try to optimize javascript before execution subtly changing the semantics of builtin operators (PostIncrementAndDecrementCanReturnNonNumber is a specific example)
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
   * ScriptInHtml -- HTML Tags in Javascript Strings can allow Unsanitized Script Execution
