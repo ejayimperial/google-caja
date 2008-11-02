@@ -29,6 +29,8 @@ Below is a list of known attack vectors.  We discuss the EcmaScript 3 language, 
   * HiddenControlFlowHazard -- Seemingly safe Caja data computations may result in a control-flow transfer to a potential adversary.
   * RegexpsLeakMatchGlobally -- Any regular expression can match against the last string passed to any other
   * EvalBreaksClosureEncapsulation -- Eval extensions allow reaching into the scope chain of closures
+  * MisOptimizations -- Some interpreters try to optimize javascript before execution subtly changing the semantics of builtin operators
+
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
   * ScriptInHtml -- HTML Tags in Javascript Strings can allow Unsanitized Script Execution
