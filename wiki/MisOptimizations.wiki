@@ -30,7 +30,7 @@ Unknown.
 ==Example==
 In IE6 and IE7:
 {{{
-  'number' === (typeof ((function (x) { return x++; })('foo')));
+  'string' === (typeof ((function (x) { return x++; })('foo')));
 }}}
 but if {{{x}}} is not a parameter to the function in which the increment appears, the result is {{{NaN}}} as in
 {{{
