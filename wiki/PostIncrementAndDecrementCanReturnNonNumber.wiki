@@ -3,12 +3,12 @@
 
 == Effect ==
 
-Properties that should not be readable may be read. It may be possible to combine this with other attack vectors such as EvalArbitraryCodeExecution to run arbitrary code.
+Properties that should not be readable may be read (and possibly written). It may be possible to combine this with other attack vectors such as EvalArbitraryCodeExecution to run arbitrary code.
 
 
 == Assumptions ==
 
-  * In a !JavaScript subset, properties named by stringified numbers are implicitly readable.
+  * In a !JavaScript subset, properties named by stringified numbers are implicitly readable (and possibly writable).
   * The subset implementation assumes that a postincrement or postdecrement expression always evaluates to a number.
   * The !JavaScript interpreter incorrectly implements postincrement or postdecrement, so that it may return its argument without first coercing it to a number.
 
@@ -21,7 +21,7 @@ However, in Internet Explorer, if `x` is a local variable or parameter of the cu
 
 For example, `(function() { var x = 'foo'; return x++; })();` will return `'foo'`, when it should return `NaN`.
 
-This means that a property access of the form `a[x++]` or `a[x--]` might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable.
+This means that a property access of the form `a[x++]` or `a[x--]` might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
 
 
 == Versions ==
