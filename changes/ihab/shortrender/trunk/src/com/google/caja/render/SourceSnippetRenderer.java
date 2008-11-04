@@ -147,8 +147,6 @@ public abstract class SourceSnippetRenderer implements TokenConsumer {
           out
               .append("// ")
               .append(formatLineNo(sl.getLineNo()))
-              .append(" -> ")
-              .append(formatLineNo(lineNo))
               .append(": ")
               .append(scrubJsString(forSource.get(l).getText()))
               .append("\n");

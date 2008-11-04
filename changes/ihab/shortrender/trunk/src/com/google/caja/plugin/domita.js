@@ -41,6 +41,8 @@
  * Add a tamed document implementation to a Gadget's global scope.
  *
  * @param {string} idSuffix a string suffix appended to all node IDs.
+ * @param {string} rootId the ID of a root node constituting the virtual
+ *     document.
  * @param {Object} uriCallback an object like <pre>{
  *       rewrite: function (uri, mimeType) { return safeUri }
  *     }</pre>.
@@ -245,7 +247,7 @@ attachDocumentStub = (function () {
   ___.simpleFrozenFunc(tameClearInterval);
 
   // See above for a description of this function.
-  function attachDocumentStub(idSuffix, uriCallback, imports) {
+  function attachDocumentStub(idSuffix, rootId, uriCallback, imports) {
     var elementPolicies = {};
     elementPolicies.form = function (attribs) {
       // Forms must have a gated onsubmit handler or they must have an
@@ -1051,11 +1053,15 @@ attachDocumentStub = (function () {
 
 
     function TameDocument(doc, editable) {
+      TameNode.call(this, document.getElementById(rootId));
       this.doc___ = doc;
       this.editable___ = editable;
     }
     extend(TameDocument, TameNode);
     nodeClasses.HTMLDocument = TameDocument;
+    TameDocument.prototype.addEventListener = tameAddEventListener;
+    TameDocument.prototype.removeEventListener = tameRemoveEventListener;
+    TameDocument.prototype.dispatchEvent = tameDispatchEvent;    
     TameDocument.prototype.createElement = function (tagName) {
       if (!this.editable___) { throw new Error(); }
       tagName = String(tagName).toLowerCase();
@@ -1088,9 +1094,15 @@ attachDocumentStub = (function () {
       // TODO(ihab.awad): Needs implementation
       cajita.log('Called document.write() with: ' + text);
     };
+    TameDocument.prototype.getElementsByClassName = function(className) {
+      // TODO(ihab.awad): Needs implementation
+      cajita.log('Called document.getElementsByClassName() with: ' + className);
+    };
     ___.ctor(TameDocument, void 0, 'TameDocument');
     ___.all2(___.grantTypedGeneric, TameDocument.prototype,
-             ['createElement', 'createTextNode', 'getElementById', 'write']);
+             ['addEventListener', 'removeEventListener', 'dispatchEvent',
+              'createElement', 'createTextNode', 'getElementById',
+               'getElementsByClassName','write']);
 
     imports.tameNode___ = tameNode;
     imports.tameEvent___ = function (event) { return new TameEvent(event); };
