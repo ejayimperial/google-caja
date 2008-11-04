@@ -140,10 +140,9 @@ attachDocumentStub = (function () {
     var declarations = styleAttrValue.split(/;/g);
 
     for (var i = 0; declarations && i < declarations.length; i++) {
-      var propertyAndValue = declarations[i].split(':');
-      if (propertyAndValue.length !== 2) { continue; }
-      var property = trimCssSpaces(propertyAndValue[0]).toLowerCase();
-      var value = trimCssSpaces(propertyAndValue[1]);
+      var parts = declarations[i].split(':');
+      var property = trimCssSpaces(parts[0]).toLowerCase();
+      var value = trimCssSpaces(parts.slice(1).join(":"));
       // TODO(mikesamuel): make a separate function to map between
       // CSS property names and style object members while handling
       // float/cssFloat properly.
@@ -450,6 +449,10 @@ attachDocumentStub = (function () {
     function tameNode(node, editable) {
       if (node === null || node === void 0) { return null; }
       // TODO(mikesamuel): make sure it really is a DOM node
+
+      // If it is a node, apply bridal browser fix
+      bridal.bind(node);
+      
       switch (node.nodeType) {
         case 1:  // Element
           var tagName = node.tagName.toLowerCase();
@@ -664,8 +667,9 @@ attachDocumentStub = (function () {
         return this[handlerName]();
       }
       if (this.node___ !== void 0 &&
-          this.node___ !== null) {
-        return this.node___["caja:"+name+"___"];
+          this.node___ !== null &&
+          this.node___.properties___){
+        return this.node___.properties___[name];
       } else {
         return void 0;
       }
@@ -676,8 +680,9 @@ attachDocumentStub = (function () {
         return this[handlerName].call(this, args);
       }
       if (this.node___ !== void 0 &&
-          this.node___ !== null) {
-        return this.node___["caja:"+name+"___"].call(this, args);
+          this.node___ !== null &&
+          this.node___.properties___) {
+        return this.node___.properties___[name].call(this, args);
       } else {
         throw new TypeError(name + " is not a function.");
       }
@@ -691,7 +696,11 @@ attachDocumentStub = (function () {
       if (this.node___ === void 0 || this.node___ === null) {
         this.node___ = {};
       }
-      return this.node___["caja:"+name+"___"] = val;
+      if (!this.node___.properties___) {
+        this.node___.properties___ = {};
+      }
+      this[name + "_canEnum___"] = true;
+      return this.node___.properties___[name] = val;
     };
     TameNode.prototype.handleDelete___ = function(name) {
       var handlerName = name + '_deleter___';
@@ -699,8 +708,10 @@ attachDocumentStub = (function () {
         return this[handlerName]();
       }
       if (this.node___ !== void 0 &&
-          this.node___ !== null) {
-        return delete this.node___["caja:"+name+"___"];
+          this.node___ !== null &&
+          this.node___.properties___) {
+        return (delete this.node___.properties___[name] && 
+            delete this[name + "_canEnum___"]);
       } else {
         return true;
       }
