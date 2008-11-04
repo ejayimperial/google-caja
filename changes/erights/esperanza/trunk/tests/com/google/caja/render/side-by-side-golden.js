@@ -11,7 +11,7 @@
 /*   return '<hr />';                             */                                                    return '<hr />';
 /* }                                              */                                                  });
 /* if (foo()) { bar(); }                          */                  if (IMPORTS___.foo.SIMPLECALL___()) {
-/*                                                */                    IMPORTS___.bar.SIMPLECALL___)();
+/*                                                */                    IMPORTS___.bar.SIMPLECALL___();
 /*                                                */                  }
 /* if (document) {                                */                  if (IMPORTS___.document) {
 /*   document                                     */                    var tmp___ = IMPORTS___.document;

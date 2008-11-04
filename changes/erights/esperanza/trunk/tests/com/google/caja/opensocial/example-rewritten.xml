@@ -7,7 +7,6 @@
                    var outers = ___.readImport(IMPORTS___, 'outers');
                    var externalScript;
                    var x0___;
-                   var x1___;
                    IMPORTS___.emitCss___([ '.', ' #p3-', ' {\n  color: red\n}' ].join(IMPORTS___.getIdClass___()));
                    IMPORTS___.emitCss___([ '@media print {\n  .', ' #p3-', ' {\n    font-weight: bold;\n    color: black\n  }\n}' ].join(IMPORTS___.getIdClass___()));
                    IMPORTS___.emitCss___([ '@media print, screen {\n  .', ' .p4 {\n    font-weight: bold\n  }\n}' ].join(IMPORTS___.getIdClass___()));
@@ -31,13 +30,13 @@
                    IMPORTS___.htmlEmitter___.pc('\n\n    \n    ').b('p').a('id', 'p3-' + IMPORTS___.getIdClass___()).f(false).ih('Paragraph 2').e('p').pc('\n\n    \n    \n\n    \n    \n    ');
                    try {
                      {
-                       moduleResult___ = (x0___ = outers, x1___ = (
+                       moduleResult___ = (x0___ = (
                            function () {
                              function handleClicky() {
                                alert.SIMPLECALL___('You clicked something!!!');
                              }
                              return ___.simpleFrozenFunc(handleClicky, 'handleClicky');
-                           })(), x0___.handleClicky_canSet___? (x0___.handleClicky = x1___): ___.setPub(x0___, 'handleClicky', x1___));
+                           })(), outers.handleClicky_canSet___? (outers.handleClicky = x0___): ___.setPub(outers, 'handleClicky', x0___));
                      }
                    } catch (ex___) {
                      ___.getNewModuleHandler().handleUncaughtException(ex___, onerror, 'example.xml', '37');

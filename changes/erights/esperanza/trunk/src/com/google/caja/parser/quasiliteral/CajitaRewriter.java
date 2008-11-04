@@ -916,13 +916,12 @@ public class CajitaRewriter extends Rewriter {
           Pair<Expression, Expression> oPair = reuse(bindings.get("o"), scope, mq);
           Reference p = (Reference) bindings.get("p");
           String propertyName = p.getIdentifierName();
-          Expression result = (Expression) QuasiBuilder.substV(
+          return commas(oPair.b, (Expression) QuasiBuilder.substV(
               "@oRef.@fp ? @oRef.@p : ___.readPub(@oRef, @rp)",
               "oRef", oPair.a,
               "p",  p,
               "fp", newReference(propertyName + "_canRead___"),
-              "rp", toStringLiteral(p));
-          return comma(oPair.b, result);
+              "rp", toStringLiteral(p)));
         }
         return NONE;
       }
@@ -1158,14 +1157,13 @@ public class CajitaRewriter extends Rewriter {
           Reference p = (Reference) bindings.get("p");
           String propertyName = p.getIdentifierName();
           Pair<Expression, Expression> rPair = reuse(bindings.get("r"), scope, mq);
-          Expression result = (Expression) QuasiBuilder.substV(
+          return commas(oPair.b, rPair.b, (Expression) QuasiBuilder.substV(
               "@oRef.@pCanSet ? (@oRef.@p = @rRef) : ___.setPub(@oRef, @pName, @rRef);",
               "oRef", oPair.a,
               "rRef", rPair.a,
               "pCanSet", newReference(propertyName + "_canSet___"),
               "p", p,
-              "pName", toStringLiteral(p));
-          return comma(oPair.b, comma(rPair.b, result));
+              "pName", toStringLiteral(p)));
         }
         return NONE;
       }
@@ -1347,7 +1345,7 @@ public class CajitaRewriter extends Rewriter {
           rhs.setFilePosition(aNode.children().get(0).getFilePosition());
           Operation assignment = ops.makeAssignment(rhs);
           assignment.setFilePosition(aNode.getFilePosition());
-          return comma(newCommaOperation(ops.getTemporaries()),
+          return commas(newCommaOperation(ops.getTemporaries()),
                        (Expression) expand(assignment, scope, mq));
         }
         return NONE;
@@ -1676,14 +1674,13 @@ public class CajitaRewriter extends Rewriter {
           Pair<ParseTreeNodeContainer, Expression> argsPair =
               reuseAll(bindings.get("as"), scope, mq);
           String methodName = m.getIdentifierName();
-          Expression result = (Expression) QuasiBuilder.substV(
+          return commas(oPair.b, argsPair.b, (Expression) QuasiBuilder.substV(
               "@oRef.@fm ? @oRef.@m(@argRefs*) : ___.callPub(@oRef, @rm, [@argRefs*]);",
               "oRef", oPair.a,
               "argRefs", argsPair.a,
               "m",  m,
               "fm", newReference(methodName + "_canCall___"),
-              "rm", toStringLiteral(m));
-          return comma(oPair.b, comma(argsPair.b, result));
+              "rm", toStringLiteral(m)));
         }
         return NONE;
       }

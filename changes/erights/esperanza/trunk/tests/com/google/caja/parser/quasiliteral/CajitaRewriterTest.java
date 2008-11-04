@@ -43,7 +43,7 @@ import junit.framework.AssertionFailedError;
  */
 public class CajitaRewriterTest extends CommonJsRewriterTestCase {
 
-  protected Rewriter defaultCajaRewriter = new CajitaRewriter(true);
+  protected Rewriter defaultCajaRewriter = new CajitaRewriter(false);
 
   @Override
   public void setUp() throws Exception {
@@ -63,11 +63,11 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
                                    String tempObj,
                                    String tempValue) {
     return
-        tempObj + " = " + obj + ",(" +
+        tempObj + " = " + obj + "," +
         tempValue + " = " + value + "," +
         "    " + tempObj + "." + varName + "_canSet___ ?" +
         "    " + tempObj + "." + varName + " = " + tempValue + ":" +
-        "    ___.setPub(" + tempObj + ", '" + varName + "', " + tempValue + "))";
+        "    ___.setPub(" + tempObj + ", '" + varName + "', " + tempValue + ")";
   }
 
   /**
@@ -1221,10 +1221,10 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "var x1___;" +
         "var x2___;" +
         "x0___ = ___.readPub(g, 0)," +
-        "(x1___ = ___.readPub(g, 1), x2___ = ___.readPub(g, 2)," +
+        "x1___ = ___.readPub(g, 1), x2___ = ___.readPub(g, 2)," +
         "x0___.m_canCall___ ?" +
         "  x0___.m(x1___, x2___) :" +
-        "  ___.callPub(x0___, 'm', [x1___, x2___]));");
+        "  ___.callPub(x0___, 'm', [x1___, x2___]);");
   }
 
   public void testCallIndexPublic() throws Exception {
