@@ -34,14 +34,18 @@ Untrusted code can generate style elements or style attributes or otherwise add 
 
 
 ==Versions==
-IE 5, 6.
+IE 5 and later.
 
 
 ==Example==
 {{{
-<div id="oDiv" style="left:expression(alert("hello"), 0)">
+<div id='oDiv' style='left:expression(alert("hello"), 0)'>
 Example DIV
 </div>
+}}}
+
+{{{
+document.body.style.cssText = 'left:expression(alert("hello"), 0)';
 }}}
 
 {{{
