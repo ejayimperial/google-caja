@@ -2655,7 +2655,7 @@ var ___;
    * to provide weak-key tables, this should feature-test and use that
    * where it is available, in which case the opt_useKeyLifetime flag
    * can be ignored. When no weak-key table is primitively provided,
-   * this key determines which of two possible approximations to
+   * this flag determines which of two possible approximations to
    * use. In all three cases (actual weak key tables,
    * opt_useKeyLifetime is falsy, and opt_useKeyLifetime is
    * truthy), the table returned
@@ -2667,8 +2667,10 @@ var ___;
    *     high probability.
    * <li>the table should not retain its keys. In other words, if a
    *     given table T is non-garbage but a given value K is otherwise
-   *     garbage, the presence of that value as a key in table T will not,
-   *     by itself, prevent K from being garbage collected.
+   *     garbage, the presence of that value as a key in table T will
+   *     not, by itself, prevent K from being garbage collected. (Note
+   *     that this is not quite as aggressive as the contract provided
+   *     by ephemerons.)
    * </ul>
    * Given that a K=>V association has been stored in table T, the
    * three cases differ according to how long they retain V:
