@@ -55,37 +55,6 @@ TypeError.typeTag___ = 'TypeError';
 URIError.typeTag___ = 'URIError';
 
 
-if (Array.prototype.indexOf === void 0) {
-  /**
-   * Returns the first index at which the specimen is found (by
-   * "===") or -1 if none.
-   */
-  Array.prototype.indexOf = function(specimen) {
-    var len = this.length;
-    for (var i = 0; i < len; i += 1) {
-      if (this[i] === specimen) {
-        return i;
-      }
-    }
-    return -1;
-  };
-}
-
-if (Array.prototype.lastIndexOf === void 0) {
-  /**
-   * Returns the last index at which the specimen is found (by
-   * "===") or -1 if none.
-   */
-  Array.prototype.lastIndexOf = function(specimen) {
-    for (var i = this.length; --i >= 0; ) {
-      if (this[i] === specimen) {
-        return i;
-      }
-    }
-    return -1;
-  };
-}
-
 if (Date.prototype.toISOString === void 0) {
   /** In anticipation of ES3.1 */
   Date.prototype.toISOString = function() {
@@ -155,6 +124,34 @@ var ___;
 // like HTMLDivElement.
 
 (function(global) {
+
+  /**
+   * Returns the first index at which the specimen is found (by
+   * "identical()") or -1 if none.
+   */
+  Array.prototype.indexOf = function(specimen) {
+    var len = this.length;
+    for (var i = 0; i < len; i += 1) {
+      if (identical(this[i], specimen)) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  /**
+   * Returns the last index at which the specimen is found (by
+   * "identical()") or -1 if none.
+   */
+  Array.prototype.lastIndexOf = function(specimen) {
+    for (var i = this.length; --i >= 0; ) {
+      if (identical(this[i], specimen)) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
   ////////////////////////////////////////////////////////////////////////
   // Some regular expressions checking for specific suffixes.
   ////////////////////////////////////////////////////////////////////////
@@ -209,28 +206,17 @@ var ___;
     return myOriginalHOP.call(obj, name);
   }
   
-  // Returns identity for a decent === check.
-  Object.prototype.getIdent___ = function() { return this; };
-  String.prototype.getIdent___ = String.prototype.valueOf;
-  Boolean.prototype.getIdent___ = Boolean.prototype.valueOf;
-  var NaNIdent = {};
-  var MinusZeroIdent = {};
-  Number.prototype.getIdent___ = function() {
-    var result = this.valueOf();
-    if (isNaN(result)) { return NaNIdent; }
-    if (result === 0 && 1/result === -Infinity) { return MinusZeroIdent; }
-    return result;
-  };
-
   /**
-   * Turns wrappers of primitives into the primitives themselves, and
-   * then compares if they are otherwise computationally identical.
+   * Are x and y not observably distinguishable?
    */
-  function same(x, y) {
-    if (x === null || x === void 0 || y === null || y === void 0) {
-      return x === y;
+  function identical(x, y) {
+    if (x === y) {
+      // 0 === -0, but they are not identical
+      return x !== 0 || 1/x === 1/y;
+    } else {
+      // NaN !== NaN, but they are identical
+      return isNaN(x) && isNaN(y);
     }
-    return x.getIdent___() === y.getIdent___();
   }
 
   Object.prototype.SIMPLECALL___ = function(var_args) {
@@ -2640,41 +2626,117 @@ var ___;
     }
   }
 
+  /**
+   * Create a unique identification of a given table identity that can
+   * be used to invisibly (to Caja code) annotate a key object to
+   * index into a table.
+   * <p>
+   * magicCount and MAGIC_TOKEN together represent a
+   * unique-across-frames value safe against collisions, under the
+   * normal Caja threat model assumptions. magicCount and
+   * MAGIC_NAME together represent a probably unique across frames
+   * value, with which can generate strings in which collision is
+   * unlikely but possible. 
+   * <p>
+   * The MAGIC_TOKEN is a unique unforgeable per-Cajita runtime
+   * value. magicCount is a per-Cajita counter, which increments each
+   * time a new one is needed.
+   */
   var magicCount = 0;
+  var MAGIC_TOKEN = Token('MAGIC_TOKEN');
+  var MAGIC_NAME = '_index:'+Math.random() + ':';
 
   /**
-   * Creates a new mutable associative table mapping from the <tt>===</tt> 
-   * identity of arbitrary keys to arbitrary values (with the caveat
-   * that NaN is a valid key even though it isn't <tt>===</tt> to itself).
+   * Creates a new mutable associative table mapping from the
+   * identity of arbitrary keys (as defined by tt>identical()</tt>) to
+   * arbitrary values.
    * <p>
-   * JavaScript has no such construct, and I had thought it impossible
-   * to implement both correctly and with the right complexity measure
-   * using the standard elements of JavaScript. However, the following
+   * Once there is a conventional way for JavaScript implementations
+   * to provide weak-key tables, this should feature-test and use that
+   * where it is available, in which case the opt_useKeyLifetime flag
+   * can be ignored. When no weak-key table is primitively provided,
+   * this key determines which of two possible approximations to
+   * use. In all three cases (actual weak key tables,
+   * opt_useKeyLifetime is falsy, and opt_useKeyLifetime is
+   * truthy), the table returned
    * <ul>
    * <li>should work across frames, 
-   * <li>should have the right garbage collection behavior, 
    * <li>should have O(1) complexity measure within a frame where
    *     collision is impossible, 
    * <li>and should have O(1) complexity measure between frames with
-   *     high probability. 
+   *     high probability.
+   * <li>the table should not retain its keys. In other words, if a
+   *     given table T is non-garbage but a given value K is otherwise
+   *     garbage, the presence of that value as a key in table T will not,
+   *     by itself, prevent K from being garbage collected.
    * </ul>
-   * Is this technique well known?
+   * Given that a K=>V association has been stored in table T, the
+   * three cases differ according to how long they retain V:
+   * <li>A genuine weak-key table retains V only while both T and K
+   *     are not garbage.
+   * <li>If opt_useKeyLifetime is falsy, retain V while T is not
+   *     garbage.
+   * <li>If opt_useKeyLifetime is truthy, retain V while K is not
+   *     garbage. In this case, K must be an object rather than a
+   *     primitive value.
+   * </ul>
+   * <p>
+   * To support Domita, the keys might be host objects.
    */
-  function newTable() {
+  function newTable(opt_useKeyLifetime) {
     magicCount++;
-    var myMagicIndexName = '_' + Math.random() + '_' + 
-                           magicCount + '_index___';
-    var myKeys = [];
+    var myMagicIndexName = MAGIC_NAME + magicCount + '___';
+
+    function setOnKey(key, value) {
+      if (key !== Object(key)) {
+	fail("Can't use key lifetime on primitive keys: ", key);
+      }
+      var list = key[myMagicIndexName];
+      if (!list) {
+        key[myMagicIndexName] = [MAGIC_TOKEN, value];
+      } else {
+	var i = 0;
+	for (; i < list.length; i += 2) {
+	  if (list[i] === MAGIC_TOKEN) { break; }
+	}
+	list[i] = MAGIC_TOKEN;
+	list[i+1] = value;
+      }
+    }
+
+    function getOnKey(key) {
+      return key[myMagicIndexName];
+      if (key !== Object(key)) {
+	fail("Can't use key lifetime on primitive keys: ", key);
+      }
+      var list = key[myMagicIndexName];
+      if (!list) {
+        return void 0;
+      } else {
+	var i = 0;
+	for (; i < list.length; i += 2) {
+	  if (list[i] === MAGIC_TOKEN) { return list[i+1]; }
+	}
+        return void 0;
+      }
+    }
+
+    if (opt_useKeyLifetime) {
+      return primFreeze({
+        set: simpleFrozenFunc(setOnKey),
+        get: simpleFrozenFunc(getOnKey)
+      });
+    }
+
     var myValues = [];
 
-    function set(key, value) {
+    function setOnTable(key, value) {
       switch (typeof key) {
         case 'object':
         case 'function': {
           if (null === key) { myValues.prim_null = value; return; } 
-          var index = myKeys.length;
-          key[myMagicIndexName] = index;
-          myKeys[index] = key;
+          var index = myValues.length;
+          setOnKey(key, index);
           myValues[index] = value;
           return;
         }
@@ -2689,23 +2751,14 @@ var ___;
      * Users of this table cannot distinguish an <tt>undefined</tt>
      * value from an absent key.
      */
-    function get(key) {
+    function getOnTable(key) {
       var index;
       switch (typeof key) {
         case 'object':
         case 'function': {
           if (null === key) { return myValues.prim_null; } 
-          var index = key[myMagicIndexName];
+          var index = getOnKey(key);
           if (void 0 === index) { return void 0; }
-          if (myKeys[index] !== key) {
-            // In case of collision
-            for (index = 0; index < myKeys.length; index++) {
-              if (myKeys[index] === key) { break; }
-            }
-            if (index === myKeys.length) { return void 0; }
-            // predictive MRU cache
-            key[myMagicIndexName] = index;
-          }
           return myValues[index];
         }
         case 'string': { return myValues['str_' + key];   }
@@ -2714,8 +2767,8 @@ var ___;
     }
 
     return primFreeze({
-      get: simpleFrozenFunc(get),
-      set: simpleFrozenFunc(set)
+      set: simpleFrozenFunc(setOnTable),
+      get: simpleFrozenFunc(getOnTable)
     });
   }
 
@@ -2986,7 +3039,7 @@ var ___;
     // Other
     typeOf: typeOf,
     hasOwnProp: hasOwnProp,
-    same: same,
+    identical: identical,
     args: args,
     tameException: tameException,
     primBeget: primBeget,
