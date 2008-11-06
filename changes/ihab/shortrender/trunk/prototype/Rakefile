@@ -120,8 +120,9 @@ namespace 'caja' do
     caja_file_path = File.join(Caja.src_path, 'src', 'com', 'google', 'caja')
     plugins = Dir[File.join(caja_file_path, 'plugin', '*.js')]
     caja_lib_path = File.join(Caja.src_path, 'ant-lib', 'com', 'google', 'caja')
+    caja_js = Dir[File.join(Caja.src_path, 'ant-lib', 'js', 'base2', '*.js')]
     cajoled = Dir[File.join(caja_lib_path, 'plugin', '*.js')]
-    Dir[File.join(caja_file_path, '*.js')].concat(plugins).concat(cajoled).each do |file|
+    Dir[File.join(caja_file_path, '*.js')].concat(plugins).concat(cajoled).concat(caja_js).each do |file|
       FileUtils.cp(file, assets_dir)
     end
     FileUtils.cp(File.join(PROTOTYPE_DIST_DIR, 'prototype.js'), assets_dir)
