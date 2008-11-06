@@ -2667,7 +2667,7 @@ var ___;
    *     high probability.
    * <li>the table should not retain its keys. In other words, if a
    *     given table T is non-garbage but a given value K is otherwise
-   *     garbage, the presence of that value as a key in table T will
+   *     garbage, the presence of K as a key in table T will
    *     not, by itself, prevent K from being garbage collected. (Note
    *     that this is not quite as aggressive as the contract provided
    *     by ephemerons.)
@@ -2691,34 +2691,34 @@ var ___;
 
     function setOnKey(key, value) {
       if (key !== Object(key)) {
-	fail("Can't use key lifetime on primitive keys: ", key);
+        fail("Can't use key lifetime on primitive keys: ", key);
       }
       var list = key[myMagicIndexName];
       if (!list) {
         key[myMagicIndexName] = [MAGIC_TOKEN, value];
       } else {
-	var i = 0;
-	for (; i < list.length; i += 2) {
-	  if (list[i] === MAGIC_TOKEN) { break; }
-	}
-	list[i] = MAGIC_TOKEN;
-	list[i+1] = value;
+        var i = 0;
+        for (; i < list.length; i += 2) {
+          if (list[i] === MAGIC_TOKEN) { break; }
+        }
+        list[i] = MAGIC_TOKEN;
+        list[i+1] = value;
       }
     }
 
     function getOnKey(key) {
       return key[myMagicIndexName];
       if (key !== Object(key)) {
-	fail("Can't use key lifetime on primitive keys: ", key);
+        fail("Can't use key lifetime on primitive keys: ", key);
       }
       var list = key[myMagicIndexName];
       if (!list) {
         return void 0;
       } else {
-	var i = 0;
-	for (; i < list.length; i += 2) {
-	  if (list[i] === MAGIC_TOKEN) { return list[i+1]; }
-	}
+        var i = 0;
+        for (; i < list.length; i += 2) {
+          if (list[i] === MAGIC_TOKEN) { return list[i+1]; }
+        }
         return void 0;
       }
     }
@@ -2737,8 +2737,11 @@ var ___;
         case 'object':
         case 'function': {
           if (null === key) { myValues.prim_null = value; return; } 
-          var index = myValues.length;
-          setOnKey(key, index);
+          var index = getOnKey(key);
+          if (index === void 0) { 
+            index = myValues.length;
+            setOnKey(key, index);
+          }
           myValues[index] = value;
           return;
         }
