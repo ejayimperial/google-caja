@@ -4,7 +4,7 @@
 =CSS allows execution of unsanitized javascript?=
 
 ==Effect==
-On older browsers, crafted CSS stylesheets can execute unsanitized javascript in the global scope.
+Crafted CSS stylesheets can execute unsanitized javascript in the global scope on some browsers.
 
 
 
@@ -34,7 +34,9 @@ Untrusted code can generate style elements or style attributes or otherwise add 
 
 
 ==Versions==
-IE 5 and later.
+IE 5 and later (but [http://blogs.msdn.com/ie/archive/2008/10/16/ending-expressions.aspx not IE 8 in "standards mode"]).
+
+Mozilla/Firefox, versions not known.
 
 
 ==Example==
@@ -45,7 +47,7 @@ Example DIV
 }}}
 
 {{{
-document.body.style.cssText = 'left:expression(alert("hello"), 0)';
+node.style.cssText = 'left:expression(alert("hello"), 0)';
 }}}
 
 {{{
