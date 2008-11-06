@@ -24,7 +24,7 @@ IE also has an extension that allows execution of arbitrary javascript.  The {{{
 
 [http://developer.mozilla.org/en/docs/CSS:-moz-binding] &
 [http://developer.mozilla.org/en/docs/XBL:XBL_1.0_Reference:Elements#binding]
-    {{{-moz-binding}}} allows binding via the XML interface
+    {{{-moz-binding}}} allows binding via the XML interface (also using data: URLs)
 
 
 
@@ -52,6 +52,12 @@ node.style.cssText = 'left:expression(alert("hello"), 0)';
 
 {{{
 <input style='-moz-binding: url("http://www.mozilla.org/xbl/htmlBindings.xml#checkbox");'>
+}}}
+
+{{{
+div {
+  -moz-binding: url(data:text/xml;charset=utf-8,%3C%3Fxml%20version%3D%221.0%22%3F%3E%0A%3Cbindings%20id%3D%22xbltestBindings%22%20xmlns%3D%22http%3A//www.mozilla.org/xbl%22%3E%0A%20%20%3Cbinding%20id%3D%22xbltest%22%3E%3Ccontent%3EPASS%3C/content%3E%3C/binding%3E%0A%3C/bindings%3E%0A);
+}
 }}}
 
 {{{
