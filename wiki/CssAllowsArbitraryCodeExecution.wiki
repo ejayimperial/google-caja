@@ -61,6 +61,10 @@ div {
 }}}
 
 {{{
+node.style.MozBinding = 'url("http://www.mozilla.org/xbl/htmlBindings.xml#checkbox")';
+}}}
+
+{{{
 <ul>
   <li style="behavior:url(a1.htc) url(a2.htc)">List Item</li>
 </ul>
