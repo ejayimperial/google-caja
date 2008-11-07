@@ -298,19 +298,19 @@ Test.Unit.Assertions = (function() {
   }
 
   function assertEqual(expected, actual, message) {
-    message = buildMessage(message || 'assertEqual', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertEqual', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() { return expected == actual });
   }
 
   function assertNotEqual(expected, actual, message) {
-    message = buildMessage(message || 'assertNotEqual', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertNotEqual', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() { return expected != actual });
   }
 
   function assertEnumEqual(expected, actual, message) {
     expected = $A(expected);
     actual = $A(actual);
-    message = buildMessage(message || 'assertEnumEqual', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertEnumEqual', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() {
       return expected.length == actual.length && expected.zip(actual).all(function(pair) { return pair[0] == pair[1] });
     });
@@ -334,7 +334,7 @@ Test.Unit.Assertions = (function() {
     expected = $H(expected);
     actual = $H(actual);
     var expected_array = expected.toArray().sort(), actual_array = actual.toArray().sort();
-    message = buildMessage(message || 'assertHashEqual', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertHashEqual', 'expected: <?>, actual: <?>', expected, actual);
     // from now we recursively zip & compare nested arrays
     function block() {
       return expected_array.length == actual_array.length && 
@@ -357,12 +357,12 @@ Test.Unit.Assertions = (function() {
   }
 
   function assertIdentical(expected, actual, message) {
-    message = buildMessage(message || 'assertIdentical', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertIdentical', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() { return expected === actual });
   }
 
   function assertNotIdentical(expected, actual, message) { 
-    message = buildMessage(message || 'assertNotIdentical', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertNotIdentical', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() { return expected !== actual });
   }
 
@@ -593,7 +593,7 @@ Test.Unit.Testcase = Class.create(Test.Unit.Assertions, {
   error: function(error, test) {
     this.errors++;
     this.actions['retry with throw'] = function() { test.run(true) };
-    this.messages.push(error.name + ": "+ error.message + "(" + Test.Unit.inspect(error) + ")");
+    this.messages.push(error.name + ": "+ error.message + ", error=(" + Test.Unit.inspect(error) + ")");
   },
   
   status: function() {

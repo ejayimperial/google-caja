@@ -1579,8 +1579,10 @@ if (!Node.ELEMENT_NODE) {
       delete attributes.name;
       return Element.writeAttribute(document.createElement(tagName), attributes);
     }
-    if (!cache[tagName]) cache[tagName] = Element.extend(document.createElement(tagName));
-    return Element.writeAttribute(cache[tagName].cloneNode(false), attributes);
+    // TODO(benl): reinstate when cloneNode exists...
+//    if (!cache[tagName]) cache[tagName] = Element.extend(document.createElement(tagName));
+//    return Element.writeAttribute(cache[tagName].cloneNode(false), attributes);
+    return Element.writeAttribute(Element.extend(document.createElement(tagName)), attributes);
   };
   Object.extend(this.Element, element || { });
   if (element) this.Element.prototype = element.prototype;

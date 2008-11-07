@@ -94,6 +94,22 @@ end
 namespace 'caja' do
   require 'test/lib/caja/caja.rb'
   
+  desc 'Builds and cajoles one gadget.'
+  task :cajole_one => [:clean_tmp, :copy_assets, :copy_fixtures] do
+    Dir["test/unit/" + ENV['GADGET']].each do |file|
+      puts "\nBuilding gadget for #{file}."
+      puts "Cajoling gadget for #{file} (this might take a while)."
+      FileUtils.cp(file, PROTOTYPE_TMP_DIR)
+      begin
+        Caja::GadgetBuilder.new(file).cajole
+        puts "Building container for #{file}."
+        Caja::ContainerBuilder.new(file).render
+      rescue Caja::CompileError => e
+        puts e
+      end
+    end
+  end
+  
   desc 'Builds and cajoles gadgets.'
   task :cajole_gadgets => [:clean_tmp, :copy_assets, :copy_fixtures] do
     Dir["test/unit/*_test.js"].each do |file|
@@ -118,11 +134,11 @@ namespace 'caja' do
     FileUtils.cp_r(File.join(PROTOTYPE_TEST_DIR, 'lib', 'assets'), PROTOTYPE_TMP_DIR)
     
     caja_file_path = File.join(Caja.src_path, 'src', 'com', 'google', 'caja')
-    plugins = Dir[File.join(caja_file_path, 'plugin', '*.js')]
     caja_lib_path = File.join(Caja.src_path, 'ant-lib', 'com', 'google', 'caja')
     caja_js = Dir[File.join(Caja.src_path, 'ant-lib', 'js', 'base2', '*.js')]
     cajoled = Dir[File.join(caja_lib_path, 'plugin', '*.js')]
-    Dir[File.join(caja_file_path, '*.js')].concat(plugins).concat(cajoled).concat(caja_js).each do |file|
+    Dir[File.join(caja_file_path, '*.js')].concat(cajoled).concat(caja_js).each do |file|
+      puts "  Copying #{file} to #{assets_dir}"
       FileUtils.cp(file, assets_dir)
     end
     FileUtils.cp(File.join(PROTOTYPE_DIST_DIR, 'prototype.js'), assets_dir)

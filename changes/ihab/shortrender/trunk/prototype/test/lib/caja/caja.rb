@@ -66,7 +66,7 @@ module Caja
         :a                  => true,
         :log                => name_file(:ext => 'txt', :suffix => 'caja_log'),
  	:minify             => true,
-        :r                  => 'sidebyside',
+#        :r                  => 'sidebyside',
         :html_attrib_schema => "resource:///html_attrib.json"
       })
     end
