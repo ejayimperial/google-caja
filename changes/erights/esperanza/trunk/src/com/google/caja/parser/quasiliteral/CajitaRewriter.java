@@ -952,6 +952,32 @@ public class CajitaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
+          name="callReadOwn",
+          synopsis="",
+          reason="",
+          matches="cajita.readOwn(@o,@s,@k)",
+          substitutes="<approx> cajita.readOwn(@o,@s,@k)")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null) {
+          Pair<Expression, Expression> oPair = reuse(bindings.get("o"), scope, mq);
+          Pair<Expression, Expression> sPair = reuse(bindings.get("s"), scope, mq);
+          Pair<Expression, Expression> kPair = reuse(bindings.get("k"), scope, mq);
+          return commas(oPair.b, sPair.b, kPair.b,
+              (Expression) QuasiBuilder.substV(
+              "(@oRef && @oRef[@sRef + '_canRead___'] === @oRef) ? " +
+              "    @oRef[@sRef] : cajita.readOwn(@oRef,@sRef,@kRef)",
+              "oRef", oPair.a,
+              "sRef", sPair.a,
+              "kRef", kPair.a));
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
           name="readIndexPublic",
           synopsis="",
           reason="",

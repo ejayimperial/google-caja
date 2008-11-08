@@ -289,7 +289,8 @@ var valijaMaker = (function(outers) {
    * Handle Valija <tt><i>obj</i>[<i>name</i>](<i>args...</i>)</tt>.
    */
   function callMethod(obj, name, args) {
-    var m = read(obj, name);
+    var m = cajita.readOwn(obj, name, pumpkin);
+    if (m === pumpkin) { m = read(obj, name); }
     if (!m) {
       throw new TypeError('callMethod: ' + obj + ' has no method ' + name);
     }

@@ -761,19 +761,21 @@ var ___;
   }
   /**
    * Tests whether the fast-path canSet flag is set, or grantSet() has been
-   * called.
+   * called, on this object itself as an own (non-inherited) attribute.
    */
   function canSet(obj, name) {
     if (obj === void 0 || obj === null) { return false; }
-    return !! (obj[name + '_canSet___'] || obj[name + '_grantSet___']);
+    return obj[name + '_canSet___'] === obj || 
+      obj[name + '_grantSet___'] === obj;
   }
 
   /**
-   * Tests whether the fast-path canDelete flag is set.
+   * Tests whether the fast-path canDelete flag is set, on this
+   * object itself as an own (non-inherited) attribute.
    */
   function canDelete(obj, name) {
     if (obj === void 0 || obj === null) { return false; }
-    return !! obj[name + '_canDelete___']; 
+    return obj[name + '_canDelete___'] === obj; 
   }
 
   /**
@@ -784,11 +786,11 @@ var ___;
    */
   function fastpathRead(obj, name) {
     if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
-    obj[name + '_canRead___'] = true;
+    obj[name + '_canRead___'] = obj;
   }
 
   function fastpathEnumOnly(obj, name) {
-    obj[name + '_canEnum___'] = true;
+    obj[name + '_canEnum___'] = obj;
   }
 
   /**
@@ -797,7 +799,7 @@ var ___;
    */
   function fastpathCall(obj, name) {
     if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
-    obj[name + '_canCall___'] = true;
+    obj[name + '_canCall___'] = obj;
     if (obj[name + '_canSet___']) {
       obj[name + '_canSet___'] = false;
     }
@@ -817,7 +819,7 @@ var ___;
     }
     fastpathEnumOnly(obj, name);
     fastpathRead(obj, name);
-    obj[name + '_canSet___'] = true;
+    obj[name + '_canSet___'] = obj;
     if (obj[name + '_canCall___']) {
       obj[name + '_canCall___'] = false;
     }
@@ -838,7 +840,7 @@ var ___;
     if (isFrozen(obj)) {
       fail("Can't delete .", name, ' on frozen (', debugReference(obj), ')');
     }
-    obj[name + '_canDelete___'] = true;
+    obj[name + '_canDelete___'] = obj;
   }
 
   /**
@@ -1194,7 +1196,8 @@ var ___;
    */
   function hasOwnPropertyOf(obj, name) {
     if (typeof name === 'number') { return hasOwnProp(obj, name); }
-    name = String(name);    
+    name = String(name);
+    if (obj && obj[name + '_canRead___'] === obj) { return true; }
     return canReadPub(obj, name) && myOriginalHOP.call(obj, name);
   }
 
@@ -1273,9 +1276,9 @@ var ___;
       return pumpkin;
     }
     name = String(name);
+    if (obj[name + '_canRead___'] === obj) { return obj[name]; }
     if (!myOriginalHOP.call(obj, name)) { return pumpkin; }
     // inline remaining relevant cases from canReadPub
-    if (obj[name + '_canRead___']) { return obj[name]; }
     if (endsWith__.test(name)) { return pumpkin; }
     if (name === 'toString') { return pumpkin; }
     if (!isJSONContainer(obj)) { return pumpkin; }
@@ -1381,6 +1384,7 @@ var ___;
    */
   function canEnumOwn(obj, name) {
     name = String(name);
+    if (obj && obj[name + '_canEnum___'] === obj) { return true; }
     return canEnumPub(obj, name) && myOriginalHOP.call(obj, name);
   }
 
@@ -1569,7 +1573,7 @@ var ___;
     if (obj === null || obj === void 0) {
       throw new TypeError("Can't set " + name + " on " + obj);
     }
-    if (obj[name + '_canSet___']) {
+    if (obj[name + '_canSet___'] === obj) {
       return obj[name] = val;
     } else if (canSetPub(obj, name)) {
       fastpathSet(obj, name);
