@@ -64,13 +64,14 @@ public class ArrayIndexOptimizationTest extends CajaTestCase {
         ""
         + "var n = 3;"
         + "return function (arr) {"
-        + "  var i = 0, j = 0, k, l = 0, m = 0;"
+        + "  var i = 0, j = 0, k, l = 0, m = 0, o = 1;"
         + "  for (var i = 0; i < arr.length; ++i, m++) { arr[i] += j; }"
         + "  j = arr[0].toString();"
         + "  k = arr[1] ? i * 2 : i;"
         + "  (function () {"
         + "     l += x;"
         + "   })();"
+        + "  o = m + 1;"
         + "  return arr[i][j][k];"
         + "};"))),
         mq);
@@ -96,6 +97,10 @@ public class ArrayIndexOptimizationTest extends CajaTestCase {
     // n is defined in an outer scope, but all uses of it are numeric.
     assertTrue(ArrayIndexOptimization.doesVarReferenceArrayMember(
         new Reference(new Identifier("n")), inner, new HashSet<String>()));
+    // o is assigned the result of an addition, but both operands are numeric
+    // or undefined.
+    assertTrue(ArrayIndexOptimization.doesVarReferenceArrayMember(
+        new Reference(new Identifier("o")), inner, new HashSet<String>()));
     // Initialization of arr is out of the control of the code sampled.
     assertFalse(ArrayIndexOptimization.doesVarReferenceArrayMember(
         new Reference(new Identifier("arr")), inner, new HashSet<String>()));
@@ -135,12 +140,9 @@ public class ArrayIndexOptimizationTest extends CajaTestCase {
   private void runArrayOptOperatorTest(List<Statement> stmts)
       throws IOException {
     RhinoTestBed.runJs(
-        new RhinoTestBed.Input(
-            getClass(), "/js/jsunit/2.2/jsUnitCore.js"),
-        new RhinoTestBed.Input(
-            getClass(), "array-opt-operator-test.js"),
-        new RhinoTestBed.Input(
-            render(new Block(stmts)), getName()));
+        new RhinoTestBed.Input(getClass(), "/js/jsunit/2.2/jsUnitCore.js"),
+        new RhinoTestBed.Input(getClass(), "array-opt-operator-test.js"),
+        new RhinoTestBed.Input(render(new Block(stmts)), getName()));
   }
 
   private static void fillOperands(

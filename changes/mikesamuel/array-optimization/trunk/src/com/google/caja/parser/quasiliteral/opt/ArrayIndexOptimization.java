@@ -218,7 +218,24 @@ public final class ArrayIndexOptimization extends OptimizationPass {
         case COMMA:
           Expression last = op.children().get(1);
           return isArrayMemberExpr(last, scopeTree, identifiersExpanding);
-        case LOGICAL_OR: case LOGICAL_AND:
+        // || and && pass through one of their operands unchanged.
+        // The addition operator works as follows:
+        // 11.6.1 Additive Operator
+        //   ...
+        //   4. Call GetValue(Result(3)).
+        //   5. Call ToPrimitive(Result(2)).
+        //   6. Call ToPrimitive(Result(4)).
+        //   7. If Type(Result(5)) is String or Type(Result(6)) is String, go to
+        //      step 12. (Note that this step differs from step 3 in the
+        //      comparison algorithm for the relational operators, by using or
+        //      instead of and.)
+        //   8. Call ToNumber(Result(5)).
+        //   9. Call ToNumber(Result(6)).
+        //   ...
+        // which means that (undefined + undefined) is a number, and so if both
+        // operands are undefined or numeric, the result is guaranteed to be
+        // numeric.
+        case LOGICAL_OR: case LOGICAL_AND: case ADDITION:
           return isArrayMemberExpr(
               op.children().get(0), scopeTree, identifiersExpanding)
               && isArrayMemberExpr(
