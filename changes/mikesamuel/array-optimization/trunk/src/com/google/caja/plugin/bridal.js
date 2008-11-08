@@ -19,6 +19,7 @@
  * functions as opposed to the native DOM functions.
  *
  * @author ihab.awad@gmail.com
+ * @author jasvir@gmail.com
  */
 
 var bridal = (function() {
@@ -60,7 +61,7 @@ var bridal = (function() {
           useCapture === void 0 ? void 0 : Boolean(useCapture));
     }
   }
-
+  
   /**
    * Remove an event listener function from an element.
    *
@@ -81,7 +82,7 @@ var bridal = (function() {
       element.removeEventListener(type, handler, useCapture);
     }
   }
-
+  
   /**
    * Create a <code>style</code> element for a document containing some
    * specified CSS text. Does not add the element to the document: the client

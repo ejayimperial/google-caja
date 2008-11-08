@@ -64,8 +64,8 @@ public class ArrayIndexOptimizationTest extends CajaTestCase {
         ""
         + "var n = 3;"
         + "return function (arr) {"
-        + "  var i = 0, j = 0, k, l = 0;"
-        + "  for (var i = 0; i < arr.length; ++i) { arr[i] += j; }"
+        + "  var i = 0, j = 0, k, l = 0, m = 0;"
+        + "  for (var i = 0; i < arr.length; ++i, m++) { arr[i] += j; }"
         + "  j = arr[0].toString();"
         + "  k = arr[1] ? i * 2 : i;"
         + "  (function () {"
@@ -88,6 +88,11 @@ public class ArrayIndexOptimizationTest extends CajaTestCase {
     // l is modified in a closure using a value that is not provably numeric.
     assertFalse(ArrayIndexOptimization.doesVarReferenceArrayMember(
         new Reference(new Identifier("l")), inner, new HashSet<String>()));
+    // m is modified by a pre-increment which is not a numeric operator
+    // for reasons discussed in isNumericOperator, but it always assigns a
+    // numeric value, so m is numeric.
+    assertTrue(ArrayIndexOptimization.doesVarReferenceArrayMember(
+        new Reference(new Identifier("m")), inner, new HashSet<String>()));
     // n is defined in an outer scope, but all uses of it are numeric.
     assertTrue(ArrayIndexOptimization.doesVarReferenceArrayMember(
         new Reference(new Identifier("n")), inner, new HashSet<String>()));
@@ -131,7 +136,7 @@ public class ArrayIndexOptimizationTest extends CajaTestCase {
       throws IOException {
     RhinoTestBed.runJs(
         new RhinoTestBed.Input(
-            getClass(), "/com/google/caja/plugin/asserts.js"),
+            getClass(), "/js/jsunit/2.2/jsUnitCore.js"),
         new RhinoTestBed.Input(
             getClass(), "array-opt-operator-test.js"),
         new RhinoTestBed.Input(

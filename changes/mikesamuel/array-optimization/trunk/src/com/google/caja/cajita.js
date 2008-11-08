@@ -1037,9 +1037,6 @@ var ___;
     }
 
     enforceType(constr, 'function');
-    if (isMethod(constr)) {
-      fail("Methods can't be called as constructors: ", constr);
-    }
     fail("Untamed functions can't be called as constructors: ", constr);
   }
 
@@ -2391,7 +2388,7 @@ var ___;
             ? asSimpleFunc(onerror)(message, String(source), String(lineNum))
             : onerror !== null);
         if (shouldReport !== false) {
-          cajita.log(source + ':' + lineNum + ': ' + message + '\n' + exception.stack);
+          cajita.log(source + ':' + lineNum + ': ' + message);
         }
       }
     });

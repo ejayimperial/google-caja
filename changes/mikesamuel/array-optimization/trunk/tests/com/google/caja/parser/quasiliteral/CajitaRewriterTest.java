@@ -43,7 +43,7 @@ import junit.framework.AssertionFailedError;
  */
 public class CajitaRewriterTest extends CommonJsRewriterTestCase {
 
-  protected Rewriter defaultCajaRewriter = new CajitaRewriter(true);
+  protected Rewriter defaultCajaRewriter = new CajitaRewriter(false);
 
   @Override
   public void setUp() throws Exception {
@@ -2000,7 +2000,8 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     mq.getMessages().clear();
     return RhinoTestBed.runJs(
         new RhinoTestBed.Input(getClass(), "/com/google/caja/cajita.js"),
-        new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
+        new RhinoTestBed.Input(
+            getClass(), "../../../../../js/jsunit/2.2/jsUnitCore.js"),
         new RhinoTestBed.Input(caja, getName() + "-uncajoled"));
   }
 
@@ -2039,7 +2040,8 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/plugin/console-stubs.js"),
         new RhinoTestBed.Input(getClass(), "/com/google/caja/cajita.js"),
-        new RhinoTestBed.Input(getClass(), "../../plugin/asserts.js"),
+        new RhinoTestBed.Input(
+            getClass(), "../../../../../js/jsunit/2.2/jsUnitCore.js"),
         new RhinoTestBed.Input(
             getClass(), "/com/google/caja/log-to-console.js"),
         new RhinoTestBed.Input(
@@ -2050,7 +2052,8 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         new RhinoTestBed.Input(cajoledJs, getName() + "-cajoled"),
         new RhinoTestBed.Input(post, getName()),
         // Return the output field as the value of the run.
-        new RhinoTestBed.Input("___.getNewModuleHandler().getLastValue();", getName()));
+        new RhinoTestBed.Input(
+            "___.getNewModuleHandler().getLastValue();", getName()));
 
     assertNoErrors();
     return result;

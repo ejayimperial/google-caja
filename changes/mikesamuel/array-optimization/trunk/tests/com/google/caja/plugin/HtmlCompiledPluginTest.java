@@ -155,7 +155,7 @@ public class HtmlCompiledPluginTest extends CajaTestCase {
 
     assertMessage(
         MessageType.END_OF_FILE, MessageLevel.ERROR,
-        FilePosition.instance(is, 1, 1, 9, 9, 1, 1, 10, 10));
+        FilePosition.instance(is, 1, 9, 9, 1, 10, 10));
   }
 
   private void execGadget(String gadgetSpec, String tests) throws Exception {
@@ -198,7 +198,8 @@ public class HtmlCompiledPluginTest extends CajaTestCase {
               "location = '" + htmlStubUrl + "';\n",
               "dom"),
           // Make the assertTrue, etc. functions available to javascript
-          new RhinoTestBed.Input(getClass(), "asserts.js"),
+          new RhinoTestBed.Input(
+              getClass(), "../../../../js/jsunit/2.2/jsUnitCore.js"),
           // Plugin Framework
           new RhinoTestBed.Input(getClass(), "../cajita.js"),
           new RhinoTestBed.Input(

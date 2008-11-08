@@ -144,6 +144,10 @@ public final class ArrayIndexOptimization extends OptimizationPass {
               return false;
             }
           }
+          // Although the increment/decrement operators are not handled here
+          // and they do cause an assignment, they will always assign a numeric
+          // value, so they do not need to be considered except for purposes of
+          // uninitialized variable analysis.
         }
       } else if (use.parent.node instanceof Declaration) {
         Declaration d = (Declaration) use.parent.node;
@@ -266,7 +270,10 @@ public final class ArrayIndexOptimization extends OptimizationPass {
       case BITWISE_AND: case BITWISE_OR: case BITWISE_XOR:
       case DIVISION: case IDENTITY: case INVERSE:
       case LSHIFT: case MODULUS: case MULTIPLICATION: case NEGATION:
-      case POST_DECREMENT: case POST_INCREMENT:
+      // The post increment and decrement operators do *not* always produce a
+      // numeric result.  For details, see
+      // http://code.google.com/p/google-caja/wiki/PostIncrementAndDecrementCanReturnNonNumber
+      // even though they always assign a numeric value.
       case PRE_DECREMENT: case PRE_INCREMENT:
       case RSHIFT: case RUSHIFT: case SUBTRACTION:
         return true;
