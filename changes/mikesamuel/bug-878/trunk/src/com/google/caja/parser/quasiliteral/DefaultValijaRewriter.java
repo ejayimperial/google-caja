@@ -284,6 +284,7 @@ public class DefaultValijaRewriter extends Rewriter {
           name="cajitaUseSubset",
           synopsis="Skip subtrees with a 'use strict,cajita' declaration",
           reason="Valija rules should not be applied to embedded cajita code",
+          // TODO(mikesamuel): check after Kona meeting
           matches="'use cajita'; @stmt*",
           substitutes="@stmt*")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {

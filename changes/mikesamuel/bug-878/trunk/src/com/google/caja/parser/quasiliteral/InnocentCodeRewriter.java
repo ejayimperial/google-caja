@@ -87,9 +87,9 @@ public class InnocentCodeRewriter extends Rewriter {
           name="functions",
           synopsis="",
           reason="",
-          matches="function @f?(@ps*) { @bs* }",
+          matches="function @f? (@ps*) { @bs* }",
           substitutes=(
-              "function @f?(@params*) {" +
+              "function @f? (@params*) {" +
               "  @startStmts*;" +
               "  @refError?;" +
               "  @body*" +
@@ -100,6 +100,8 @@ public class InnocentCodeRewriter extends Rewriter {
         if (bindings != null) {
           Scope s2 = Scope.fromFunctionConstructor(
               scope, (FunctionConstructor) node);
+          ParseTreeNode params = expandAll(bindings.get("ps"), s2, mq);
+          ParseTreeNode body = expandAll(bindings.get("bs"), s2, mq);
 
           // If the function has a free THIS, check what it binds to at runtime
           ParseTreeNode refError = null;
@@ -108,13 +110,13 @@ public class InnocentCodeRewriter extends Rewriter {
                 "if (this.___) { throw ReferenceError; }");
           }
 
-          bindings.put("params", expandAll(bindings.get("ps"), s2, mq));
-          bindings.put("body", expandAll(bindings.get("bs"), s2, mq));
-          bindings.put("refError", refError);
-          bindings.put(
-              "startStmts",
-              new ParseTreeNodeContainer(s2.getStartStatements()));
-          return subst(bindings);
+          return substV(
+              "refError", refError,
+              "f", bindings.get("f"),
+              "ps", bindings.get("params"),
+              "params", params,
+              "startStmts", new ParseTreeNodeContainer(s2.getStartStatements()),
+              "body", body);
         }
         return NONE;
       }

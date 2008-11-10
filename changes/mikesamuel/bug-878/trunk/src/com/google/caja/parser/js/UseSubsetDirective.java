@@ -45,7 +45,9 @@ import java.util.Set;
  *   <li>Evaluate SubsetList
  *   <li>Return Result(1)
  * </ol>
+ * TODO(mikesamuel): check after Kona meeting
  *
+ * <p>
  * The production SubsetList : Subset is evaluated as follows:<ol>
  *   <li>If Subset is not the name of a usage subset that is supported by this
  *     ECMAScript implementation, return an empty internal list.
