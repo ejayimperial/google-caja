@@ -41,7 +41,6 @@ import com.google.caja.parser.js.Loop;
 import com.google.caja.parser.js.ModuleEnvelope;
 import com.google.caja.parser.js.MultiDeclaration;
 import com.google.caja.parser.js.Noop;
-import com.google.caja.parser.js.NumberLiteral;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
@@ -1789,12 +1788,14 @@ public class CajitaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="function @fname(@ps*) { @bs*; }",
-          substitutes="@fname = ___.simpleFunc(\n"
-              + "  function(@ps*) {\n"
-              + "    @fh*;\n"
-              + "    @stmts*;\n"
-              + "    @bs*;\n"
-              + "}, @'fname');")
+          substitutes="@fname = (function() {\n"
+            + "  function @fname(@ps*) {\n"
+            + "    @fh*;\n"
+            + "    @stmts*;\n"
+            + "    @bs*;\n"
+            + "  }\n"
+            + "  return ___.simpleFunc(@fname, @'fname');\n"
+            + "})();")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = (
             node instanceof FunctionDeclaration)
@@ -1809,13 +1810,16 @@ public class CajitaRewriter extends Rewriter {
           Identifier fname = (Identifier) bindings.get("fname");
           scope.declareStartOfScopeVariable(fname);
           Expression expr = (Expression) QuasiBuilder.substV(
-              "@fname = ___.simpleFunc(" +
-              "  function(@ps*) {" +
-              "    @fh*;" +
-              "    @stmts*;" +
-              "    @bs*;" +
-              "}, @rf);",
-              "fname", new Reference(fname),
+              "@fRef = (function() {\n"
+              + "  function @fname(@ps*) {\n"
+              + "    @fh*;\n"
+              + "    @stmts*;\n"
+              + "    @bs*;\n"
+              + "  }\n"
+              + "  return ___.simpleFunc(@fRef, @rf);\n"
+              + "})();",
+              "fname", fname,
+              "fRef", new Reference(fname),
               "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing fh and stmts.
@@ -1853,7 +1857,6 @@ public class CajitaRewriter extends Rewriter {
               (FunctionConstructor) node);
           checkFormals(bindings.get("ps"), mq);
           Identifier fname = (Identifier) bindings.get("fname");
-          Reference fRef = new Reference(fname);
           return QuasiBuilder.substV(
               "(function() {\n"
               + "  function @fname(@ps*) {\n"
@@ -1864,7 +1867,7 @@ public class CajitaRewriter extends Rewriter {
               + "  return ___.simpleFrozenFunc(@fRef, @rf);\n"
               + "})();",
               "fname", fname,
-              "fRef", fRef,
+              "fRef", new Reference(fname),
               "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing fh and stmts.

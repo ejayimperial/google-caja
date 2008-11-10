@@ -19,9 +19,12 @@
                    IMPORTS___.htmlEmitter___.pc('\n\n    \n    \n\n    \n    \n\n    \n    \n\n    \n    ').b('p').a('class', 'p1 p2').f(false).ih('Paragraph 1').e('p').pc('\n\n    ');
                    try {
                      {
-                       externalScript = ___.simpleFunc(function () {
-                                                         alert.SIMPLECALL___('external script');
-                                                       }, 'externalScript');
+                       externalScript = (function () {
+                                           function externalScript() {
+                                             alert.SIMPLECALL___('external script');
+                                           }
+                                           return ___.simpleFunc(externalScript, 'externalScript');
+                                         })();
                        ;
                      }
                    } catch (ex___) {

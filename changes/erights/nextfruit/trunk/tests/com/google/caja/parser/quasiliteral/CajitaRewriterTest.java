@@ -164,7 +164,12 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  function boo() { return x; }"
         + "var x;",
         "  var boo;"
-        + "boo = ___.simpleFunc(function() { return x; }, 'boo');"
+        + "boo = (function () {\n" +
+        		"           function boo() {\n" +
+        		"             return x;\n" +
+        		"           }\n" +
+        		"           return ___.simpleFunc(boo, \'boo\');\n" +
+        		"         })();"
         + ";"
         + "var x;");
   }
@@ -399,7 +404,11 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         Collections.singletonList(innerInput));
     makeSynthetic(input);
     ParseTreeNode expectedResult = js(fromString(
-        "var foo; { foo = ___.simpleFunc(function() {}, 'foo'); ; }"));
+        "var foo; { foo = (function () {\n" +
+        "             function foo() {\n" +
+        "             }\n" +
+        "             return ___.simpleFunc(foo, \'foo\');\n" +
+        "           })(); ; }"));
     checkSucceeds(input, expectedResult);
   }
 
@@ -439,7 +448,11 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "{ function foo() {} }",
         "var foo;" +
-        "{ foo = ___.simpleFunc(function() {}, 'foo'); ; }");
+        "{ foo = (function () {\n" +
+        "             function foo() {\n" +
+        "             }\n" +
+        "             return ___.simpleFunc(foo, \'foo\');\n" +
+        "           })(); ; }");
   }
 
   public void testNestedBlockWithVariable() throws Exception {
@@ -1333,12 +1346,15 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         weldPrelude("g") +
         "___.simpleFrozenFunc(function() {" +
         "  var foo;" +
-        "  foo = ___.simpleFunc(function(x, y) {" +
-        "      var a___ = ___.args(arguments);" +
-        "      x = a___;" +
-        "      y = ___.readPub(g, 0);" +
-        "      return foo.SIMPLECALL___(x - 1, y - 1);" +
-        "  }, 'foo');" +
+        "  foo = (function () {\n" +
+        "       function foo(x, y) {\n" +
+        "         var a___ = ___.args(arguments);\n" +
+        "         x = a___;\n" +
+        "         y = ___.readPub(g, 0);\n" +
+        "         return foo.SIMPLECALL___(x - 1, y - 1);\n" +
+        "       }\n" +
+        "       return ___.simpleFunc(foo, \'foo\');\n" +
+        "     })();" +
         "  ;"+
         "});");
     checkSucceeds(
@@ -1346,9 +1362,12 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  return foo(x - 1, y - 1);" +
         "}",
         "var foo;" +
-        "foo = ___.simpleFunc(function(x, y) {" +
-        "  return foo.SIMPLECALL___(x - 1, y - 1);" +
-         "}, 'foo');" +
+        "foo = (function () {\n" +
+        "           function foo(x, y) {\n" +
+        "             return foo.SIMPLECALL___(x - 1, y - 1);\n" +
+        "           }\n" +
+        "           return ___.simpleFunc(foo, \'foo\');\n" +
+        "         })();" +
         ";");
     rewriteAndExecute(
         "(function () {" +
@@ -1458,7 +1477,11 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "g[0] instanceof foo;",
         weldPrelude("g") +
         "var foo;" +
-        "foo = ___.simpleFunc(function() {}, 'foo');" +
+        "foo = (function () {\n" +
+        "           function foo() {\n" +
+        "           }\n" +
+        "           return ___.simpleFunc(foo, \'foo\');\n" +
+        "         })();" +
         ";" +
         "___.readPub(g, 0) instanceof ___.primFreeze(foo);");
     checkSucceeds(
