@@ -1803,9 +1803,9 @@ same order as in the original.}
    \nonumber & \lefteqn{\mathrm{Simple functions}} & \\
   \code{function\ F(a\ldots)\ \{{\ldots}\}}      
              & \label{func:named-expr}
-                                 & \code{\_\_\_.primFreeze(\_\_\_.simpleFunc(function\ F(a\ldots)\ \{{\ldots}\}))} \\
+                                 & \code{\_\_\_.primFreeze(\_\_\_.func(function\ F(a\ldots)\ \{{\ldots}\}))} \\
   \code{function(a\ldots)\ \{{\ldots}\}}         
-             & \label{func:anon} & \code{\_\_\_.primFreeze(\_\_\_.simpleFunc(function(a\ldots)\ \{{\ldots}\}))} \\ 
+             & \label{func:anon} & \code{\_\_\_.primFreeze(\_\_\_.func(function(a\ldots)\ \{{\ldots}\}))} \\ 
   \hline
   \code{arguments.callee} 
              & \label{read:bad-callee} & /*rejected*/ \\

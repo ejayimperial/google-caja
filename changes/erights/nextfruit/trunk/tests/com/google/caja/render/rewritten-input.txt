@@ -33,7 +33,7 @@ sep
 =
 ___
 .
-simpleFunc
+func
 (
 function
 sep
@@ -55,7 +55,7 @@ IMPORTS___
 .
 foo
 .
-SIMPLECALL___
+CALL___
 (
 )
 )
@@ -64,7 +64,7 @@ IMPORTS___
 .
 bar
 .
-SIMPLECALL___
+CALL___
 (
 )
 ;
@@ -115,7 +115,7 @@ tmp0___
 # test-input1.js:11+7-15
 sep
 .
-SIMPLECALL___
+CALL___
 (
 )
 )

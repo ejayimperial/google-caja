@@ -1187,7 +1187,7 @@ public final class GxpCompiler {
         gxpc.eventHandlers.put(
             handlerFnName,
             new ExpressionStmt((Expression) QuasiBuilder.substV(
-                "IMPORTS___.@handlerFnName = ___.simpleFunc("
+                "IMPORTS___.@handlerFnName = ___.func("
                 + "   function (" + ReservedNames.THIS_NODE + ", event) {"
                 + "     @handler*;"
                 + "   });",

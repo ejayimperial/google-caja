@@ -1708,14 +1708,14 @@ public class CajitaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="callDeclaredFunc",
-          synopsis="When calling a declared function name, leave the freezing to SIMPLECALL___.",
+          synopsis="When calling a declared function name, leave the freezing to CALL___.",
           reason="If @fname is a declared function name, an escaping use as here would " +
               "normally generate a call to primFreeze it, so that it's frozen on " +
-              "first use. However, since the default SIMPLECALL___ method now freezes  " +
+              "first use. However, since the default CALL___ method now freezes  " +
               "the function it's called on, " +
               "if @fname is a declared function name, we avoid expanding it.",
           matches="@fname(@as*)",
-          substitutes="@fname.SIMPLECALL___(@as*)")
+          substitutes="@fname.CALL___(@as*)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null &&
@@ -1735,7 +1735,7 @@ public class CajitaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="@f(@as*)",
-          substitutes="@f.SIMPLECALL___(@as*)")
+          substitutes="@f.CALL___(@as*)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
@@ -1758,7 +1758,7 @@ public class CajitaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="function (@ps*) { @bs*; }",
-          substitutes="___.simpleFrozenFunc(\n"
+          substitutes="___.frozenFunc(\n"
               + "  function (@ps*) {\n"
               + "    @fh*;\n"
               + "    @stmts*;\n"
@@ -1793,7 +1793,7 @@ public class CajitaRewriter extends Rewriter {
             + "  @stmts*;\n"
             + "  @bs*;\n"
             + "}\n"
-            + "___.simpleFunc(@fname, @'fname');")
+            + "___.func(@fname, @'fname');")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         if (node instanceof FunctionDeclaration &&
             scope == scope.getClosestDeclarationContainer()) {
@@ -1813,7 +1813,7 @@ public class CajitaRewriter extends Rewriter {
                 + "  @stmts*;\n"
                 + "  @bs*;\n"
                 + "}\n"
-                + "___.simpleFunc(@fRef, @rf);",
+                + "___.func(@fRef, @rf);",
                 "fname", fname,
                 "fRef", new Reference(fname),
                 "rf", toStringLiteral(fname),
@@ -1845,7 +1845,7 @@ public class CajitaRewriter extends Rewriter {
             + "    @stmts*;\n"
             + "    @bs*;\n"
             + "  }\n"
-            + "  return ___.simpleFunc(@fself, @'fname');\n"
+            + "  return ___.func(@fself, @'fname');\n"
             + "})();")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = (
@@ -1868,7 +1868,7 @@ public class CajitaRewriter extends Rewriter {
               + "    @stmts*;\n"
               + "    @bs*;\n"
               + "  }\n"
-              + "  return ___.simpleFunc(@rfself, @rf);\n"
+              + "  return ___.func(@rfself, @rf);\n"
               + "})();",
               "fname", fname,
               "fRef", new Reference(fname),
@@ -1900,7 +1900,7 @@ public class CajitaRewriter extends Rewriter {
               + "    @stmts*;\n"
               + "    @bs*;\n"
               + "  }\n"
-              + "  return ___.simpleFrozenFunc(@fname, @'fname');\n"
+              + "  return ___.frozenFunc(@fname, @'fname');\n"
               + "})();")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
@@ -1918,7 +1918,7 @@ public class CajitaRewriter extends Rewriter {
               + "    @stmts*;\n"
               + "    @bs*;\n"
               + "  }\n"
-              + "  return ___.simpleFrozenFunc(@fRef, @rf);\n"
+              + "  return ___.frozenFunc(@fRef, @rf);\n"
               + "})();",
               "fname", fname,
               "fRef", new Reference(fname),

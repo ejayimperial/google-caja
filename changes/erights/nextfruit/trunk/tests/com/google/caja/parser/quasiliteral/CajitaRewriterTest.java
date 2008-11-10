@@ -163,13 +163,10 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "  function boo() { return x; }"
         + "var x;",
-        "  var boo;"
-        + "boo = (function () {\n" +
-        		"           function boo$self() {\n" +
-        		"             return x;\n" +
-        		"           }\n" +
-        		"           return ___.simpleFunc(boo$self, \'boo\');\n" +
-        		"         })();"
+        "  function boo() {\n" +
+        "    return x;\n" +
+        "  }\n" +
+        "  ___.func(boo, \'boo\');"
         + ";"
         + "var x;");
   }
@@ -218,7 +215,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "function() { var y = x; };",
         weldPrelude("x") +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  var y = x;" +
         "});");
   }
@@ -407,7 +404,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "var foo; { foo = (function () {\n" +
         "             function foo$self() {\n" +
         "             }\n" +
-        "             return ___.simpleFunc(foo$self, \'foo\');\n" +
+        "             return ___.func(foo$self, \'foo\');\n" +
         "           })(); ; }"));
     checkSucceeds(input, expectedResult);
   }
@@ -435,7 +432,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         + "var x1___;"
         + "function f() {"
         + "  "  // ... not down here!
-        + weldSetPub("foo.SIMPLECALL___()", "x", "bar.SIMPLECALL___()", "x0___", "x1___")
+        + weldSetPub("foo.CALL___()", "x", "bar.CALL___()", "x0___", "x1___")
         + ";}"));
     checkSucceeds(input, expectedResult);
   }
@@ -451,7 +448,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "{ foo = (function () {\n" +
         "             function foo$self() {\n" +
         "             }\n" +
-        "             return ___.simpleFunc(foo$self, \'foo\');\n" +
+        "             return ___.func(foo$self, \'foo\');\n" +
         "           })(); ; }");
   }
 
@@ -461,7 +458,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         weldPrelude("g") +
          "var x0___;" +
         "{" +
-         "  var x = " + weldReadPub("g.SIMPLECALL___()", "y", "x0___") + ";"+
+         "  var x = " + weldReadPub("g.CALL___()", "y", "x0___") + ";"+
          "}");
   }
 
@@ -714,7 +711,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  p = arguments;" +
         "};",
         "var p;" +
-        "var foo = ___.simpleFrozenFunc(function() {" +
+        "var foo = ___.frozenFunc(function() {" +
         "  var a___ = ___.args(arguments);" +
         "  p = a___;" +
         "});");
@@ -746,7 +743,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     // Make sure *single* underscore is okay
     checkSucceeds(
         "function() { var foo_ = 3; };",
-        "___.simpleFrozenFunc(function() { var foo_ = 3; });");
+        "___.frozenFunc(function() { var foo_ = 3; });");
   }
 
   public void testVarBadSuffixDeclaration() throws Exception {
@@ -806,7 +803,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  foo;" +
         "};",
         weldPrelude("foo") +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  foo;" +
         "});");
     checkSucceeds(
@@ -814,7 +811,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  var foo;" +
         "  foo;" +
         "};",
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  var foo;" +
         "  foo;" +
         "});");
@@ -831,7 +828,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  " + unchanged +
         "};",
         "var undefined = ___.readImport(IMPORTS___, 'undefined', {});" +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  " + unchanged +
         "});");
   }
@@ -858,7 +855,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         weldPrelude("foo") +
         "var x0___;" +
         "var p;" +
-        "p = " + weldReadPub("foo.SIMPLECALL___()", "p", "x0___") + ";");
+        "p = " + weldReadPub("foo.CALL___()", "p", "x0___") + ";");
   }
 
   public void testReadIndexPublic() throws Exception {
@@ -936,7 +933,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         weldPrelude("x") +
         "var x0___;" +
         "var x1___;" +
-        weldSetPub("x.SIMPLECALL___()", "p", "___.readPub(g, 0)", "x0___", "x1___") +
+        weldSetPub("x.CALL___()", "p", "___.readPub(g, 0)", "x0___", "x1___") +
         ";");
   }
 
@@ -1005,7 +1002,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "myArray().key += 1;",
         weldPrelude("myArray")
         + "var x0___;"
-        + "x0___ = myArray.SIMPLECALL___(),"
+        + "x0___ = myArray.CALL___(),"
         + "___.setPub(x0___, 'key',"
         + "           ___.readPub(x0___, 'key') + 1);");
     checkSucceeds(
@@ -1014,16 +1011,16 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         + weldPrelude("myKey")
         + "var x0___;"
         + "var x1___;"
-        + "x0___ = myArray.SIMPLECALL___(),"
-        + "x1___ = myKey.SIMPLECALL___(),"
+        + "x0___ = myArray.CALL___(),"
+        + "x1___ = myKey.CALL___(),"
         + "___.setPub(x0___, x1___,"
         + "           ___.readPub(x0___, x1___) + 1);");
     checkSucceeds(  // Local reference need not be assigned to a temp.
         "(function (myKey) { myArray()[myKey] += 1; });",
         weldPrelude("myArray")
-        + "___.simpleFrozenFunc(function (myKey) {"
+        + "___.frozenFunc(function (myKey) {"
         + "  var x0___;"
-        + "  x0___ = myArray.SIMPLECALL___(),"
+        + "  x0___ = myArray.CALL___(),"
         + "  ___.setPub(x0___, myKey,"
         + "             ___.readPub(x0___, myKey) + 1);"
         + "});");
@@ -1099,7 +1096,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkFails("++x__;", "");
     checkSucceeds(
         "(function (x, y) { return [x--, --x, y++, ++y]; });",
-        "___.simpleFrozenFunc(" +
+        "___.frozenFunc(" +
         "  function (x, y) { return [x--, --x, y++, ++y]; });");
 
     assertConsistent(
@@ -1183,12 +1180,12 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "delete foo()[bar()];",
         weldPrelude("bar") +
         weldPrelude("foo") +
-        "___.deletePub(foo.SIMPLECALL___()," +
-        "              bar.SIMPLECALL___());");
+        "___.deletePub(foo.CALL___()," +
+        "              bar.CALL___());");
     checkSucceeds(
         "delete foo().bar;",
         weldPrelude("foo") +
-        "___.deletePub(foo.SIMPLECALL___(), 'bar');");
+        "___.deletePub(foo.CALL___(), 'bar');");
     assertConsistent(
         "(function() {" +
         "  var o = { x: 3, y: 4 };" +    // A JSON object.
@@ -1254,7 +1251,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "g(g[1], g[2]);",
         weldPrelude("g") +
-        "g.SIMPLECALL___" +
+        "g.CALL___" +
         "     (___.readPub(g, 1), ___.readPub(g, 2));");
   }
 
@@ -1270,7 +1267,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         + "  origCallPub.call(___, obj, name, args);"
         + "};"
         + "testImports.$v = ___.primFreeze({"
-        + "  dis: ___.simpleFrozenFunc(function(n) { x = n; })"
+        + "  dis: ___.frozenFunc(function(n) { x = n; })"
         + "});";
     rewriteAndExecute(
         fixture,
@@ -1293,7 +1290,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds(
         "function(x, y) { x = arguments; y = g[0]; };",
         weldPrelude("g") +
-        "___.simpleFrozenFunc(function(x, y) {" +
+        "___.frozenFunc(function(x, y) {" +
         "  var a___ = ___.args(arguments);" +
         "  x = a___;" +
         "  y = ___.readPub(g, 0);" +
@@ -1344,30 +1341,24 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  }" +
         "};",
         weldPrelude("g") +
-        "___.simpleFrozenFunc(function() {" +
-        "  var foo;" +
-        "  foo = (function () {\n" +
-        "       function foo$self(x, y) {\n" +
-        "         var a___ = ___.args(arguments);\n" +
-        "         x = a___;\n" +
-        "         y = ___.readPub(g, 0);\n" +
-        "         return foo.SIMPLECALL___(x - 1, y - 1);\n" +
-        "       }\n" +
-        "       return ___.simpleFunc(foo$self, \'foo\');\n" +
-        "     })();" +
+        "___.frozenFunc(function() {" +
+        "   function foo(x, y) {\n" +
+        "                           var a___ = ___.args(arguments);\n" +
+        "                           x = a___;\n" +
+        "                           y = ___.readPub(g, 0);\n" +
+        "                           return foo.CALL___(x - 1, y - 1);\n" +
+        "                         }\n" +
+        "                         ___.func(foo, \'foo\');" +
         "  ;"+
         "});");
     checkSucceeds(
         "function foo(x, y ) {" +
         "  return foo(x - 1, y - 1);" +
         "}",
-        "var foo;" +
-        "foo = (function () {\n" +
-        "           function foo$self(x, y) {\n" +
-        "             return foo.SIMPLECALL___(x - 1, y - 1);\n" +
-        "           }\n" +
-        "           return ___.simpleFunc(foo$self, \'foo\');\n" +
-        "         })();" +
+        "  function foo(x, y) {\n" +
+        "    return foo.CALL___(x - 1, y - 1);\n" +
+        "  }\n" +
+        "  ___.func(foo, \'foo\');" +
         ";");
     rewriteAndExecute(
         "(function () {" +
@@ -1402,9 +1393,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "        var a___ = ___.args(arguments);" +
         "        x = a___;" +
         "        y = z;" +
-        "        return foo.SIMPLECALL___(x - 1, y - 1);" +
+        "        return foo.CALL___(x - 1, y - 1);" +
         "      }" +
-        "      return ___.simpleFrozenFunc(foo, 'foo');" +
+        "      return ___.frozenFunc(foo, 'foo');" +
         "    }();");
     checkSucceeds(
         "var bar = function foo_(x, y ) {" +
@@ -1412,9 +1403,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "};",
         "var bar = function() {" +
         "  function foo_(x, y) {" +
-        "    return foo_.SIMPLECALL___(x - 1, y - 1);" +
+        "    return foo_.CALL___(x - 1, y - 1);" +
         "  }" +
-        "  return ___.simpleFrozenFunc(foo_, 'foo_');" +
+        "  return ___.frozenFunc(foo_, 'foo_');" +
         "}();");
   }
 
@@ -1451,8 +1442,8 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "var x0___;" +
         "var x1___;" +
         "var o = ___.initializeMap(" +
-        "    [ 'k0', " + weldReadPub("g.SIMPLECALL___()", "x", "x0___") + ", " +
-        "      'k1', " + weldReadPub("g.SIMPLECALL___()", "y", "x1___") + " ]);");
+        "    [ 'k0', " + weldReadPub("g.CALL___()", "x", "x0___") + ", " +
+        "      'k1', " + weldReadPub("g.CALL___()", "y", "x1___") + " ]);");
     // Ensure that calling an untamed function throws
     rewriteAndExecute(
         "testImports.f = function() {};",
@@ -1476,12 +1467,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "function foo() {}" +
         "g[0] instanceof foo;",
         weldPrelude("g") +
-        "var foo;" +
-        "foo = (function () {\n" +
-        "           function foo$self() {\n" +
-        "           }\n" +
-        "           return ___.simpleFunc(foo$self, \'foo\');\n" +
-        "         })();" +
+        "function foo() {\n" +
+        "  }\n" +
+        "  ___.func(foo, \'foo\');" +
         ";" +
         "___.readPub(g, 0) instanceof ___.primFreeze(foo);");
     checkSucceeds(
@@ -1540,7 +1528,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     checkSucceeds("void 0;", "void 0;");
     checkSucceeds("void g();",
                   weldPrelude("g") +
-                  "void g.SIMPLECALL___();");
+                  "void g.CALL___();");
     checkSucceeds("g[0], g[1];",
                   weldPrelude("g") +
                   "___.readPub(g, 0), ___.readPub(g, 1);");
@@ -1576,7 +1564,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "function() {" +
         "  var x, y;" +
         "};",
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  var x, y;" +
         "});");
     checkSucceeds(
@@ -1584,7 +1572,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  var x = g[0], y = g[1];" +
         "};",
         weldPrelude("g") +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  var x = ___.readPub(g, 0), y = ___.readPub(g, 1);" +
         "});");
     checkSucceeds(
@@ -1592,7 +1580,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  var x, y = g[0];" +
         "};",
         weldPrelude("g") +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  var x, y = ___.readPub(g, 0);" +
         "});");
     // 'var' in global scope, 'for' statement
@@ -1600,7 +1588,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "function() {" +
         "  for (var x, y; ; ) {}" +
         "};",
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  for (var x, y; ; ) {}" +
         "});");
     checkSucceeds(
@@ -1608,7 +1596,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  for (var x = g[0], y = g[1]; ; ) {}" +
         "};",
         weldPrelude("g") +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  for (var x = ___.readPub(g, 0), " +
         "           y = ___.readPub(g, 1); ; ) {}" +
         "});");
@@ -1617,7 +1605,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  for (var x, y = g[0]; ; ) {}" +
         "};",
         weldPrelude("g") +
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  for (var x, y = ___.readPub(g, 0); ; ) {}" +
         "});");
     assertConsistent(
@@ -1778,7 +1766,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "  var x;" +
         "  throw x;" +
         "};",
-        "___.simpleFrozenFunc(function() {" +
+        "___.frozenFunc(function() {" +
         "  var x;" +
         "  throw x;" +
         "});");
@@ -1810,7 +1798,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     executePlain(
         ""
         + "___.getNewModuleHandler().getImports().assertEquals\n"
-        + "    = ___.simpleFrozenFunc(assertEquals);\n"
+        + "    = ___.frozenFunc(assertEquals);\n"
         + "___.loadModule(function (___, IMPORTS___) {\n"
         + render(emulated)
         + "});").toString();
@@ -1912,7 +1900,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
   public void testStamp() throws Exception {
     rewriteAndExecute(
         "___.getNewModuleHandler().getImports().stamp =" +
-        "    ___.simpleFrozenFunc(___.stamp);" +
+        "    ___.frozenFunc(___.stamp);" +
         "___.grantRead(___.getNewModuleHandler().getImports(), 'stamp');",
         "function Foo(){}" +
         "var foo = new Foo;" +
@@ -1929,7 +1917,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "");
     rewriteAndExecute(
         "___.getNewModuleHandler().getImports().stamp =" +
-        "    ___.simpleFrozenFunc(___.stamp);" +
+        "    ___.frozenFunc(___.stamp);" +
         "___.grantRead(___.getNewModuleHandler().getImports(), 'stamp');",
         "function Foo(){}" +
         "var foo = new Foo;" +
@@ -1940,7 +1928,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "");
     rewriteAndExecute(
         "___.getNewModuleHandler().getImports().stamp =" +
-        "    ___.simpleFrozenFunc(___.stamp);" +
+        "    ___.frozenFunc(___.stamp);" +
         "___.grantRead(___.getNewModuleHandler().getImports(), 'stamp');",
         "var foo = {};" +
         "var tm = {};" +
@@ -1949,7 +1937,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "");
     rewriteAndExecute(
         "___.getNewModuleHandler().getImports().stamp =" +
-        "    ___.simpleFrozenFunc(___.stamp);" +
+        "    ___.frozenFunc(___.stamp);" +
         "___.grantRead(___.getNewModuleHandler().getImports(), 'stamp');",
         "var foo = {};" +
         "var tm = {};" +
@@ -1965,7 +1953,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "");
     rewriteAndExecute(
         "___.getNewModuleHandler().getImports().stamp =" +
-        "    ___.simpleFrozenFunc(___.stamp);" +
+        "    ___.frozenFunc(___.stamp);" +
         "___.grantRead(___.getNewModuleHandler().getImports(), 'stamp');",
         "var foo = {};" +
         "var tm = {};" +
@@ -1982,7 +1970,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "");
     rewriteAndExecute(
         "___.getNewModuleHandler().getImports().stamp =" +
-        "    ___.simpleFrozenFunc(___.stamp);" +
+        "    ___.frozenFunc(___.stamp);" +
         "___.grantRead(___.getNewModuleHandler().getImports(), 'stamp');",
         "function foo(){};" +
         "var tm = {};" +
@@ -2077,7 +2065,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     importsSetup.append("var testImports = ___.copy(___.sharedImports);");
     for (String f : assertFunctions) {
       importsSetup
-          .append("testImports." + f + " = ___.simpleFunc(" + f + ");")
+          .append("testImports." + f + " = ___.func(" + f + ");")
           .append("___.grantRead(testImports, '" + f + "');");
     }
     importsSetup.append("___.getNewModuleHandler().setImports(testImports);");

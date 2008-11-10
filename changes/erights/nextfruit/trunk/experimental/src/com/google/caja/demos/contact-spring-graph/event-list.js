@@ -29,7 +29,7 @@ function CalEvent(id, attendees) {
   this.id_ = id;
   this.attendees_ = caja.freeze(attendees.slice(0));
 }
-___.simpleFunc(CalEvent);
+___.func(CalEvent);
 CalEvent.prototype.toString = ___.method(function () {
   return '[CalEvent ' + this.id_ + ' : ' + this.attendees_ + ']';
 }, 'toString');
@@ -49,7 +49,7 @@ ___.grantCall(CalEvent.prototype, 'getId');
 function Calendar(events) {
   this.events_ = caja.freeze(events.slice(0));
 }
-___.simpleFunc(Calendar);
+___.func(Calendar);
 Calendar.prototype.getEvents = ___.method(
     function () { return this.events_; }, 'getEvents');
 Calendar.prototype.toString = ___.method(

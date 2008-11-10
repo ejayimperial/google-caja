@@ -125,7 +125,7 @@ public class CajolingServiceTest extends TestCase {
     assertEquals(
         request("?url=http://foo/bar.js&mime-type=text/javascript"),
         "{\n  var f = ___.readImport(IMPORTS___, 'f');\n"
-        + "  f.SIMPLECALL___();\n}");
+        + "  f.CALL___();\n}");
   }
 
   public void testImage() throws Exception {

@@ -377,7 +377,7 @@ public class CompiledPluginTest extends TestCase {
             + "var testImports = ___.getNewModuleHandler().getImports();\n"
             + "testImports.exports = {};\n"
             + "attachDocumentStub('-post', uriCallback, testImports);\n"
-            + "testImports.log = ___.simpleFunc(function(s) {\n"
+            + "testImports.log = ___.func(function(s) {\n"
             + "  console.log(s);\n"
             + "});"),
             "container"),

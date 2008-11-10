@@ -209,7 +209,7 @@ public class HtmlCompiledPluginTest extends CajaTestCase {
               "var valijaMaker = {};\n" +
               "var testImports = ___.copy(___.sharedImports);\n" +
               "testImports.loader = {\n" +
-              "  provide: ___.simpleFunc(function(v) { valijaMaker = v; })\n" +
+              "  provide: ___.func(function(v) { valijaMaker = v; })\n" +
               "};\n" +
               "testImports.outers = ___.copy(___.sharedImports);\n" +
               "___.getNewModuleHandler().setImports(testImports);",

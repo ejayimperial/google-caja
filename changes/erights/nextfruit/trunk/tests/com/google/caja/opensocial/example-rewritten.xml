@@ -12,8 +12,8 @@
                    IMPORTS___.emitCss___([ '@media print, screen {\n  .', ' .p4 {\n    font-weight: bold\n  }\n}' ].join(IMPORTS___.getIdClass___()));
                    IMPORTS___.emitCss___([ '.', ' .p1 {\n  color: red\n}' ].join(IMPORTS___.getIdClass___()));
                    {
-                     IMPORTS___.c_1___ = ___.simpleFrozenFunc(function (event, thisNode___) {
-                                                                handleClicky.SIMPLECALL___();
+                     IMPORTS___.c_1___ = ___.frozenFunc(function (event, thisNode___) {
+                                                                handleClicky.CALL___();
                                                               });
                    }
                    IMPORTS___.htmlEmitter___.pc('\n\n    \n    \n\n    \n    \n\n    \n    \n\n    \n    ').b('p').a('class', 'p1 p2').f(false).ih('Paragraph 1').e('p').pc('\n\n    ');
@@ -21,9 +21,9 @@
                      {
                        externalScript = (function () {
                                            function externalScript$self() {
-                                             alert.SIMPLECALL___('external script');
+                                             alert.CALL___('external script');
                                            }
-                                           return ___.simpleFunc(externalScript$self, 'externalScript');
+                                           return ___.func(externalScript$self, 'externalScript');
                                          })();
                        ;
                      }
@@ -36,9 +36,9 @@
                        moduleResult___ = (x0___ = (
                            function () {
                              function handleClicky() {
-                               alert.SIMPLECALL___('You clicked something!!!');
+                               alert.CALL___('You clicked something!!!');
                              }
-                             return ___.simpleFrozenFunc(handleClicky, 'handleClicky');
+                             return ___.frozenFunc(handleClicky, 'handleClicky');
                            })(), outers.handleClicky_canSet___? (outers.handleClicky = x0___): ___.setPub(outers, 'handleClicky', x0___));
                      }
                    } catch (ex___) {

@@ -350,7 +350,7 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         new RhinoTestBed.Input(
             "var testImports = ___.copy(___.sharedImports);\n" +
             "testImports.loader = ___.freeze({\n" +
-            "        provide: ___.simpleFrozenFunc(\n" +
+            "        provide: ___.frozenFunc(\n" +
             "            function(v){ valijaMaker = v; })\n" +
             "    });\n" +
             "testImports.outers = ___.copy(___.sharedImports);\n" +
@@ -361,13 +361,13 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
             // Set up the imports environment.
             "testImports = ___.copy(___.sharedImports);\n" +
             "testImports.console = console;" +
-            "testImports.assertEquals = ___.simpleFunc(assertEquals);" +
+            "testImports.assertEquals = ___.func(assertEquals);" +
             "___.grantCall(testImports, 'assertEquals');" +
-            "testImports.assertTrue = ___.simpleFunc(assertTrue);" +
+            "testImports.assertTrue = ___.func(assertTrue);" +
             "___.grantCall(testImports, 'assertTrue');" +
-            "testImports.assertFalse = ___.simpleFunc(assertFalse);" +
+            "testImports.assertFalse = ___.func(assertFalse);" +
             "___.grantCall(testImports, 'assertFalse');" +
-            "testImports.$v = valijaMaker.SIMPLECALL___(testImports);\n" +
+            "testImports.$v = valijaMaker.CALL___(testImports);\n" +
             "___.getNewModuleHandler().setImports(testImports);",
             getName() + "-test-fixture"),
         new RhinoTestBed.Input(pre, getName() + "-pre"),
