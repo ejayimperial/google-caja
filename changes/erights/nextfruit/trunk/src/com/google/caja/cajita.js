@@ -757,7 +757,12 @@ var ___;
    */
   function canCall(obj, name)   {
     if (obj === void 0 || obj === null) { return false; }
-    return !! (obj[name + '_canCall___'] || obj[name + '_grantCall___']);
+    if (obj[name + '_canCall___']) { return true; }
+    if (obj[name + '_grantCall___']) {
+      fastpathCall(obj, name);
+      return true;
+    }
+    return false;
   }
   /**
    * Tests whether the fast-path canSet flag is set, or grantSet() has been
@@ -765,8 +770,12 @@ var ___;
    */
   function canSet(obj, name) {
     if (obj === void 0 || obj === null) { return false; }
-    return obj[name + '_canSet___'] === obj || 
-      obj[name + '_grantSet___'] === obj;
+    if (obj[name + '_canSet___'] === obj) { return true; }
+    if (obj[name + '_grantSet___'] === obj) {
+      fastpathSet(obj, name);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -799,13 +808,13 @@ var ___;
    */
   function fastpathCall(obj, name) {
     if (name === 'toString') { fail("internal: Can't fastpath .toString"); }
-    obj[name + '_canCall___'] = obj;
     if (obj[name + '_canSet___']) {
       obj[name + '_canSet___'] = false;
     }
     if (obj[name + '_grantSet___']) {
       obj[name + '_grantSet___'] = false;
     }
+    obj[name + '_canCall___'] = obj;
   }
 
   /**
@@ -819,13 +828,13 @@ var ___;
     }
     fastpathEnumOnly(obj, name);
     fastpathRead(obj, name);
-    obj[name + '_canSet___'] = obj;
     if (obj[name + '_canCall___']) {
       obj[name + '_canCall___'] = false;
     }
     if (obj[name + '_grantCall___']) {
       obj[name + '_grantCall___'] = false;
     }
+    obj[name + '_canSet___'] = obj;
   }
 
   /**
@@ -856,13 +865,13 @@ var ___;
   }
 
   function grantCall(obj, name) {
-//    fastpathCall(obj, name);
-    obj[name + '_grantCall___'] = true;
+    fastpathCall(obj, name);
+    obj[name + '_grantCall___'] = obj;
   }
 
   function grantSet(obj, name) {
-//    fastpathSet(obj, name);
-    obj[name + '_grantSet___'] = true;
+    fastpathSet(obj, name);
+    obj[name + '_grantSet___'] = obj;
   }
 
   function grantDelete(obj, name) {
@@ -1502,7 +1511,11 @@ var ___;
     if (obj === null) { return false; }
     if (obj === void 0) { return false; }
     name = String(name);
-    if (canCall(obj, name)) { return true; }
+    if (obj[name + '_canCall___']) { return true; }
+    if (obj[name + '_grantCall___']) { 
+      fastpathCall(obj, name);
+      return true; 
+    }
     if (!canReadPub(obj, name)) { return false; }
     if (endsWith__.test(name)) { return false; }
     if (name === 'toString') { return false; }

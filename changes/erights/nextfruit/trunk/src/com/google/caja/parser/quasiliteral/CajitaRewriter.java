@@ -41,6 +41,7 @@ import com.google.caja.parser.js.Loop;
 import com.google.caja.parser.js.ModuleEnvelope;
 import com.google.caja.parser.js.MultiDeclaration;
 import com.google.caja.parser.js.Noop;
+import com.google.caja.parser.js.NumberLiteral;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.Reference;
