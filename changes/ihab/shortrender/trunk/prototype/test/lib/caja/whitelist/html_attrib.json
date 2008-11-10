@@ -8,17 +8,10 @@
   ],
 
   "allowed": [
-    {
-      "key": "A:ACCESSKEY"
-    },
-    
-    {
-      "key": "DIV:FOO"
-    },
-    
-    {
-      "key": "DIV:BAR"
-    }
+    "FORM:ACCEPT-CHARSET",
+    "DIV:FOO",
+    "DIV:BAR",
+    "A:ACCESSKEY"
   ],
 
   "types": [
