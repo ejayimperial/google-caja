@@ -1789,12 +1789,12 @@ public class CajitaRewriter extends Rewriter {
           reason="",
           matches="function @fname(@ps*) { @bs*; }",
           substitutes="@fname = (function() {\n"
-            + "  function @fname(@ps*) {\n"
+            + "  function @fself(@ps*) {\n"
             + "    @fh*;\n"
             + "    @stmts*;\n"
             + "    @bs*;\n"
             + "  }\n"
-            + "  return ___.simpleFunc(@fname, @'fname');\n"
+            + "  return ___.simpleFunc(@fself, @'fname');\n"
             + "})();")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = (
@@ -1808,18 +1808,21 @@ public class CajitaRewriter extends Rewriter {
               ((FunctionDeclaration) node).getInitializer());
           checkFormals(bindings.get("ps"), mq);
           Identifier fname = (Identifier) bindings.get("fname");
+          Identifier fself = new Identifier(fname.getName() + "$self");
           scope.declareStartOfScopeVariable(fname);
           Expression expr = (Expression) QuasiBuilder.substV(
               "@fRef = (function() {\n"
-              + "  function @fname(@ps*) {\n"
+              + "  function @fself(@ps*) {\n"
               + "    @fh*;\n"
               + "    @stmts*;\n"
               + "    @bs*;\n"
               + "  }\n"
-              + "  return ___.simpleFunc(@fRef, @rf);\n"
+              + "  return ___.simpleFunc(@rfself, @rf);\n"
               + "})();",
               "fname", fname,
               "fRef", new Reference(fname),
+              "fself", fself,
+              "rfself", new Reference(fself),
               "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing fh and stmts.

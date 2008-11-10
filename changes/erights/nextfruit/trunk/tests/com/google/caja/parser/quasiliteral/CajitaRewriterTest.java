@@ -165,10 +165,10 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         + "var x;",
         "  var boo;"
         + "boo = (function () {\n" +
-        		"           function boo() {\n" +
+        		"           function boo$self() {\n" +
         		"             return x;\n" +
         		"           }\n" +
-        		"           return ___.simpleFunc(boo, \'boo\');\n" +
+        		"           return ___.simpleFunc(boo$self, \'boo\');\n" +
         		"         })();"
         + ";"
         + "var x;");
@@ -405,9 +405,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     makeSynthetic(input);
     ParseTreeNode expectedResult = js(fromString(
         "var foo; { foo = (function () {\n" +
-        "             function foo() {\n" +
+        "             function foo$self() {\n" +
         "             }\n" +
-        "             return ___.simpleFunc(foo, \'foo\');\n" +
+        "             return ___.simpleFunc(foo$self, \'foo\');\n" +
         "           })(); ; }"));
     checkSucceeds(input, expectedResult);
   }
@@ -449,9 +449,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "{ function foo() {} }",
         "var foo;" +
         "{ foo = (function () {\n" +
-        "             function foo() {\n" +
+        "             function foo$self() {\n" +
         "             }\n" +
-        "             return ___.simpleFunc(foo, \'foo\');\n" +
+        "             return ___.simpleFunc(foo$self, \'foo\');\n" +
         "           })(); ; }");
   }
 
@@ -1347,13 +1347,13 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "___.simpleFrozenFunc(function() {" +
         "  var foo;" +
         "  foo = (function () {\n" +
-        "       function foo(x, y) {\n" +
+        "       function foo$self(x, y) {\n" +
         "         var a___ = ___.args(arguments);\n" +
         "         x = a___;\n" +
         "         y = ___.readPub(g, 0);\n" +
         "         return foo.SIMPLECALL___(x - 1, y - 1);\n" +
         "       }\n" +
-        "       return ___.simpleFunc(foo, \'foo\');\n" +
+        "       return ___.simpleFunc(foo$self, \'foo\');\n" +
         "     })();" +
         "  ;"+
         "});");
@@ -1363,10 +1363,10 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "}",
         "var foo;" +
         "foo = (function () {\n" +
-        "           function foo(x, y) {\n" +
+        "           function foo$self(x, y) {\n" +
         "             return foo.SIMPLECALL___(x - 1, y - 1);\n" +
         "           }\n" +
-        "           return ___.simpleFunc(foo, \'foo\');\n" +
+        "           return ___.simpleFunc(foo$self, \'foo\');\n" +
         "         })();" +
         ";");
     rewriteAndExecute(
@@ -1478,9 +1478,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         weldPrelude("g") +
         "var foo;" +
         "foo = (function () {\n" +
-        "           function foo() {\n" +
+        "           function foo$self() {\n" +
         "           }\n" +
-        "           return ___.simpleFunc(foo, \'foo\');\n" +
+        "           return ___.simpleFunc(foo$self, \'foo\');\n" +
         "         })();" +
         ";" +
         "___.readPub(g, 0) instanceof ___.primFreeze(foo);");
