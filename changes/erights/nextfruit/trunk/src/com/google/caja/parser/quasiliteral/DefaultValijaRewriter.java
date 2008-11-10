@@ -1025,7 +1025,7 @@ public class DefaultValijaRewriter extends Rewriter {
           Identifier fname = (Identifier) bindings.get("fname");
           Identifier fcaller = new Identifier(fname.getName() + "$caller");
           scope.declareStartOfScopeVariable(fname);
-          Statement stat = (Statement) substV(
+          Block block = (Block) substV(
               "fname", new Reference(fname),
               "fcaller", fcaller,
               "rfcaller", new Reference(fcaller),
@@ -1034,7 +1034,9 @@ public class DefaultValijaRewriter extends Rewriter {
               // It's important to expand bs before computing stmts.
               "bs", expand(bindings.get("bs"), s2, mq),
               "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
-          scope.addStartOfBlockStatement(stat);
+          for (Statement stat : block.children()) {
+            scope.addStartOfBlockStatement(stat);
+          }
           return QuasiBuilder.substV(";");
         }
         return NONE;

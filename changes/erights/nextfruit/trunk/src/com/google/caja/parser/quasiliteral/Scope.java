@@ -340,7 +340,7 @@ public class Scope {
         "id", id));
   }
 
-  private Scope getClosestDeclarationContainer() {
+  public Scope getClosestDeclarationContainer() {
     if (!type.isDeclarationContainer()) {
       assert(parent != null);
       return parent.getClosestDeclarationContainer();

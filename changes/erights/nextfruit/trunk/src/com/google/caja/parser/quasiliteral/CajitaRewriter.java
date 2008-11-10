@@ -1784,6 +1784,57 @@ public class CajitaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
+          name="funcNamedTopDecl",
+          synopsis="A non-nested named function doesn't need a maker",
+          reason="",
+          matches="function @fname(@ps*) { @bs*; }",
+          substitutes="function @fname(@ps*) {\n"
+            + "  @fh*;\n"
+            + "  @stmts*;\n"
+            + "  @bs*;\n"
+            + "}\n"
+            + "___.simpleFunc(@fname, @'fname');")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof FunctionDeclaration &&
+            scope == scope.getClosestDeclarationContainer()) {
+
+          Map<String, ParseTreeNode> bindings =
+            match(((FunctionDeclaration) node).getInitializer());
+          // Named simple function declaration
+          if (bindings != null) {
+            Scope s2 = Scope.fromFunctionConstructor(
+                scope,
+                ((FunctionDeclaration) node).getInitializer());
+            checkFormals(bindings.get("ps"), mq);
+            Identifier fname = (Identifier) bindings.get("fname");
+            Block block = (Block) QuasiBuilder.substV(
+                "function @fname(@ps*) {\n"
+                + "  @fh*;\n"
+                + "  @stmts*;\n"
+                + "  @bs*;\n"
+                + "}\n"
+                + "___.simpleFunc(@fRef, @rf);",
+                "fname", fname,
+                "fRef", new Reference(fname),
+                "rf", toStringLiteral(fname),
+                "ps", bindings.get("ps"),
+                // It's important to expand bs before computing fh and stmts.
+                "bs", expand(bindings.get("bs"), s2, mq),
+                "fh", getFunctionHeadDeclarations(s2),
+                "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
+            for (Statement stat : block.children()) {
+              scope.addStartOfBlockStatement(stat);
+            }
+            return QuasiBuilder.substV(";");
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
           name="funcNamedSimpleDecl",
           synopsis="",
           reason="",
