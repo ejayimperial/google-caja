@@ -196,7 +196,7 @@ var ___;
    * Note: JavaScript has no macros, so even in the "does nothing"
    * case, remember that the arguments are still evaluated.
    */
-  var myLogFunc = frozenFunc(function(str, opt_stop) {});
+  var myLogFunc = simpleFrozenFunc(function(str, opt_stop) {});
 
   /**
    * Gets the currently registered logging function.
@@ -652,7 +652,7 @@ var ___;
            debugReference(obj));
     }
     var result = isArray(obj) ? [] : {};
-    each(obj, frozenFunc(function(k, v) {
+    each(obj, simpleFrozenFunc(function(k, v) {
       result[k] = v;
     }));
     return result;
@@ -810,7 +810,7 @@ var ___;
    * calls the super constructor to do its part in initializing the object.
    * <p>
    * A function is tamed and classified by calling one of
-   * <tt>ctor()</tt>, <tt>method()</tt>, or <tt>func()</tt>. Each
+   * <tt>ctor()</tt>, <tt>method()</tt>, or <tt>simpleFunc()</tt>. Each
    * of these checks that the function hasn't already been classified by
    * any of the others. A function which has not been so classified is an
    * <i>untamed function</i>.
@@ -989,7 +989,7 @@ var ___;
    * function. Currently, this is used only to generate friendlier
    * error messages.
    */
-  function func(fun, opt_name) {
+  function simpleFunc(fun, opt_name) {
     enforceType(fun, 'function', opt_name);
     if (isCtor(fun)) {
       fail("Constructors can't be simple functions: ", fun);
@@ -1010,8 +1010,8 @@ var ___;
   /**
    * Mark fun as a simple function and freeze it.
    */
-  function frozenFunc(fun, opt_name) {
-    return primFreeze(func(fun, opt_name));
+  function simpleFrozenFunc(fun, opt_name) {
+    return primFreeze(simpleFunc(fun, opt_name));
   }
 
   /** This "Only" form doesn't freeze */
@@ -1058,7 +1058,7 @@ var ___;
     if (isCtor(fun)) {
       if (fun === Number || fun === String || fun === Boolean) {
         // TODO(erights): To avoid accidents, <tt>method</tt>,
-        // <tt>func</tt>, and <tt>ctor</tt> each ensure that
+        // <tt>simpleFunc</tt>, and <tt>ctor</tt> each ensure that
         // these classifications are exclusive. A function can be
         // classified as in at most one of these categories. However,
         // some primordial type conversion functions like
@@ -1353,10 +1353,10 @@ var ___;
    */
   function Token(name) {
     return primFreeze({
-          toString: frozenFunc(function() { return name; })
+          toString: simpleFrozenFunc(function() { return name; })
         });
   }
-  frozenFunc(Token);
+  simpleFrozenFunc(Token);
 
   /**
    * Inside a <tt>caja.each()</tt>, the body function can terminate
@@ -1732,7 +1732,7 @@ var ___;
    *
    */
   function setMemberMap(sub, members) {
-    each(members, frozenFunc(function(mname, member) {
+    each(members, simpleFrozenFunc(function(mname, member) {
       setMember(sub, mname, member);
     }));
   }
@@ -1783,7 +1783,7 @@ var ___;
       }
       sub.prototype.constructor = sub;
       init(sub, members);
-      each(statics, frozenFunc(function(sname, staticMember) {
+      each(statics, simpleFrozenFunc(function(sname, staticMember) {
         setStatic(sub, sname, staticMember);
       }));
       // translator freezes sub and sub.prototype later.
@@ -1801,7 +1801,7 @@ var ___;
    */
   var unsafeDef = commonDef(
       function (sub, members) {
-        each(members, frozenFunc(function(key, val){
+        each(members, simpleFrozenFunc(function(key, val){
           sub.prototype[key] = val;
         }));
       });
@@ -1889,7 +1889,7 @@ var ___;
    * called or read.
    */
   function grantSimpleFunc(obj, name) {
-    frozenFunc(obj[name], name);
+    simpleFrozenFunc(obj[name], name);
     grantCall(obj, name);
     grantRead(obj, name);
   }
@@ -2027,7 +2027,7 @@ var ___;
                         xo4a(function(self, var_args) {
     var thisFunc = this;
     var leftArgs = Array.slice(arguments, 1);
-    return frozenFunc(function(var_args) {
+    return simpleFrozenFunc(function(var_args) {
       var args = leftArgs.concat(Array.slice(arguments, 0));
       return callPub(thisFunc, 'apply', [self, args]);
     });
@@ -2194,7 +2194,7 @@ var ___;
    * A new-module-handler which does nothing.
    */
   var ignoreNewModule = freeze({
-    handle: frozenFunc(function(newModule){})
+    handle: simpleFrozenFunc(function(newModule){})
   });
 
   /**
@@ -2209,11 +2209,11 @@ var ___;
   function makeNormalNewModuleHandler() {
     var imports = copy(sharedImports);
     return freeze({
-      getImports: frozenFunc(function() { return imports; }),
-      setImports: frozenFunc(function(newImports) { 
+      getImports: simpleFrozenFunc(function() { return imports; }),
+      setImports: simpleFrozenFunc(function(newImports) { 
         imports = newImports; 
       }),
-      handle: frozenFunc(function(newModule) {
+      handle: simpleFrozenFunc(function(newModule) {
         newModule(___, imports);
       })
     });
@@ -2222,12 +2222,12 @@ var ___;
   /**
    * A module is a plugin-maker function.
    * <p>
-   * loadModule(module) marks module as a func, freezes it,
+   * loadModule(module) marks module as a simpleFunc, freezes it,
    * asks the current new-module-handler to handle it (thereby
    * notifying the handler), and returns the new module.
    */
   function loadModule(module) {
-    callPub(myNewModuleHandler, 'handle', [frozenFunc(module)]);
+    callPub(myNewModuleHandler, 'handle', [simpleFrozenFunc(module)]);
     return module;
   }
 
@@ -2384,8 +2384,8 @@ var ___;
       function box() {
         flag = true, squirrel = payload;
       }
-      box.toString = frozenFunc(function () { return '(box)'; });
-      return frozenFunc(box);
+      box.toString = simpleFrozenFunc(function () { return '(box)'; });
+      return simpleFrozenFunc(box);
     }
     function unseal(box) {
       // Start off in a known good state.
@@ -2511,8 +2511,8 @@ var ___;
     }
 
     return primFreeze({
-      get: frozenFunc(get),
-      set: frozenFunc(set)
+      get: simpleFrozenFunc(get),
+      set: simpleFrozenFunc(set)
     });
   }
 
@@ -2603,14 +2603,14 @@ var ___;
     beget: beget
   };
 
-  each(safeCaja, frozenFunc(function(k, v) {
+  each(safeCaja, simpleFrozenFunc(function(k, v) {
     switch (typeof v) {
       case 'object': {
         if (v !== null) { primFreeze(v); }
         break;
       }
       case 'function': {
-        frozenFunc(v);
+        simpleFrozenFunc(v);
         break;
       }
     }
@@ -2628,14 +2628,14 @@ var ___;
     'NaN': NaN,
     'Infinity': Infinity,
     'undefined': (void 0),
-    parseInt: frozenFunc(parseInt),
-    parseFloat: frozenFunc(parseFloat),
-    isNaN: frozenFunc(isNaN),
-    isFinite: frozenFunc(isFinite),
-    decodeURI: frozenFunc(decodeURI),
-    decodeURIComponent: frozenFunc(decodeURIComponent),
-    encodeURI: frozenFunc(encodeURI),
-    encodeURIComponent: frozenFunc(encodeURIComponent),
+    parseInt: simpleFrozenFunc(parseInt),
+    parseFloat: simpleFrozenFunc(parseFloat),
+    isNaN: simpleFrozenFunc(isNaN),
+    isFinite: simpleFrozenFunc(isFinite),
+    decodeURI: simpleFrozenFunc(decodeURI),
+    decodeURIComponent: simpleFrozenFunc(decodeURIComponent),
+    encodeURI: simpleFrozenFunc(encodeURI),
+    encodeURIComponent: simpleFrozenFunc(encodeURIComponent),
     Math: Math,
 
     Object: Object,
@@ -2655,7 +2655,7 @@ var ___;
     URIError: URIError
   };
 
-  each(sharedImports, frozenFunc(function(k, v) {
+  each(sharedImports, simpleFrozenFunc(function(k, v) {
     switch (typeof v) {
       case 'object': {
         if (v !== null) { primFreeze(v); }
@@ -2698,8 +2698,8 @@ var ___;
     asCtor: asCtor,
     splitCtor: splitCtor,
     method: method,               asMethod: asMethod,
-    func: func,       asSimpleFunc: asSimpleFunc,
-    frozenFunc: frozenFunc,
+    simpleFunc: simpleFunc,       asSimpleFunc: asSimpleFunc,
+    simpleFrozenFunc: simpleFrozenFunc,
     xo4a: xo4a,
     setMember: setMember,
     setMemberMap: setMemberMap,
@@ -2757,12 +2757,12 @@ var ___;
     unregister: unregister
   };
 
-  each(caja, frozenFunc(function(k, v) {
+  each(caja, simpleFrozenFunc(function(k, v) {
     if (k in ___) {
       fail('internal: initialization conflict: ', k);
     }
     if (typeof v === 'function') {
-      frozenFunc(v);
+      simpleFrozenFunc(v);
       grantCall(caja, k);
     }
     ___[k] = v;

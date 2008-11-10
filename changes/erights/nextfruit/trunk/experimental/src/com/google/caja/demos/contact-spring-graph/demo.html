@@ -30,7 +30,7 @@
                     group: 0, groupEnd: 0, time: 0, timeEnd: 0, dir: 0,
                     assert: 0, dirxml: 0, profile: 0, profileEnd: 0 }) {
       imports.console[k] = (function (k, f) {
-        return ___.func(
+        return ___.simpleFunc(
             function () { f.apply(console, arguments); });
       })(k, console[k]);
     }
@@ -39,10 +39,10 @@
         '-p___', { rewrite: function (uri, mimeType) { return null; } },
         imports);
 
-    imports.getCalendar = ___.func(function getCalendar() {
+    imports.getCalendar = ___.simpleFunc(function getCalendar() {
       return MY_CALENDAR;
     });
-    imports.setSelectedUser = ___.func(function setSelectedUser(name) {
+    imports.setSelectedUser = ___.simpleFunc(function setSelectedUser(name) {
       document.getElementById('currentUser').innerHTML = html.escapeAttrib(
           'The plugin has selected ' + name);
     });

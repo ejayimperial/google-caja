@@ -380,7 +380,7 @@
             match js`function @f(@ps*) {@bs*}` ?
                   !(anyFreeThis(bs))            { def scope2 := scope.nest(e)
                                                   def b2s    := expandAll(bs, scope2)
-                                                  expandDef(f, js`___.function(function<WBR>($ps*) {
+                                                  expandDef(f, js`___.simpleFunction(function<WBR>($ps*) {
                                                        ${scope2.tempDefs()}*;
                                                        $b2s*
                                                      })`)

@@ -45,7 +45,7 @@
     }
     out___.push(IMPORTS___.htmlAttr___(IMPORTS___.suffix___(c5___.join(''))), '\">\n  </form>\n  <a href=\"/testplugin/help.html\" target=\"_new\">Help</a>\n\n</div>');
   }
-  IMPORTS___.c4___ = ___.func(function (thisNode___, event) {
+  IMPORTS___.c4___ = ___.simpleFunc(function (thisNode___, event) {
                                       panic();
                                     });
 }

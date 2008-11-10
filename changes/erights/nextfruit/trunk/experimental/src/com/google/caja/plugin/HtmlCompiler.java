@@ -527,7 +527,7 @@ public class HtmlCompiler {
         htmlc.eventHandlers.put(
             handlerFnName,
             new ExpressionStmt((Expression) QuasiBuilder.substV(
-                "IMPORTS___.@handlerFnName = ___.func("
+                "IMPORTS___.@handlerFnName = ___.simpleFunc("
                 + "   function (" + ReservedNames.THIS_NODE + ", event) {"
                 + "     @handler*;"
                 + "   });",

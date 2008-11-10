@@ -548,7 +548,7 @@ ___.callProp(t___, @'p', [@as*]</pre></td>
       <td bgcolor="#FF0000"></td>
       <td bgcolor="#FF0000"><pre>(function (@formals*) {@body*;}).bind(
     this, @args*);</pre></td>
-      <td bgcolor="#FF0000"><pre>___.frozenFunc(
+      <td bgcolor="#FF0000"><pre>___.simpleFrozenFunc(
     function (@formals*) {@fh*; @stmts*; @body*;}.bind(
         t___, @args*));</pre></td>
     </tr>
@@ -585,7 +585,7 @@ ___.callProp(t___, @'p', [@as*]</pre></td>
       <td>funcAnonSimple</td>
       <td></td>
       <td><pre>function (@ps*) {@bs*;}</pre></td>
-      <td><pre>___.frozenFunc(
+      <td><pre>___.simpleFrozenFunc(
     function (@ps*) {@fh*; @stmts*; @bs*;})</pre></td>
     </tr>
     <tr>
@@ -593,7 +593,7 @@ ___.callProp(t___, @'p', [@as*]</pre></td>
       <td bgcolor="#FFFF00">funcNamedSimpleDecl</td>
       <td bgcolor="#FFFF00"></td>
       <td bgcolor="#FFFF00"><pre>function @fname(@ps*) {@bs*;}</pre></td>
-      <td bgcolor="#FFFF00"><pre>var @fname = ___.func(
+      <td bgcolor="#FFFF00"><pre>var @fname = ___.simpleFunc(
     function(@ps*) {@fh*; @stmts*; @bs*;}, 
     @'fname');</pre></td>
     </tr>
@@ -604,7 +604,7 @@ ___.callProp(t___, @'p', [@as*]</pre></td>
       <td bgcolor="#FFFF00"><pre>function @fname(@ps*) {@bs*;}</pre></td>
       <td bgcolor="#FFFF00"><pre>(function() {
   var @fname = function(@ps*) {@fh*; @stmts*; @bs*;}
-  return ___.frozenFunc(@fname, @'fname');
+  return ___.simpleFrozenFunc(@fname, @'fname');
 })();</pre></td>
     </tr>
     <tr>

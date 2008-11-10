@@ -17,7 +17,7 @@ ___.loadModule(function (___, IMPORTS___) {
    * over.  This is not actually in the current rewriting rules. !!!
    */
 	var printPropsGetter;
-  printPropsGetter = ___.func(function (obj, ind) {
+  printPropsGetter = ___.simpleFunc(function (obj, ind) {
     var a, x0___, x1___;
 		var indent = "";
 		for (var i = 0; i < ind; i++) {
