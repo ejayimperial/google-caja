@@ -215,7 +215,7 @@ public final class PluginCompilerMain {
           break;
         case SIDEBYSIDE:
           tc = new SourceSnippetRenderer(
-              buildOriginalInputCharSequences(), out, ioHandler) {
+              buildOriginalInputCharSequences(), mc, out, ioHandler) {
             protected TokenConsumer createDelegateRenderer(
                 Appendable out, Callback<IOException> exHandler) {
               return new JsPrettyPrinter(out, exHandler);

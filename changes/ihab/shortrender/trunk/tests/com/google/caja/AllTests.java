@@ -14,7 +14,6 @@
 
 package com.google.caja;
 
-import com.google.caja.CajitaTest;
 import com.google.caja.config.ConfigUtilTest;
 import com.google.caja.demos.calendar.EventStoreTest;
 import com.google.caja.demos.calendar.HcalTest;
@@ -71,6 +70,7 @@ import com.google.caja.render.JsLinePreservingPrinterTest;
 import com.google.caja.render.JsMinimalPrinterTest;
 import com.google.caja.render.JsPrettyPrinterTest;
 import com.google.caja.render.SideBySideRendererTest;
+import com.google.caja.render.SourceSnippetRendererTest;
 import com.google.caja.render.TokenClassificationTest;
 import com.google.caja.reporting.AbstractMessageQueueTest;
 import com.google.caja.reporting.BuildInfoTest;
@@ -157,6 +157,7 @@ public class AllTests {
           ScopeTest.class,
           SideBySideRendererTest.class,
           SnippetProducerTest.class,
+          SourceSnippetRendererTest.class,
           SparseBitSetTest.class,
           StringLiteralTest.class,
           StringsTest.class,

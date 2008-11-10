@@ -18,6 +18,7 @@ import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.TokenConsumer;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.util.Callback;
+import com.google.caja.reporting.MessageContext;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -135,7 +136,7 @@ public abstract class SourceSnippetRenderer implements TokenConsumer {
         out
             .append("\n")
             .append("// *** ")
-            .append(s.toString())
+            .append(s.getShortName(mc.inputSources))
             .append(" ***\n");
         
         Map<Integer, OriginalSourceLine> forSource = lines.get(s);
@@ -161,6 +162,7 @@ public abstract class SourceSnippetRenderer implements TokenConsumer {
   }
 
   private final Appendable out;
+  private final MessageContext mc;
   private final Callback<IOException> exHandler;
   private final TokenConsumer delegateRenderer;
   private final List<RenderedSourceLine> renderedLines
@@ -172,9 +174,11 @@ public abstract class SourceSnippetRenderer implements TokenConsumer {
 
   public SourceSnippetRenderer(
       Map<InputSource, ? extends CharSequence> originalSource,
+      MessageContext mc,
       Appendable out,
       Callback<IOException> exHandler) {
     this.out = out;
+    this.mc = mc;
     this.exHandler = exHandler;
     delegateRenderer = createDelegateRenderer(rendererAppendable, exHandler);
     buildOriginalSourceLines(originalSource);
@@ -232,7 +236,7 @@ public abstract class SourceSnippetRenderer implements TokenConsumer {
   }
 
   private void addEvidenceForCurrentMark(int evidence) {
-    if (currentMark == FilePosition.UNKNOWN) { return; }
+    if (currentMark == FilePosition.UNKNOWN || currentMark == null) { return; }
 
     List<OriginalSourceLine> sourceList =
         originalSourceLines.get(currentMark.source());
@@ -285,7 +289,7 @@ public abstract class SourceSnippetRenderer implements TokenConsumer {
   }
 
   private static String shrinkSpaces(String orig) {
-    return orig.replaceAll(" +", " ");
+    return orig.replaceAll("^ +", "");
   }
 
   private static String formatLineNo(int lineNo) {

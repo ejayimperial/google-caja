@@ -102,6 +102,7 @@ public class RhinoTestBed {
     List<Input> inputs = new ArrayList<Input>();
 
     // Stub out the Browser
+    inputs.add(new Input(RhinoTestBed.class, "../plugin/html4-defs.js"));    
     inputs.add(new Input(RhinoTestBed.class, "../plugin/console-stubs.js"));
     inputs.add(new Input(RhinoTestBed.class, "/js/jqueryjs/runtest/env.js"));
     int injectHtmlIndex = inputs.size();
