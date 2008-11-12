@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc. All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author mikesamuel@gmail.com
  */
-class JsTokenAdjacencyChecker {
+final class JsTokenAdjacencyChecker {
   /** Keeps track of our position in a run of punctuation tokens. */
   private PunctuationTrie trie = START_TRIE;
   /** The classification of the last non-space/comment token. */
