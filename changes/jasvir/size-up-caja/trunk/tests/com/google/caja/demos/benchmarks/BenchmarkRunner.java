@@ -21,12 +21,12 @@ import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.Pair;
 import com.google.caja.util.RhinoTestBed;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -43,13 +43,12 @@ public class BenchmarkRunner extends CajaTestCase {
   }
 
   /**
-   * Measures the size and performance characteristics given javascript 
-   * @param name of javascript file in benchmark
+   * Measures the size and performance characteristics of a given {@code jsFile}
+   * @param jsFile  name of javascript file in benchmark
    */
   private void measureBenchmark(String jsFile) throws Exception {
     runBenchmark(jsFile);
     sizeBenchmark(jsFile);
-    
   }
 
   
@@ -58,7 +57,7 @@ public class BenchmarkRunner extends CajaTestCase {
    * Computes the pre- and post- cajoled size of the given benchmark
    * Accumulates the result and formats it for consumption by varz
    * Format:
-   * VarZ:benchmark.<benchmark name>.<size>.<language>.<debug?>.<compression>
+   * VarZ:benchmark.(benchmark name).(size).(language).(debug?).(compression)
    */
   private void sizeBenchmark(String filename) throws Exception {
     String uncajoled = uncajoledFile(filename);
@@ -73,11 +72,11 @@ public class BenchmarkRunner extends CajaTestCase {
         ".size.valija.nodebug.gzip=" + gzipSize(cajoled));
   }
 
-  private int plainSize(String contents) {
-    return contents.getBytes().length;
+  private static int plainSize(String contents) throws UnsupportedEncodingException {
+    return contents.getBytes("UTF-8").length;
   }
 
-  private int gzipSize(String contents) throws IOException {
+  private static int gzipSize(String contents) throws IOException {
     ByteArrayOutputStream result = new ByteArrayOutputStream();
     GZIPOutputStream out = new GZIPOutputStream(result);
     out.write(contents.getBytes());
@@ -85,8 +84,9 @@ public class BenchmarkRunner extends CajaTestCase {
     return result.toByteArray().length;
   }
   
-  private String uncajoledFile(String filename) throws Exception {
-    BufferedReader reader= new BufferedReader(new FileReader(filename));
+  private String uncajoledFile(String filename) throws IOException {
+    BufferedReader reader = new BufferedReader(
+        new InputStreamReader(new FileInputStream(filename), "UTF-8"));
     StringBuffer buf = new StringBuffer();
     String line;
     while (null != (line = reader.readLine())) { buf.append(line); }
@@ -122,7 +122,7 @@ public class BenchmarkRunner extends CajaTestCase {
     System.out.println("VarZ:benchmark." + getName() 
         + ".memory.valija.nodebug.rhino.cold=" + scoreCajoled.b);
     System.out.println("VarZ:benchmark." + getName() 
-        + ".memorydiff.valija.nodebug.rhino.cold=" + (scoreCajoled.b - scoreUncajoled.b));
+        + ".memorydiff.valija.nodebug.rhino.cold=" + (scoreCajoled.b / scoreUncajoled.b));
   }
 
   // Like run.js but outputs the result differently.
