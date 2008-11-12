@@ -393,7 +393,7 @@ public class MatchTest extends CajaTestCase {
     assertNotNull(m);
     assertEquals("foo", ((Identifier) m.get("name")).getName());
     assertEquals(
-        "fakeGlobals[ 'foo' ] = function foo() {\n}",
+        render(jsExpr(fromString("fakeGlobals['foo'] = function foo() {}"))),
         render(QuasiBuilder.subst(
             "fakeGlobals['@name'] = function @name() { @body* }",
             m)));

@@ -76,6 +76,7 @@ class StringLiteralQuasiNode extends QuasiNode {
     } else {
       return false;
     }
+    if (ident.getName() == null) { return false; }
     StringLiteral sl = StringLiteral.valueOf(ident.getName());
     sl.setFilePosition(ident.getFilePosition());
     substitutes.add(sl);
