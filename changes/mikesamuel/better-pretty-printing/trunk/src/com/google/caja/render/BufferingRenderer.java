@@ -37,6 +37,10 @@ abstract class BufferingRenderer implements TokenConsumer {
     this.ioExceptionHandler = ioExceptionHandler;
   }
 
+  /**
+   * @throws NullPointerException if out raises an IOException
+   *     and ioExceptionHandler is null.
+   */
   public final void noMoreTokens() {
     JsTokenAdjacencyChecker adjChecker = new JsTokenAdjacencyChecker();
     try {
@@ -85,10 +89,6 @@ abstract class BufferingRenderer implements TokenConsumer {
     }
   }
 
-  /**
-   * @throws NullPointerException if out raises an IOException
-   *     and ioExceptionHandler is null.
-   */
   public final void consume(String text) {
     if ("".equals(text)) { return; }
     pending.add(text);
