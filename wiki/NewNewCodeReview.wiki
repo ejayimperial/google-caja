@@ -8,6 +8,7 @@ A much better and simpler code review scheme.
 
   # Create your patch however you want.
   # Check out Caja from svn.
+  # Download [http://codereview.appspot.com/static/upload.py upload.py].
   # Apply your patch to the trunk.
   # Run {{{upload.py -r <reviewers> --send_mail}}}.
   # Note the review number.
