@@ -29,6 +29,8 @@ import com.google.caja.parser.js.FunctionConstructor;
 import com.google.caja.parser.js.FunctionDeclaration;
 import com.google.caja.parser.js.Identifier;
 import com.google.caja.parser.js.ModuleEnvelope;
+import com.google.caja.parser.js.MultiDeclaration;
+import com.google.caja.parser.js.Noop;
 import com.google.caja.parser.js.Operation;
 import com.google.caja.parser.js.Operator;
 import com.google.caja.parser.js.QuotedExpression;
@@ -37,7 +39,6 @@ import com.google.caja.parser.js.RegexpLiteral;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.SyntheticNodes;
-import com.google.caja.parser.js.MultiDeclaration;
 import com.google.caja.parser.js.TryStmt;
 import com.google.caja.reporting.MessageQueue;
 
@@ -282,6 +283,92 @@ public class DefaultValijaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
+          name="cajitaUseSubset",
+          synopsis="Skip subtrees with a 'use strict,cajita' declaration",
+          reason="Valija rules should not be applied to embedded cajita code",
+          // TODO(mikesamuel): check after Kona meeting
+          matches="'use cajita'; @stmt*",
+          substitutes="@stmt*")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof Block) {
+          Map<String, ParseTreeNode> bindings = this.match(node);
+          if (bindings != null) {
+            // Do not descend into children.  Cajita nodes are exempt
+            // from the Valija -> Cajita translation since they
+            // presumably already contain Cajita.  If they do not
+            // contain valid Cajita code, the CajitaRewriter will
+            // complain.
+            return subst(bindings);
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="cajitaUseSubsetFnDecl",
+          synopsis="Skip functions with a 'use strict,cajita' declaration",
+          reason="Valija rules should not be applied to embedded cajita code",
+          matches="/*outer*/function @name(@actuals*) { 'use cajita'; @body* }",
+          substitutes="$v.so('@name', function @name(@actuals*) { @body* })")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof FunctionDeclaration) {
+          Map<String, ParseTreeNode> bindings = this.match(
+              ((FunctionDeclaration) node).getInitializer());
+          if (bindings != null) {
+            // Do not expand children. See discussion in cajitaUseSubset above.
+            // But we do want to make the name visible on outers, so expand the
+            // declaration to an assignment to outers and hoist it to the top
+            // of the block.
+            if (scope.isOuter(((Identifier) bindings.get("name")).getName())) {
+              scope.addStartOfScopeStatement(new ExpressionStmt((Expression)
+                  QuasiBuilder.subst("$v.initOuter('@name');", bindings)));
+              scope.addStartOfBlockStatement(
+                  new ExpressionStmt((Expression) subst(bindings)));
+              return new Noop();
+            }
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="cajitaUseSubsetFn",
+          synopsis="Skip functions with a 'use strict,cajita' declaration",
+          reason="Valija rules should not be applied to embedded cajita code",
+          matches="function @i?(@actuals*) { 'use cajita'; @stmt* }",
+          substitutes="function @i?(@actuals*) { @stmt* }")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        FunctionConstructor ctor;
+        if (node instanceof FunctionDeclaration) {
+          ctor = ((FunctionDeclaration) node).getInitializer();
+        } else if (node instanceof FunctionConstructor) {
+          ctor = (FunctionConstructor) node;
+        } else {
+          return NONE;
+        }
+        Map<String, ParseTreeNode> bindings = this.match(ctor);
+        if (bindings != null) {
+          // Do not expand children. See discussion in cajitaUseSubset above.
+          FunctionConstructor newCtor = (FunctionConstructor) subst(bindings);
+          if (node instanceof FunctionDeclaration) {
+            return new FunctionDeclaration(newCtor.getIdentifier(), newCtor);
+          } else {
+            return newCtor;
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
           name="module",
           synopsis="Assume an imported \"$v\" that knows our shared outers. " +
             "Name it $dis so top level uses of \"this\" in Valija work.",
@@ -453,13 +540,13 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="/* in outer scope */ var @v = @r",
-          substitutes="$v.so(@rv, @r)")
+          substitutes="$v.so('@v', @r)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null &&
             scope.isOuter(((Identifier) bindings.get("v")).getName())) {
           return new ExpressionStmt((Expression) substV(
-              "rv", toStringLiteral(bindings.get("v")),
+              "v", bindings.get("v"),
               "r", expand(bindings.get("r"), scope, mq)));
         }
         return NONE;
@@ -473,14 +560,14 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="/* declared in outer scope */ @v = @r",
-          substitutes="$v.so(@rv, @r)")
+          substitutes="$v.so('@v', @r)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null &&
             bindings.get("v") instanceof Reference &&
             scope.isOuter(((Reference) bindings.get("v")).getIdentifierName())) {
           return substV(
-              "rv", toStringLiteral(bindings.get("v")),
+              "v", bindings.get("v"),
               "r", expand(bindings.get("r"), scope, mq));
         }
         return NONE;
@@ -494,14 +581,14 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="/* in outer scope */ var @v",
-          substitutes="$v.initOuter(@rv)")
+          substitutes="$v.initOuter('@v')")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null &&
             bindings.get("v") instanceof Identifier &&
             scope.isOuter(((Identifier) bindings.get("v")).getName())) {
-          return new ExpressionStmt((Expression) substV(
-              "rv", toStringLiteral(bindings.get("v"))));
+          return new ExpressionStmt(
+              (Expression) substV("v", bindings.get("v")));
         }
         return NONE;
       }
@@ -531,13 +618,13 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="/* declared in outer scope */ @v",
-          substitutes="$v.ro(@rv)")
+          substitutes="$v.ro('@v')")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null && bindings.get("v") instanceof Reference) {
           Reference v = (Reference) bindings.get("v");
           if (scope.isOuter(v.getIdentifierName())) {
-            return substV("rv", toStringLiteral(v));
+            return subst(bindings);
           }
         }
         return NONE;
@@ -551,14 +638,14 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Read @'p' from @o or @o's POE table",
           reason="",
           matches="@o.@p",
-          substitutes="$v.r(@o, @rp)")
+          substitutes="$v.r(@o, '@p')")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
           Reference p = (Reference) bindings.get("p");
           return substV(
               "o", expand(bindings.get("o"), scope, mq),
-              "rp", toStringLiteral(p));
+              "p", p);
         }
         return NONE;
       }
@@ -590,14 +677,14 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Set @'p' on @o or @o's POE table",
           reason="",
           matches="@o.@p = @r",
-          substitutes="$v.s(@o, @rp, @r)")
+          substitutes="$v.s(@o, '@p', @r)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
           Reference p = (Reference) bindings.get("p");
           return substV(
               "o", expand(bindings.get("o"), scope, mq),
-              "rp", toStringLiteral(p),
+              "p", p,
               "r", expand(bindings.get("r"), scope, mq));
         }
         return NONE;
@@ -820,14 +907,14 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Delete a statically known property of an object.",
           reason="",
           matches="delete @o.@p",
-          substitutes="$v.remove(@o, @rp)")
+          substitutes="$v.remove(@o, '@p')")
           public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
           Reference p = (Reference) bindings.get("p");
           return substV(
               "o", expand(bindings.get("o"), scope, mq),
-              "rp", toStringLiteral(p));
+              "p", p);
         }
         return NONE;
       }
@@ -859,7 +946,7 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="Call a property with a statically known name.",
           reason="",
           matches="@o.@p(@as*)",
-          substitutes="$v.cm(@o, @rp, [@as*])")
+          substitutes="$v.cm(@o, '@p', [@as*])")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
@@ -871,7 +958,7 @@ public class DefaultValijaRewriter extends Rewriter {
           }
           return substV(
               "o", expand(bindings.get("o"), scope, mq),
-              "rp", toStringLiteral(p),
+              "p", p,
               "as", new ParseTreeNodeContainer(expanded));
         }
         return NONE;
@@ -956,43 +1043,40 @@ public class DefaultValijaRewriter extends Rewriter {
           name="disfuncNamedGlobalDecl",
           synopsis="Transmutes functions into disfunctions and hoists them.",
           reason="",
-          matches="<at top level>function @f(@ps*) {@bs*;}",
+          matches="/* at top level */ function @f(@ps*) {@bs*;}",
           substitutes=(
-              "$v.so(@fname, (function () {" +
+              "$v.so('@f', (function () {" +
               "  var @f;" +
               "  function @fcaller($dis, @ps*) {" +
               "    @stmts*;" +
               "    @bs*;" +
               "  }" +
-              "  @rf = $v.dis(@rfcaller, @fname);" +
+              "  @rf = $v.dis(@rfcaller, '@f');" +
               "  return @rf;" +
               "})());"))
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // Named simple function declaration
-        if (node instanceof FunctionDeclaration &&
-            QuasiBuilder.match(
-                "function @f(@ps*) { @bs*; }",
-                node.children().get(1), bindings) &&
-            scope.isOuter(((Identifier)bindings.get("f")).getName())) {
-          Scope s2 = Scope.fromFunctionConstructor(
-              scope,
-              (FunctionConstructor)node.children().get(1));
-          checkFormals(bindings.get("ps"), mq);
-          Identifier f = (Identifier)bindings.get("f");
-          Identifier fcaller = new Identifier(f.getName() + "$caller");
-          Expression expr = (Expression) substV(
-              "f", f,
-              "rf", new Reference(f),
-              "fcaller", fcaller,
-              "rfcaller", new Reference(fcaller),
-              "fname", toStringLiteral(f),
-              "ps", bindings.get("ps"),
-              // It's important to expand bs before computing stmts.
-              "bs", expand(bindings.get("bs"), s2, mq),
-              "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
-          scope.addStartOfBlockStatement(new ExpressionStmt(expr));
-          return QuasiBuilder.substV(";");
+        if (node instanceof FunctionDeclaration) {
+          FunctionConstructor c = ((FunctionDeclaration) node).getInitializer();
+          Map<String, ParseTreeNode> bindings = match(c);
+          if (bindings != null
+              && scope.isOuter(((Identifier) bindings.get("f")).getName())) {
+            Scope s2 = Scope.fromFunctionConstructor(scope, c);
+            checkFormals(bindings.get("ps"), mq);
+            Identifier f = (Identifier) bindings.get("f");
+            Identifier fcaller = new Identifier(f.getName() + "$caller");
+            Expression expr = (Expression) substV(
+                "f", f,
+                "rf", new Reference(f),
+                "fcaller", fcaller,
+                "rfcaller", new Reference(fcaller),
+                "ps", bindings.get("ps"),
+                // It's important to expand bs before computing stmts.
+                "bs", expand(bindings.get("bs"), s2, mq),
+                "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
+            scope.addStartOfBlockStatement(new ExpressionStmt(expr));
+            return QuasiBuilder.substV(";");
+          }
         }
         return NONE;
       }
@@ -1010,14 +1094,14 @@ public class DefaultValijaRewriter extends Rewriter {
               "    @stmts*;" +
               "    @bs*;" +
               "}" +
-              "@fname = $v.dis(@rfcaller, @rf);"))
+              "@fname = $v.dis(@rfcaller, '@fname');"))
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = new LinkedHashMap<String, ParseTreeNode>();
         // Named simple function declaration
         if (node instanceof FunctionDeclaration &&
             QuasiBuilder.match(
                 "function @fname(@ps*) { @bs*; }",
-                node.children().get(1), bindings)) {
+                ((FunctionDeclaration) node).getInitializer(), bindings)) {
           Scope s2 = Scope.fromFunctionConstructor(
               scope,
               (FunctionConstructor) node.children().get(1));
@@ -1029,7 +1113,6 @@ public class DefaultValijaRewriter extends Rewriter {
               "fname", new Reference(fname),
               "fcaller", fcaller,
               "rfcaller", new Reference(fcaller),
-              "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing stmts.
               "bs", expand(bindings.get("bs"), s2, mq),
@@ -1056,7 +1139,7 @@ public class DefaultValijaRewriter extends Rewriter {
               "    @stmts*;" +
               "    @bs*;" +
               "  }" +
-              "  var @fname = $v.dis(@rfcaller, @rf);" +
+              "  var @fname = $v.dis(@rfcaller, '@fname');" +
               "  return @fRef;" +
               "})();"))
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1074,7 +1157,6 @@ public class DefaultValijaRewriter extends Rewriter {
               "fRef", new Reference(fname),
               "fcaller", fcaller,
               "rfcaller", new Reference(fcaller),
-              "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing stmts.
               "bs", expand(bindings.get("bs"), s2, mq),
@@ -1091,7 +1173,7 @@ public class DefaultValijaRewriter extends Rewriter {
           synopsis="typeof of a global reference.",
           reason="Typeof should not throw an error for undefined outers",
           matches="typeof /* global reference */ @f",
-          substitutes="$v.typeOf($v.ros(@fname))")
+          substitutes="$v.typeOf($v.ros('@f'))")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
@@ -1099,7 +1181,6 @@ public class DefaultValijaRewriter extends Rewriter {
           if (f instanceof Reference) {
             Reference fRef = (Reference) f;
             if (scope.isOuter(fRef.getIdentifierName())) {
-              bindings.put("fname", toStringLiteral(fRef));
               return subst(bindings);
             }
           }

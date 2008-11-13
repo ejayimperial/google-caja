@@ -309,6 +309,12 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
     assertConsistent("Function.prototype.bind.call(function(a, b) {return a + b;}, {}, 3)(4);");
   }
 
+  public void testMonkeyPatchPrimordialFunction() throws Exception {
+    assertConsistent(
+        "isNaN.foo = 'bar';" +
+        "isNaN.foo;");
+  }
+
   @Override
   protected Object executePlain(String caja)
       throws IOException, ParseException {

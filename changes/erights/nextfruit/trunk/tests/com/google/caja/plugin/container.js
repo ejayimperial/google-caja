@@ -24,9 +24,10 @@ imports.fail = ___.frozenFunc(fail);
 imports.assertEquals = ___.frozenFunc(assertEquals);
 imports.assertTrue = ___.frozenFunc(assertTrue);
 imports.assertFalse = ___.frozenFunc(assertFalse);
+imports.assertThrows = ___.frozenFunc(assertThrows);
 imports.document = document;
 imports.console = console;
-imports.$v = valijaMaker(imports);
+imports.$v = valijaMaker.CALL___(imports);
 ___.frozenFunc(console.log);
 // Included in order to test this function;
 // stamp should never be made available to real caja code.

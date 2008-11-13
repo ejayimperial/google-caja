@@ -220,7 +220,7 @@ var ___;
   }
 
   Object.prototype.CALL___ = function(var_args) {
-    return asSimpleFunc(this).apply(USELESS, arguments);
+    return asFunc(this).apply(USELESS, arguments);
   };
 
   ////////////////////////////////////////////////////////////////////////
@@ -678,7 +678,7 @@ var ___;
     }
     obj.FROZEN___ = obj;
     if (typeOf(obj) === 'function') {
-      if (isSimpleFunc(obj)) { 
+      if (isFunc(obj)) { 
         grantCall(obj, 'call');
         grantCall(obj, 'apply');
         obj.CALL___ = obj;
@@ -885,8 +885,8 @@ var ___;
   function isCtor(constr)    {
     return constr && !! constr.CONSTRUCTOR___;
   }
-  function isSimpleFunc(fun) {
-    return fun && !! fun.SIMPLEFUNC___;
+  function isFunc(fun) {
+    return fun && !! fun.FUNC___;
   }
   function isXo4aFunc(func) {
     return func && !! func.XO4A___;
@@ -911,7 +911,7 @@ var ___;
    */
   function ctor(constr, opt_Sup, opt_name) {
     enforceType(constr, 'function', opt_name);
-    if (isSimpleFunc(constr)) {
+    if (isFunc(constr)) {
       fail("Simple functions can't be constructors: ", constr);
     }
     if (isXo4aFunc(constr)) {
@@ -995,7 +995,7 @@ var ___;
     if (isCtor(func)) {
       fail("Internal: Constructors can't be exophora: ", func);
     }
-    if (isSimpleFunc(func)) {
+    if (isFunc(func)) {
       fail("Internal: Simple functions can't be exophora: ", func);
     }
     func.XO4A___ = true;
@@ -1017,7 +1017,7 @@ var ___;
     if (isXo4aFunc(fun)) {
       fail("Exophoric functions can't be simple functions: ", fun);
     }
-    fun.SIMPLEFUNC___ = true;
+    fun.FUNC___ = true;
     if (opt_name) {
       fun.NAME___ = String(opt_name);
     }
@@ -1033,7 +1033,7 @@ var ___;
 
   /** This "Only" form doesn't freeze */
   function asCtorOnly(constr) {
-    if (isCtor(constr) || isSimpleFunc(constr)) {
+    if (isCtor(constr) || isFunc(constr)) {
       return constr;
     }
 
@@ -1049,11 +1049,11 @@ var ___;
   /** 
    * Only simple functions can be called as simple functions.
    * <p>
-   * It is now <tt>asSimpleFunc</tt>'s responsibility to
+   * It is now <tt>asFunc</tt>'s responsibility to
    * <tt>primFreeze(fun)</tt>. 
    */
-  function asSimpleFunc(fun) {
-    if (fun && fun.SIMPLEFUNC___) {
+  function asFunc(fun) {
+    if (fun && fun.FUNC___) {
       // fastpath shortcut
       if (fun.FROZEN___ === fun) {
         return fun;
@@ -1112,15 +1112,15 @@ var ___;
    * Coerces fun to a genuine simple-function.
    * <p>
    * If fun is an applicator, then return a simple-function that invokes
-   * fun's apply method. Otherwise, asSimpleFunc().
+   * fun's apply method. Otherwise, asFunc().
    */
-  function toSimpleFunc(fun) {
+  function toFunc(fun) {
     if (isApplicator(fun)) { 
       return frozenFunc(function(var_args) {
         return callPub(fun, 'apply', [USELESS, Array.slice(arguments, 0)]);
       });
     }
-    return asSimpleFunc(fun);
+    return asFunc(fun);
   }
 
   /**
@@ -1143,7 +1143,7 @@ var ___;
   function asFirstClass(value) {
     switch(typeOf(value)) {
       case 'function': {
-        if (isSimpleFunc(value) || isCtor(value)) {
+        if (isFunc(value) || isCtor(value)) {
           if (isFrozen(value)) {
             return value;
           }
@@ -1430,7 +1430,7 @@ var ___;
    * the canEnumOwn() property names.
    */
   function forOwnKeys(obj, fn) {
-    fn = toSimpleFunc(fn);
+    fn = toFunc(fn);
     var keys = ownKeys(obj);
     for (var i = 0; i < keys.length; i++) {
       if (fn(keys[i], readPub(obj, keys[i])) === BREAK) {
@@ -1447,7 +1447,7 @@ var ___;
    * the canEnumPub() property names.
    */
   function forAllKeys(obj, fn) {
-    fn = toSimpleFunc(fn);
+    fn = toFunc(fn);
     var keys = allKeys(obj);
     for (var i = 0; i < keys.length; i++) {
       if (fn(keys[i], readPub(obj, keys[i])) === BREAK) {
@@ -1520,7 +1520,7 @@ var ___;
     if (endsWith__.test(name)) { return false; }
     if (name === 'toString') { return false; }
     var func = obj[name];
-    if (!isSimpleFunc(func) && !isXo4aFunc(func)) {
+    if (!isFunc(func) && !isXo4aFunc(func)) {
       return false;
     }
     fastpathCall(obj, name);
@@ -1888,7 +1888,7 @@ var ___;
    * Whilelist obj[name] as a simple frozen function that can be either
    * called or read.
    */
-  function grantSimpleFunc(obj, name) {
+  function grantFunc(obj, name) {
     frozenFunc(obj[name], name);
     grantCall(obj, name);
     grantRead(obj, name);
@@ -2010,7 +2010,7 @@ var ___;
   all2(grantRead, Math, [
     'E', 'LN10', 'LN2', 'LOG2E', 'LOG10E', 'PI', 'SQRT1_2', 'SQRT2'
   ]);
-  all2(grantSimpleFunc, Math, [
+  all2(grantFunc, Math, [
     'abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'exp', 'floor',
     'log', 'max', 'min', 'pow', 'random', 'round', 'sin', 'sqrt', 'tan'
   ]);
@@ -2083,10 +2083,10 @@ var ___;
   /// Function
 
   handleGeneric(Function.prototype, 'apply', function(self, realArgs) {
-    return toSimpleFunc(this).apply(self, realArgs);
+    return toFunc(this).apply(self, realArgs);
   });
   handleGeneric(Function.prototype, 'call', function(self, var_args) {
-    return toSimpleFunc(this).apply(self, Array.slice(arguments, 1));
+    return toFunc(this).apply(self, Array.slice(arguments, 1));
   });
   handleGeneric(Function.prototype, 'bind', function(self, var_args) {
     var thisFunc = this;
@@ -2100,7 +2100,7 @@ var ___;
   /// Array
 
   ctor(Array, Object, 'Array');
-  grantSimpleFunc(Array, 'slice');
+  grantFunc(Array, 'slice');
   grantToString(Array.prototype);
   all2(grantTypedGeneric, Array.prototype, [ 'toLocaleString' ]);
   all2(grantGeneric, Array.prototype, [
@@ -2114,7 +2114,7 @@ var ___;
       fail("Can't sort a frozen array.");
     }
     if (comparator) {
-      return Array.prototype.sort.call(this, toSimpleFunc(comparator));
+      return Array.prototype.sort.call(this, toFunc(comparator));
     } else {
       return Array.prototype.sort.call(this);
     }
@@ -2123,7 +2123,7 @@ var ___;
   /// String
 
   ctor(String, Object, 'String');
-  grantSimpleFunc(String, 'fromCharCode');
+  grantFunc(String, 'fromCharCode');
   grantToString(String.prototype);
   all2(grantTypedGeneric, String.prototype, [
     'toLocaleString', 'indexOf', 'lastIndexOf'
@@ -2140,10 +2140,10 @@ var ___;
   });
   handleGeneric(String.prototype, 'replace', function(searcher, replacement) {
     enforceMatchable(searcher);
-    if (isSimpleFunc(replacement)) {
-      replacement = asSimpleFunc(replacement);
+    if (isFunc(replacement)) {
+      replacement = asFunc(replacement);
     } else if (isApplicator(replacement)) {
-      replacement = toSimpleFunc(replacement);
+      replacement = toFunc(replacement);
     } else {
       replacement = '' + replacement;
     }
@@ -2178,8 +2178,8 @@ var ___;
   /// Date
 
   ctor(Date, Object, 'Date');
-  grantSimpleFunc(Date, 'parse');
-  grantSimpleFunc(Date, 'UTC');
+  grantFunc(Date, 'parse');
+  grantFunc(Date, 'UTC');
   grantToString(Date.prototype);
   all2(grantTypedGeneric, Date.prototype, [
     'toDateString','toTimeString', 'toUTCString',
@@ -2389,9 +2389,9 @@ var ___;
         // exceptions, it would go here before onerror is invoked.
 
         // See the HTML5 discussion for the reasons behind this rule.
-        if (isApplicator(onerror)) { onerror = toSimpleFunc(onerror); }
+        if (isApplicator(onerror)) { onerror = toFunc(onerror); }
         var shouldReport = (
-            isSimpleFunc(onerror)
+            isFunc(onerror)
             ? onerror.CALL___(message, String(source), String(lineNum))
             : onerror !== null);
         if (shouldReport !== false) {
@@ -2657,8 +2657,9 @@ var ___;
    * time a new one is needed.
    */
   var magicCount = 0;
-  var MAGIC_TOKEN = Token('MAGIC_TOKEN');
-  var MAGIC_NAME = '_index:'+Math.random() + ':';
+  var MAGIC_NUM = Math.random();
+  var MAGIC_TOKEN = Token('MAGIC_TOKEN_FOR:' + MAGIC_NUM);
+  var MAGIC_NAME = '_index:'+ MAGIC_NUM + ':';
 
   /**
    * Creates a new mutable associative table mapping from the
@@ -2721,7 +2722,6 @@ var ___;
     }
 
     function getOnKey(key) {
-      return key[myMagicIndexName];
       if (key !== Object(key)) {
         fail("Can't use key lifetime on primitive keys: ", key);
       }
@@ -2821,9 +2821,9 @@ var ___;
    */
   function getSuperCtor(func) {
     enforceType(func, 'function');
-    if (isCtor(func) || isSimpleFunc(func)) {
+    if (isCtor(func) || isFunc(func)) {
       var result = directConstructor(func.prototype);
-      if (isCtor(result) || isSimpleFunc(result)) {
+      if (isCtor(result) || isFunc(result)) {
         return result;
       }
     }
@@ -3043,11 +3043,11 @@ var ___;
 
     // Classifying functions
     isCtor: isCtor,
-    isSimpleFunc: isSimpleFunc,
+    isFunc: isFunc,
     isXo4aFunc: isXo4aFunc,
     ctor: ctor,
     func: func,       frozenFunc: frozenFunc,
-    asSimpleFunc: asSimpleFunc,   toSimpleFunc: toSimpleFunc,
+    asFunc: asFunc,   toFunc: toFunc,
     xo4a: xo4a,
     initializeMap: initializeMap,
 
@@ -3074,7 +3074,7 @@ var ___;
     useSetHandler: useSetHandler,
     useDeleteHandler: useDeleteHandler,
 
-    grantSimpleFunc: grantSimpleFunc,
+    grantFunc: grantFunc,
     grantGeneric: grantGeneric,
     handleGeneric: handleGeneric,
     grantTypedGeneric: grantTypedGeneric,
@@ -3104,7 +3104,7 @@ var ___;
       fail('internal: initialization conflict: ', k);
     }
     if (typeOf(v) === 'function') {
-      grantSimpleFunc(cajita, k);
+      grantFunc(cajita, k);
     }
     ___[k] = v;
   }));

@@ -83,7 +83,7 @@
 
     <script type="text/javascript">(function () {
       var testImports = ___.copy(___.sharedImports);
-      if (valijaMaker) { testImports.$v = valijaMaker(testImports); }
+      if (valijaMaker) { testImports.$v = valijaMaker.CALL___(testImports); }
 
       ___.getNewModuleHandler().setImports(testImports);
       attachDocumentStub(

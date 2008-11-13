@@ -119,7 +119,7 @@
 
     var imports = ___.copy(___.sharedImports);
     ___.getNewModuleHandler().setImports(imports);
-    imports.$v = valijaMaker(imports);
+    imports.$v = valijaMaker.CALL___(imports);
     attachDocumentStub('-pre___', uriCallback, imports);
     // Grant readonly access to a portion of the DOM
     imports.document.body = makeReadOnlyNode(document.body);

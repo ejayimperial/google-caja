@@ -220,7 +220,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "});");
   }
 
-  public void testConstructionWithSimpleFunction() throws Exception {
+  public void testConstructionWithFunction() throws Exception {
     assertConsistent(
         "  function Point() {}"
         + "var p = new Point();"
@@ -327,7 +327,7 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
    */
   public void testCajaPropsFrozen() throws Exception {
     rewriteAndExecute(";","0;",
-    "assertTrue(___.isSimpleFunc(___.sharedImports.cajita.manifest));");
+    "assertTrue(___.isFunc(___.sharedImports.cajita.manifest));");
     rewriteAndExecute(";","0;",
     "assertTrue(___.isFrozen(___.sharedImports.cajita.manifest));");
   }
@@ -2027,6 +2027,46 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
     // non-generic call and apply methods.
     assertConsistent("(function(){}).apply.call(function(a, b) {return a + b;}, {}, [3, 4]);");
     assertConsistent("(function(){}).call.call(function(a, b) {return a + b;}, {}, 3, 4);");
+  }
+
+  /**
+   * Tests the cajita.newTable(opt_useKeyLifetime) abstraction.
+   * <p>
+   * From here, we are not in a position to test the weak-GC properties this abstraction is
+   * designed to provide, nor its O(1) complexity measure. However, we can test that it works
+   * as a simple lookup table.
+   */
+  public void testTable() throws Exception {
+    rewriteAndExecute(
+        "var t = cajita.newTable();" +
+        "var k1 = {};" +
+        "var k2 = {};" +
+        "var k3 = {};" +
+        "t.set(k1, 'v1');" +
+        "t.set(k2, 'v2');" +
+        "assertEquals(t.get(k1), 'v1');" +
+        "assertEquals(t.get(k2), 'v2');" +
+        "assertTrue(t.get(k3) === void 0);");
+    rewriteAndExecute(
+        "var t = cajita.newTable(true);" +
+        "var k1 = {};" +
+        "var k2 = {};" +
+        "var k3 = {};" +
+        "t.set(k1, 'v1');" +
+        "t.set(k2, 'v2');" +
+        "assertEquals(t.get(k1), 'v1');" +
+        "assertEquals(t.get(k2), 'v2');" +
+        "assertTrue(t.get(k3) === void 0);");
+    rewriteAndExecute(
+        "var t = cajita.newTable();" +
+        "t.set('foo', 'v1');" +
+        "t.set(null, 'v2');" +
+        "assertEquals(t.get('foo'), 'v1');" +
+        "assertEquals(t.get(null), 'v2');" +
+        "assertTrue(t.get({toString: function(){return 'foo';}}) === void 0);");
+    rewriteAndExecute(
+        "var t = cajita.newTable(true);" +
+        "assertThrows(function(){t.set('foo', 'v1');});");
   }
 
   @Override

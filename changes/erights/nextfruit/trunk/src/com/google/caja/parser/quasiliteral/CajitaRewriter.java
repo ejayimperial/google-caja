@@ -52,6 +52,7 @@ import com.google.caja.parser.js.SwitchStmt;
 import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.parser.js.TranslatedCode;
 import com.google.caja.parser.js.TryStmt;
+import com.google.caja.parser.js.UseSubsetDirective;
 import com.google.caja.util.Pair;
 import com.google.caja.util.SyntheticAttributeKey;
 import com.google.caja.reporting.MessagePart;
@@ -880,8 +881,8 @@ public class CajitaRewriter extends Rewriter {
           name="permittedRead",
           synopsis="When @o.@m is a statically permitted read, translate directly.",
           reason="The static permissions check is recorded so that, when the base of " +
-                        "@o is imported, we check that this static permission was actually " +
-                        "safe to assume.",
+                 "@o is imported, we check that this static permission was actually " +
+                 "safe to assume.",
           matches="@o.@m",
           substitutes="@o.@m")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1634,9 +1635,9 @@ public class CajitaRewriter extends Rewriter {
       @RuleDescription(
           name="permittedCall",
           synopsis="When @o.@m is a statically permitted call, translate directly.",
-          reason="The static permissions check is recorded so that, when the base of " +
-              "@o is imported, we check that this static permission was actually " +
-              "safe to assume.",
+          reason="The static permissions check is recorded so that, when the " +
+              "base of @o is imported, we check that this static permission " +
+              "was actually safe to assume.",
           matches="@o.@m(@as*)",
           substitutes="@o.@m(@as*)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -2193,6 +2194,25 @@ public class CajitaRewriter extends Rewriter {
               RewriterMessageType.REGEX_LITERALS_NOT_IN_CAJITA,
               node.getFilePosition(), this, node);
           return node;
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="useSubsetDirective",
+          synopsis="replace use subset directives with noops",
+          reason="rewriting changes the block structure of the input, which"
+              + " could lead to a directive appearing in an illegal position"
+              + " since directives must appear at the beginning of a program"
+              + " or function body, not in an arbitrary block",
+          matches="'use';",
+          substitutes=";")
+      public ParseTreeNode fire(ParseTreeNode node, Scope s, MessageQueue mq) {
+        if (node instanceof UseSubsetDirective) {
+          return new Noop();
         }
         return NONE;
       }

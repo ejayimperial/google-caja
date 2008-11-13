@@ -153,11 +153,11 @@ final class CajaRuntimeDebuggingRewriter extends Rewriter {
     addRule(new AddPositionParamRule() {
           @Override
           @RuleDescription(
-              name="asSimpleFunc",
-              synopsis="Turns .CALL___ calls into ___.asSimpleFunc calls with debugging info",
+              name="asFunc",
+              synopsis="Turns .CALL___ calls into ___.asFunc calls with debugging info",
               reason="",
               matches="@fun.CALL___",
-              substitutes="___.asSimpleFunc(@fun, @debug)")
+              substitutes="___.asFunc(@fun, @debug)")
           public ParseTreeNode fire(ParseTreeNode n, Scope s, MessageQueue mq) {
             return super.fire(n, s, mq);
           }
