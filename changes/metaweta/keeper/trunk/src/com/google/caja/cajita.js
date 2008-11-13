@@ -1037,9 +1037,6 @@ var ___;
     }
 
     enforceType(constr, 'function');
-    if (isMethod(constr)) {
-      fail("Methods can't be called as constructors: ", constr);
-    }
     fail("Untamed functions can't be called as constructors: ", constr);
   }
 
@@ -1475,6 +1472,9 @@ var ___;
           result.push(k);
         }
       }
+      if (obj.handleEnum___) {
+        result = result.concat(obj.handleEnum___(true));
+      }
     }
     return result;
   }
@@ -1494,6 +1494,9 @@ var ___;
         if (canEnumPub(obj, k)) {
           result.push(k);
         }
+      }
+      if (obj.handleEnum___) {
+        result = result.concat(obj.handleEnum___(false));
       }
       return result;
     }

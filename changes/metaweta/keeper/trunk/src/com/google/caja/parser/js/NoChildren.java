@@ -1,4 +1,4 @@
-// Copyright (C) 2005 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.caja.lexer;
+package com.google.caja.parser.js;
+
+import com.google.caja.reporting.RenderContext;
 
 /**
- * Types of javascript tokens.
+ * A placeholder that can be used in the child type parameter to
+ * AbstractParseTreeNode to indicate that the node is always a leaf in the parse
+ * tree.
  *
- * @author mikesamuel@gmail.com (Mike Samuel)
+ * @author mikesamuel@gmail.com
  */
-public enum JsTokenType implements TokenType {
-  COMMENT,
-  STRING,
-  REGEXP,
-  PUNCTUATION,
-  WORD,
-  KEYWORD,
-  INTEGER,
-  FLOAT,
-  /**
-   * An escape that occurs before a slash in a whitespace token as in
-   * <pre>
-   * foo \
-   * bar
-   * </pre>
-   */
-  LINE_CONTINUATION,
-  ;
+final class NoChildren extends AbstractExpression<NoChildren> {
+  private NoChildren() { /* Not instantiable. */ }
+  @Override
+  public Object getValue() { throw new AssertionError(); }
+  public void render(RenderContext rc) { throw new AssertionError(); }
 }

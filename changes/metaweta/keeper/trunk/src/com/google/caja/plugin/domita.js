@@ -449,9 +449,6 @@ attachDocumentStub = (function () {
     function tameNode(node, editable) {
       if (node === null || node === void 0) { return null; }
       // TODO(mikesamuel): make sure it really is a DOM node
-
-      // If it is a node, apply bridal browser fix
-      bridal.bind(node);
       
       switch (node.nodeType) {
         case 1:  // Element
@@ -715,6 +712,17 @@ attachDocumentStub = (function () {
       } else {
         return true;
       }
+    };
+    /**
+     * @param {boolean} ownFlag ignored
+     */
+    TameNode.prototype.handleEnum___ = function(ownFlag) {
+      // TODO(metaweta): Add code to list all the other handled stuff we know about.
+      var result = [];
+      if (this.node___ && this.node___.properties___) {
+        result = cajita.allKeys(this.node___.properties___);
+      }
+      return result;
     };
     ___.ctor(TameNode, void 0, 'TameNode');
     var tameNodeMembers = [

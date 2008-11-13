@@ -27,7 +27,6 @@ import com.google.caja.reporting.MessageLevel;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageType;
 import com.google.caja.reporting.RenderContext;
-import com.google.caja.reporting.SimpleMessageQueue;
 import com.google.caja.util.CajaTestCase;
 import com.google.caja.util.MoreAsserts;
 import com.google.caja.util.Strings;
@@ -95,6 +94,34 @@ public class ParserTest extends CajaTestCase {
   }
   public void testParser9() throws Exception {
     runParseTest("parsertest9.js", "parsergolden9.txt");
+  }
+  public void testParser10() throws Exception {
+    runParseTest("parsertest10.js", "parsergolden10.txt");
+
+    Message m;
+    Iterator<Message> msgs = mq.getMessages().iterator();
+
+    assertTrue(msgs.hasNext());
+    m = msgs.next();
+    assertEquals(MessageType.SEMICOLON_INSERTED, m.getMessageType());
+    assertFilePosition("parsertest10.js:19+22",
+                       (FilePosition) m.getMessageParts().get(0), mc);
+
+    assertTrue(msgs.hasNext());
+    m = msgs.next();
+    assertEquals(MessageType.UNRECOGNIZED_USE_SUBSET, m.getMessageType());
+    assertFilePosition("parsertest10.js:43+3 - 14",
+                       (FilePosition) m.getMessageParts().get(0), mc);
+    assertEquals("bogus", m.getMessageParts().get(1).toString());
+
+    assertTrue(msgs.hasNext());
+    m = msgs.next();
+    assertEquals(MessageType.UNRECOGNIZED_USE_SUBSET, m.getMessageType());
+    assertFilePosition("parsertest10.js:47+3 - 21",
+                       (FilePosition) m.getMessageParts().get(0), mc);
+    assertEquals("bogus", m.getMessageParts().get(1).toString());
+
+    assertFalse(msgs.hasNext());
   }
 
   public void testParseTreeRendering1() throws Exception {
@@ -264,7 +291,7 @@ public class ParserTest extends CajaTestCase {
     jsExpr(fromString(" new RegExp('foo\\s+bar') "));
     assertMessage(
         MessageType.REDUNDANT_ESCAPE_SEQUENCE, MessageLevel.LINT,
-        FilePosition.instance(is, 1, 1, 13, 13, 1, 1, 24, 24),
+        FilePosition.instance(is, 1, 13, 13, 1, 24, 24),
         MessagePart.Factory.valueOf("\\s"));
     mq.getMessages().clear();
 
@@ -284,7 +311,7 @@ public class ParserTest extends CajaTestCase {
   public void assertExpectedSemi() {
     assertParseFails("foo(function () {return;");
     assertMessage(MessageType.EXPECTED_TOKEN, MessageLevel.ERROR,
-                  FilePosition.instance(is, 1, 1, 24, 24),
+                  FilePosition.instance(is, 1, 24, 24),
                   MessagePart.Factory.valueOf("}"));
   }
 

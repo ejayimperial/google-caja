@@ -21,6 +21,7 @@ import com.google.caja.lexer.JsTokenQueue;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
 import com.google.caja.parser.ParseTreeNode;
+import com.google.caja.parser.ParserBase;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Expression;
 import com.google.caja.parser.js.ExpressionStmt;
@@ -33,6 +34,7 @@ import com.google.caja.parser.js.Reference;
 import com.google.caja.parser.js.Statement;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.js.SyntheticNodes;
+import com.google.caja.parser.js.UseSubsetDirective;
 import com.google.caja.reporting.DevNullMessageQueue;
 
 import java.io.StringReader;
@@ -40,6 +42,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import java.net.URI;
 
 /**
@@ -227,11 +231,18 @@ public class QuasiBuilder {
     if (n instanceof Identifier) {
       String name = ((Identifier) n).getName();
       if (name != null && name.startsWith("@")) {
+        boolean isOptional = name.endsWith("?");
+        if (isOptional) { name = name.substring(0, name.length() - 1); }
+        QuasiNode qn;
         if (name.endsWith("_")) {
-          return buildTrailingUnderscoreMatchNode(name);
+          qn = buildTrailingUnderscoreMatchNode(name);
         } else {
-          return buildMatchNode(Identifier.class, name);
+          qn = buildMatchNode(Identifier.class, name);
         }
+        if (isOptional) {
+          qn = new SingleOptionalIdentifierQuasiNode(qn);
+        }
+        return qn;
       }
     }
 
@@ -244,6 +255,21 @@ public class QuasiBuilder {
       if (key.startsWith("@") && key.endsWith("*")
           && val.startsWith("@") && val.endsWith("*")) {
         return buildObjectConstructorMatchNode(key, val);
+      }
+    }
+
+    if (n instanceof UseSubsetDirective) {
+      return buildUseSubsetQuasiNode(((UseSubsetDirective) n).getSubsetNames());
+    }
+
+    if (n instanceof StringLiteral) {
+      StringLiteral lit = (StringLiteral) n;
+      String value = lit.getUnquotedValue();
+      if (value.startsWith("@")) {
+        String bindingName = value.substring(1);
+        if (ParserBase.isJavascriptIdentifier(bindingName)) {
+          return new StringLiteralQuasiNode(bindingName);
+        }
       }
     }
 
@@ -333,6 +359,10 @@ public class QuasiBuilder {
     keyExpr = keyExpr.substring(1, keyExpr.length() - 1);
     valueExpr = valueExpr.substring(1, valueExpr.length() - 1);
     return new ObjectConstructorHole(keyExpr, valueExpr);
+  }
+
+  private static QuasiNode buildUseSubsetQuasiNode(Set<String> subsetNames) {
+    return new UseSubsetQuasiNode(subsetNames);
   }
 
   private static QuasiNode[] buildChildrenOf(ParseTreeNode n) {
