@@ -629,9 +629,9 @@ jsunitRegister('testOpaqueNodes',
   assertEquals('Foo', child.nodeValue);
 
   child = child.nextSibling;
-  assertEquals(-1, child.nodeType);
-  assertEquals('#', child.nodeName);
-  assertEquals('', child.nodeValue);
+  assertEquals(1, child.nodeType);
+  assertEquals('SCRIPT', child.nodeName);
+  assertEquals(null, child.nodeValue);
   expectFailure(function () { child.appendChild(noText); },
                 'opaque node was editable');
 
@@ -643,9 +643,9 @@ jsunitRegister('testOpaqueNodes',
   assertEquals('Foo', child.nodeValue);
 
   child = child.nextSibling;
-  assertEquals(-1, child.nodeType);
-  assertEquals('#', child.nodeName);
-  assertEquals('', child.nodeValue);
+  assertEquals(1, child.nodeType);
+  assertEquals('OBJECT', child.nodeName);
+  assertEquals(null, child.nodeValue);
   expectFailure(function () { child.appendChild(noText); },
                 'opaque node was editable');
 
