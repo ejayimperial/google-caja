@@ -27,18 +27,18 @@ public class CapturingReader extends Reader {
   public static final int DEFAULT_INITIAL_SIZE = 1024;
 
   private final Reader delegate;
-  private StringBuffer buf;
+  private StringBuilder buf;
   private CharSequence capture = null;
 
   /**
    * Creates a {@code CapturingReader}.
    *
    * @param delegate the underlying {@code Reader} to which reads are delegated.
-   * @param initialSize the intial size of the buffer for the cache.
+   * @param initialSize the initial size of the buffer for the cache.
    */
   public CapturingReader(Reader delegate, int initialSize) {
     this.delegate = delegate;
-    buf = new StringBuffer(initialSize);
+    buf = new StringBuilder(initialSize);
   }
 
   /**
