@@ -52,6 +52,7 @@ import com.google.caja.parser.js.SwitchStmt;
 import com.google.caja.parser.js.ThrowStmt;
 import com.google.caja.parser.js.TranslatedCode;
 import com.google.caja.parser.js.TryStmt;
+import com.google.caja.parser.js.UseSubsetDirective;
 import com.google.caja.util.Pair;
 import com.google.caja.util.SyntheticAttributeKey;
 import com.google.caja.reporting.MessagePart;
@@ -235,8 +236,8 @@ public class CajitaRewriter extends Rewriter {
           // since those are specified in ES262 by looking up the identifiers
           // "Array" and "Object" in the local scope.
           // SpiderMonkey actually implements this behavior, though it is fixed
-	  // in FF3, and ES3.1 is specifying the behavior of [] and {} in terms
-	  // of the original Array and Object constructors for that context.
+          // in FF3, and ES3.1 is specifying the behavior of [] and {} in terms
+          // of the original Array and Object constructors for that context.
           Set<String> orderedImportNames = new LinkedHashSet<String>();
           if (importNames.contains("Array")) {
             orderedImportNames.add("Array");
@@ -495,10 +496,11 @@ public class CajitaRewriter extends Rewriter {
               + "with the function's name to the beginning of the enclosing "
               + "function body or module top level, and to initialize this "
               + "variable to a new anonymous function every time control "
-              + "re-enters the enclosing block.\n"
+              + "re-enters the enclosing block."
+              + "\n"
               + "Note that ES3.1 and ES4 specify a better and safer semantics "
               + "-- block level lexical scoping -- that we'd like to adopt into "
-              + "Cajita eventually. However, it so challenging to implement this "
+              + "Cajita eventually. However, it is so challenging to implement this "
               + "semantics by translation to currently-implemented JavaScript "
               + "that we provide something quicker and dirtier for now.",
           matches="{@ss*;}",
@@ -876,6 +878,34 @@ public class CajitaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
+          name="permittedRead",
+          synopsis="When @o.@m is a statically permitted read, translate directly.",
+          reason="The static permissions check is recorded so that, when the base of " +
+                 "@o is imported, we check that this static permission was actually " +
+                 "safe to assume.",
+          matches="@o.@m",
+          substitutes="@o.@m")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null) {
+          ParseTreeNode o = bindings.get("o");
+          Permit oPermit = scope.permitRead(o);
+          if (null != oPermit) {
+            ParseTreeNode m = bindings.get("m");
+            if (null != oPermit.canRead(m)) {
+              return substV(
+                  "o",  expand(o, scope, mq),
+                  "m",  m);
+            }
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
           name="readPublic",
           synopsis="",
           reason="",
@@ -884,18 +914,15 @@ public class CajitaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
+          Pair<Expression, Expression> oPair = reuse(bindings.get("o"), scope, mq);
           Reference p = (Reference) bindings.get("p");
           String propertyName = p.getIdentifierName();
-          return QuasiBuilder.substV(
-              "@ref = @o, ("
-              + "    @ref.@fp"
-              + "    ? @ref.@p"
-              + "    : ___.readPub(@ref, @rp))",
-              "ref", new Reference(scope.declareStartOfScopeTempVariable()),
-              "o", expand(bindings.get("o"), scope, mq),
+          return commas(oPair.b, (Expression) QuasiBuilder.substV(
+              "@oRef.@fp ? @oRef.@p : ___.readPub(@oRef, @rp)",
+              "oRef", oPair.a,
               "p",  p,
               "fp", newReference(propertyName + "_canRead___"),
-              "rp", toStringLiteral(p));
+              "rp", toStringLiteral(p)));
         }
         return NONE;
       }
@@ -907,9 +934,9 @@ public class CajitaRewriter extends Rewriter {
           name="readNumPublic",
           synopsis="Recognize that numeric indexing is inherently safe.",
           reason="When the developer knows that their index expression is numeric, " +
-          		"they can indicate this with the unary plus operator -- which " +
-          		"coerces to a number. Since numeric properties are necessarily " +
-          		"readable, we can pass these through directly to JavaScript.",
+              "they can indicate this with the unary plus operator -- which " +
+              "coerces to a number. Since numeric properties are necessarily " +
+              "readable, we can pass these through directly to JavaScript.",
           matches="@o[+@s]",
           substitutes="@o[+@s]")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1127,21 +1154,17 @@ public class CajitaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
+          Pair<Expression, Expression> oPair = reuse(bindings.get("o"), scope, mq);
           Reference p = (Reference) bindings.get("p");
           String propertyName = p.getIdentifierName();
-          return QuasiBuilder.substV(
-              "@tmpO = @expandO," +
-              "@tmpR = @expandR," +
-              "@tmpO.@pCanSet ?" +
-              "    (@tmpO.@p = @tmpR) :" +
-              "    ___.setPub(@tmpO, @pName, @tmpR);",
-              "tmpO", new Reference(scope.declareStartOfScopeTempVariable()),
-              "tmpR", new Reference(scope.declareStartOfScopeTempVariable()),
-              "expandO", expand(bindings.get("o"), scope, mq),
-              "expandR", expand(bindings.get("r"), scope, mq),
+          Pair<Expression, Expression> rPair = reuse(bindings.get("r"), scope, mq);
+          return commas(oPair.b, rPair.b, (Expression) QuasiBuilder.substV(
+              "@oRef.@pCanSet ? (@oRef.@p = @rRef) : ___.setPub(@oRef, @pName, @rRef);",
+              "oRef", oPair.a,
+              "rRef", rPair.a,
               "pCanSet", newReference(propertyName + "_canSet___"),
               "p", p,
-              "pName", toStringLiteral(p));
+              "pName", toStringLiteral(p)));
         }
         return NONE;
       }
@@ -1323,14 +1346,8 @@ public class CajitaRewriter extends Rewriter {
           rhs.setFilePosition(aNode.children().get(0).getFilePosition());
           Operation assignment = ops.makeAssignment(rhs);
           assignment.setFilePosition(aNode.getFilePosition());
-          if (ops.getTemporaries().isEmpty()) {
-            return expand(assignment, scope, mq);
-          } else {
-            return QuasiBuilder.substV(
-                "@tmps, @assignment",
-                "tmps", newCommaOperation(ops.getTemporaries()),
-                "assignment", expand(assignment, scope, mq));
-          }
+          return commas(newCommaOperation(ops.getTemporaries()),
+                       (Expression) expand(assignment, scope, mq));
         }
         return NONE;
       }
@@ -1618,9 +1635,9 @@ public class CajitaRewriter extends Rewriter {
       @RuleDescription(
           name="permittedCall",
           synopsis="When @o.@m is a statically permitted call, translate directly.",
-          reason="The static permissions check is recorded so that, when the base of " +
-          		"@o is imported, we check that this static permission was actually " +
-          		"safe to assume.",
+          reason="The static permissions check is recorded so that, when the " +
+              "base of @o is imported, we check that this static permission " +
+              "was actually safe to assume.",
           matches="@o.@m(@as*)",
           substitutes="@o.@m(@as*)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -1653,21 +1670,18 @@ public class CajitaRewriter extends Rewriter {
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
-          Pair<ParseTreeNode, ParseTreeNode> aliases =
-              reuseAll(bindings.get("as"), scope, mq);
+          Pair<Expression, Expression> oPair = reuse(bindings.get("o"), scope, mq);
           Reference m = (Reference) bindings.get("m");
+          Pair<ParseTreeNodeContainer, Expression> argsPair =
+              reuseAll(bindings.get("as"), scope, mq);
           String methodName = m.getIdentifierName();
-          return QuasiBuilder.substV(
-              "@oTmp = @o," +
-              "@as," +
-              "@oTmp.@fm ? @oTmp.@m(@vs*) : ___.callPub(@oTmp, @rm, [@vs*]);",
-              "oTmp", new Reference(scope.declareStartOfScopeTempVariable()),
-              "o",  expand(bindings.get("o"), scope, mq),
-              "as", newCommaOperation(aliases.b.children()),
-              "vs", aliases.a,
+          return commas(oPair.b, argsPair.b, (Expression) QuasiBuilder.substV(
+              "@oRef.@fm ? @oRef.@m(@argRefs*) : ___.callPub(@oRef, @rm, [@argRefs*]);",
+              "oRef", oPair.a,
+              "argRefs", argsPair.a,
               "m",  m,
               "fm", newReference(methodName + "_canCall___"),
-              "rm", toStringLiteral(m));
+              "rm", toStringLiteral(m)));
         }
         return NONE;
       }
@@ -1695,13 +1709,14 @@ public class CajitaRewriter extends Rewriter {
       @Override
       @RuleDescription(
           name="callDeclaredFunc",
-          synopsis="When calling a declared function name, leave the freezing to asSimpleFunc.",
+          synopsis="When calling a declared function name, leave the freezing to CALL___.",
           reason="If @fname is a declared function name, an escaping use as here would " +
-          		"normally generate a call to primFreeze it, so that it's frozen on " +
-          		"first use. However, since asSimpleFunc() now freezes its argument, " +
-          		"if @fname is a declared function name, we avoid expanding it.",
+              "normally generate a call to primFreeze it, so that it's frozen on " +
+              "first use. However, since the default CALL___ method now freezes  " +
+              "the function it's called on, " +
+              "if @fname is a declared function name, we avoid expanding it.",
           matches="@fname(@as*)",
-          substitutes="___.asSimpleFunc(@fname)(@as*)")
+          substitutes="@fname.CALL___(@as*)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null &&
@@ -1721,7 +1736,7 @@ public class CajitaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="@f(@as*)",
-          substitutes="___.asSimpleFunc(@f)(@as*)")
+          substitutes="@f.CALL___(@as*)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
         if (bindings != null) {
@@ -1744,7 +1759,7 @@ public class CajitaRewriter extends Rewriter {
           synopsis="",
           reason="",
           matches="function (@ps*) { @bs*; }",
-          substitutes="___.simpleFrozenFunc(\n"
+          substitutes="___.frozenFunc(\n"
               + "  function (@ps*) {\n"
               + "    @fh*;\n"
               + "    @stmts*;\n"
@@ -1770,16 +1785,69 @@ public class CajitaRewriter extends Rewriter {
     new Rule() {
       @Override
       @RuleDescription(
+          name="funcNamedTopDecl",
+          synopsis="A non-nested named function doesn't need a maker",
+          reason="",
+          matches="function @fname(@ps*) { @bs*; }",
+          substitutes="function @fname(@ps*) {\n"
+            + "  @fh*;\n"
+            + "  @stmts*;\n"
+            + "  @bs*;\n"
+            + "}\n"
+            + "___.func(@fname, @'fname');")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof FunctionDeclaration &&
+            scope == scope.getClosestDeclarationContainer()) {
+
+          Map<String, ParseTreeNode> bindings =
+            match(((FunctionDeclaration) node).getInitializer());
+          // Named simple function declaration
+          if (bindings != null) {
+            Scope s2 = Scope.fromFunctionConstructor(
+                scope,
+                ((FunctionDeclaration) node).getInitializer());
+            checkFormals(bindings.get("ps"), mq);
+            Identifier fname = (Identifier) bindings.get("fname");
+            Block block = (Block) QuasiBuilder.substV(
+                "function @fname(@ps*) {\n"
+                + "  @fh*;\n"
+                + "  @stmts*;\n"
+                + "  @bs*;\n"
+                + "}\n"
+                + "___.func(@fRef, @rf);",
+                "fname", fname,
+                "fRef", new Reference(fname),
+                "rf", toStringLiteral(fname),
+                "ps", bindings.get("ps"),
+                // It's important to expand bs before computing fh and stmts.
+                "bs", expand(bindings.get("bs"), s2, mq),
+                "fh", getFunctionHeadDeclarations(s2),
+                "stmts", new ParseTreeNodeContainer(s2.getStartStatements()));
+            for (Statement stat : block.children()) {
+              scope.addStartOfBlockStatement(stat);
+            }
+            return QuasiBuilder.substV(";");
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
           name="funcNamedSimpleDecl",
           synopsis="",
           reason="",
           matches="function @fname(@ps*) { @bs*; }",
-          substitutes="@fname = ___.simpleFunc(\n"
-              + "  function(@ps*) {\n"
-              + "    @fh*;\n"
-              + "    @stmts*;\n"
-              + "    @bs*;\n"
-              + "}, @'fname');")
+          substitutes="@fname = (function() {\n"
+            + "  function @fself(@ps*) {\n"
+            + "    @fh*;\n"
+            + "    @stmts*;\n"
+            + "    @bs*;\n"
+            + "  }\n"
+            + "  return ___.func(@fself, @'fname');\n"
+            + "})();")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = (
             node instanceof FunctionDeclaration)
@@ -1792,15 +1860,21 @@ public class CajitaRewriter extends Rewriter {
               ((FunctionDeclaration) node).getInitializer());
           checkFormals(bindings.get("ps"), mq);
           Identifier fname = (Identifier) bindings.get("fname");
+          Identifier fself = new Identifier(fname.getName() + "$self");
           scope.declareStartOfScopeVariable(fname);
           Expression expr = (Expression) QuasiBuilder.substV(
-              "@fname = ___.simpleFunc(" +
-              "  function(@ps*) {" +
-              "    @fh*;" +
-              "    @stmts*;" +
-              "    @bs*;" +
-              "}, @rf);",
-              "fname", new Reference(fname),
+              "@fRef = (function() {\n"
+              + "  function @fself(@ps*) {\n"
+              + "    @fh*;\n"
+              + "    @stmts*;\n"
+              + "    @bs*;\n"
+              + "  }\n"
+              + "  return ___.func(@rfself, @rf);\n"
+              + "})();",
+              "fname", fname,
+              "fRef", new Reference(fname),
+              "fself", fself,
+              "rfself", new Reference(fself),
               "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing fh and stmts.
@@ -1827,7 +1901,7 @@ public class CajitaRewriter extends Rewriter {
               + "    @stmts*;\n"
               + "    @bs*;\n"
               + "  }\n"
-              + "  return ___.simpleFrozenFunc(@fname, @'fname');\n"
+              + "  return ___.frozenFunc(@fname, @'fname');\n"
               + "})();")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = match(node);
@@ -1838,7 +1912,6 @@ public class CajitaRewriter extends Rewriter {
               (FunctionConstructor) node);
           checkFormals(bindings.get("ps"), mq);
           Identifier fname = (Identifier) bindings.get("fname");
-          Reference fRef = new Reference(fname);
           return QuasiBuilder.substV(
               "(function() {\n"
               + "  function @fname(@ps*) {\n"
@@ -1846,10 +1919,10 @@ public class CajitaRewriter extends Rewriter {
               + "    @stmts*;\n"
               + "    @bs*;\n"
               + "  }\n"
-              + "  return ___.simpleFrozenFunc(@fRef, @rf);\n"
+              + "  return ___.frozenFunc(@fRef, @rf);\n"
               + "})();",
               "fname", fname,
-              "fRef", fRef,
+              "fRef", new Reference(fname),
               "rf", toStringLiteral(fname),
               "ps", bindings.get("ps"),
               // It's important to expand bs before computing fh and stmts.
@@ -1912,8 +1985,8 @@ public class CajitaRewriter extends Rewriter {
           name="mapNonEmpty",
           synopsis="Turns an object literal into an explicit initialization.",
           reason="To avoid creating even a temporary possibly unsafe object " +
-          		"(such as one with a bad 'toString' method), pass an " +
-          		"array of @items, which are interleaved @keys and @vals.",
+              "(such as one with a bad 'toString' method), pass an " +
+              "array of @items, which are interleaved @keys and @vals.",
           matches="({@keys*: @vals*})",
           substitutes="___.initializeMap([@items*])")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
@@ -2121,6 +2194,25 @@ public class CajitaRewriter extends Rewriter {
               RewriterMessageType.REGEX_LITERALS_NOT_IN_CAJITA,
               node.getFilePosition(), this, node);
           return node;
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="useSubsetDirective",
+          synopsis="replace use subset directives with noops",
+          reason="rewriting changes the block structure of the input, which"
+              + " could lead to a directive appearing in an illegal position"
+              + " since directives must appear at the beginning of a program"
+              + " or function body, not in an arbitrary block",
+          matches="'use';",
+          substitutes=";")
+      public ParseTreeNode fire(ParseTreeNode node, Scope s, MessageQueue mq) {
+        if (node instanceof UseSubsetDirective) {
+          return new Noop();
         }
         return NONE;
       }
