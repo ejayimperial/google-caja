@@ -31,7 +31,7 @@ The potential for an exploit is limited by the fact that most secure subsets att
 
 In Jacaranda, this issue is not exploitable (despite the fact that !RegExp objects are accessible) because only local variables and properties of `this` can be used as !LeftHandSideExpressions, and `this` must refer to an object created by an object literal.
 
-In Caja, it is not exploitable because currently there is no reliance on compound assignments evaluating to a number or simple assignments evaluating to their right-hand-side (CHECK THIS).
+In Caja and ADsafe, it is not exploitable because currently there is no reliance on compound assignments evaluating to a number or simple assignments evaluating to their right-hand-side. (CHECK for Caja) (CHECK for ADsafe)
 
 
 == Versions ==
