@@ -11,22 +11,27 @@ Properties that should not be readable may be read (and possibly written). It ma
   * In a !JavaScript subset, properties named by stringified numbers are implicitly readable (and possibly writable).
   * The subset implementation assumes that a compound assignment expression other than += always evaluates to a number, or that += evaluates to a (number or string), or that a simple assignment evaluates to its right-hand-side.
   * The !JavaScript interpreter incorrectly implements assignments, so that they may return a value that has been coerced to a different type.
-  * An object that performs such a coercion is directly accessible to code written in the subset language (either untrusted code, or a tamed API implementation that can be exploited as a confused deputy).
+  * An object that performs such a coercion when its properties are assigned is directly accessible to code written in the subset language (either untrusted code, or a tamed API implementation that can be exploited as a confused deputy).
+  * The subset allows !LeftHandSideExpressions that might refer to a property of such an object.
 
 
 == Background ==
 
 The compound assignment operators (+=, `*`=, /=, %=, -=, <<=, >>=, >>>=, &=, ^=, |=) are specified to return the value computed by the corresponding operator. This should always be a number, or a (number or string) in the case of +=. Caja, ADsafe, and Jacaranda unconditionally allow reading of properties named by "stringified numbers", that is, strings that can be the result of !ToString(!ToNumber(x)) for some x.
 
-However, in some versions of !SpiderMonkey, if `x` is a host object, then the assigned value can be coerced to a value of a different type, which is then incorrectly used as the result of the assignment operator. (The problem is not the coercion, but the fact that the assignment evaluates to the coerced value.)
+However, in some versions of !SpiderMonkey, if `obj.prop `_op_`= rhs` is a compound assignment then for certain properties `obj.prop`, the assigned value `obj.prop `_op_` rhs` can be coerced to a value of a different type, which is then incorrectly used as the result of the assignment operator. (The problem is not the coercion, but the fact that the assignment evaluates to the coerced value.)
 
-For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because window.location is a host object that coerces to type object. See [https://bugzilla.mozilla.org/show_bug.cgi?id=312354 Mozilla bug 312354].
+For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because the `window` object coerces its `location` property to type object. See [https://bugzilla.mozilla.org/show_bug.cgi?id=312354 Mozilla bug 312354].
 
-This means that a property access of the form `a[x -= 0]`, for example, might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
+This means that a property access of the form `a[x.prop -= 0]`, for example, might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
 
 The same problem occurs for a simple assignment, if the subset implementation assumes that simple assignments evaluate to their right-hand-side.
 
 The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects, and so this would have to be combined with another security weakness.
+
+In Jacaranda, this issue is not exploitable (even if a host object were accessible) because only local variables and properties of `this` can be used as LeftHandSideExpressions, and `this` must refer to an object created by an object literal. 
+
+In Caja, it is not exploitable because currently there is no reliance on compound assignments evaluating to a number or simple assignments evaluating to their right-hand-side (CHECK THIS).
 
 
 == Versions ==
@@ -44,16 +49,4 @@ The potential for an exploit is limited by the fact that most secure subsets att
 }}}
 {{{
   typeof (/a/.lastIndex = "7");  // returns "number", not "string"
-}}}
-
-The same result can be achieved with [https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch a watcher] on non-host Objects in SpiderMonkey
-{{{
-  var obj = {};
-  obj.watch(
-      'foo',
-      function (prop, oldval, newval) {
-        return typeof newval === 'number' && isNaN(newval) ? oldval : newval;
-      });
-  obj.foo = 'foo';
-  (obj.foo -= 1);  // returns 'foo', not NaN
 }}}
