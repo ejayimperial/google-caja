@@ -1,0 +1,39 @@
+#summary Compound assignment expressions might not evaluate to a number (or string in the case of +=), in violation of the ES3 specification
+#labels Attack-Vector
+
+== Effect ==
+
+Properties that should not be readable may be read (and possibly written). It may be possible to combine this with other attack vectors such as EvalArbitraryCodeExecution to run arbitrary code.
+
+
+== Assumptions ==
+
+  * In a !JavaScript subset, properties named by stringified numbers are implicitly readable (and possibly writable).
+  * The subset implementation assumes that a compound assignment expression other than += always evaluates to a number, or that += evaluates to a (number or string).
+  * The !JavaScript interpreter incorrectly implements assignments, so that they may return a value that has been coerced to a different type.
+  * An object that performs such a coercion is directly accessible to code written in the subset language (either untrusted code, or a tamed API implementation that can be exploited as a confused deputy).
+
+
+== Background ==
+
+The compound assignment operators (+=, `*`=, /=, %=, -=, <<=, >>=, >>>=, &=, ^=, |=) are specified to return the value computed by the corresponding operator. This should always be a number, or a (number or string) in the case of +=. Caja, ADsafe, and Jacaranda unconditionally allow reading of properties named by "stringified numbers", that is, strings that can be the result of !ToString(!ToNumber(x)) for some x.
+
+However, in some versions of !SpiderMonkey, if `x` is a host object, then the assigned value can be coerced to a value of a different type, which is then incorrectly used as the result of the assignment operator. (The problem is not the coercion, but the fact that the assignment evaluates to the coerced value.)
+
+For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because window.location is a host object that coerces to type object. See Mozilla bug 312354.
+
+This means that a property access of the form `a[x -= 0]`, for example, might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
+
+The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects, and so this would have to be combined with another security weakness.
+
+
+== Versions ==
+  * !SpiderMonkey in Firefox 3.0.4 and earlier.
+  * Apparently fixed in !SpiderMonkey trunk.
+
+
+== Example ==
+
+{{{
+  foo[window.location -= 0];  // accesses a property of foo named by the current URL
+}}}
