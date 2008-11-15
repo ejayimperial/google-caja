@@ -34,7 +34,7 @@ The potential for an exploit is limited by the fact that most secure subsets att
   * Apparently fixed in !SpiderMonkey trunk.
 
 
-== Example ==
+== Examples ==
 
 {{{
   foo[window.location -= 0];     // accesses a property of foo named by the current URL
