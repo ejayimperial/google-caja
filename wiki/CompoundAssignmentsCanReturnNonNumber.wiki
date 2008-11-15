@@ -27,7 +27,7 @@ This means that a property access of the form `a[x.prop -= 0]`, for example, mig
 
 The same problem occurs for a simple assignment, if the subset implementation assumes that simple assignments evaluate to their right-hand-side.
 
-The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects. However, even some non-host objects, such as !RegExp and !Array objects, have coercing properties in !SpiderMonkey.
+The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects. However, even some non-host objects, such as !RegExp and Array objects, have coercing properties in !SpiderMonkey.
 
 The same result can be achieved with a [https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch watcher] or setter on non-host objects in !SpiderMonkey (see examples below); however, most subsets block the `'watch'` and `'__defineSetter__'` methods.
 
