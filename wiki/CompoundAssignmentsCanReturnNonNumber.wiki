@@ -20,7 +20,7 @@ The compound assignment operators (+=, `*`=, /=, %=, -=, <<=, >>=, >>>=, &=, ^=,
 
 However, in some versions of !SpiderMonkey, if `x` is a host object, then the assigned value can be coerced to a value of a different type, which is then incorrectly used as the result of the assignment operator. (The problem is not the coercion, but the fact that the assignment evaluates to the coerced value.)
 
-For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because window.location is a host object that coerces to type object. See Mozilla bug 312354.
+For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because window.location is a host object that coerces to type object. See [https://bugzilla.mozilla.org/show_bug.cgi?id=312354 Mozilla bug 312354].
 
 This means that a property access of the form `a[x -= 0]`, for example, might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
 
