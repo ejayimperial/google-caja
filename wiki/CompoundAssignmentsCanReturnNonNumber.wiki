@@ -45,3 +45,15 @@ The potential for an exploit is limited by the fact that most secure subsets att
 {{{
   typeof (/a/.lastIndex = "7");  // returns "number", not "string"
 }}}
+
+The same result can be achieved with [https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch a watcher] on non-host Objects in SpiderMonkey
+{{{
+  var obj = {};
+  obj.watch(
+      'foo',
+      function (prop, oldval, newval) {
+        return typeof newval === 'number' && isNaN(newval) ? oldval : newval;
+      });
+  obj.foo = 'foo';
+  (obj.foo -= 1);  // returns 'foo', not NaN
+}}}
