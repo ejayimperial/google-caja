@@ -27,9 +27,9 @@ This means that a property access of the form `a[x.prop -= 0]`, for example, mig
 
 The same problem occurs for a simple assignment, if the subset implementation assumes that simple assignments evaluate to their right-hand-side.
 
-The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects. However, even some non-host objects, such as !RegExp objects, have coercing properties in !SpiderMonkey.
+The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects. However, even some non-host objects, such as !RegExp and !Array objects, have coercing properties in !SpiderMonkey.
 
-The same result can be achieved with [https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch a watcher] on non-host objects in !SpiderMonkey (see example below); however, most subsets block the `'watch'` method.
+The same result can be achieved with a [https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch watcher] or setter on non-host objects in !SpiderMonkey (see examples below); however, most subsets block the `'watch'` and `'__defineSetter__'` methods.
 
 In Jacaranda, this issue is not exploitable (despite the fact that !RegExp objects are accessible) because only local variables and properties of `this` can be used as !LeftHandSideExpressions, and `this` must refer to an object created by an object literal.
 
@@ -61,4 +61,88 @@ In Caja and ADsafe, it is not exploitable because currently there is no reliance
       });
   obj.foo = 'foo';
   (obj.foo -= 1);  // returns 'foo', not NaN
+}}}
+
+The following test script is from the Mozilla bug report:
+{{{
+var gprop = [];
+var p = "length";
+
+function test0()
+{
+  function inner()
+  {
+    var r;
+    return typeof (r = this[p] = "5");
+  }
+
+  var thisp = [];
+  return inner.call(thisp);
+}
+
+function test1(argvar)
+{
+  var r;
+  return typeof (r = argvar = "5");
+}
+
+function test2()
+{
+  var r;
+  return typeof (r = gprop.length = "5");
+}
+
+this.__defineSetter__("topSet", function(v) { return 17; });
+
+function test3()
+{
+  var r;
+  return typeof (r = topSet = "5");
+}
+
+function test4()
+{
+  var r, c = [];
+  return typeof (r = c[p] = "5");
+}
+
+function test5()
+{
+  var r, local = [];
+  return typeof (r = local.length = "5");
+}
+
+function test6()
+{
+  function inner()
+  {
+    var r;
+    return typeof (r = this.length = "5");
+  }
+
+  var thisp = [];
+  return inner.call(thisp);
+}
+
+function test7()
+{
+  if (typeof (<foo/>.x = 5) == "number")
+    return "string";
+  return "number got converted!";
+}
+
+function test8()
+{
+  if (typeof (<foo/>.x = true) == "boolean")
+    return "string";
+  return "boolean got converted!";
+}
+
+var allTests = [test0, test1, test2, test3, test4, test5, test6, test7, test8];
+
+for (var i = 0; i < allTests.length; i++)
+{         
+  if ("string" !== allTests[i]())
+    throw "fail test" + i + "()";
+}
 }}}
