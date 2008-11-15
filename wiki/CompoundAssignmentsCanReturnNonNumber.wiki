@@ -59,8 +59,7 @@ In Caja and ADsafe, it is not exploitable because currently there is no reliance
   obj.watch(
       'foo',
       function (prop, oldval, newval) {
-        return typeof newval === 'number' && isNaN(newval) ? oldval :  
-newval;
+        return typeof newval === 'number' && isNaN(newval) ? oldval : newval;
       });
   obj.foo = 'foo';
   (obj.foo -= 1);  // returns 'foo', not NaN
