@@ -27,9 +27,9 @@ This means that a property access of the form `a[x.prop -= 0]`, for example, mig
 
 The same problem occurs for a simple assignment, if the subset implementation assumes that simple assignments evaluate to their right-hand-side.
 
-The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects, and so this would have to be combined with another security weakness.
+The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects. However, even some non-host objects, such as RegExp objects, have coercing properties in SpiderMonkey.
 
-In Jacaranda, this issue is not exploitable (even if a host object were accessible) because only local variables and properties of `this` can be used as !LeftHandSideExpressions, and `this` must refer to an object created by an object literal. 
+In Jacaranda, this issue is not exploitable (despite the fact that RegExp objects are accessible) because only local variables and properties of `this` can be used as !LeftHandSideExpressions, and `this` must refer to an object created by an object literal.
 
 In Caja, it is not exploitable because currently there is no reliance on compound assignments evaluating to a number or simple assignments evaluating to their right-hand-side (CHECK THIS).
 
