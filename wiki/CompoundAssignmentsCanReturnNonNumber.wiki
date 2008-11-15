@@ -19,9 +19,9 @@ Properties that should not be readable may be read (and possibly written). It ma
 
 The compound assignment operators (+=, `*`=, /=, %=, -=, <<=, >>=, >>>=, &=, ^=, |=) are specified to return the value computed by the corresponding operator. This should always be a number, or a (number or string) in the case of +=. Caja, ADsafe, and Jacaranda unconditionally allow reading of properties named by "stringified numbers", that is, strings that can be the result of !ToString(!ToNumber(x)) for some x.
 
-However, in some versions of !SpiderMonkey, if `obj.prop `_op_`= rhs` is a compound assignment then for certain properties `obj.prop`, the assigned value `obj.prop `_op_` rhs` can be coerced to a value of a different type, which is then incorrectly used as the result of the assignment operator. (The problem is not the coercion, but the fact that the assignment evaluates to the coerced value.)
+However, in some versions of !SpiderMonkey, if `obj.prop `_op_`= rhs` is a compound assignment then for certain properties `obj.prop`, the assigned value `obj.prop `_op_` rhs` can be coerced to a value of a different type, which is then incorrectly used as the result of the assignment operator. (The problem is not the coercion, but the fact that the assignment evaluates to the coerced value.) See [https://bugzilla.mozilla.org/show_bug.cgi?id=312354 Mozilla bug 312354].
 
-For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because the `window` object coerces its `location` property to type object. See [https://bugzilla.mozilla.org/show_bug.cgi?id=312354 Mozilla bug 312354].
+For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` will return `'object'`, when they should return `'string'`. This happens because the `window` object coerces its `location` property to type object.
 
 This means that a property access of the form `a[x.prop -= 0]`, for example, might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
 
