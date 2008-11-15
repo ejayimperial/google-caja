@@ -1,4 +1,4 @@
-#summary Compound assignment expressions might not evaluate to a number (or string in the case of +=), in violation of the ES3 specification
+#summary Compound assignment expressions might not evaluate to a number (or string in the case of +=), in violation of the ES3 specification. Simple assignments might not evaluate to their right-hand-side.
 #labels Attack-Vector
 
 == Effect ==
@@ -9,7 +9,7 @@ Properties that should not be readable may be read (and possibly written). It ma
 == Assumptions ==
 
   * In a !JavaScript subset, properties named by stringified numbers are implicitly readable (and possibly writable).
-  * The subset implementation assumes that a compound assignment expression other than += always evaluates to a number, or that += evaluates to a (number or string).
+  * The subset implementation assumes that a compound assignment expression other than += always evaluates to a number, or that += evaluates to a (number or string), or that a simple assignment evaluates to its right-hand-side.
   * The !JavaScript interpreter incorrectly implements assignments, so that they may return a value that has been coerced to a different type.
   * An object that performs such a coercion is directly accessible to code written in the subset language (either untrusted code, or a tamed API implementation that can be exploited as a confused deputy).
 
@@ -24,6 +24,8 @@ For example, `typeof(window.location += '')` or `typeof(window.location -= 0)` w
 
 This means that a property access of the form `a[x -= 0]`, for example, might be allowed under the assumption that it is accessing a stringified number property, but actually access a different property that should not have been readable (or writable when the access is a !LeftHandSideExpression).
 
+The same problem occurs for a simple assignment, if the subset implementation assumes that simple assignments evaluate to their right-hand-side.
+
 The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects, and so this would have to be combined with another security weakness.
 
 
@@ -35,5 +37,11 @@ The potential for an exploit is limited by the fact that most secure subsets att
 == Example ==
 
 {{{
-  foo[window.location -= 0];  // accesses a property of foo named by the current URL
+  foo[window.location -= 0];     // accesses a property of foo named by the current URL
+}}}
+{{{
+  (<xml/>.x = 0) + 0;            // returns "00", not 0 (depends on E4X)
+}}}
+{{{
+  typeof (/a/.lastIndex = "7");  // returns "number", not "string"
 }}}
