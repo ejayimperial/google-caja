@@ -29,9 +29,7 @@ The same problem occurs for a simple assignment, if the subset implementation as
 
 The potential for an exploit is limited by the fact that most secure subsets attempt not to grant direct access to host objects. However, even some non-host objects, such as !RegExp objects, have coercing properties in !SpiderMonkey.
 
-The same result can be achieved with  
-[https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch  
-a watcher] on non-host objects in !SpiderMonkey (see example below); however, most subsets block the `'watch'` method.
+The same result can be achieved with [a watcher https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Object/watch] on non-host objects in !SpiderMonkey (see example below); however, most subsets block the `'watch'` method.
 
 In Jacaranda, this issue is not exploitable (despite the fact that !RegExp objects are accessible) because only local variables and properties of `this` can be used as !LeftHandSideExpressions, and `this` must refer to an object created by an object literal.
 
