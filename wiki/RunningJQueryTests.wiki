@@ -6,11 +6,14 @@ Long version:
 
 The "caja" directory under experimental/jquery/test should really be a pointer to ant-www/testbed.  Fix that if you want by deleting the caja directory and using ln -s instead.
 
-experimental/jquery/test/hostpage.html is a minimalist framework for hosting a single gadget, the cajoled jquery test gadget.
+  * experimental/jquery/test/hostpage.html 
+    A minimalist framework for hosting a single gadget, the cajoled jquery test gadget.
 
-experimental/jquery/test/index.html is the original, uncajoled test page.
+  * experimental/jquery/test/index.html 
+    The original, uncajoled test page.
 
-experimental/jquery/test/index2.html is a modified version that gets rid of some things that caja can't do yet
+  * experimental/jquery/test/index2.html 
+    A modified version that works around some things that caja can't do yet,like document.body.
 
 I ran 
 {{{
