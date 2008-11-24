@@ -23,6 +23,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An abstract renderer for JavaScript tokens that ensures that implementations
+ * don't fall afoul of JavaScript's syntactic quirks.
+ *
+ * @author mikesamuel@gmail.com
+ */
 abstract class BufferingRenderer implements TokenConsumer {
   private final List<Object> pending = new ArrayList<Object>();
   private final Appendable out;
@@ -112,6 +118,13 @@ abstract class BufferingRenderer implements TokenConsumer {
     }
   }
 
+  /**
+   * May receive line-break or comment tokens.  Implementations may ignore
+   * comment tokens, but the client is responsible for making sure that comments
+   * are well-formed, do not contain code (e.g. conditional compilation code),
+   * and do not violate any containment requirements, such as not containing the
+   * string {@code </script>}.
+   */
   public final void consume(String text) {
     if ("".equals(text)) { return; }
     pending.add(text);
