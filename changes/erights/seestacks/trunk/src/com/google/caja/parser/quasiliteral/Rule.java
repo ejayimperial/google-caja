@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -349,7 +348,7 @@ public abstract class Rule implements MessagePart {
    * For all other nodes, currently returns the node itself.
    */
   protected ParseTreeNode nymize(ParseTreeNode node, String baseName, String ext) {
-    Map<String, ParseTreeNode> bindings = new HashMap<String, ParseTreeNode>();
+    Map<String, ParseTreeNode> bindings = makeBindings();
     if (QuasiBuilder.match("function (@ps*) {@bs*;}", node, bindings)) {
       return QuasiBuilder.substV(
           "function @fname(@ps*) {@bs*;}",
@@ -358,6 +357,49 @@ public abstract class Rule implements MessagePart {
           "bs", bindings.get("bs"));
     }
     return node;
+  }
+
+  /**
+   * <tt>substSingleMap(k, v)</tt> should be equivalent to<pre>
+   * QuasiBuilder.substV(
+   *     "({@key: @val})",
+   *     "key", k,
+   *     "val", v)</pre>
+   * but currently isn't.
+   * <p>
+   * TODO(erights): figure out why not, and fix if appropriate.
+   */
+  protected ParseTreeNode substSingleMap(ParseTreeNode key, ParseTreeNode val) {
+    List<ParseTreeNode> keys = new ArrayList<ParseTreeNode>();
+    List<ParseTreeNode> vals = new ArrayList<ParseTreeNode>();
+    keys.add(key);
+    vals.add(val);
+    return QuasiBuilder.substV(
+        "({@keys*: @vals*})",
+        "keys", new ParseTreeNodeContainer(keys),
+        "vals", new ParseTreeNodeContainer(vals));
+  }
+
+  /**
+   * <tt>matchSingleMap(node) != null</tt> should be equivalent to<pre>
+   * QuasiBuilder.match("({@key: @val})", node)</pre>
+   * but currently isn't.
+   * <p>
+   * TODO(erights): figure out why not, and fix if appropriate.
+   */
+  protected Map<String, ParseTreeNode> matchSingleMap(ParseTreeNode node) {
+    Map<String, ParseTreeNode> badBindings = makeBindings();
+    if (QuasiBuilder.match("({@keys*: @vals*})", node, badBindings)) {
+      ParseTreeNodeContainer keys = (ParseTreeNodeContainer) badBindings.get("keys");
+      if (keys.children().size() == 1) {
+        ParseTreeNodeContainer vals = (ParseTreeNodeContainer) badBindings.get("vals");
+        Map<String, ParseTreeNode> fixedBindings = makeBindings();
+        fixedBindings.put("key", keys.children().get(0));
+        fixedBindings.put("val", vals.children().get(0));
+        return fixedBindings;
+      }
+    }
+    return null;
   }
 
   protected void checkFormals(ParseTreeNode formals, MessageQueue mq) {
@@ -412,26 +454,6 @@ public abstract class Rule implements MessagePart {
         StringLiteral.toQuotedValue(ident.getName()));
     sl.setFilePosition(ident.getFilePosition());
     return sl;
-  }
-
-  protected boolean literalsEndWith(ParseTreeNode container, String suffix) {
-    for (ParseTreeNode n : container.children()) {
-      assert(n instanceof StringLiteral);
-      if (((StringLiteral)n).getUnquotedValue().endsWith(suffix)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  protected boolean literalsContain(ParseTreeNode container, String key) {
-    for (ParseTreeNode n : container.children()) {
-      assert(n instanceof StringLiteral);
-      if (((StringLiteral)n).getUnquotedValue().equals(key)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**

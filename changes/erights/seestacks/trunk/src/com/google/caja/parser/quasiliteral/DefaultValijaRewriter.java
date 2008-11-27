@@ -64,6 +64,11 @@ public class DefaultValijaRewriter extends Rewriter {
   }
 
   final public Rule[] valijaRules = {
+
+    ////////////////////////////////////////////////////////////////////////
+    // Do nothing if the node is already the result of some translation
+    ////////////////////////////////////////////////////////////////////////
+
     new Rule() {
       @Override
       @RuleDescription(
@@ -264,21 +269,9 @@ public class DefaultValijaRewriter extends Rewriter {
       }
     },
 
-    new Rule() {
-      @Override
-      @RuleDescription(
-          name="moduleEnvelope",
-          synopsis="Expand to a Caja module using an isolated scope.",
-          reason="The 'module' rule should fire on the body of the module.",
-          matches="<a Valija ModuleEnvelope>",
-          substitutes="<a Caja ModuleEnvelope>")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (node instanceof ModuleEnvelope) {
-          return expandAll(node, null, mq);
-        }
-        return NONE;
-      }
-    },
+    ////////////////////////////////////////////////////////////////////////
+    // 'use strict,*'; pragmas
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -366,6 +359,26 @@ public class DefaultValijaRewriter extends Rewriter {
       }
     },
 
+    ////////////////////////////////////////////////////////////////////////
+    // Module envelope
+    ////////////////////////////////////////////////////////////////////////
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="moduleEnvelope",
+          synopsis="Expand to a Caja module using an isolated scope.",
+          reason="The 'module' rule should fire on the body of the module.",
+          matches="<a Valija ModuleEnvelope>",
+          substitutes="<a Caja ModuleEnvelope>")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof ModuleEnvelope) {
+          return expandAll(node, null, mq);
+        }
+        return NONE;
+      }
+    },
+
     new Rule() {
       @Override
       @RuleDescription(
@@ -392,6 +405,10 @@ public class DefaultValijaRewriter extends Rewriter {
         return NONE;
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // Support hoisting of functions to the top of their containing block
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -427,6 +444,10 @@ public class DefaultValijaRewriter extends Rewriter {
         return NONE;
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // foreach - "for ... in" loops
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule () {
       @Override
@@ -515,6 +536,78 @@ public class DefaultValijaRewriter extends Rewriter {
         }
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // try - try/catch/finally constructs
+    ////////////////////////////////////////////////////////////////////////
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="tryCatch",
+          synopsis="",
+          reason="",
+          matches="try { @s0*; } catch (@x) { @s1*; }",
+          substitutes="try { @s0*; } catch (@x) { @s1*; }")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null) {
+          TryStmt t = (TryStmt) node;
+          bindings.put("s0", expandAll(bindings.get("s0"), scope, mq));
+          bindings.put("s1",
+              expandAll(bindings.get("s1"),
+                  Scope.fromCatchStmt(scope, t.getCatchClause()), mq));
+          return subst(bindings);
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="tryCatchFinally",
+          synopsis="",
+          reason="",
+          matches="try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }",
+          substitutes="try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null) {
+          TryStmt t = (TryStmt) node;
+          bindings.put("s0", expandAll(bindings.get("s0"), scope, mq));
+          bindings.put("s1",
+              expandAll(bindings.get("s1"),
+                  Scope.fromCatchStmt(scope, t.getCatchClause()), mq));
+          bindings.put("s2", expandAll(bindings.get("s2"), scope, mq));
+          return subst(bindings);
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="tryFinally",
+          synopsis="",
+          reason="",
+          matches="try { @s0*; } finally { @s1*; }",
+          substitutes="try { @s0*; } finally { @s1*; }")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null) {
+          return substV(
+            "s0", expandAll(bindings.get("s0"), scope, mq),
+            "s1", expandAll(bindings.get("s1"), scope, mq));
+        }
+        return NONE;
+      }
+    },
+
+    ////////////////////////////////////////////////////////////////////////
+    // variable - variable name handling
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -634,6 +727,10 @@ public class DefaultValijaRewriter extends Rewriter {
       }
     },
 
+    ////////////////////////////////////////////////////////////////////////
+    // read - reading properties
+    ////////////////////////////////////////////////////////////////////////
+
     new Rule() {
       @Override
       @RuleDescription(
@@ -672,6 +769,10 @@ public class DefaultValijaRewriter extends Rewriter {
         return NONE;
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // set - assignments
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -868,6 +969,10 @@ public class DefaultValijaRewriter extends Rewriter {
       }
     },
 
+    ////////////////////////////////////////////////////////////////////////
+    // new - new object creation
+    ////////////////////////////////////////////////////////////////////////
+
     new Rule() {
       @Override
       @RuleDescription(
@@ -904,6 +1009,10 @@ public class DefaultValijaRewriter extends Rewriter {
         return NONE;
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // delete - property deletion
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -943,6 +1052,10 @@ public class DefaultValijaRewriter extends Rewriter {
         return NONE;
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // call - function calls
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -1018,6 +1131,10 @@ public class DefaultValijaRewriter extends Rewriter {
         return NONE;
       }
     },
+
+    ////////////////////////////////////////////////////////////////////////
+    // function - function definitions
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
@@ -1171,6 +1288,100 @@ public class DefaultValijaRewriter extends Rewriter {
       }
     },
 
+    ////////////////////////////////////////////////////////////////////////
+    // multiDeclaration - multiple declarations
+    ////////////////////////////////////////////////////////////////////////
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="multiDeclaration",
+          synopsis="Convert a MultiDeclaration into a comma expression",
+          reason="")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        if (node instanceof MultiDeclaration
+            && scope.isOuter()) {
+          List <Expression> newChildren = new ArrayList<Expression>();
+          for (int i = 0, len = node.children().size(); i < len; i++) {
+            ExpressionStmt result = (ExpressionStmt)
+                expand(node.children().get(i), scope, mq);
+            newChildren.add(i, result.getExpression());
+          }
+          return new ExpressionStmt(
+              newCommaOperation(newChildren));
+        }
+        return NONE;
+      }
+    },
+
+    ////////////////////////////////////////////////////////////////////////
+    // map - object literals
+    ////////////////////////////////////////////////////////////////////////
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="mapSingle",
+          synopsis="",
+          reason="",
+          matches="({@key: @val})",
+          substitutes="({@key: @val})")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = matchSingleMap(node);
+        if (bindings != null) {
+          StringLiteral key = (StringLiteral) bindings.get("key");
+          ParseTreeNode val = (ParseTreeNode) bindings.get("val");
+          return substSingleMap(
+              key,
+              expand(nymize(val, key.getUnquotedValue(), "lit"), scope, mq));
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="mapPlural",
+          synopsis="",
+          reason="",
+          matches="({@keys*: @vals*})",
+          substitutes="({@keys*: @vals*})")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = match(node);
+        if (bindings != null) {
+          List<ParseTreeNode> newVals = new ArrayList<ParseTreeNode>();
+          List<? extends ParseTreeNode> keys = bindings.get("keys").children();
+          List<? extends ParseTreeNode> vals = bindings.get("vals").children();
+          int len = keys.size();
+          if (1 == len) {
+            mq.addMessage(
+                RewriterMessageType.MAP_RECURSION_FAILED,
+                node.getFilePosition(), node);
+          }
+          for (int i = 0, n = len; i < n; ++i) {
+            ParseTreeNode pairIn = substSingleMap(keys.get(i), vals.get(i));
+            ParseTreeNode pairOut = expand(pairIn, scope, mq);
+            Map<String, ParseTreeNode> pairBindings = matchSingleMap(pairOut);
+            if (null == pairBindings) {
+              mq.addMessage(
+                  RewriterMessageType.MAP_RECURSION_FAILED,
+                  node.getFilePosition(), node);
+            }
+            newVals.add(pairBindings.get("val"));
+          }
+          return substV(
+              "keys", new ParseTreeNodeContainer(keys),
+              "vals", new ParseTreeNodeContainer(newVals));
+        }
+        return NONE;
+      }
+    },
+
+    ////////////////////////////////////////////////////////////////////////
+    // other - things not otherwise covered
+    ////////////////////////////////////////////////////////////////////////
+
     new Rule() {
       @Override
       @RuleDescription(
@@ -1288,91 +1499,9 @@ public class DefaultValijaRewriter extends Rewriter {
       }
     },
 
-    new Rule() {
-      @Override
-      @RuleDescription(
-          name="multiDeclaration",
-          synopsis="Convert a MultiDeclaration into a comma expression",
-          reason="")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        if (node instanceof MultiDeclaration
-            && scope.isOuter()) {
-          List <Expression> newChildren = new ArrayList<Expression>();
-          for (int i = 0, len = node.children().size(); i < len; i++) {
-            ExpressionStmt result = (ExpressionStmt)
-                expand(node.children().get(i), scope, mq);
-            newChildren.add(i, result.getExpression());
-          }
-          return new ExpressionStmt(
-              newCommaOperation(newChildren));
-        }
-        return NONE;
-      }
-    },
-
-    new Rule() {
-      @Override
-      @RuleDescription(
-          name="tryCatch",
-          synopsis="",
-          reason="",
-          matches="try { @s0*; } catch (@x) { @s1*; }",
-          substitutes="try { @s0*; } catch (@x) { @s1*; }")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = match(node);
-        if (bindings != null) {
-          TryStmt t = (TryStmt) node;
-          bindings.put("s0", expandAll(bindings.get("s0"), scope, mq));
-          bindings.put("s1",
-              expandAll(bindings.get("s1"),
-                  Scope.fromCatchStmt(scope, t.getCatchClause()), mq));
-          return subst(bindings);
-        }
-        return NONE;
-      }
-    },
-
-    new Rule() {
-      @Override
-      @RuleDescription(
-          name="tryCatchFinally",
-          synopsis="",
-          reason="",
-          matches="try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }",
-          substitutes="try { @s0*; } catch (@x) { @s1*; } finally { @s2*; }")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = match(node);
-        if (bindings != null) {
-          TryStmt t = (TryStmt) node;
-          bindings.put("s0", expandAll(bindings.get("s0"), scope, mq));
-          bindings.put("s1",
-              expandAll(bindings.get("s1"),
-                  Scope.fromCatchStmt(scope, t.getCatchClause()), mq));
-          bindings.put("s2", expandAll(bindings.get("s2"), scope, mq));
-          return subst(bindings);
-        }
-        return NONE;
-      }
-    },
-
-    new Rule() {
-      @Override
-      @RuleDescription(
-          name="tryFinally",
-          synopsis="",
-          reason="",
-          matches="try { @s0*; } finally { @s1*; }",
-          substitutes="try { @s0*; } finally { @s1*; }")
-      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
-        Map<String, ParseTreeNode> bindings = match(node);
-        if (bindings != null) {
-          return substV(
-            "s0", expandAll(bindings.get("s0"), scope, mq),
-            "s1", expandAll(bindings.get("s1"), scope, mq));
-        }
-        return NONE;
-      }
-    },
+    ////////////////////////////////////////////////////////////////////////
+    // recurse - automatically recurse into remaining structures
+    ////////////////////////////////////////////////////////////////////////
 
     new Rule() {
       @Override
