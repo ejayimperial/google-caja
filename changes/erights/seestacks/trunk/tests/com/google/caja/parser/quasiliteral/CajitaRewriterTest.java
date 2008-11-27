@@ -2072,6 +2072,42 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "assertThrows(function(){t.set('foo', 'v1');});");
   }
 
+  /**
+   * Although the golden output here tests many extraneous things, the point of
+   * this test is to see that various anonymous functions in the original are
+   * turned into named functions -- named after the variable or property
+   * they are initializing.
+   */
+  public void testFuncNaming() throws Exception {
+    checkSucceeds(
+        "function foo(){debugger;}" +
+        "var x = {bar: function() {foo();}};" +
+        "x.baz = function(){x.bar();};" +
+        "var zip = function(){x.baz();};" +
+        "zip();",
+
+        "function foo() { debugger; }" +
+        "___.func(foo, 'foo');" +
+        "var x0___;;" +
+        "var x = ___.initializeMap(['bar', (function () {" +
+        "  function bar$_lit() { foo.CALL___(); }" +
+        "  return ___.frozenFunc(bar$_lit, 'bar$_lit');" +
+        "})()]);" +
+        "x0___ = (function () {" +
+        "  function baz$_meth() {" +
+        "    x.bar_canCall___? x.bar(): ___.callPub(x, 'bar', []);" +
+        "  }" +
+        "  return ___.frozenFunc(baz$_meth, 'baz$_meth');" +
+        "})(), x.baz_canSet___ ? (x.baz = x0___) : ___.setPub(x, 'baz', x0___);" +
+        "var zip = (function () {" +
+        "  function zip$_var() {" +
+        "    x.baz_canCall___ ? x.baz() : ___.callPub(x, 'baz', []);" +
+        "  }" +
+        "  return ___.frozenFunc(zip$_var, 'zip$_var');" +
+        "})();"+
+        "zip.CALL___();");
+  }
+
   @Override
   protected Object executePlain(String caja) throws IOException {
     mq.getMessages().clear();

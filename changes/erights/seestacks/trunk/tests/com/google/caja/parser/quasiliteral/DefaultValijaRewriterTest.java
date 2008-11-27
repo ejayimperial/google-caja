@@ -315,6 +315,49 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         "isNaN.foo;");
   }
 
+  public void testFuncNaming() throws Exception {
+    checkSucceeds(
+        "function foo(){debugger;}" +
+        "var x = {bar: function() {foo();}};" +
+        "x.baz = function(){x.bar();};" +
+        "var zip = function(){x.baz();};" +
+        "zip();",
+
+        "var $dis = $v.getOuters();" +
+        "$v.initOuter('onerror');" +
+        "$v.so('foo', (function () {" +
+        "  var foo;" +
+        "  function foo$_caller($dis) { debugger; }" +
+        "  foo = $v.dis(foo$_caller, 'foo');" +
+        "  return foo;" +
+        "})());" +
+        ";" +
+        "$v.so('x',{" +
+        "  'bar': (function () {" +
+        "    function bar$_lit$($dis) {" +
+        "      $v.cf($v.ro('foo'), []);" +
+        "    }" +
+        "    var bar$_lit = $v.dis(bar$_lit$, 'bar$_lit');" +
+        "    return bar$_lit;" +
+        "  })()" +
+        "});" +
+        "$v.s($v.ro('x'), 'baz', (function () {" +
+        "  function baz$_meth$($dis) {" +
+        "    $v.cm($v.ro('x'), 'bar', []);" +
+        "  }" +
+        "  var baz$_meth = $v.dis(baz$_meth$, 'baz$_meth');" +
+        "  return baz$_meth;" +
+        "})());" +
+        "$v.so('zip', (function () {" +
+        "  function zip$_var$($dis) {" +
+        "    $v.cm($v.ro('x'), 'baz', []);" +
+        "  }" +
+        "  var zip$_var = $v.dis(zip$_var$, 'zip$_var');" +
+        "  return zip$_var;" +
+        "})());" +
+        "$v.cf($v.ro('zip'), []);");
+  }
+
   @Override
   protected Object executePlain(String caja)
       throws IOException, ParseException {
