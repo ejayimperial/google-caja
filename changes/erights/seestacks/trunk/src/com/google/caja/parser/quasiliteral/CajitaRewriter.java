@@ -399,6 +399,10 @@ public class CajitaRewriter extends Rewriter {
           synopsis="Cajole a ModuleEnvelope into a call to ___.loadModule.",
           reason="So that the module loader can be invoked to load a module.",
           matches="<a ModuleEnvelope>",
+          // TODO(erights): This creates an uncajoled named function <i>expression</i>
+          // which has dangerous scoping properties under ES3 and current Firefox.
+          // Must either verify that these dangers can't harm us here (which is
+          // plausible), or refactor to avoid this issue.
           substitutes=(
               "{"
               + "  ___./*@synthetic*/loadModule("
