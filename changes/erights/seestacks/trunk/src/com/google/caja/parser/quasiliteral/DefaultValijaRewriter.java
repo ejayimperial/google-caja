@@ -638,11 +638,12 @@ public class DefaultValijaRewriter extends Rewriter {
         Map<String, ParseTreeNode> bindings = this.match(node);
         if (bindings != null) {
           Identifier v = (Identifier) bindings.get("v");
-          if (scope.isOuter(v.getName())) {
+          String vname = v.getName();
+          if (scope.isOuter(vname)) {
             ParseTreeNode r = bindings.get("r");
             return new ExpressionStmt((Expression) substV(
                 "v", v,
-                "r", expand(nymize(r, v.getName(), "var"), scope, mq)));
+                "r", expand(nymize(r, vname, "var"), scope, mq)));
           }
         }
         return NONE;
@@ -659,12 +660,17 @@ public class DefaultValijaRewriter extends Rewriter {
           substitutes="$v.so('@v', @r)")
       public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
         Map<String, ParseTreeNode> bindings = this.match(node);
-        if (bindings != null &&
-            bindings.get("v") instanceof Reference &&
-            scope.isOuter(((Reference) bindings.get("v")).getIdentifierName())) {
-          return substV(
-              "v", bindings.get("v"),
-              "r", expand(bindings.get("r"), scope, mq));
+        if (bindings != null) {
+          ParseTreeNode v = bindings.get("v");
+          if (v instanceof Reference) {
+            String vname = ((Reference) v).getIdentifierName();
+            if (scope.isOuter(vname)) {
+              ParseTreeNode r = bindings.get("r");
+              return substV(
+                  "v", v,
+                  "r", expand(nymize(r, vname, "var"), scope, mq));
+            }
+          }
         }
         return NONE;
       }
@@ -721,6 +727,56 @@ public class DefaultValijaRewriter extends Rewriter {
           Reference v = (Reference) bindings.get("v");
           if (scope.isOuter(v.getIdentifierName())) {
             return subst(bindings);
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="initLocalVar",
+          synopsis="",
+          reason="",
+          matches="/* not in outer scope */ var @v = @r",
+          substitutes="var @v = @r")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = this.match(node);
+        if (bindings != null) {
+          Identifier v = (Identifier) bindings.get("v");
+          String vname = v.getName();
+          if (! scope.isOuter(vname)) {
+            ParseTreeNode r = bindings.get("r");
+            return substV(
+                "v", v,
+                "r", expand(nymize(r, vname, "var"), scope, mq));
+          }
+        }
+        return NONE;
+      }
+    },
+
+    new Rule() {
+      @Override
+      @RuleDescription(
+          name="setLocalVar",
+          synopsis="",
+          reason="",
+          matches="/* not in outer scope */ @v = @r",
+          substitutes="@v = @r")
+      public ParseTreeNode fire(ParseTreeNode node, Scope scope, MessageQueue mq) {
+        Map<String, ParseTreeNode> bindings = this.match(node);
+        if (bindings != null) {
+          ParseTreeNode v = bindings.get("v");
+          if (v instanceof Reference) {
+            String vname = ((Reference) v).getIdentifierName();
+            if (! scope.isOuter(vname)) {
+              ParseTreeNode r = bindings.get("r");
+              return substV(
+                  "v", v,
+                  "r", expand(nymize(r, vname, "var"), scope, mq));
+            }
           }
         }
         return NONE;

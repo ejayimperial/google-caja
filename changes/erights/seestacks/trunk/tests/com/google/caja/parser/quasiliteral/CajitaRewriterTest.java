@@ -2077,6 +2077,10 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
    * this test is to see that various anonymous functions in the original are
    * turned into named functions -- named after the variable or property
    * they are initializing.
+   * <p>
+   * The test is structured as as a call stack resulting in a breakpoint.
+   * If executed, for example, in the testbed applet with Firebug enabled,
+   * one should see the stack of generated function names.
    */
   public void testFuncNaming() throws Exception {
     checkSucceeds(
@@ -2084,7 +2088,9 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "var x = {bar: function() {foo();}};" +
         "x.baz = function(){x.bar();};" +
         "var zip = function(){x.baz();};" +
-        "zip();",
+        "var zap;" +
+        "zap = function(){zip();};" +
+        "zap();",
 
         "function foo() { debugger; }" +
         "___.func(foo, 'foo');" +
@@ -2104,8 +2110,13 @@ public class CajitaRewriterTest extends CommonJsRewriterTestCase {
         "    x.baz_canCall___ ? x.baz() : ___.callPub(x, 'baz', []);" +
         "  }" +
         "  return ___.frozenFunc(zip$_var, 'zip$_var');" +
-        "})();"+
-        "zip.CALL___();");
+        "})();" +
+        "var zap;" +
+        "zap = (function () {" +
+        "  function zap$_var() { zip.CALL___(); }" +
+        "  return ___.frozenFunc(zap$_var, 'zap$_var');" +
+        "})();" +
+        "zap.CALL___();");
   }
 
   @Override

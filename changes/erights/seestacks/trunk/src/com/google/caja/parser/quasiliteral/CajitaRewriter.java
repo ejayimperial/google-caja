@@ -489,6 +489,7 @@ public class CajitaRewriter extends Rewriter {
     ////////////////////////////////////////////////////////////////////////
     // Support hoisting of functions to the top of their containing block
     ////////////////////////////////////////////////////////////////////////
+
     new Rule() {
       @Override
       @RuleDescription(
@@ -1315,10 +1316,12 @@ public class CajitaRewriter extends Rewriter {
         if (bindings != null) {
           ParseTreeNode v = bindings.get("v");
           if (v instanceof Reference) {
-            if (!scope.isFunction(getReferenceName(v))) {
+            String vname = getReferenceName(v);
+            if (!scope.isFunction(vname)) {
+              ParseTreeNode r = bindings.get("r");
               return substV(
                   "v", v,
-                  "r", expand(bindings.get("r"), scope, mq));
+                  "r", expand(nymize(r, vname, "var"), scope, mq));
             }
           }
         }

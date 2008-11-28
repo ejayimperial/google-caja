@@ -315,13 +315,30 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         "isNaN.foo;");
   }
 
+  /**
+   * Although the golden output here tests many extraneous things, the point of
+   * this test is to see that various anonymous functions in the original are
+   * turned into named functions -- named after the variable or property
+   * they are initializing.
+   * <p>
+   * The test is structured as as a call stack resulting in a breakpoint.
+   * If executed, for example, in the testbed applet with Firebug enabled,
+   * one should see the stack of generated function names.
+   */
   public void testFuncNaming() throws Exception {
     checkSucceeds(
         "function foo(){debugger;}" +
         "var x = {bar: function() {foo();}};" +
         "x.baz = function(){x.bar();};" +
-        "var zip = function(){x.baz();};" +
-        "zip();",
+        "var zip = function(){" +
+        "  var lip = function(){x.baz();};" +
+        "  var lap;" +
+        "  lap = function(){lip();};" +
+        "  lap();" +
+        "};" +
+        "var zap;" +
+        "zap = function(){zip();};" +
+        "zap();",
 
         "var $dis = $v.getOuters();" +
         "$v.initOuter('onerror');" +
@@ -350,12 +367,35 @@ public class DefaultValijaRewriterTest extends CommonJsRewriterTestCase {
         "})());" +
         "$v.so('zip', (function () {" +
         "  function zip$_var$($dis) {" +
-        "    $v.cm($v.ro('x'), 'baz', []);" +
+        "    var lip = (function () {" +
+        "      function lip$_var$($dis) {" +
+        "        $v.cm($v.ro('x'), 'baz', [ ]);" +
+        "      }" +
+        "      var lip$_var = $v.dis(lip$_var$, 'lip$_var');" +
+        "      return lip$_var;" +
+        "    })();" +
+        "    var lap;" +
+        "    lap = (function () {" +
+        "      function lap$_var$($dis) {" +
+        "        $v.cf(lip, [ ]);" +
+        "      }" +
+        "      var lap$_var = $v.dis(lap$_var$, 'lap$_var');" +
+        "      return lap$_var;" +
+        "    })();" +
+        "    $v.cf(lap, [ ]);" +
         "  }" +
         "  var zip$_var = $v.dis(zip$_var$, 'zip$_var');" +
         "  return zip$_var;" +
         "})());" +
-        "$v.cf($v.ro('zip'), []);");
+        "$v.initOuter('zap');" +
+        "$v.so('zap', (function () {" +
+        "  function zap$_var$($dis) {" +
+        "    $v.cf($v.ro('zip'), [ ]);" +
+        "  }" +
+        "  var zap$_var = $v.dis(zap$_var$, 'zap$_var');" +
+        "  return zap$_var;" +
+        "})());" +
+        "$v.cf($v.ro('zap'), [ ]);");
   }
 
   @Override
