@@ -31,7 +31,7 @@ Below is a list of known attack vectors.  We discuss the !EcmaScript 3 language,
   * EvalBreaksClosureEncapsulation -- Eval extensions allow reaching into the scope chain of closures
   * PostIncrementAndDecrementCanReturnNonNumber -- Incorrect implementations of postincrement and postdecrement can cause confusion as to which property is being accessed
   * MisOptimizations -- Some interpreters try to optimize javascript before execution subtly changing the semantics of builtin operators (PostIncrementAndDecrementCanReturnNonNumber is a specific example)
-  * CompoundAssignmentCanReturnNonNumber -- The type of assignment expressions may not be correct.
+  * CompoundAssignmentsCanReturnNonNumber -- The type of assignment expressions may not be correct.
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
   * ScriptInHtml -- HTML Tags in Javascript Strings can allow Unsanitized Script Execution
