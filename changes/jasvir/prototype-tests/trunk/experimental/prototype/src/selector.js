@@ -76,15 +76,12 @@ var Selector = Class.create({
     }
     
     this.matcher = function(root) {
-      var r = root; 
-      var h = Selector.handlers;
       var c = false;
       var n;
       for (var x=0; x < matching.length; x++) {
-        var result = matching[x](n,r,c,h,m);
+        var result = matching[x](n,root,c,Selector.handlers,m);
         n = result[0];
         c = result[1];
-        h = result[2];
       }
       return h.unique(n);
     }
@@ -292,22 +289,22 @@ Object.extend(Selector, {
   },
   
   criteria: {
-               tagName:      function(n,r,c,h, m) { console.log("tagName before:" + n); n = h.tagName(n, r, m[1], c); c = false; console.log("tagName after:" + n); return [n,c,h];},
-                      className:    function(n,r,c,h, m) { n = h.className(n, r, m[1], c); c = false; return [n,c,h];},
-                      id: function(n,r,c,h, m) { n = h.id(n, r, m[1], c); c = false; return [n,c,h];},
-                      attrPresence: function(n,r,c,h, m) { n = h.attrPresence(n, r, m[1], c); c = false; return [n,c,h];},
-                      attr: function(n,r,c,h, m) {
-                    m[3] = (m[5] || m[6]); 
-                    n = h.attr(n, r, m[1], m[3], m[2]);
-                    c = false; return [n,c,h];},
-                      pseudo: function(n,r,c,h, m) {
-                    if (m[6]) m[6] = m[6].replace(/"/g, '\\"'); /*')*/
-                        n = h.pseudo(n, r, m[1], m[6]); 
-                    c = false; return [n,c,h];},
-                      descendant:   function(n,r,c,h, m) { c = 'descendant'; return [n,c,h];},
-                      child:        function(n,r,c,h, m) { c = 'child'; return [n,c,h];},
-                      adjacent:     function(n,r,c,h, m) { c = 'adjacent'; return [n,c,h];},
-                      laterSibling: function(n,r,c,h, m) { c = 'laterSibling'; return [n,c,h];},
+    tagName:      function(n,r,c,h, m) { n = h.tagName(n, r, m[1], c); c = false; return [n,c];},
+    className:    function(n,r,c,h, m) { n = h.className(n, r, m[1], c); c = false; return [n,c];},
+    id: function(n,r,c,h, m) { n = h.id(n, r, m[1], c); c = false; return [n,c];},
+    attrPresence: function(n,r,c,h, m) { n = h.attrPresence(n, r, m[1], c); c = false; return [n,c];},
+    attr: function(n,r,c,h,m) {
+            m[3] = (m[5] || m[6]); 
+            n = h.attr(n, r, m[1], m[3], m[2]);
+            c = false; return [n,c];},
+    pseudo: function(n,r,c,h, m) {
+                  if (m[6]) m[6] = m[6].replace(/"/g, '\\"'); /*')*/
+                  n = h.pseudo(n, r, m[1], m[6]); 
+                  c = false; return [n,c,h];},
+    descendant:   function(n,r,c,h, m) { c = 'descendant'; return [n,c];},
+    child:        function(n,r,c,h, m) { c = 'child'; return [n,c];},
+    adjacent:     function(n,r,c,h, m) { c = 'adjacent'; return [n,c];},
+    laterSibling: function(n,r,c,h, m) { c = 'laterSibling'; return [n,c];},
   },
 
   patterns: {
