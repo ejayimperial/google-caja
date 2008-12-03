@@ -61,14 +61,16 @@ var Selector = Class.create({
       return;
     }
 
-    var matching = [];
+    var criteria = [];
+    var matches = [];
 
     while (e && le != e && (/\S/).test(e)) {
       le = e;
       for (var i in ps) {
         p = ps[i];
         if (m = e.match(p)) {
-          matching.push(c[i]);
+          criteria.push(c[i]);
+          matches.push(m);
           e = e.replace(m[0], '');
           break;
         }
@@ -78,8 +80,8 @@ var Selector = Class.create({
     this.matcher = function(root) {
       var c = false;
       var n;
-      for (var x=0; x < matching.length; x++) {
-        var result = matching[x](n,root,c,Selector.handlers,m);
+      for (var x=0; x < criteria.length; x++) {
+        var result = criteria[x](n,root,c,Selector.handlers,matches[x]);
         n = result[0];
         c = result[1];
       }
@@ -295,12 +297,12 @@ Object.extend(Selector, {
     attrPresence: function(n,r,c,h, m) { n = h.attrPresence(n, r, m[1], c); c = false; return [n,c];},
     attr: function(n,r,c,h,m) {
             m[3] = (m[5] || m[6]); 
-            n = h.attr(n, r, m[1], m[3], m[2]);
+            n = h.attr(n, r, m[1], m[3], m[2],c);
             c = false; return [n,c];},
-    pseudo: function(n,r,c,h, m) {
+    pseudo: function(n,r,c,h,m) {
                   if (m[6]) m[6] = m[6].replace(/"/g, '\\"'); /*')*/
-                  n = h.pseudo(n, r, m[1], m[6]); 
-                  c = false; return [n,c,h];},
+                  n = h.pseudo(n, m[1], m[6], r, c); 
+                  c = false; return [n,c];},
     descendant:   function(n,r,c,h, m) { c = 'descendant'; return [n,c];},
     child:        function(n,r,c,h, m) { c = 'child'; return [n,c];},
     adjacent:     function(n,r,c,h, m) { c = 'adjacent'; return [n,c];},
