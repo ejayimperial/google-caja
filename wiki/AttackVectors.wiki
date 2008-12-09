@@ -48,3 +48,4 @@ Below is a list of known attack vectors.  We discuss the !EcmaScript 3 language,
   * EventHandlersEvalWithDom -- The scope that event handlers are executed in may expose DOM properties as globals
   * DocTypesCanInjectUnsanitizedContent -- DOCTYPEs can define entities which can inject unsanitized script or markup.
   * EventChecksCircumventableByInfLoops -- Invariants preserved by event handlers can be circumvented by causing the browser to turn off javascript.
+  * IdAndNameMasking -- Members of {{{HtmlCollection}}}, {{{HTMLFormElement}}}, etc. masked by ids&names
