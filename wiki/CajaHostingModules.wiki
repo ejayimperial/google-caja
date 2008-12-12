@@ -3,199 +3,86 @@
 
 This document is intended for those who want to host [CajaModule Caja modules] within pages that they serve.  If you simply want to write Caja modules for someone else to host, check out the [CajaCajole Cajoler] docs.
 
-Here's a sample Caja module container; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text.
+Here's a sample Caja module host page; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text.
 
 {{{
-    <html>
-      <head>
-        <title>My Container</title>
-      </head>
-      <body>
-        <h1>My Container</h1>
-
-1       <script type="text/javascript" src="caja.js"></script>
-        <script>
-          // Here is some global data.
-
-          // Two approaches to object construction to illustrate the
-          // differences in how Caja treats object literals vs.
-          // objects constructed using new.
-2         var literalGuy = { name:"George" };
-          var constructedGuy = new function(){ this.name = "George"; }
-
-          var warn=function (x) { alert("Warning: " + x); };
-
-          var html_sanitize = function (html) {
-            // This implementation forbids the use of all tags except <BR>.
-            var re=/^(\w|\s|\.|,|<BR>)*$/i;
-            html = String(html);
-            if (html.match(re)) return html;
-            return "";
+  <html>
+    <head>
+      <title>A simple host page for Caja gadgets</title>
+    
+1     <!-- In ant-lib/com/google/caja/plugin/ -->
+2     <script src="domita-minified.js"></script>
+3     <script src="valija.co.js"></script>
+    
+      <script>
+4       var initValija = function(divId, extraImports) {
+          // Make a copy of the standard objects
+5         var imports = ___.copy(___.sharedImports);
+        
+          // Add the extra, possibly shared state
+6         for (var i in extraImports) {
+            imports[i] = extraImports[i];
           }
-        </script>
-
-        <script>
-          // ___.sharedImports is the stuff that's common to all modules.
-          // We make a copy so we can grant different capabilities to 
-          // different modules.
-3         var imports = ___.copy(___.sharedImports);
-
-          // "Taming" a global object is disabling everything except 
-          // explicitly whitelisted reads, calls, sets, and deletes.
-
-          // NOTE! Exposing too much can break the system entirely.  Don't 
-          // allow anything without consulting an object-capabilities/
-          // web-browser guru.
-
-          // Let the modules know about the constructedGuy object.
-          // Because constructedGuy is created with new, we have to explicitly
-          // whitelist reads, calls, ands sets.
-4         imports.constructedGuy = constructedGuy;
-          // We only grant reads, because we want it to be a constant.
-          ___.grantRead(imports.constructedGuy, "name");
-
-          // Let the modules know about the literalGuy object.
-          // Because literalGuy is an object literal, the module is free 
-          // to modify it.
-5         imports.literalGuy = literalGuy;
-          // Because we want literalGuy.name to be a constant, we freeze it.
-          ___.freeze(imports.literalGuy);
-
-          // Don't grant alert, but do allow indirect access to alert 
-          // via warn()
-6         imports.warn = warn;
-          // Mark it as callable; note the difference between marking a simple
-          // function as callable as opposed to marking a method as callable (16).
-7         ___.simpleFunc(warn);
-
-          // DOM taming
-          // Give the module a fake document object.
-8         imports.document = {};
-
-          // Put in a fake "document.write" method that sanitizes the html.
-9         imports.document.write = function(html) {
-            document.getElementById('my_shared_module_div').innerHTML +=
-                html_sanitize(html);
+  
+          // Reify the imports for use by Valija
+7         imports.outers = imports;
+        
+          // Create the Valija runtime instance
+8         imports.$v = valijaMaker.CALL___(imports);
+        
+          // Create a fake document object, attach it to the given div,
+          // and put a reference in imports
+9         var htmlContainer = document.getElementById(divId);
+10        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
+11        imports.getCssContainer___ = function () {
+            return htmlContainer;
           };
-
-10        imports.document.getElementById = function(id) {
-            id = String(id);
-
-            // Tame the element before returning it.
-11          var element = document.getElementById('my_prefix_'+id);
-
-            // This stuff is harmless, so we allow it.
-12          ___.grantCall(element, 'hasAttributes');
-13          ___.grantRead(element, 'tagName');
-
-14          // Instead of granting the capability to set innerHTML directly,
-            // like this,
-            //     ___.grantSet(element,'innerHTML')
-            // we replace the setter with a sanitizer.  This technique is
-            // called "wrapping".
-15          element.innerHTML_setter___ = function(html) {
-              element.innerHTML = html_sanitize(html);
+12        attachDocumentStub(
+              "-" + divId,
+              // Don't proxy urls
+              { rewrite: function(uri, mimetype) { return uri; } },
+              imports,
+              document.getElementById(divId));
+            
+          // Use these imports
+13        ___.getNewModuleHandler().setImports(imports);
+        };
+      </script>
+    </head>
+    <body>
+      <script>
+        // Some state to share between the gadgets
+14      var shared = (function (x) {
+          return { 
+15            get: ___.func(function () { return x; }),
+16            set: ___.func(function (y) { x = String(y); })
             };
-
-            return element;
-          };
-
-          // Whitelist the document methods.
-16        ___.grantCall(imports.document, 'getElementById');
-17        ___.grantCall(imports.document, 'write');
-
-          // The next two modules loaded after this will share the same
-          // virtual global scope
-18        ___.getNewModuleHandler().setImports(imports);
-        </script>
-
-19      <div id="my_shared_module_div">
-           <span id="my_prefix_greeting">Hi there!</span>
-        </div>
-
-        <!-- Load the rewritten ("cajoled") modules.  
-             Note that the scripts could be inlined instead! -->
-20      <script src="myRewrittenModule.js"></script>
-21      <script src="myOtherRewrittenModule.js"></script>
-
-        <script>
-          // Create a different virtual global scope.
-22        var imports2 = ___.copy(___.sharedImports);
-          
-23        imports2.phoneHome = function(hex) {
-            hex = String(hex);
-            var re = /^[A-F0-9]*$/;
-            if (hex.match(re)) {
-              var request = window.XMLHttpRequest ? new XMLHttpRequest() : 
-                  new ActiveXObject("MSXML2.XMLHTTP.3.0");
-              request.open("GET", "http://www.myserver.com/?hex="+hex, true);
-              request.send();
-            }
-          }
-          // The next module will see a different virtual global scope 
-          // than the last two.  In particular, it has no way to
-          // manipulate the DOM.
-24        ___.getNewModuleHandler().setImports(imports2);
-        </script>
-25      <script src="myThirdRewrittenModule.js"></script>
-      </body>
-    </html>
+        })("");
+      </script>
+  
+17    <div id="gadget1"></div>  
+18    <script>initValija("gadget1", {get : shared.get});
+19    <script src="gadget1.vo.js"></script>
+  
+20    <div id="gadget2"></div>
+21    <script>initValija("gadget2", {set : shared.set});
+22    <script src="gadget2.vo.js"></script>
+    </body>
+  </html>
 }}}
 
-A Caja module container is an HTML document.  It must do four things:
-  * Load the caja library before loading any modules. (1)  
-  * Define a javascript object to express the security policy for modules. (3) (22)
-  * Tell the caja library about the object. (18) (24)
-  * Load the modules (20) (21) (25); it can do this either by using a script tag:
-    {{{
-  <script src="myRewrittenModule.js"></script>
-    }}}
-  or it can use a template language to inline the code:
-    {{{
-  <script><% MY_REWRITTEN_MODULE %></script>
-    }}}
-  or a module can be hardcoded into the page:
-    {{{
-  <script>
-  ___.loadModule(function(___, IMPORTS___){
-    /* rest of rewritten code here... */
-  });
-  </script>
-    }}}
+A Caja module host page is an HTML document.  It must do a few things:
+  * Load the Caja trusted code base, which creates the {{{___}}} and {{{cajita}}} objects (2)
+  * Load the Valija library (3)
+  * Create divs to hold the cajoled content (17) (20)
+  * Create instances of the "virtual iframes" in the divs (18) (21)
+  * Load the third-party code that will run in the virtual iframes (19) (22)
+The trusted code base and the Valija library are built by running "ant" after checking out the Caja project (1).
 
-The browser environment comes with several predefined standard global objects, like the DOM tree, Object, Array, Date, Math, etc.  Most containers also define global objects, like information about the currently logged-in user.  To enforce the principle of least authority, these objects will usually need to be restricted in some way.  The caja runtime provides safe versions of the standard objects as properties of `___.sharedImports`.
+The real substance of this file is in the code that sets up the virtual iframes (4-13).  It takes the id of a div and a mix-in object containing host-specific APIs and shared state.  Next, it makes a copy (5) of the default set of objects, called {{{imports}}}, that JavaScript code assumes are universally accessible: JavaScript builtins like {{{Object}}}, {{{Array}}}, and {{{Math}}}, as well as browser builtins like the {{{document}}} and {{{window}}} objects. 
 
-The best way to control access is to define it in a module; then the code is guaranteed to follow object capability rules.  When working with legacy code, however, cajoling the code into a module may be difficult.
+The properties of {{{extraImports}}} may be host-specific APIs, like the OpenSocial APIs; they may also be objects that enable communication between gadgets.  In this example, the host page creates a pair of closures for manipulating a string (14).  The getter is added to gadget1's imports, while the setter is added to gadget2's imports.  The variable {{{get}}} appears to be a built-in global function to gadget1, while gadget2 sees a global variable {{{set}}}.  Thus the code in gadget2 can send a message to gadget1, but gadget1 cannot send a message back.  
 
-Legacy code, then, will typically be either _tamed_ or _wrapped_.  _Taming_ an object is disabling everything except for whitelisted calls, sets, and reads of the object's properties; a direct reference to the object is provided, but runtime checks are performed before allowing any of these actions.  The direct reference is placed into the virtual global scope of the module, called the `imports`.  Typically, we make a copy of the standard objects (3) and add references to the copy.  Any property of imports can be read, set, or called by module code, but actions that affect properties of other objects need to be explicitly whitelisted.
+All functions that gadgets need to call must be explicitly whitelisted; {{{get}}} and {{{set}}} are functions that only reference a string, so they can be whitelisted with the {{{func}}} method of the Caja runtime library (15) (16).  In general, we may want to restrict or alter the behavior of functions, so simple whitelisting isn't sufficient.  This process is called "taming" and forms part of the trusted code base; new tamed methods should only be provided to gadgets after an extensive security review.  About half of the trusted code base (2) consists of taming the DOM; see [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domita.js src/com/google/caja/plugin/domita.js] for examples of tamings ranging from trivial to intricate.
 
-There are two different approaches to controlling the ability to set properties of global objects.  In this example, `constructedGuy` is an object with a single property, name.  We'd like it to be a constant, so we need to tame it.  First, we put a reference to `constructedGuy` into `imports` (4).  Next, we whitelist the ability to read `constructedGuy`'s name.  The call to `grantRead` sets the flag `constructedGuy.name_canRead___` to `true`; any attempt to read `constructedGuy.name` within translated module code checks this flag before continuing.
-
-`literalGuy` is an object literal, and Caja is more lax with these: modules are free  to modify properties of any object that's a direct descendant of Object or Array.  So if we were to say (5)
-{{{
-imports.literalGuy = literalGuy;
-}}}
-and do nothing else, then module code would be free to change the `name` property.  If we want it to be constant, then we need to freeze it.
-
-The function `warn()` allows a module to put up an alert box, but prefaces the message with a fixed string.  Since `alert()` is not included in `___.sharedImports`, modules cannot pop up boxes unless we grant them the capability to do so.  We put the reference to `warn()` in `imports` and then tell Caja that it's safe to call it as a simple function. (Note that there's a different call to tell Caja that it's safe to call methods of constructed objects (16).)
-
-Many modules will want to manipulate their DOM tree after they have been loaded.  We do not want to allow arbitrary calls to `document.write()`; that's far too much authority.  Instead, we allow the modules to manipulate the inner HTML of `my_shared_module_div` (19).  First, we create an empty object in the virtual global scope and call it `document` (8).  This gives the illusion of being in a browser context to the module code.  Next, we add some methods to `imports.document` and whitelist them.  [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domita.js DOMita] does this for you, and the {{{document}}} methods above are purely illustrative.
-
-
-This simple `imports.document.write()` function (9) only allows the
-use of `<BR>` tags, alphanumeric strings, and a bit of punctuation.
-The real [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/html-emitter.js HtmlEmitter] that Caja uses to inject HTML uses a more flexible [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/html-sanitizer.js html sanitizer.js], but discussing the issues involved in doing this safely and is beyond the scope of this document.
-
-The function `imports.document.getElementById()` (10) returns a direct reference to the DOM element (11), but being allowed to ask for *any* id is too much authority, and there would be no way to prevent id name clashes between modules. So, we prefix the id with a namespace identifier.  The caja runtime will prevent any reads, assignments, or calls to properties of the element at runtime unless we whitelist the actions (12) (13).  Just as with `document.write()`, allowing a module to assign to the `innerHTML` property directly is far too much authority, so we want to sanitize first.  Caja provides a way to intercept property assignments through the use of the `*_setter___` properties.  Since we did not explicitly say `___.grantSet(element.innerHTML)`, when a module attempts to set it, the runtime check will fail and will call `innerHTML_setter___` instead.
-
-Finally, we whitelist `imports.document.getElementById()` (16) and `imports.document.write()` (17).
-
-At this point, it must be emphasized that taming an existing API is a job for a javascript security expert with a strong background in object capabilities.  Exposing too much will completely break the security.  Don't be tempted to throw in new capabilities without thoroughly understanding the implications.
-
-Now we can tell the Caja runtime about the virtual global scope we've defined (18).  `___.getNewModuleHandler()` gets the handler for new modules; `setImports(imports)` makes the handler use our virtual global scope for every module that's loaded after this point (at least, until we call `setImports()` again).
-
-Here, we load two modules by referencing the rewritten javascript in the `src` attribute of script tags (20) (21).  To reduce latency, the scripts could have been inlined here.  Both scripts will share the same virtual global scope.  Any "global" variable defined in one will be visible to the other.
-
-Once these two modules have finished executing, we'd like to load a module that does not interact at all with the DOM; instead it performs a calculation and then sends the result to a fixed URL.  We make a new copy of `___.sharedImports` (22) and equip it with a `phoneHome()` method (23); it coerces its input to a string, verifies that it consists exclusively of hexadecimal digits, and then issues the request on behalf of the module.  The other two modules do not have access to this function, just as this module will not have access to the DOM.
-
-We tell Caja about the new `imports2` object with `setImports()` (24) and load the third module (25).  When it has finished executing, all further activity within modules will be driven by user actions.
+The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (19) (22) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".vo.js" means that the resulting "Valija object code" is just more complicated JavaScript.
