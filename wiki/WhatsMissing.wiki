@@ -63,5 +63,4 @@ Valija allows nested {{{function}}} declarations, but not yet with the block-sco
 == In ES3.1-strict but not yet in Valija ==
 
   * *Reflective attribute control* -- ES3.1 adds reflective attribute control operations on the {{{Object()}}} constructor (including the aforementioned {{{Object.getPrototype()}}}).
-  * *Decimal* -- ES3.1 adds a decimal floating point library as an arithmetic alternative to binary floating point.
   * *getters and setters*
