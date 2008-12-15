@@ -60,11 +60,11 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
         })("");
       </script>
   
-17    <div id="gadget1"></div>  
+17    <div id="gadget1" class="gadget1"></div>  
 18    <script>initValija("gadget1", {get : shared.get});
 19    <script src="gadget1.vo.js"></script>
   
-20    <div id="gadget2"></div>
+20    <div id="gadget2" class="gadget2"></div>
 21    <script>initValija("gadget2", {set : shared.set});
 22    <script src="gadget2.vo.js"></script>
     </body>
@@ -84,5 +84,7 @@ The real substance of this file is in the code that sets up the virtual iframes 
 The properties of {{{extraImports}}} may be host-specific APIs, like the OpenSocial APIs; they may also be objects that enable communication between gadgets.  In this example, the host page creates a pair of closures for manipulating a string (14).  The getter is added to gadget1's imports, while the setter is added to gadget2's imports.  The variable {{{get}}} appears to be a built-in global function to gadget1, while gadget2 sees a global variable {{{set}}}.  Thus the code in gadget2 can send a message to gadget1, but gadget1 cannot send a message back.  
 
 All functions that gadgets need to call must be explicitly whitelisted; {{{get}}} and {{{set}}} are functions that only reference a string, so they can be whitelisted with the {{{func}}} method of the Caja runtime library (15) (16).  In general, we may want to restrict or alter the behavior of functions, so simple whitelisting isn't sufficient.  This process is called "taming" and forms part of the trusted code base; new tamed methods should only be provided to gadgets after an extensive security review.  About half of the trusted code base (2) consists of taming the DOM; see [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domita.js src/com/google/caja/plugin/domita.js] for examples of tamings ranging from trivial to intricate.
+
+The divs playing the role of virtual iframes should have the same class and id (17) (20).
 
 The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (19) (22) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".vo.js" means that the resulting "Valija object code" is just more complicated JavaScript.
