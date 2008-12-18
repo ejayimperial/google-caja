@@ -40,3 +40,17 @@ IE, Firefox w/ Venkman
 {{{
 //@JSD_EVAL alert(document.cookie);
 }}}
+
+And CC can change tokenization arbitrarily far from the CC directive.
+{{{
+x /*@cc_on =*/ ++ /a/i.x
+}}}
+is interpreted as
+{{{
+x = ++((new RegExp('a', 'i')).x)
+}}}
+by IE's JScript interpreter but as
+{{{
+(x++) / a / (i.x)
+}}}
+on other interpreters.
