@@ -11,33 +11,44 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
       <title>A simple host page for Caja gadgets</title>
     
 1     <!-- In ant-lib/com/google/caja/plugin/ -->
-2     <script src="domita-minified.js"></script>
-3     <script src="valija.co.js"></script>
+2     <script src="html-sanitizer-minified.js"></script>
+3     <script src="domita-minified.js"></script>
     
       <script>
-4       var initValija = function(divId, extraImports) {
+      (function(){
+4       // Give the module a variable into which it can export the valija maker
+        var imports = ___.getNewModuleHandler().getImports();
+        imports.loader = {provide:___.func(function(v){valijaMaker = v;})};
+      })();
+      </script>
+
+      <!-- In ant-lib/com/google/caja/plugin/ -->
+5     <script src="valija.co.js"></script>
+    
+      <script>
+6       var initValija = function(divId, extraImports) {
           // Make a copy of the standard objects
-5         var imports = ___.copy(___.sharedImports);
+7         var imports = ___.copy(___.sharedImports);
         
           // Add the extra, possibly shared state
-6         for (var i in extraImports) {
-            imports[i] = extraImports[i];
+8         for (var i in extraImports) {
+            if (!i.match(/___$/)) { imports[i] = extraImports[i]; }
           }
   
           // Reify the imports for use by Valija
-7         imports.outers = imports;
+9         imports.outers = imports;
         
           // Create the Valija runtime instance
-8         imports.$v = valijaMaker.CALL___(imports);
+10        imports.$v = valijaMaker.CALL___(imports);
         
           // Create a fake document object, attach it to the given div,
           // and put a reference in imports
-9         var htmlContainer = document.getElementById(divId);
-10        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
-11        imports.getCssContainer___ = function () {
+11        var htmlContainer = document.getElementById(divId);
+12        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
+13        imports.getCssContainer___ = function () {
             return htmlContainer;
           };
-12        attachDocumentStub(
+14        attachDocumentStub(
               "-" + divId,
               // Don't proxy urls
               { rewrite: function(uri, mimetype) { return uri; } },
@@ -45,46 +56,48 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
               document.getElementById(divId));
             
           // Use these imports
-13        ___.getNewModuleHandler().setImports(imports);
+15        ___.getNewModuleHandler().setImports(imports);
         };
       </script>
     </head>
     <body>
       <script>
         // Some state to share between the gadgets
-14      var shared = (function (x) {
+16      var shared = (function (x) {
           return { 
-15            get: ___.func(function () { return x; }),
-16            set: ___.func(function (y) { x = String(y); })
+17            get: ___.func(function () { return x; }),
+18            set: ___.func(function (y) { x = String(y); })
             };
         })("");
       </script>
   
-17    <div id="gadget1" class="gadget1"></div>  
-18    <script>initValija("gadget1", {get : shared.get});
-19    <script src="gadget1.vo.js"></script>
+19    <div id="gadget1" class="gadget1"></div>  
+20    <script>initValija("gadget1", {get : shared.get});
+21    <script src="gadget1.vo.js"></script>
   
-20    <div id="gadget2" class="gadget2"></div>
-21    <script>initValija("gadget2", {set : shared.set});
-22    <script src="gadget2.vo.js"></script>
+22    <div id="gadget2" class="gadget2"></div>
+23    <script>initValija("gadget2", {set : shared.set});
+24    <script src="gadget2.vo.js"></script>
     </body>
   </html>
 }}}
 
 A Caja module host page is an HTML document.  It must do a few things:
-  * Load the Caja trusted code base, which creates the {{{___}}} and {{{cajita}}} objects (2)
-  * Load the Valija library (3)
-  * Create divs to hold the cajoled content (17) (20)
-  * Create instances of the "virtual iframes" in the divs (18) (21)
-  * Load the third-party code that will run in the virtual iframes (19) (22)
+  * Load the HTML sanitizer (2)
+  * Load the Caja trusted code base, which creates the {{{___}}} and {{{cajita}}} objects (3)
+  * Supply a {{{provide}}} function for the Valija library to export its maker into
+  * Load the Valija library (5)
+  * Create divs to hold the cajoled content (19) (22)
+  * Create instances of the "virtual iframes" in the divs (20) (23)
+  * Load the third-party code that will run in the virtual iframes (21) (24)
 The trusted code base and the Valija library are built by running "ant" after checking out the Caja project (1).
 
-The real substance of this file is in the code that sets up the virtual iframes (4-13).  It takes the id of a div and a mix-in object containing host-specific APIs and shared state.  Next, it makes a copy (5) of the default set of objects, called {{{imports}}}, that JavaScript code assumes are universally accessible: JavaScript builtins like {{{Object}}}, {{{Array}}}, and {{{Math}}}, as well as browser builtins like the {{{document}}} and {{{window}}} objects. 
+The real substance of this file is in the code that sets up the virtual iframes (6-15).  It takes the id of a div and a mix-in object containing host-specific APIs and shared state.  Next, it makes a copy (7) of the default set of objects, called {{{imports}}}, that JavaScript code assumes are universally accessible: JavaScript builtins like {{{Object}}}, {{{Array}}}, and {{{Math}}}, as well as browser builtins like the {{{document}}} and {{{window}}} objects. 
 
-The properties of {{{extraImports}}} may be host-specific APIs, like the OpenSocial APIs; they may also be objects that enable communication between gadgets.  In this example, the host page creates a pair of closures for manipulating a string (14).  The getter is added to gadget1's imports, while the setter is added to gadget2's imports.  The variable {{{get}}} appears to be a built-in global function to gadget1, while gadget2 sees a global variable {{{set}}}.  Thus the code in gadget2 can send a message to gadget1, but gadget1 cannot send a message back.  
+The properties of {{{extraImports}}} may be host-specific APIs, like the OpenSocial APIs; they may also be objects that enable communication between gadgets.  In this example, the host page creates a pair of closures for manipulating a string (16).  The getter is added to gadget1's imports, while the setter is added to gadget2's imports.  The variable {{{get}}} appears to be a built-in global function to gadget1, while gadget2 sees a global variable {{{set}}}.  Thus the code in gadget2 can send a message to gadget1, but gadget1 cannot send a message back.  
 
-All functions that gadgets need to call must be explicitly whitelisted; {{{get}}} and {{{set}}} are functions that only reference a string, so they can be whitelisted with the {{{func}}} method of the Caja runtime library (15) (16).  In general, we may want to restrict or alter the behavior of functions, so simple whitelisting isn't sufficient.  This process is called "taming" and forms part of the trusted code base; new tamed methods should only be provided to gadgets after an extensive security review.  About half of the trusted code base (2) consists of taming the DOM; see [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domita.js src/com/google/caja/plugin/domita.js] for examples of tamings ranging from trivial to intricate.
+All functions that gadgets need to call must be explicitly whitelisted; {{{get}}} and {{{set}}} are functions that only reference a string, so they can be whitelisted with the {{{func}}} method of the Caja runtime library (17) (18).  In general, we may want to restrict or alter the behavior of functions, so simple whitelisting isn't sufficient.  This process is called "taming" and forms part of the trusted code base; new tamed methods should only be provided to gadgets after an extensive security review.  About half of the trusted code base (3) consists of taming the DOM; see [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domita.js src/com/google/caja/plugin/domita.js] for examples of tamings ranging from trivial to intricate.
 
-The divs playing the role of virtual iframes should have the same class and id (17) (20).
+The divs playing the role of virtual iframes should have the same class and id (19) (22).
 
-The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (19) (22) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".vo.js" means that the resulting "Valija object code" is just more complicated JavaScript.
+The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (21) (24) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".vo.js" means that the resulting "Valija object code" is just more complicated JavaScript.
