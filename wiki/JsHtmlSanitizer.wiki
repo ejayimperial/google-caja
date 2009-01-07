@@ -1,0 +1,24 @@
+#summary How to use caja as a stand-alone client side sanitizer
+
+= Introduction =
+
+The Caja project includes a html-sanitizer written in javascript which can be used independently of the cajoler.  You can use it to remove potentially executable javascript from a snippet of html.  To use it, first build html-sanitizer-minified.js by running {{{ant}}}.
+
+Use a {{{<script>}}} tag to include the resulting {{{com/google/caja/plugin/html-sanitizer-minified.js}}} in your program.  To sanitize a snippet of javascript, use the {{{html_sanitize(htmlSnippet, urlTransformer, nameIdClassTransformer)}}} to sanitize your html snippet where:
+
+  * {{{htmlSnippet}}} is the snippet you want to sanitize
+  * {{{nameIdClassTransformer}}} is a function which is called on every url in {{{htmlSnippet}}}.  This is a good place to ensure there are no {{{javascript:}}} urls.  In fact, you want always to _whitelist_ only urls you know to be safe.  For example, you may only want to allow urls to a particular domain.
+
+  * {{{nameIdClassTransformer}}} is a function which is callend on every id, name and class in {{{htmlSnippet}}}
+
+The return value is the html snippet with all script and style tags removed (style tags can include code which is interpreted as javascript on some browsers), and urls, ids, names and classes rewritten according to the transformers. 
+
+= Example =
+{{{
+    <script src="html-sanitizer-minified.js">
+    <script>
+      function urlX(url) { if(/^https?:\/\//.test(url)) { return url }}
+      function idX(id) { return id }
+      alert(html_sanitize('<b>hello</b><img src="http://asdf"><a href="javascript:alert(0)"><script src="http://dfd"></ script>', urlX, idX))
+    </script>
+}}}
