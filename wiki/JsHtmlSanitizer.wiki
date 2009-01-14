@@ -46,6 +46,6 @@ After this call, {{{mySaxParser}}} is a function that takes HTML text and an arb
     <script>
       function urlX(url) { if(/^https?:\/\//.test(url)) { return url }}
       function idX(id) { return id }
-      alert(html_sanitize('<b>hello</b><img src="http://asdf"><a href="javascript:alert(0)"><script src="http://dfd"></ script>', urlX, idX))
+      alert(html_sanitize('<b>hello</b><img src="http://asdf"><a href="javascript:alert(0)"><script src="http://dfd"><\/script>', urlX, idX))
     </script>
 }}}
