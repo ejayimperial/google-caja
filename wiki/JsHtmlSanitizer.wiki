@@ -9,7 +9,7 @@ Use a {{{<script>}}} tag to include the resulting {{{com/google/caja/plugin/html
   * {{{htmlSnippet}}} is the snippet you want to sanitize
   * {{{nameIdClassTransformer}}} is a function which is called on every url in {{{htmlSnippet}}}.  This is a good place to ensure there are no {{{javascript:}}} urls.  In fact, you want always to _whitelist_ only urls you know to be safe.  For example, you may only want to allow urls to a particular domain.
 
-  * {{{nameIdClassTransformer}}} is a function which is callend on every id, name and class in {{{htmlSnippet}}}
+  * {{{nameIdClassTransformer}}} is a function which is called on every id, name and class in {{{htmlSnippet}}}
 
 The return value is the html snippet with all script and style tags removed (style tags can include code which is interpreted as javascript on some browsers), and urls, ids, names and classes rewritten according to the transformers. 
 
