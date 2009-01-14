@@ -42,7 +42,7 @@ After this call, {{{mySaxParser}}} is a function that takes HTML text and an arb
 
 = Example =
 {{{
-    <script src="html-sanitizer-minified.js">
+    <script src="html-sanitizer-minified.js"></script>
     <script>
       function urlX(url) { if(/^https?:\/\//.test(url)) { return url }}
       function idX(id) { return id }
