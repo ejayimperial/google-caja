@@ -35,7 +35,7 @@ Now the Cajoled code can see the library, but it has no access to properties yet
 ___.grantRead(mylibrary, 'someProperty');
 }}}
 
-would allow the Cajoled code to read `mylibrary.someProperty` but not to write or execute it. Similarly write access is granted with `___.grantRead(object, 'property')`, calls with `___.grantCall(object, 'property')`. Constructors are a little more complex, these are done with `___.ctor(class, parent, 'classname')`.
+would allow the Cajoled code to read `mylibrary.someProperty` but not to write or execute it. Similarly write access is granted with `___.grantSet(object, 'property')`, calls with `___.grantCall(object, 'property')`. Constructors are a little more complex, these are done with `___.ctor(class, parent, 'classname')`.
 
 == Taming The Library ==
 
