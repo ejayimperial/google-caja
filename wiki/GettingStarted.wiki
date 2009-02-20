@@ -3,7 +3,8 @@
 
 = Resource For New Users =
 
- * [RunningCaja Downloading and running Caja].
+ * [RunningCaja Downloading and building Caja].
+ * [CajaCajole Running Caja from the command line].
  * [NewNewCodeReview Contributing code] - see also the Contributor Licence Agreement (either the [http://code.google.com/legal/individual-cla-v1.0.html individual CLA] or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate CLA]).
  * [CajaHostingModules Writing containers].
  * [LibraryTaming Taming libraries].
