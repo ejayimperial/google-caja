@@ -1,0 +1,3 @@
+#summary All our security advisories.
+
+SecurityAdvisory20090220 Flaw in JSON parsing
