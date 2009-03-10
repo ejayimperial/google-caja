@@ -3,13 +3,15 @@
   # Check Shindig out.
   # Build it:
 {{{
+mvn clean
 mvn
 }}}
   # Run it:
 {{{
 mvn -Prun
 }}}
-  # Once it runs you should see which port it puts itself on (usually 8080), browse there and make sure gadgets work at all.
+  # Once it runs you should see which port it puts itself on (usually 8080).
+  # Browse to http://localhost:8080/gadgets/files/samplecontainer/samplecontainer.html and make sure gadgets work at all.
   # If that all works ok, then check Caja out.
   # (Optional) In {{{caja/build.xml}}} replace every instance of "minify" with "pretty" - this will mean you can see original code in Shindig instead of minified code (see [http://code.google.com/p/google-caja/issues/detail?id=1004 issue 1004] for whether this is still needed.
   # Each time you modify Caja, build:
@@ -24,11 +26,12 @@ cp ant-jars/pluginc.jar ~/.m2/repository/caja/caja/r3164/caja-r3164.jar
 {{{
 mvn && mvn -Prun
 }}}
-  or, optionally, without tests (much faster, but still pretty damn slow)
+  or, optionally, without tests (much faster, but still slow)
 {{{
 mvn -Dmaven.test.skip=true && mvn -Prun
 }}}
   Just this step is sufficient if all you have changed is Shindig.
   # Shift-reload the gadget container in your browser - a simple reload doesn't always seem to get your updates.
+  # It also helps to uncheck "Cache".
   # On the browser, it can be helpful to open the gadget frame in a new tab, add {{{&debug=1}}} to the URL (before the {{{#}}}) and shift-reload.
   # With luck, you will now be fully equipped for debugging at all levels.
