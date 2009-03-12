@@ -26,23 +26,18 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
 5     <script src="valija.co.js"></script>
     
       <script>
-6       var initValija = function(divId, extraImports) {
+6       var initValija = function(divId, extraOuters) {
           // Make a copy of the standard objects
 7         var imports = ___.copy(___.sharedImports);
         
-          // Add the extra, possibly shared state
-8         for (var i in extraImports) {
-            if (!i.match(/___$/)) { imports[i] = extraImports[i]; }
-          }
-  
           // Reify the imports for use by Valija
-9         imports.outers = imports;
+8         imports.outers = imports;
         
           // Create a fake document object, attach it to the given div,
           // and put a reference in imports
-10        var htmlContainer = document.getElementById(divId);
-11        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
-12        imports.getCssContainer___ = function () {
+9         var htmlContainer = document.getElementById(divId);
+10        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
+11        imports.getCssContainer___ = function () {
             return htmlContainer;
           };
           
@@ -52,13 +47,24 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
           // so after this call, imports.outers !== imports.  Also, if
           // you set a property on imports.outers after this point, 
           // you have to grant access to it explicitly.
-13        attachDocumentStub(
+12        attachDocumentStub(
               "-" + divId,
               // Don't proxy urls
               { rewrite: function(uri, mimetype) { return uri; } },
               imports,
               document.getElementById(divId));
             
+          // Add the extra, possibly shared state
+13        for (var i in extraOuters) {
+            if (!i.match(/___$/)) { 
+              imports.outers[i] = extraOuters[i]; 
+              if (typeof imports.outers[i] === "function") {
+                // This taming assumes that functions don't use the keyword "this". 
+                ___.grantFunc(imports.outers, i);
+              }
+            }
+          }
+  
           // Create the Valija runtime instance
           // This must be called after attachDocumentStub().
 14        imports.$v = valijaMaker.CALL___(imports.outers);
@@ -139,11 +145,11 @@ The trusted code base and the Valija library are built by running "ant" after ch
 
 Optionally, the host page may supply some APIs for accessing shared state (16) or may instantiate code in the gadget's environment before loading the gadget [usually library code like Prototype, jQuery, YUI, etc.] (29) (33).
 
-The real substance of this file is in the code that sets up the virtual iframes (6-15).  This function takes the id of a {{{div}}} and a mix-in object containing host-specific APIs and shared state.  Next, it makes a copy (7) of the default set of objects, called {{{imports}}}, that JavaScript code assumes are universally accessible: JavaScript builtins like {{{Object}}}, {{{Array}}}, and {{{Math}}}.  It adds the properties of the mix-in object to {{{imports}}} (8).
+The real substance of this file is in the code that sets up the virtual iframes (6-15).  This function takes the id of a {{{div}}} and a mix-in object containing host-specific APIs and shared state.  Next, it makes a copy (7) of the default set of objects, called {{{imports}}}, that JavaScript code assumes are universally accessible: JavaScript builtins like {{{Object}}}, {{{Array}}}, and {{{Math}}}.  
   
-The valija library is written entirely in the small-but-secure "cajita" dialect of JavaScript, so it cannot modify {{{imports}}} directly---only modify its properties.  In particular, it assumes that all the objects visible as global variables to a gadget are properties of an import named {{{outers}}}.  By setting {{{imports.outers}}} equal to {{{imports}}} (9), all the builtins in {{{imports}}} become visible to the gadget as globals.
+The valija library is written entirely in the small-but-secure "cajita" dialect of JavaScript, so it cannot modify {{{imports}}} directly---only modify its properties.  In particular, it assumes that all the objects visible as global variables to a gadget are properties of an import named {{{outers}}}.  By setting {{{imports.outers}}} equal to {{{imports}}} (8), all the builtins in {{{imports}}} become visible to the gadget as globals.
 
-Next, we add to {{{imports}}} a reference to the div containing the gadget and wrappers for the DOM objects like {{{document}}} and {{{window}}} (10-13).  The function {{{attachDocumentStub}}} creates a new {{{outers}}} property by mixing the old one into a {{{tameWindow}}} object so that {{{window}}} is the global scope.
+Next, we add to {{{imports}}} a reference to the div containing the gadget and wrappers for the DOM objects like {{{document}}} and {{{window}}} (9-12).  The function {{{attachDocumentStub}}} creates a new {{{outers}}} property by mixing the old one into a {{{tameWindow}}} object so that {{{window}}} is the global scope.  Then we add the properties of the mix-in object to {{{imports.outers}}} (13).
 
 The cajoler assumes that the valija library is named {{{$v}}} (14), so we have to use that name when instantiating the library.  This call must occur after {{{attachDocumentStub}}} so that it gets the proper {{{outers}}} object.
 
