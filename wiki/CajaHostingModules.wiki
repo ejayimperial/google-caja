@@ -98,7 +98,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
           return {
 22            capture: function() { ___.setNewModuleHandler(capturingModuleHandler); },
 23            restore: function() { ___.setNewModuleHandler(oldModuleHandler); },
-24            inject: function() { module(___, oldModuleHandler.getImports()); }
+24            inject: function() { module.instantiate(___, oldModuleHandler.getImports()); }
             };
         })();
         
