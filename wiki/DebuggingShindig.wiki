@@ -30,6 +30,10 @@ mvn && mvn -Prun
 {{{
 mvn -Dmaven.test.skip=true && mvn -Prun
 }}}
+  or, in offline mode (reasonably fast)
+{{{
+mvn -o -Dmaven.test.skip=true && mvn -o -Prun
+}}}
   Just this step is sufficient if all you have changed is Shindig.
   # Shift-reload the gadget container in your browser - a simple reload doesn't always seem to get your updates.
   # It also helps to uncheck "Cache".
