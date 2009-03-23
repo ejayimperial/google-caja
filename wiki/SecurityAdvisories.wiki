@@ -1,3 +1,4 @@
 #summary All our security advisories.
 
-SecurityAdvisory20090220 Flaw in JSON parsing
+  * 23 Mar 2009 SecurityAdvisory20090323 Some code was not cajoled at all.
+  * 20 Feb 2009 SecurityAdvisory20090220 Flaw in JSON parsing.
