@@ -68,12 +68,11 @@ hg push <path to repo>
   Note that there will be no email notifications, so other participants need to be told to do a pull/update.
   * To produce the Shindig diff, either the original producer of the repo, who still has a Subversion checkout, can do an update (he won't need to do a pull, because it is his repo that everyone is pushing to) and then carry on in the normal way, or you can check out a fresh copy, pull the Mercurial repo over the top of it, and carry on [[TBD]].
 
-  * Mercurial maintains a record of individual changesets that it has applied and lets you backout particular changesets.  This can sometimes be helpful if you need to freshen a CL you are working on that has not been submitted upstream.  If you applied the diff you want to freshen at revision 10, first sync then backout that revision 
+  * Mercurial maintains a record of individual changesets that it has applied and lets you backout the last changeset.  This can sometimes be helpful if you have applied a changeset in error and no one has yet submitted another change.  First backout the latest change
 {{{
-  hg update
-  hg backout -r 10
+  hg backout
 }}}
-  then apply the new patch and resolve any merge issues
+  then apply a new patch and resolve any merge issues
 {{{
   patch -p0 < yourpatch.patch
   hg merge
