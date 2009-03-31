@@ -28,22 +28,22 @@ property values, and as arguments to Javascript APIs.
 </tr>
 <tr><th colspan="3">In CSS</th></tr>
 <tr>
-<td>{{{background-image: uri(...)}}}, etc.</td>
+<td>{{{background-image: url(...)}}}, etc.</td>
 <td>{{{image/*}}}</td>
 <td>Image loaded in page</td>
 </tr>
 <tr>
-<td>{{{content: uri(...)}}}</td>
+<td>{{{content: url(...)}}}</td>
 <td>{{{text/plain}}}</td>
 <td>Immediately loaded textual content added to affected elements or their parent</td>
 </tr>
 <tr>
-<td>{{{cue-after: uri(...)}}}, etc.</td>
+<td>{{{cue-after: url(...)}}}, etc.</td>
 <td>{{{audio/*}}}</td>
 <td>Audio played before or after activation of affected element</td>
 </tr>
 <tr>
-<td>{{{cursor: uri(...)}}}</td>
+<td>{{{cursor: url(...)}}}</td>
 <td>{{{image/*}}}</td>
 <td>Immediately loaded cursor bitmap</td>
 </tr>
@@ -224,7 +224,7 @@ Erik van der Poel, a unicode.org contributor, says:
 
    The browsers handle illegal Punycode names differently. MSIE7 rejects them, while Firefox allows them. Non-Latin characters are covered by IDNA too.
 
-   One example is the soft hyphen (U+00AD), which is "mapped to nothing" in IDNA. I have come across URLs on the Web where there is a soft hyphen at a hyphenation point, e.g. {{{micro<U+00AD>soft.com}}}. MSIE7 just goes to microsoft.com, but MSIE6 goes to {{{micro\xC2\xADsoft.com}}}, so if your whitelist contains hosts at unscrupulous registries like *.cc and the like, your MSIE6 users might accidentally go to a site that you didn't intend to whitelist.
+   One example is the soft hyphen (U+00AD), which is "mapped to nothing" in IDNA. I have come across URLs on the Web where there is a soft hyphen at a hyphenation point, e.g. {{{micro<U+00AD>soft.com}}}. MSIE7 just goes to microsoft.com, but MSIE6 goes to {{{micro\xC2\xADsoft.com}}}, so if your whitelist contains hosts at unscrupulous registries like {{{*.cc}}} and the like, your MSIE6 users might accidentally go to a site that you didn't intend to whitelist.
 
 
 ===Legacy URL Policies===
