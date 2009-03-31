@@ -219,9 +219,12 @@ Under HTTP, servers never receive the fragment from the browser.
 Erik van der Poel, a unicode.org contributor, says:
 
    The browsers implement a set of RFCs called IDNA (Internationalizing Domain Names in Applications) specified in RFCs 349{<a href="http://www.faqs.org/rfcs/rfc3490.html">0</a>,<a href="http://www.faqs.org/rfcs/rfc3491.html">1</a>,<a href="http://www.faqs.org/rfcs/rfc3492.html">2</a>} and <a href="http://www.faqs.org/rfcs/rfc3454.html">3454</a>. The IDNA process includes a Nameprep step (based on Stringprep) that involves lower-casing, case-folding, mapping to nothing (deleting) and NFKC normalization. This step is often bundled into the same API that performs the final Punycode step (xn-- followed by gibberish). These steps can fail, in which case you probably want to reject that domain name.
+
    If you're using Java, ICU4J has a class called <a href="http://icu-project.org/apiref/icu4j/com/ibm/icu/text/IDNA.html" >IDNA</a>.
+
    The browsers handle illegal Punycode names differently. MSIE7 rejects them, while Firefox allows them. Non-Latin characters are covered by IDNA too.
-    One example is the soft hyphen (U+00AD), which is "mapped to nothing" in IDNA. I have come across URLs on the Web where there is a soft hyphen at a hyphenation point, e.g. {{{micro<U+00AD>soft.com}}}. MSIE7 just goes to microsoft.com, but MSIE6 goes to {{{micro\xC2\xADsoft.com}}}, so if your whitelist contains hosts at unscrupulous registries like *.cc and the like, your MSIE6 users might accidentally go to a site that you didn't intend to whitelist.
+
+   One example is the soft hyphen (U+00AD), which is "mapped to nothing" in IDNA. I have come across URLs on the Web where there is a soft hyphen at a hyphenation point, e.g. {{{micro<U+00AD>soft.com}}}. MSIE7 just goes to microsoft.com, but MSIE6 goes to {{{micro\xC2\xADsoft.com}}}, so if your whitelist contains hosts at unscrupulous registries like *.cc and the like, your MSIE6 users might accidentally go to a site that you didn't intend to whitelist.
 
 
 ===Legacy URL Policies===
