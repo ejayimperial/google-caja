@@ -17,10 +17,10 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/cajita-vs-valija.png
 
 Besides the normal object-capability constraints, Cajita was shaped by the need to simultaneously support all four of the depicted relationships, as well as is practical today.
 
-  * _T = TranslationTarget_. Cajita is implemented by translation to !JavaScript as run by current browsers.
-  * _N = NiceNeighbor_. Cajita code coexists with some amount of untranslated !JavaScript code. This coexistence must have a well defined semantics and useful safety properties. Today, the NiceNeighbor property supports safety only in one direction -- protecting untranslated !JavaScript from potentially offensive Cajita code.
-  * _S = SimpleSubset_. The first enemy of security is complexity. Due to !JavaScript's history, it is needlessly complex. Cajita is approximately the simplest subset of !JavaScript we could find with no loss of functionality for new code.
-  * _E = EmbeddedEmulation_. !JavaScript, and therefore Valija, supports mutable static state, which violates object-capability rules. To support multiple isolated Valija sandboxes on one web page, we translate Valija to Cajita so as to emulate this static state in terms of isolated Cajita object states.
+  * *_T = TranslationTarget_*. Cajita is implemented by translation to !JavaScript as run by current browsers.
+  * *_N = NiceNeighbor_*. Cajita code coexists with some amount of untranslated !JavaScript code. This coexistence must have a well defined semantics and useful safety properties. Today, the NiceNeighbor property supports safety only in one direction -- protecting untranslated !JavaScript from potentially offensive Cajita code.
+  * *_S = SimpleSubset_*. The first enemy of security is complexity. Due to !JavaScript's history, it is needlessly complex. Cajita is approximately the simplest subset of !JavaScript we could find with no loss of functionality for new code.
+  * *_E = EmbeddedEmulation_*. !JavaScript, and therefore Valija, supports mutable static state, which violates object-capability rules. To support multiple isolated Valija sandboxes on one web page, we translate Valija to Cajita so as to emulate this static state in terms of isolated Cajita object states.
 
 Among secure !JavaScript variants, [http://www.adsafe.org/ ADsafe], [http://www.jacaranda.org/jacaranda-spec-0.3.txt Jacaranda], and [http://www.sitepen.com/blog/2008/08/01/secure-mashups-with-dojoxsecure/ dojox secure] are all designed for a similar degree of support for NiceNeighbor and SimpleSubset. Rather than translate to ES3R, they instead take a verification-only approach, which has various engineering benefits such as zero runtime overhead. However, for ES3R, verification requires blacklisting rather than whitelisting, which is harder to secure.
 
@@ -39,7 +39,7 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/ses-vs-es5.png
 
 The [http://ses.json.org/ Secure EcmaScript] working group of the !EcmaScript committee seeks to define a simple secure subset of future !JavaScript, to be known as "Secure !EcmaScript" or SES. Based on lessons from Cajita and these other systems, we propose that SES and future !EcmaScript be co-designed to improve all four relationships between them. In this section, we explain first how Cajita will coexist better with ES5. We then explain some deficiencies in those relationships suggesting further improvements in future !EcmaScripts and in Cajita as a proposal for Secure !EcmaScript.
 
-  * _T = TranslationTarget_. Cajita can be translated trivially to ES5-strict, and the resulting translated code should be able to run at close to full speed.
-  * _N = NiceNeighbor_. Because ES5 enforces the primary security mechanisms Cajita depends on -- closure encapsulation and frozen objects -- untrusted untranslated ES5 objects can be given direct access to Cajita objects without being able to harm their integrity.
-  * _S = SimpleSubset_. Once the Cajita's target language supports the ES5 meta operations, it becomes practical for Cajita too as well.
-  * _E = EmbeddedEmulation_. Once Cajita supports the ES5 meta operations, it becomes practical to emulate these operations in the embedded language, bringing it up to full ES5-strict.
+  * *_T = TranslationTarget_*. Cajita can be translated trivially to ES5-strict, and the resulting translated code should be able to run at close to full speed.
+  * *_N = NiceNeighbor_*. Because ES5 enforces the primary security mechanisms Cajita depends on -- closure encapsulation and frozen objects -- untrusted untranslated ES5 objects can be given direct access to Cajita objects without being able to harm their integrity.
+  * *_S = SimpleSubset_*. Once the Cajita's target language supports the ES5 meta operations, it becomes practical for Cajita too as well.
+  * *_E = EmbeddedEmulation_*. Once Cajita supports the ES5 meta operations, it becomes practical to emulate these operations in the embedded language, bringing it up to full ES5-strict.
