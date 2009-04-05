@@ -1,4 +1,4 @@
-#summary Cajita as the simplest full-function subset of !JavaScript
+#summary Cajita as the simplest full-function subset of JavaScript
 
 See SubsetRelationships for context.
 
