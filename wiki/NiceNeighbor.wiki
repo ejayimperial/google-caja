@@ -1,4 +1,4 @@
-#summary How Cajita coexists with untranslated !JavaScript
+#summary How Cajita coexists with untranslated JavaScript
 
 See SubsetRelationships for context.
 
