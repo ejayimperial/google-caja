@@ -2,7 +2,7 @@
 
 = Caja Today =
 
-!JavaScript and Caja are jointly in transition. The language in the middle of the digram below is Cajita, the Caja kernel language. Cajita is a genuine [http://en.wikipedia.org/wiki/Object-capability_model object-capability language] we discovered in a subset of !JavaScript. As an object capability language, Cajita omits all of !JavaScript's mutable static state -- all primordial objects like `Object.prototype` are immutable (transitively frozen). Cajita strengthens !JavaScript's one encapsulation mechanism -- lexical variable capture by closures -- into a true security boundary. To make defensive programming practical, Cajita omits !JavaScript's magical `this` keyword.
+!JavaScript and Caja are jointly in transition. The language in the middle of the digram below is Cajita, the Caja kernel language. Cajita is a genuine [http://en.wikipedia.org/wiki/Object-capability_model object-capability language] we discovered in a subset of !JavaScript. As an object capability language, Cajita omits all of !JavaScript's mutable static state. In other words, all global implicitly accessible objects, like `Object.prototype`, are immutable. Cajita strengthens !JavaScript's one encapsulation mechanism -- lexical variable capture by closures -- into a true security boundary. To make defensive programming practical, Cajita omits various accident prone features of !JavaScript, such as the magical `this` keyword.
 
 The following diagram explains the current relationships between Cajita and !JavaScript. 
 ----
