@@ -1,0 +1,16 @@
+#summary How Cajita supports multiple Valija sandboxes
+
+See SubsetRelationships for context.
+
+= Emulating !JavaScript Today =
+
+----
+http://google-caja.googlecode.com/svn/trunk/doc/images/ee-today.png
+----
+
+
+= Emulating Future !JavaScript =
+
+----
+http://google-caja.googlecode.com/svn/trunk/doc/images/ee-future.png
+----
