@@ -1,0 +1,37 @@
+#summary Relationships of Cajita, Valija, and various versions of !JavaScript
+
+= Caja Today =
+
+!JavaScript and Caja are jointly in transition. The following diagram
+----
+http://google-caja.googlecode.com/svn/trunk/doc/images/cajita-vs-valija.png
+----
+explains the current relationships. 
+  * _ES3R_ is used in various !EcmaScript discussions for "!EcmaScript 3 plus reality", meaning, consensus !JavaScript as implemented current grade-A browsers (IE, FF, Safari and Chrome, Opera).
+  * _ES5_ is the [http://wiki.ecmascript.org/doku.php?id=es3.1:es3.1_proposal_working_draft draft standard] for the next version of !JavaScript.
+  * _ES5-strict_ 
+  * Caja defines two variants of !JavaScript:
+    * _Valija_ (Spanish for _baggage_) is the ES3 subset of ES5-strict. Old !JavaScript code can easily be ported to Valija. Once ported, it will work on both current and future !JavaScripts.
+    * _Cajita_ (Spanish for _small box_) is the Caja kernel language --- a genuine object-capability language. 
+
+Besides the normal object-capability constraints, Cajita was shaped by the need to simultaneously satisfy all four of the depicted relationships as well as is practical.
+
+  * _T = TranslationTarget_. Cajita is implemented by translation to !JavaScript as run by current browsers.
+  * _N = NiceNeighbor_. Cajita code coexists with some amount of untranslated !JavaScript code. This coexistence must have a well defined semantics and useful safety properties. Today, the NiceNeighbor property is supported only by Taming.
+  * _E = EmbeddedEmulation_. !JavaScript, and therefore Valija, supports mutable static state, which violates object-capability rules. To support multiple isolated Valija sandboxes on one web page, we translate Valija to Cajita so as to emulate this static state in terms of isolated Cajita object states.
+  * _S = SimpleSubset_. The first enemy of security is complexity. Due to !JavaScript's history, it is needlessly complex. Cajita is approximately the simplest subset of !JavaScript we could find with no loss of functionality for new code.
+
+Among secure !JavaScript variants, [http://www.adsafe.org/ ADsafe], [http://www.jacaranda.org/jacaranda-spec-0.3.txt Jacaranda], and [http://www.sitepen.com/blog/2008/08/01/secure-mashups-with-dojoxsecure/ dojox secure] are all designed for a similar degree of support for NiceNeighbor and SimpleSubset. Rather than translate to ES3R, they instead take a verification-only approach, which has various engineering benefits. However, for ES3R, verification requires blacklisting rather than whitelisting, which is harder to secure.
+
+Facebook's [http://developers.facebook.com/news.php?blog=1&story=189 FBJS2] and Microsoft's [http://websandbox.livelabs.com/ WebSandbox] support only EmbeddedEmulation by translation directly to ES3R, i.e., conventional sandboxing. This supports isolation well, but provides no direct support for secure cooperation or the writing of high integrity access abstractions. Cajita is unique in taking on all four constraints simultaneously.
+
+Currently, each of these relationships are fragile or imperfect in various ways documented on each of these respective pages.
+
+= Caja Tomorrow =
+
+----
+http://google-caja.googlecode.com/svn/trunk/doc/images/ses-vs-es5.png
+----
+
+The [http://ses.json.org/ Secure EcmaScript] working group of the !EcmaScript committee seeks to define a simple secure subset of future !JavaScript, to be known as "Secure !EcmaScript" or SES. Based on our experience with Cajita, we propose that SES and future !EcmaScript be co-designed to improve all four relationships between them.
+
