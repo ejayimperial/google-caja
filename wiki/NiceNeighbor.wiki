@@ -1,0 +1,16 @@
+#summary How Cajita coexists with untranslated !JavaScript
+
+See SubsetRelationships for context.
+
+= Coexistence Today by Taming =
+
+----
+http://google-caja.googlecode.com/svn/trunk/doc/images/nn-today.png
+----
+
+
+= Future defensibility from untranslated code =
+
+----
+http://google-caja.googlecode.com/svn/trunk/doc/images/nn-future.png
+----
