@@ -2,13 +2,13 @@
 
 = Caja Today =
 
-!JavaScript and Caja are jointly in transition. The language in the middle is Cajita, the Caja kernel language. Cajita is a genuine [http://en.wikipedia.org/wiki/Object-capability_model object-capability language] we discovered in a subset of !JavaScript. As an object capability language, Cajita omits all of !JavaScript's mutable static state -- all primordial objects like `Object.prototype` are immutable (transitively frozen). Cajita strengthens !JavaScript's one encapsulation mechanism -- lexical variable capture by closures -- into a true security boundary. To make defensive programming practical, Cajita omits !JavaScript's magical `this` keyword.
+!JavaScript and Caja are jointly in transition. The language in the middle of the digram below is Cajita, the Caja kernel language. Cajita is a genuine [http://en.wikipedia.org/wiki/Object-capability_model object-capability language] we discovered in a subset of !JavaScript. As an object capability language, Cajita omits all of !JavaScript's mutable static state -- all primordial objects like `Object.prototype` are immutable (transitively frozen). Cajita strengthens !JavaScript's one encapsulation mechanism -- lexical variable capture by closures -- into a true security boundary. To make defensive programming practical, Cajita omits !JavaScript's magical `this` keyword.
 
 The following diagram explains the current relationships between Cajita and !JavaScript. 
 ----
 http://google-caja.googlecode.com/svn/trunk/doc/images/cajita-vs-valija.png
 ----
-  * _ES3R_ as used in various !EcmaScript discussions for "!EcmaScript 3 plus reality", meaning, consensus !JavaScript as implemented by current grade-A browsers (IE, FF, Safari and Chrome, Opera).
+  * _ES3R_ is used in various !EcmaScript discussions for "!EcmaScript 3 plus reality", meaning, consensus !JavaScript as implemented by current [http://developer.yahoo.com/yui/articles/gbs/ A-grade browsers].
   * _ES5_ is the [http://wiki.ecmascript.org/doku.php?id=es3.1:es3.1_proposal_working_draft draft standard] for the next version of !JavaScript.
   * _ES5-strict_ is a more principled sublanguage of ES5 supported by ES5's `"use strict"` directive.
   * Caja defines two variants of !JavaScript:
