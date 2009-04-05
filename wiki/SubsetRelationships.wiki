@@ -1,4 +1,4 @@
-#summary Relationships of Cajita, Valija, and various versions of !JavaScript
+#summary Relationships of Cajita, Valija, and various versions of JavaScript
 
 = Caja Today =
 
@@ -34,4 +34,3 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/ses-vs-es5.png
 ----
 
 The [http://ses.json.org/ Secure EcmaScript] working group of the !EcmaScript committee seeks to define a simple secure subset of future !JavaScript, to be known as "Secure !EcmaScript" or SES. Based on our experience with Cajita, we propose that SES and future !EcmaScript be co-designed to improve all four relationships between them.
-
