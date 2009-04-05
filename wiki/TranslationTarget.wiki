@@ -1,4 +1,4 @@
-#summary Compiling Cajita to !JavaScript
+#summary Compiling Cajita to JavaScript
 
 See SubsetRelationships for context.
 
