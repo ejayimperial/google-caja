@@ -1,4 +1,6 @@
+#summary @import(<url>) can allow execution of script in unsanitized CSS
 #labels Attack-Vector
+
 Reported by Michal Zalewski
 
 = {{{@import}}} can import unsanitized CSS =
@@ -30,3 +32,8 @@ Expression is IE specific, but the same could be applied to {{{-moz-binding}}} i
 }}}
 
 An {{{@import}}} with a HTTP url will also allow importing of unsanitized CSS.
+
+IE has an [http://www.securityfocus.com/archive/1/372659 undocumented extension] that serves as a shorthand for {{{@import}}}:
+{{{
+    <style><!--@\ "http://www.finjan.com/mcrc/file.css";--></style>
+}}}
