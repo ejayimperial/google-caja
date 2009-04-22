@@ -8,13 +8,19 @@ See SubsetRelationships for context.
 http://google-caja.googlecode.com/svn/trunk/doc/images/nn-today.png
 ----
 
-== Normal Data Property Attributes ==
+== Taming Normal Property Attributes ==
 
 || *Current API* || *Similar ES5 attribute* || *Differences* ||
 || `___.grantRead(obj,name)` || _none_ || ES5 has no non-readable properties ||
-|| `___.grantSet(obj,name)` || `{writable: true}` || In ES5, this really says whether the property value may change. In Cajita taming, it says whether Cajita code can assign to it. ||
-|| `___.grantEnum(obj,name)` || `{enumerable: true}` || ||
-|| `___.grantDelete(obj,name)` || `{configurable: true}` || In ES5, if a property is configurable, its attributes may change at runtime. In Cajita taming, uncajoled code can change attributes unconditionally but typically only on initialization; cajoled code can only freeze. ||
+|| `___.grantSet(obj,name)` || `{writable:true}` || In ES5, this really says whether the property value may change. In Cajita taming, it says whether Cajita code can assign to it. ||
+|| `___.grantEnum(obj,name)` || `{enumerable:true}` || ||
+|| `___.grantDelete(obj,name)` || `{configurable:true}` || In ES5, if a property is configurable, its attributes may change at runtime. In Cajita taming, uncajoled code can change attributes unconditionally but typically only on initialization; cajoled code can only freeze. ||
+|| `___.useGetHandler(obj,name,handler}` || `{get:handler}` || Cajita handlers are only tried after normal data lookup fails. ||
+|| `___.useSetHandler(obj,name,handler}` || `{set:handler}` || Cajita handlers are only tried after normal data lookup fails. ||
+
+== Taming Functions and Methods ==
+
+
 
 = Future defensibility from untranslated code =
 
