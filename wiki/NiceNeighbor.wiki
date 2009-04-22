@@ -10,13 +10,14 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/nn-today.png
 
 == Taming Normal Property Attributes ==
 
-|| *Current API* || *Similar ES5 attribute* || *Differences* ||
-|| `___.grantRead(obj,name)` || _none_ || ES5 has no non-readable properties ||
-|| `___.grantSet(obj,name)` || `{writable:true}` || In ES5, this really says whether the property value may change. In Cajita taming, it says whether Cajita code can assign to it. ||
-|| `___.grantEnum(obj,name)` || `{enumerable:true}` || ||
-|| `___.grantDelete(obj,name)` || `{configurable:true}` || In ES5, if a property is configurable, its attributes may change at runtime. In Cajita taming, uncajoled code can change attributes unconditionally but typically only on initialization; cajoled code can only freeze. ||
-|| `___.useGetHandler(obj,name,handler}` || `{get:handler}` || Cajita handlers are only tried after normal data lookup fails. ||
-|| `___.useSetHandler(obj,name,handler}` || `{set:handler}` || Cajita handlers are only tried after normal data lookup fails. ||
+|| *Current API* || *Similar ES5 attribute* || *Common Semantics*|| *Differences* ||
+|| `___.grantRead(`_obj_`,`_name_`)` || _none_ || ES5 has no non-readable properties. In Cajita taming of JSON containers, all actual properties are implicitly visible to cajoled code. In either case this call is unnecessary and redundant. || In Cajita taming of constructed objects, this makes actual uncajoled properties visible to cajoled code. ||
+|| `___.setPub(`_obj_`,`_name_`,`_val_`)` || `{value:`_val_`, writable:true, enumerable:true}` || If the property's value is mutable, sets its value. || In a non-frozen Cajita JSON container, all properties are mutable. In ES5, if a property is configurable but not writable, then it can be mutated by the meta API but not by assignment. ||
+|| `___.grantSet(`_obj_`,`_name_`)` || `{writable:true, enumerable:true}` || Allow the actual property to be changed by assignment. || In ES5, this really says whether the property value may change. In Cajita taming, it says whether Cajita code can assign to it. ||
+|| `___.grantEnum(`_obj_`,`_name_`)` || `{enumerable:true}` || This property _name_ will be enumerated by a for-in loop on _obj_. || ||
+|| `___.grantDelete(`_obj_`,`_name_`)` || `{configurable:true}` || The property can be deleted. || In ES5, if a property is configurable, its attributes may change at runtime. In Cajita taming, uncajoled code can change attributes unconditionally but does typically only on initialization; cajoled code can only freeze or, for deletable properties, delete it. All properties on non-frozen JSON containers are implicitly deletable. ||
+|| `___.useGetHandler(`_obj_`,`_name_`,`_getter_`}` || `{get:`_getter_`}` || Reading the property obtains the result of calling _getter_`.call(`_obj_`)` || Cajita handlers are only tried after normal data lookup fails. ||
+|| `___.useSetHandler(`_obj_`,`_name_`,`_setter_`}` || `{set:`_setter_`}` || Assigning _val_ to the property calls _setter_`.call(`_obj_`,`_val_`)`. The value of the assignment expression is _val_, not the result of the setter call. || Cajita handlers are only tried after normal data lookup fails. ES5 represents a non-writable accessor property by `{set:undefined}`. Cajita has no equivalent. ||
 
 == Taming Functions and Methods ==
 
