@@ -22,7 +22,7 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/nn-today.png
 || *Current API* || *Similar ES5 attribute* || *Common Semantics*|| *Differences* ||
 || `___.useGetHandler(`_obj_`,`_name_`,`_getter_`}` || `{get:`_getter_`}` || Reading the property obtains the result of calling _getter_`.call(`_obj_`)` || Cajita handlers are only tried after normal data lookup fails. ||
 || `___.useSetHandler(`_obj_`,`_name_`,`_setter_`}` || `{set:`_setter_`}` || Assigning _val_ to the property calls _setter_`.call(`_obj_`,`_val_`)`. The value of the assignment expression is _val_, not the result of the setter call. || Cajita handlers are only tried after normal data lookup fails. ES5 represents a non-writable accessor property by `{set:undefined}`. Cajita has no equivalent. ||
-|| `___.useDeleteHandler(`_obj_`,`_name_`,`_deleter_`) || _none_ || || In ES5, property deletion is either allowed or rejected, but not handled. ||
+|| `___.useDeleteHandler(`_obj_`,`_name_`,`_deleter_`)` || _none_ || || In ES5, property deletion is either allowed or rejected, but not handled. ||
 
 == Taming Functions ==
 
