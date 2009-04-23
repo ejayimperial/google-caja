@@ -33,7 +33,7 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/nn-today.png
 == Taming Methods ==
 
 || *Current API* || *Meaning* ||
-|| `___.grantFunc(`_obj_`,`_name_`)` || Use when _obj_[_name_] is a safe simple-function, i.e., a function that does not mention `this` that should be invokable from Cajita. ||
+|| `___.grantFunc(`_obj_`,`_name_`)` || Use when _obj[[name]]_ is a safe simple-function, i.e., a function that does not mention `this` that should be invokable from Cajita. ||
 || `___.grantGeneric(`_obj_`,`_name_`)` || ||
 || `___.grantTypedGeneric(`_obj_`,`_name_`)` || ||
 || `___.grantMutator(`_obj_`,`_name_`)` || ||
