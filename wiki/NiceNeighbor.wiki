@@ -13,11 +13,70 @@ On !JavaScript as implemented on browsers today (ES3R), inter-object security is
  # _Trusted !JavaScript_, such as cajita.js -- the Cajita runtime.
  # _Tamed innocent !JavaScript_, such as the core ES3 library or the browser's DOM API.
 
-The first two are the subject of TranslationTarget. The third, _tamed innocent !JavaScript_, is the subject of this page. This page explains the taming API provided by the Cajita runtime and how to use it to tame innocent !JavaScript. The taming of innocent !JavaScript must carefully ensure that the security properties enforced by a cajoler together with the Cajita runtime are not violated by innocent !JavaScript.
+The first two are the subject of TranslationTarget. The third, _tamed
+innocent !JavaScript_, is the subject of this page. This page explains
+the taming API provided by the Cajita runtime and how to use it to
+tame innocent !JavaScript. Taming is the design of the interface
+between cajoled and uncajoled !JavaScript. The taming is based on
+whitelisting -- unless an uncajoled property is explicitly made
+visible by taming, it is not visible to Cajita code. For those
+properties that are made visible, taming can attenuate what
+interactions are possible across the boundary.
 
-_Innocent code_ is code written without awareness of the possibility of evil. Innocent code neither seeks to do evil, nor does it engage in any defensive practices needed to resist evil. Although most existing !JavaScript code is innocent, without strong evidence to the contrary, we must classify most code as untrusted, i.e., potentially hostile. If we misclassify hostile code as innocent, Cajita's security is lost. We assume innocent code may be buggy, but that none of these bugs can be exploited by an attacker via the available attack surface to cause the innocent code to act as hostile code. Again, if we misclassify exploitable code as innocent, Cajita's security is lost. 
+_Innocent code_ is code written without awareness of the possibility
+of evil. Innocent code neither seeks to do evil, nor does it engage in
+any defensive practices needed to resist evil. Although most existing
+!JavaScript code is innocent, without strong evidence to the contrary,
+we must classify most code as untrusted, i.e., potentially hostile. If
+we misclassify hostile code as innocent, Cajita's security is lost. We
+assume innocent code may be buggy, but that none of these bugs can be
+exploited by an attacker, via the available attack surface, to cause
+the innocent code to act as hostile code. Again, if we misclassify
+exploitable code as innocent, Cajita's security is lost.
 
-Some innocent code is directly provided by the target platform -- such as the code ES3 libraries and the browser's DOM API. This code is not subject to examination or translation. For all other innocent code, we do assume that it has been translated through our InnocentCodeRewriter. _*Note: As of this writing, all deployments of Caja violate this assumption. Once we fix issue XXX, we must repair this unsafe situation.*-
+Some innocent code is directly provided by the target platform -- such
+as the code ES3 libraries and the browser's DOM API. This code is not
+subject to examination or translation. For all other innocent code, we
+do assume that it has been translated through our
+InnocentCodeRewriter. _*Note: As of this writing, all deployments of
+Caja violate this assumption. Once we fix issue 1019, we must repair
+this unsafe situation.*-
+
+== Security Properties to be maintained by taming ==
+
+Even with the above problem repaired, and even assuming no malicious
+or exploitable code is misclassified as innocent,
+[http://combex.com/papers/darpa-review/ previous] [http://google-caja.googlecode.com/files/Caja_External_Security_Review_v2.pdf experiences] 
+suggest that taming is the most hazardous part of
+securing a legacy platform, and bad taming decisions are the most
+likely source of fatal security problems. The taming of innocent
+!JavaScript must carefully ensure that the security properties
+enforced by a cajoler together with the Cajita runtime are not
+violated by innocent !JavaScript. These security properties are:
+
+=== Closure encapsulation === 
+
+!JavaScript today has only one almost working security mechanism --
+lexical variable capture by nested functions. Although the ES3
+specification provides no operations for violating this encapsulation,
+neither does it prohibit the addition of such operations by conforming
+platforms. ES3R (ES3 as implemented on today's browsers) universally
+provides operations -- `arguments.caller`, _function_`.caller`, and
+_function_`.arguments` -- which allow uncajoled code to violate the
+encapsulation of functions on their call stack. Taming should only
+allow cajoled code to call uncajoled code when none of the uncajoled
+code reachable from those entry points might employ one of these
+operations to violate the encapsulation of a Cajita closure on its
+call chain.
+
+=== Simulated Attributes Restrict Property Manipulation ===
+
+
+=== No Access to Global object or scope ===
+
+
+=== No Exophoric Functions ===
+
 
 == Taming Normal Property Attributes ==
 
