@@ -71,6 +71,30 @@ call chain.
 
 === Simulated Attributes Restrict Property Manipulation ===
 
+In the language of the ES3 spec, each property has associated with it
+a set of attributes. (To avoid confusion, we will use the ES5 names
+for these attributes, even when speaking about ES3.) For example, if
+the [[Writable]] attribute of a property is false, the property is
+read-only and cannot be changed by assignment. However, neither ES3
+nor ES3R provide any way for !JavaScript code to create properties
+with non-default attribute settings. But Cajita requires such
+restrictions in order to create tamper-proof objects.
+
+Cajita on the ES3R platform simulates attribute-based restrictions of
+property manipulation by representing such per-property virtual
+attribute settings in its own bookkeeping. Cajoling translates Cajita
+code into cajoled !JavaScript code that cannot violate the
+restrictions represented in this bookkeeping. However, innocent
+!JavaScript knows nothing of the restrictions represented in this
+bookkeeping, and may therefore innocently violate these restrictions.
+
+For example, say malicious Cajita object Mallet has access to both
+frozen victim Cajita object Fred and to innocent mutating object
+Inara. Since Mallet is written in Cajita, it is translated into code
+which _cannot_ directly mutate Fred. However, if Inara were
+innappropriately tamed, such that Mallet could pass Fred as an
+argument to one of Inara's mutating operations, then Mallet could get
+Inara to innocently do the forbidden mutation on his behalf.
 
 === No Access to Global object or scope ===
 
@@ -115,3 +139,43 @@ call chain.
 ----
 http://google-caja.googlecode.com/svn/trunk/doc/images/nn-future.png
 ----
+
+== Does ES5 protect Cajita from untrusted !JavaScript? ==
+
+Let's reexamine each of the security properties Cajita relies on.
+
+=== Closure encapsulation === 
+
+Mostly, yes. 
+
+Cajita functions will translate to ES5-strict functions. The three
+closure-breaking operations of ES3R -- `arguments.caller`,
+_function_`.caller`, and _function_`.arguments` -- are not available
+on strict functions, even from nonstrict functions. In designing the
+new _meta_ API for ES5 (the reflective property manipulation methods
+on `Object`, covered next), we were careful not to introduce any new
+ways to violate closure encapsulation.
+
+The only reason for the _mostly_ qualifier above is that the ES5 spec,
+like the ES3 spec before it, contains a grand loophole (chapter 16)
+that allows an implementation to provide virtually any extension and
+still claim conformance to the spec.
+
+=== Simulated Attributes Restrict Property Manipulation ===
+
+Yes. But with a new restriction on innocent code.
+
+To be explained.
+
+=== No Access to Global object or scope ===
+
+Between frames, yes. Within a frame, we still prevent priviledge escalation.
+
+To be explained.
+
+
+=== No Exophoric Functions ===
+
+No. This inability forces us to change our strategy.
+
+To be explained.
