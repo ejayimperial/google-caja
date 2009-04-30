@@ -102,7 +102,32 @@ Inara to innocently do the forbidden mutation on his behalf.
 === No Exophoric Functions ===
 
 
+For purposes of taming, we first classify !JavaScript values into one
+of the following categories:
+  # Primitive values. These are unconditionally accessible from both Cajita and !JavaScript.
+     # numbers, strings, booleans.
+     # null and undefined. Note that `typeof null === "object"`.
+  # Objects that Cajita code cannot create, but that can be made available to Cajita by taming.
+     # Constructors. A tamed constructor is a function mentioning `this`, typically meant to be invoked with `new`, whose `prototype` property points at a _prototypical object_ (defined below) whose `constructor` property points back at this constructor. Constructors are for expressing class-like inheritance, and so can also be invoked by a constructor representing a "subclass" in order to initialize their "superclass" portion of the object. Cajita code can only invoke constructors with `new`, which is fine since Cajita code cannot define "subclass" constructors anyway. To Cajita code, constructors are always frozen.
+     # Constructed objects. An object is a constructed object if it is not a function and the first prototypical object on its prototype chain is not `Object.prototype` or `Array.prototype`. The value of that prototypical object's `constructor` property is the _direct constructor_ of the constructed object. A constructed object should only be accessible to Cajita code if its direct constructor has been tamed as a constructor. Cajita code can only see whitelisted properties of constructed objects, and cannot extend constructed objects with new properties.
+     The allowed constructors and constructed objects necessarily includes the primitive value wrappers: Numbers, Strings, and Booleans. Good code should never create wrappers, but defensive code must be prepared to receive wrappers as arguments.
+  # Objects that Cajita code can create. These can also be made available by taming.
+     # Simple-functions. A function not mentioning `this`. Such a function can be safely invoked as a function, as a constructor using `new`, or as a method. Cajita code implicitly postpones freezing a named simple-function until its first use or escaping occurrence, so that it can initialize static properties on it. Anonymous simple-functions are born frozen. Tamed simple-functions, whether named or not, are also immediately frozen on taming. Any static property on a tamed simple function to be made available must by tamed as non-writable.
+     # Records.
+     # Arrays.
+  # !JavaScript values that must not be made available to Cajita code.
+     # The global object.
+     # Exophoric functions.
+     # Prototypical objects.
+     # Functions not enumerated by a taming decision and their instances.
+     # Host objects. Because even the specified semantics of host objects is an unpredictable mess, we currently prevent Cajita code from ever obtaining access to a host object. However, for taming the browser DOM tree (without weak pointers or weak tables), this technique prevents the garbage collector from doing its job. We may relax this restriction until !JavaScript provides weak tables.
+     # Genuine `arguments` objects. The object created by the !JavaScript expression `arguments` has bizarre semantics. It may or may not inherits from `Array.prototype`, it acts in some array-like ways but is not an array, it is typically joined to the parameter variables of the function that created it, and there is no test that can reliably determine whether a given object is an `arguments` object.
+  # !JavaScript values that must never be encountered by the Cajita runtime.
+     # Ill-formed prototype chains. Note that taming is too late to prevent this. Safest would be not to allow such cases onto the page. (TODO rephrase without "page" concept.)
+
 == Taming Normal Property Attributes ==
+
+
 
 || *Current API* || *Similar ES5 attribute* || *Common Semantics*|| *Differences* ||
 || `___.grantRead(`_obj_`,`_name_`)` || _none_ || ES5 has no non-readable properties. In Cajita taming of JSON containers, all actual properties are implicitly visible to cajoled code. In either case this call is unnecessary and redundant. || In Cajita taming of constructed objects, this makes actual uncajoled properties visible to cajoled code. ||
