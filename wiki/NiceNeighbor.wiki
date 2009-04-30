@@ -74,7 +74,7 @@ call chain.
 In the language of the ES3 spec, each property has associated with it
 a set of attributes. (To avoid confusion, we will use the ES5 names
 for these attributes, even when speaking about ES3.) For example, if
-the [[Writable]] attribute of a property is false, the property is
+the `[[Writable]]` attribute of a property is false, the property is
 read-only and cannot be changed by assignment. However, neither ES3
 nor ES3R provide any way for !JavaScript code to create properties
 with non-default attribute settings. But Cajita requires such
