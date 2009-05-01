@@ -92,12 +92,12 @@ For example, say malicious Cajita object Mallet has access to both
 frozen victim Cajita object Fred and to innocent mutating object
 Inara. Since Mallet is written in Cajita, it is translated into code
 which _cannot_ directly mutate Fred. However, if Inara were
-innappropriately tamed, such that Mallet could pass Fred as an
+inappropriately tamed, such that Mallet could pass Fred as an
 argument to one of Inara's mutating operations, then Mallet could get
 Inara to innocently do the forbidden mutation on his behalf.
 
 These simulated attributes are also used to freeze all the primordial
-objects. Untamed code within the same frame must not modify any visble
+objects. Untamed code within the same frame must not modify any visible
 primordial state once Cajita code has been allowed to execute in that
 frame. This cannot be enforced after the fact by taming; it must be
 enforced by (necessarily fallible) inspection of innocent code.
@@ -107,13 +107,14 @@ enforced by (necessarily fallible) inspection of innocent code.
 
 === No Exophoric Functions ===
 
+(TODO: Move taxonomy to its own web page and flesh out.)
 
 For purposes of taming, we first classify !JavaScript values into one
 of the following categories:
   # Primitive values. These are unconditionally accessible from both Cajita and !JavaScript.
      # numbers, strings, booleans.
      # null and undefined. Note that `typeof null === "object"`.
-  # Objects that Cajita code cannot create, but that can be made available to Cajita by taming.
+  # Objects that Cajita code cannot create, but that can be made available to Cajita by taming. From Cajita's perspective, these are primitive objects not coded in Cajita.
      # Constructors. A tamed constructor is a function mentioning `this`, typically meant to be invoked with `new`, whose `prototype` property points at a _prototypical object_ (defined below) whose `constructor` property points back at this constructor. Constructors are for expressing class-like inheritance, and so can also be invoked by a constructor representing a "subclass" in order to initialize their "superclass" portion of the object. Cajita code can only invoke constructors with `new`, which is fine since Cajita code cannot define "subclass" constructors anyway. To Cajita code, constructors are always frozen.
      # Constructed objects. An object is a constructed object if it is not a function and the first prototypical object on its prototype chain is not `Object.prototype` or `Array.prototype`. The value of that prototypical object's `constructor` property is the _direct constructor_ of the constructed object. A constructed object should only be accessible to Cajita code if its direct constructor has been tamed as a constructor. Cajita code can only see whitelisted properties of constructed objects, and cannot extend constructed objects with new properties.
      The allowed constructors and constructed objects necessarily includes the primitive value wrappers: Numbers, Strings, and Booleans. Good code should never create wrappers, but defensive code must be prepared to receive wrappers as arguments.
@@ -121,11 +122,11 @@ of the following categories:
      # Simple-functions. A function not mentioning `this`. Such a function can be safely invoked as a function, as a constructor using `new`, or as a method. Cajita code implicitly postpones freezing a named simple-function until its first use or escaping occurrence, so that it can initialize static properties on it. Anonymous simple-functions are born frozen. Tamed simple-functions, whether named or not, are also immediately frozen on taming. Any static property on a tamed simple function to be made available must by tamed as non-writable.
      # Records. A _record_ is an object that inherits directly from `Object.prototype` or from another record. Records do not need to be tamed as such to be considered records. Any object meeting these conditions will be considered a record. Cajita code can make records with object literal expressions (`{foo: 3}`), by `new Object()`, or by `cajita.beget(`_parentRecord_`)`. To prevent confusion with prototypical objects, there must not be any accessible function _F_ such that _F_`.prototype` is a record. Untamed records inheriting from records are problematic. If possible, innocent record inheritance should be rewritten to create the nested record by calling `cajita.beget(`_parentRecord_`)` explicitly.
      # Arrays. An _array_ is an object inheriting directly from `Array.prototype` and with the special array behavior (such as length adjustment) as defined in the ES3 spec. For non-host objects, a reliable test of whether a specimen object is an array is `Object.prototype.toString.call(`_specimen_`) === '[object Array]'`. Cajita code can make arrays with array literal expressions (`['foo', 3]`) or by `new Array(`_elements..._`)`. Note that this constructor call has irregular behavior when given a single argument, so the array literal expression should always be preferred.
-     At the present time, we say that an object is a _JSONContainer_ if it is either a record or an array. However, now that Cajita supports record inheritance, this is a misnomer that will be fixed. All properties of JSONContainers that don't end in double underbar are visble to Cajita code. The attributes of the visible properties are not individually manipualble. Rather, a JSON container as a whole is either frozen or not. If it is frozen, then it is not extensible and all its properties are non-writable, enumerable, and non-deletable. Otherwise, the JSONContainer is extensible and all its visible properties are writable, enumerable, and deleteable.
+     At the present time, we say that an object is a _JSONContainer_ if it is either a record or an array. However, now that Cajita supports record inheritance, this is a misnomer that will be fixed. All properties of JSONContainers that don't end in double underbar are visible to Cajita code. The attributes of the visible properties are not individually manipulable. Rather, a JSON container as a whole is either frozen or not. If it is frozen, then it is not extensible and all its properties are non-writable, enumerable, and non-deletable. Otherwise, the JSONContainer is extensible and all its visible properties are writable, enumerable, and deletable.
   # !JavaScript values that must not be made available to Cajita code.
      # The global object.
      # Prototypical objects. By _prototypical_ object, informally we mean the object used as the prototype in the classical inheritance pattern. An object is considered prototypical if the value of its `constructor` property is a function whose `prototype` property points back at it.
-     # Exophoric functions. These are functions other than constructor that mention `this`. They are typically used by uncajoled !JavaScript as methods stored in prototypical objects.
+     # Exophoric functions. These are functions other than constructors that mention `this`. They are typically used by uncajoled !JavaScript as methods stored in prototypical objects.
      # Functions not enumerated by a taming decision and their instances.
      # Host objects. Because even the specified semantics of host objects is an unpredictable mess, we currently prevent Cajita code from ever obtaining access to a host object. However, for taming the browser DOM tree (without weak pointers or weak tables), this technique prevents the garbage collector from doing its job. We may relax this restriction until !JavaScript provides weak tables.
   # !JavaScript values that must never be encountered by the Cajita runtime.
@@ -134,26 +135,89 @@ of the following categories:
      # Non-arrays that inherit (directly or indirectly) from `Array.prototype`.
      # Non-functions that inherit (directly or indirectly) from `Function.prototype`.
 
-Most of this taxonomy should work as stated inter-frame, but this is an unsupported experimental use largely untested at this time.
+Most of this taxonomy should work as stated inter-frame, but this is
+an unsupported experimental use largely untested at this time.
+
+The most problematic aspect of the above taxonomy is exophoric
+functions. To be explained.
 
 == Taming Normal Property Attributes ==
 
-
+The following operations are only relevant for taming constructed
+objects or their prototypes. All mentionable properties on records and
+arrays are implicitly readable and enumerable anyway. If the record or
+array is not frozen, then all its mentionable properties are also
+implicitly settable and deletable.
 
 || *Current API* || *Similar ES5 attribute* || *Common Semantics*|| *Differences* ||
-|| `___.grantRead(`_obj_`,`_name_`)` || _none_ || ES5 has no non-readable properties. In Cajita taming of JSON containers, all actual properties are implicitly visible to cajoled code. In either case this call is unnecessary and redundant. || In Cajita taming of constructed objects, this makes actual uncajoled properties visible to cajoled code. ||
-|| `___.setPub(`_obj_`,`_name_`,`_val_`)` || `{value:`_val_`, writable:true, enumerable:true}` || If the property's value is mutable, sets its value. || In a non-frozen Cajita JSON container, all properties are mutable. In ES5, if a property is configurable but not writable, then it can be mutated by the meta API but not by assignment. ||
-|| `___.grantSet(`_obj_`,`_name_`)` || `{writable:true, enumerable:true}` || Allow the actual property to be changed by assignment. || In ES5, this really says whether the property value may change. In Cajita taming, it says whether Cajita code can assign to it. ||
-|| `___.grantEnum(`_obj_`,`_name_`)` || `{enumerable:true}` || This property _name_ will be enumerated by a for-in loop on _obj_. || ||
-|| `___.grantDelete(`_obj_`,`_name_`)` || `{configurable:true}` || The property can be deleted. || In ES5, if a property is configurable, its attributes may change at runtime. In Cajita taming, uncajoled code can change attributes unconditionally but does typically only on initialization; cajoled code can only freeze or, for deletable properties, delete it. All properties on non-frozen JSON containers are implicitly deletable. ||
+|| `___.grantRead(`_obj_`,`_name_`)` || _none_ || ES5 has no non-readable properties. || This operation makes actual uncajoled properties visible to cajoled code. ||
+|| `___.grantSet(`_obj_`,`_name_`)` || `{writable:true, enumerable:true}` || Allow the actual property to be changed by assignment. || _none_ ||
+|| `___.grantEnum(`_obj_`,`_name_`)` || `{enumerable:true}` || This property _name_ will be enumerated by a for-in loop on _obj_. || _none_ ||
+|| `___.grantDelete(`_obj_`,`_name_`)` || `{configurable:true}` || The property can be deleted. || In ES5, if a property is configurable, its attributes may change at runtime. In Cajita taming, uncajoled code currently can change attributes unconditionally but should normally do so only on initialization. Cajita code can only delete deletable properties; it cannot otherwise manipulate attributes of constructed objects. ||
+
+If _obj_ is a constructed object, then these operations apply directly
+to own properties of _obj_. If _obj_ is a prototypical object, then
+these operations determine the behavior of the property as inherited
+by constructed objects that inherit from that prototype. Since
+prototypical objects are implicitly frozen, `grantSet` and
+`grantDelete` make no sense when _obj_ is a prototypical object and
+should not be used.
+
+The second column of the table shows the attribute settings that would
+appear in an ES5 call to `Object.create` or `Object.defineProperty`,
+or that would be returned by `Object.getOwnPropertyDescriptor`. For
+example, when uncajoled !JavaScript today expresses the taming
+decision `___.grantEnum(foo, 'bar')`, the ES5 equivalent would be
+`Object.defineProperty(foo, 'bar', {enumerable: true})`.
+
 
 == Installing Property Accessors ==
 
+Mozilla !JavaScript introduced experimental getters and setters --
+a pair of functions associated with a property name which, together,
+simulate the property's value. The _getter_ is called when the
+property is read. The value returned by the getter is then used as the
+value of the read operation. The _setter_ is called when the property
+is assigned to, so that it can perform whatever side effects it
+chooses. Getters and setters are needed to allow objects written
+in !JavaScript to emulate the peculiar behavior of DOM objects, where
+assignment to its `innerHTML` property can cause vast numbers of side
+effects. 
+
+Some other !JavaScript implementations followed, with oddly different
+semantics for various corner cases. ES5 has codified an understandable
+and mutually agreeable semantics for getters and setters.
+
+Due to implementation constraints of implementing Cajita on ES3R,
+which includes Internet Explorer 6 and 7 where getters and setters are
+not available, Cajita implements getters and setters as a consequence
+of _fault handling_, so that it can optimize normal property access to
+occur on a fast path, with little checking and no calls on the typical
+property access. As a consequence, if normal property access,
+including inheritance, can succeed, no fault has occurred, and no
+fault handler will get invoked. Only if a normal read operation fails
+will a _get handler_, if available, be called. Only if a normal
+assignment fails will a _set handler_ be called.
+
 || *Current API* || *Similar ES5 attribute* || *Common Semantics*|| *Differences* ||
 || `___.useGetHandler(`_obj_`,`_name_`,`_getter_`}` || `{get:`_getter_`}` || Reading the property obtains the result of calling _getter_`.call(`_obj_`)` || Cajita handlers are only tried after normal data lookup fails. ||
-|| `___.useSetHandler(`_obj_`,`_name_`,`_setter_`}` || `{set:`_setter_`}` || Assigning _val_ to the property calls _setter_`.call(`_obj_`,`_val_`)`. The value of the assignment expression is _val_, not the result of the setter call. || Cajita handlers are only tried after normal data lookup fails. ES5 represents a non-writable accessor property by `{set:undefined}`. Cajita has no equivalent. ||
+|| `___.useSetHandler(`_obj_`,`_name_`,`_setter_`}` || `{set:`_setter_`}` || Assigning _val_ to the property calls _setter_`.call(`_obj_`,`_val_`)`. The value of the assignment expression is _val_, not the result of the setter call. || Cajita handlers are only tried after normal data lookup fails. ES5 represents a non-writable accessor property by `{set:undefined}`. The Cajita equivalent would be a setter that always throws. ||
+
+One useful taming technique is to provide a virtual version of an
+actual property by not doing a `grantRead` on the actual property, so
+normal access fails, and to install getters and setters to simulate
+the property as it should be seen by Cajita code. This technique works
+only on constructed objects. On records and arrays, since all
+mentionable properties are implicitly whitelisted, the actually
+property will always be accessed first preventing fault
+handling. However, getters and setters can still work of records and
+arrays in order to simulate properties that are not actually present.
 
 == Taming Functions ==
+
+Of the functions not defined by Cajita code, the only ones that should
+be accessible to Cajita code as values are those tamed as frozen
+_constructors_ or as frozen _simple-functions_. 
 
 || *Current API* || *Meaning* ||
 || `___.ctor(`_fun_`,`_optname_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. ||
@@ -162,12 +226,44 @@ Most of this taxonomy should work as stated inter-frame, but this is an unsuppor
 
 == Taming Methods ==
 
+The remaining common use of !JavaScript functions is as methods. The
+!JavaScript expression `a.foo(b)` is syntactically a function call
+whose left operand is the property read expression `a.foo`. If the
+value of `a.foo` is a simple-function, then this accounts for its
+semantics as well. The first taming call below,
+`___.grantFunc(`_obj_`,`_name_`)`, both makes _obj_`[`_name_`]` readable
+(as if by `___.grantRead(`_obj_`,`_name_`)`), and marks its current
+value as a frozen simple-function (as if by
+`___.frozenFunc(`_obj_`[`_name_`],`_name_`)`). 
+
+The remaining cases in the table determine the taming of exophoric
+methods. To determine which one to use, one must understand the
+semantics of the exophoric method in question. These calls do _not_
+make _obj_`[`_name_`]` readable, and it must not be made readable by
+other means, else an exophoric function might become accessible to
+Cajita code. Instead, they install an appropriate get handler (as if
+by `___.useGetHandler`), which returns a _pseudo function_, a record
+containing `apply`, `call`, and `bind` functions that act like methods
+on the exophoric function as bound to that exophoric function. (To be
+explained better.) 
+
+Note that pseudo function appear to be normal exophoric functions to
+Valija code, so only the Cajita programmer need be aware that these
+reads do not return a function.
+
 || *Current API* || *Meaning* ||
 || `___.grantFunc(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`]` is a safe simple-function, i.e., a function that does not mention `this` that should be invokable from Cajita. ||
-|| `___.grantGeneric(`_obj_`,`_name_`)` || ||
-|| `___.grantTypedGeneric(`_obj_`,`_name_`)` || ||
-|| `___.grantMutator(`_obj_`,`_name_`)` || ||
-|| `___.handleGeneric(`_obj_`,`_name_`,`_callHandler_`)` || ||
+|| `___.grantGeneric(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`) is safe to call directly from Cajita code, and _obj_`[`_name_`] is safe to use _generically_ -- with its `this` bound to other objects via `apply`, `call`, and `bind`. For example, most methods on `Array.prototype` are tamed as generic. ||
+|| `___.grantTypedGeneric(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`) is safe to call directly from Cajita code, but when _obj_`[`_name_`] is _not_ safe to use generically. This taming ensures that if its `this` bound to other objects via `apply`, `call`, and `bind`, the function is only called if the alternate `this` inherits from _obj_ (which is therefore prototypical). For example, most methods on `Date.prototype` are tamed as typed generic. ||
+|| `___.grantMutator(`_obj_`,`_name_`)` || Then the method would mutate its `this` value, which must therefore be guarded by an `isFrozen` check. ||
+|| `___.handleGeneric(`_obj_`,`_name_`,`_callHandler_`)` || All remaining cases, where the _callHandler_ supplies whatever alternate behavior is to be made available to Cajita code. ||
+
+Note that only `grantFunc` makes the property normally readable. All
+the others make the property readable by installing a get handler,
+which has the inheritance irregularities explained above. Similarly,
+only `grantFunc` and `grantGeneric` make the method directly
+callable. The others install call handlers, which are similarly tried
+only if direct calling fails.
 
 
 = Future defensibility from untranslated code =
@@ -205,7 +301,7 @@ To be explained.
 
 === No Access to Global object or scope ===
 
-Between frames, yes. Within a frame, we still prevent priviledge escalation.
+Between frames, yes. Within a frame, we still prevent privilege escalation.
 
 To be explained.
 
