@@ -222,9 +222,11 @@ be accessible to Cajita code as values are those tamed as frozen
 _constructors_ or as frozen _simple-functions_. 
 
 || *Current API* || *Meaning* ||
-|| `___.ctor(`_fun_`,`_optname_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. ||
+|| `___.ctor(`_fun_`,`_optSuper_`,`_optname_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. ||
 || `___.frozenFunc(`_fun_`,`_optname_`)` || Marks _fun_ as a simple-function -- one that does not mention `this`. A simple function can be called as a function, method, or constructor. It is first class -- reading a readable property whose value is a simple-function obtains the simple-function itself. ||
 || `___.func(`_fun_`,`_optname_`)` || Not a taming API. Should only be called by the cajoler's generated code. ||
+
+If _fun_ is a constructor and _fun_`.prototype` inherits directly from `Object.prototype`, then the _optSuper_ argument to `___.ctor` can either be `Object` or be left out. Otherwise, it must be another function marked as a constructor, such that _fun_`.prototype` inherits directly from _optSuper_`.prototype`.
 
 == Taming Methods ==
 
