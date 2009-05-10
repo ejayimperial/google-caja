@@ -226,7 +226,7 @@ _constructors_ or as frozen _simple-functions_.
 || `___.frozenFunc(`_fun_`,`_optname_`)` || Marks _fun_ as a simple-function -- one that does not mention `this`. A simple function can be called as a function, method, or constructor. It is first class -- reading a readable property whose value is a simple-function obtains the simple-function itself. ||
 || `___.func(`_fun_`,`_optname_`)` || Not a taming API. Should only be called by the cajoler's generated code. ||
 
-If _fun_ is a constructor and _fun_`.prototype` inherits directly from `Object.prototype`, then the _optSuper_ argument to `___.ctor` can either be `Object` or be left out. Otherwise, it must be another function marked as a constructor, such that _fun_`.prototype` inherits directly from _optSuper_`.prototype`.
+If _fun_ is a constructor and _fun_`.prototype` inherits directly from _super_`.prototype`, then the _optSuper_ argument to `___.ctor` should be _super_. _optSuper_ must be another function marked as a constructor. _optSuper_ may only be absent or `undefined` when _fun_`.prototype` inherits from nothing. Currently, this is only the case for `Object.prototype` itself.
 
 == Taming Methods ==
 
