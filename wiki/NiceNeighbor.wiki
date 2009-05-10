@@ -4,6 +4,8 @@ See SubsetRelationships for context.
 
 = Coexistence Today by Taming =
 
+(The documentation here corresponds to Caja once http://codereview.appspot.com/50041/show has been committed.)
+
 ----
 http://google-caja.googlecode.com/svn/trunk/doc/images/nn-today.png
 ----
