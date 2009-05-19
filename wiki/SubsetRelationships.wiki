@@ -10,7 +10,7 @@ http://google-caja.googlecode.com/svn/trunk/doc/images/cajita-vs-valija.png
 ----
   * _ES3R_ is used in various !EcmaScript discussions for "!EcmaScript 3 plus reality", meaning, consensus !JavaScript as implemented by current [http://developer.yahoo.com/yui/articles/gbs/ A-grade browsers].
   * _ES5_ is the [http://wiki.ecmascript.org/doku.php?id=es3.1:es3.1_proposal_working_draft draft standard] for the next version of !JavaScript.
-  * _ES5-strict_ is a more principled sublanguage of ES5 supported by ES5's `"use strict"` directive.
+  * _[http://google-caja.googlecode.com/svn/trunk/doc/html/es5-talk/es5-talk.html ES5-strict]_ is a more principled sublanguage of ES5 supported by ES5's `"use strict"` directive.
   * Caja defines two variants of !JavaScript:
     * _Cajita_ (Spanish for _small box_) is the Caja kernel language --- an object-capability language supporting defensive programming. 
     * _Valija_ (Spanish for _baggage_) is the ES3 subset of ES5-strict. Old !JavaScript code can easily be ported to Valija. Once ported, it will work on both current and future !JavaScripts. Valija exists _only_ to accommodate old code. The additional elements of !JavaScript it includes, such as `this`, make it unsuitable for writing defensive code. Instead, Valija is used only to isolate potentially offensive code.
