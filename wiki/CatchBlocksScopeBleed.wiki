@@ -61,6 +61,6 @@ alert(a);  // alerts 1 on old FF
     throw 1;
   } catch (a) {
   }
-  alert(a);  // alerts 1 on IE 6
+  alert(a);  // alerts 1 on IE 6 and 7 (IE 8 not tested)
 })();
 }}}
