@@ -31,8 +31,7 @@ Section 12.14 describes catch clauses
 
 Existing interpreters fail to implement the semantics of 12.14.  Old versions of firefox allow global assignment this way.
 
-IE introduces it as a variable in the local scope, instead of creating a new scope.
-
+IE introduces it as a variable in the local scope, instead of creating a new scope (see  <a href="http://code.google.com/p/google-caja/issues/detail?id=1032">bug 1032</a>).
 
 
 ==Assumptions==
