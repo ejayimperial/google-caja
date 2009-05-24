@@ -18,9 +18,11 @@ When {{{Error}}}s are converted to a string, the result is implementation-depend
 
 
 ==Assumptions==
-Secrets are stored in javascript source file names as in {{{foo.js?password=hello}}}
+Properties containing stack traces such as {{{anError.stack}}} or {{{anError.message}}} are readable by untrusted code, AND
+
+Stack traces include source filenames containing secrets, as in {{{foo.js?password=hello}}}
     OR
-{{{anError.stack}}} and/or {{{anError.message}}} is readable, and contains privileged stack frames with actual parameter values.
+Stack traces include privileged stack frames with actual parameter values.
 
 
 ==Versions==
