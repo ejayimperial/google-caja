@@ -14,20 +14,22 @@ According to section 15.11 of ES 262:
     
     Instances of Error objects are thrown as exceptions when runtime errors occur. The Error objects may also serve as base objects for user-defined exception classes.
 
-When {{{Error}}}s are converted to a string, the result is implementation-dependent.  Some interpreters (e.g. SpiderMonkey) add members to {{{Error}}} that include stack trace information.  That stack may include not just names, and source files and line numbers, but also parameter values.
+When {{{Error}}}s are converted to a string, the result is implementation-dependent.  Some interpreters (e.g. SpiderMonkey and Opera's implementation) add members to {{{Error}}} that include stack trace information.  That stack may include not just names, and source files and line numbers, but also parameter values.
 
 
 ==Assumptions==
 Secrets are stored in javascript source file names as in {{{foo.js?password=hello}}}
     OR
-{{{Error.stack}}} is readable and contains privileged stack frames with actual parameter values.
+{{{anError.stack}}} and/or {{{anError.message}}} is readable, and contains privileged stack frames with actual parameter values.
 
 
 ==Versions==
-Works in Firefox.
+Works in Firefox ({{{.stack}}}) and Opera ({{{.message}}}). Both add stack traces that include parameter values.
+
+Note that Opera only adds the {{{message}}} property when an error object is thrown, whereas Firefox adds the {{{stack}}} property when an error object is constructed.
 
 
-==Example==
+==Example (Firefox) ==
 {{{
 // President Skroob knows his luggage combination.
 function skroob(luggageCombination) {
