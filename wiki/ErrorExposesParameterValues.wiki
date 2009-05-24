@@ -18,7 +18,7 @@ When {{{Error}}}s are converted to a string, the result is implementation-depend
 
 
 ==Assumptions==
-Properties containing stack traces such as {{{anError.stack}}} or {{{anError.message}}} are readable by untrusted code, AND
+Properties containing stack traces such as {{{anError.{stack,message,stacktrace} }}} are readable by untrusted code, AND
 
 Stack traces include source filenames containing secrets, as in {{{foo.js?password=hello}}}
     OR
