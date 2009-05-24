@@ -30,7 +30,7 @@ Works in Firefox ({{{.stack}}}) and Opera ({{{.message}}} and {{{.stacktrace}}})
 
 Note that Opera only adds the {{{message}}} and {{{stacktrace}}} properties when an error object is thrown, whereas Firefox adds the {{{stack}}} property when an error object is constructed.
 
-Opera's {{{stacktrace}}} property is controlled by a user preference that is disabled by default. Its value when disabled is the string "n/a; see 'opera:config#UserPrefs|Exceptions Have Stacktrace'". Setting that preference does enable it. (Tested on Opera 9.64.)
+Opera's {{{stacktrace}}} property is controlled by a user preference that is disabled by default. Its value when disabled is the string "n/a; see 'opera:config#UserPrefs|Exceptions Have Stacktrace'". Setting that preference does enable it. There is no obvious preference to disable the {{{message}}} property. (Tested on Opera 9.64.)
 
 
 ==Example (Firefox) ==
