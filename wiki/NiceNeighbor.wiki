@@ -221,7 +221,7 @@ arrays in order to simulate properties that are not actually present.
 
 Of the functions not defined by Cajita code, the only ones that should
 be accessible to Cajita code as values are those tamed as frozen
-_constructors_ or as frozen _simple-functions_. 
+_constructors_ or as frozen _simple-functions_. In all cases, if `_optName_` is provided, it will be used for debugging purposes as the name of the function.
 
 || *Current API* || *Meaning* ||
 || `___.ctor(`_fun_`,`_optSuper_`,`_optname_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. ||
