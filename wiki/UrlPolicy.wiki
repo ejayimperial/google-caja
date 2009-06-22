@@ -371,7 +371,7 @@ Use the {{{NormalizedUri}}} class to normalize any URL parts that you wish to us
 
 Do not fetch the URL speculatively before deciding whether to allow it or not since that might enable XSRF attacks.
 
-White-list protocols.  Be wary of {{{javascript:}}} and anything not {{{http:}}} or {{{https:}}} or {{{mailto:}}}.
+White-list protocols.  Be wary of {{{javascript:}}}, {{{widget:}}} urls and anything not {{{http:}}} or {{{https:}}} or {{{mailto:}}}.
 
 Check the context hints.  If you don't have enough hints, DENY.
 
