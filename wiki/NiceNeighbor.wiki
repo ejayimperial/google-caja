@@ -172,7 +172,7 @@ appear in an ES5 call to `Object.create` or `Object.defineProperty`,
 or that would be returned by `Object.getOwnPropertyDescriptor`. For
 example, when uncajoled !JavaScript today expresses the taming
 decision `___.grantEnum(foo, 'bar')`, the ES5 equivalent would be
-`Object.defineProperty(foo, 'bar', {enumerable: true})`.
+`Object.defineProperty(foo, 'bar', {enumerable: true})`. 
 
 
 == Installing Property Accessors ==
@@ -224,11 +224,18 @@ be accessible to Cajita code as values are those tamed as frozen
 _constructors_ or as frozen _simple-functions_. In all cases, if _optName_ is provided, it will be used for debugging purposes as the name of the function.
 
 || *Current API* || *Meaning* ||
-|| `___.ctor(`_fun_`,`_optSuper_`,`_optname_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. ||
-|| `___.frozenFunc(`_fun_`,`_optname_`)` || Marks _fun_ as a simple-function -- one that does not mention `this`. A simple function can be called as a function, method, or constructor. It is first class -- reading a readable property whose value is a simple-function obtains the simple-function itself. ||
-|| `___.func(`_fun_`,`_optname_`)` || Not a taming API. Should only be called by the cajoler's generated code. ||
+|| `___.ctor(`_fun_`,`_optSuper_`,`_optName_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. Returns _fun_. ||
+|| `___.extend(`_hiddenFun_`,`_someSuper_`,`_optName_`)` || Use when _hiddenFun_ is a constructor which should not be exposed that makes tamed instances that should be exposed. Returns a new inert tamed constructor which will not make anything, but will be be `instanceof`-equivalent to _hiddenFun_. ||
+|| `___.frozenFunc(`_fun_`,`_optName_`)` || Marks _fun_ as a simple-function -- one that does not mention `this`. A simple function can be called as a function, method, or constructor. It is first class -- reading a readable property whose value is a simple-function obtains the simple-function itself. ||
+|| `___.func(`_fun_`,`_optName_`)` || Not a taming API. Should only be called by the cajoler's generated code. ||
 
-If _fun_ is a constructor and _fun_`.prototype` inherits directly from _super_`.prototype`, then the _optSuper_ argument to `___.ctor` should be _super_. _optSuper_ must be another function marked as a constructor. _optSuper_ may only be absent or `undefined` when _fun_`.prototype` inherits from nothing. Currently, this is only the case for `Object.prototype` itself.
+If _fun_ is a constructor and _fun_`.prototype` inherits directly from _aSuper_`.prototype`, then the _optSuper_ argument to `___.ctor` should be _aSuper_. _optSuper_ must be another function marked as a constructor. _optSuper_ may only be absent or `undefined` when _fun_`.prototype` inherits from nothing. Currently, this is only the case for `Object.prototype` itself.
+
+`___.extend` should be called before _hiddenFun_`.prototype` is initialized, since it will replace _hiddenFun_`.prototype` with a prototypical object that inherits from _someSuper_`.prototype`. The _someSuper_ argument of `___.extend` may either be a hidden constructor used as the first argument of a previous call to `___.extend`, or it may be the tamed inert constructor returned from a previous such call. If the returned inert constructor is to be made available to cajoled code under some name, _optName_ should be that name. For example, Domita's `TameElement` makes tamed wrappers for real HTMLElements, so Domita exposes
+{{{
+nodeClasses.HTMLElement = ___.extend(TameElement, TameBackedNode, 'HTMLElement');
+}}}
+which denies cajoled access to the `TameElement` constructor; but allows the caja expression `node instanceof HTMLElement` to succeed if node was made by `new TameElement(`_..._`)`.
 
 == Taming Methods ==
 
@@ -259,15 +266,15 @@ reads do not return a function.
 
 || *Current API* || *Meaning* ||
 || `___.grantFunc(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`]` is a safe simple-function, i.e., a function that does not mention `this` that should be invokable from Cajita. ||
-|| `___.grantGeneric(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, and _obj_`[`_name_`]` is safe to use _generically_ -- with its `this` bound to other objects via `apply`, `call`, and `bind`. For example, most methods on `Array.prototype` are tamed as generic. ||
-|| `___.grantTypedGeneric(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, but when _obj_`[`_name_`]` is _not_ safe to use generically. This taming ensures that if its `this` is bound to other objects via `apply`, `call`, and `bind`, the function is only called if the alternate `this` inherits from _obj_. For example, most methods on `Date.prototype` are tamed as typed generic. ||
-|| `___.grantMutator(`_obj_`,`_name_`)` || Then the method would mutate its `this` value, which must therefore be guarded by an `isFrozen` check. ||
-|| `___.handleGeneric(`_obj_`,`_name_`,`_callHandler_`)` || All remaining cases, where the _callHandler_ supplies whatever alternate behavior is to be made available to Cajita code. ||
+|| `___.grantGenericMethod(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, and _obj_`[`_name_`]` is safe to use _generically_ -- with its `this` bound to other objects via `apply`, `call`, and `bind`. For example, most methods on `Array.prototype` are tamed as generic. ||
+|| `___.grantTypedMethod(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, but when _obj_`[`_name_`]` is _not_ safe to use generically. This taming ensures that if its `this` is bound to other objects via `apply`, `call`, and `bind`, the function is only called if the alternate `this` inherits from _obj_. For example, most methods on `Date.prototype` are tamed as typed generic. ||
+|| `___.grantMutatingMethod(`_obj_`,`_name_`)` || Then the method would mutate its `this` value, which must therefore be guarded by an `isFrozen` check. ||
+|| `___.handleGenericMethod(`_obj_`,`_name_`,`_callHandler_`)` || All remaining cases, where the _callHandler_ supplies whatever alternate behavior is to be made available to Cajita code. ||
 
 Note that only `grantFunc` makes the property normally readable. All
 the others make the property readable by installing a get handler,
 which has the inheritance irregularities explained above. Similarly,
-only `grantFunc` and `grantGeneric` make the method directly
+only `grantFunc` and `grantGenericMethod` make the method directly
 callable. The others install call handlers, which are similarly tried
 only if direct calling fails.
 
