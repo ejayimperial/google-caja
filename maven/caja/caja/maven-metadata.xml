@@ -2,7 +2,7 @@
   <groupId>caja</groupId>
   <artifactId>caja</artifactId>
   <versioning>
-    <release>r3522</release>
+    <release>r3574</release>
     <versions>
       <version>r339</version>
       <version>r359</version>
@@ -21,6 +21,7 @@
       <version>r3360</version>
       <version>r3375</version>
       <version>r3522</version>
+      <version>r3574</version>
     </versions>
   </versioning>
 </metadata>
