@@ -4,7 +4,7 @@
 
 Flash code embedded in a web page with allowScriptAccess="all" can execute arbitrary Javascript code, violating Caja invariants.  Third party flash should therefore only be included in a page if it has allowNetworking="internal" set, which prevents the Flash code from modifying browser state (i.e. the Flash code can't redirect the page, cause the browser to fetch images or scripts, or interact with Javascript code).
 
-The Flash bridge is trusted code that mediates the interaction between the Flash code and the cajoled JavaScript code running in the browser.
+The Flash bridge is trusted code that mediates the interaction between the Flash code and the cajoled Javascript code running in the browser.
 
 
 = Flash =
@@ -57,7 +57,7 @@ onFlashBridgeReady = function () {
 Objects passed to Flash code must be directed and acyclic.  Since Caja modifies {{{Object.prototype}}} in such a way that no object satisfies that rule, we must clone the objects using a fresh {{{Object}}} and {{{Array}}} constructor:
 
 {{{
-var cleanse = (function () {
+var clone = (function () {
   // Gets a fresh Array and Object constructor that 
   // doesn't have the caja properties on it.  This is 
   // important for passing objects across the boundary 
@@ -95,7 +95,7 @@ The host page exposes the callSWF function of the bridge to the cajoled code:
 outers.bridge = ___.primFreeze({
   callSWF: (function (channel) { 
     return ___.func(function (methodName, argv) {
-        return bridge___.callSWF("" + channel, "" + methodName, cleanse(argv));
+        return bridge___.callSWF("" + channel, "" + methodName, clone(argv));
       });
   })(channel);
 });
