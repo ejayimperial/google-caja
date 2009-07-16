@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Flash code embedded in a web page with allowScriptAccess="all" can execute arbitrary javascript code, violating Caja invariants.  Third party flash should therefore only be included in a page if it has allowNetworking="internal" set, which prevents the Flash code from modifying browser state (i.e. the Flash code can't redirect the page, cause the browser to fetch images or scripts, or interact with JavaScript code).
+Flash code embedded in a web page with allowScriptAccess="all" can execute arbitrary Javascript code, violating Caja invariants.  Third party flash should therefore only be included in a page if it has allowNetworking="internal" set, which prevents the Flash code from modifying browser state (i.e. the Flash code can't redirect the page, cause the browser to fetch images or scripts, or interact with Javascript code).
 
 The Flash bridge is trusted code that mediates the interaction between the Flash code and the cajoled JavaScript code running in the browser.
 
@@ -37,7 +37,7 @@ class Example extends MovieClip {
 
 = Host page = 
 
-The host page defines two JavaScript functions, {{{callJS}}} and {{{onFlashBridgeReady}}}.
+The host page defines two Javascript functions, {{{callJS}}} and {{{onFlashBridgeReady}}}.
 
 {{{
 callJS = function (functionName, argv) {
@@ -103,9 +103,9 @@ outers.bridge = ___.primFreeze({
 
 In an OpenSocial environment, the object above is returned from the call to {{{embedFlash}}}.
 
-= JavaScript =
+= Javascript =
 
-Invoking Flash code from cajoled JavaScript code is simple:
+Invoking Flash code from cajoled Javascript code is simple:
 
 {{{
 bridge.callSWF("mySWFMethod", argv);
