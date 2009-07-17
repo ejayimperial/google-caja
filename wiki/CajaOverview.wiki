@@ -49,7 +49,7 @@ Threats & features:
 Adds back into Cajita "toy knives": they behave like the originals within a Cajita module without interfering with code in the other modules.
 
 Threats & features:
-  * Not defensive: Valija emulates "monkey patching", which necessarily changes the object
+  * Not defensive: Valija emulates "monkey patching" by adding in a "shadow" prototype chain, which _appears_ to change the object.
   * Offensive:
     * Valija is rewritten into Cajita, which is rewritten by the cajoler into code with no free variables, so there's no way for valija code to get access statically to references other than by explicit grant
     * Runtime checks prevent dynamic access
