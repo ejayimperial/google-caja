@@ -41,7 +41,7 @@ Threats & features:
     * Cajita is rewritten by the cajoler into code with no free variables, so there's no way for cajita code to get access statically to references other than by explicit grant
     * Runtime checks prevent dynamic access
   * Tools: Cajita is a subset of JavaScript, so all the tools work unchanged.
-  * --Code--: The language excises many of the parts of Javascript, so most old code won't work.
+  * No support for legacy code: The language excises many of the parts of Javascript, so most old code won't work.
   * Virtualization: we can emulate all the excised parts, effectively having several separate Javascript environments.  These environments can only interact via references that they get from the host page.
 
 == Valija ==
@@ -49,7 +49,7 @@ Threats & features:
 Adds back into Cajita "toy knives": they behave like the originals within a Cajita module without interfering with code in the other modules.
 
 Threats & features:
-  * --Defensive--: 
+  * Not defensive: Valija emulates "monkey patching", which necessarily changes the object
   * Offensive:
     * Valija is rewritten into Cajita, which is rewritten by the cajoler into code with no free variables, so there's no way for valija code to get access statically to references other than by explicit grant
     * Runtime checks prevent dynamic access
