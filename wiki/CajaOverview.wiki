@@ -58,6 +58,6 @@ Threats & features:
   * Tools: Valija is a subset of JavaScript, so all the tools work unchanged.
   * Code: Nearly all of Javascript is supported
 
-== Tools ==
+= Tools =
 
 Web content is rewritten using the Java cajoler.  There is a command-line version (bin/cajole_html), an interactive applet version (ant-www/testbed), a cajoling service on App Engine (http://caja.appspot.com), and a Java class for use by those that want to cajole code themselves (used by Yahoo! and Shindig, for example).
