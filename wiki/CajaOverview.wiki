@@ -49,10 +49,16 @@ Threats & features:
 
 == Valija ==
 
-Adds back into Cajita "toy knives": they behave like the originals within a Cajita module without interfering with code in the other modules.
+Adds back into Cajita "toy knives": they behave like the Javascript knives, but only within a Cajita module.  Valija code cannot interfere with code in other modules.
+
+For example, one can write
+{{{
+Object.prototype.x = 1;
+}}}
+in Valija, and all objects in that module will appear to have an {{{x}}} property.  But objects in other modules will be unaffected.
 
 Threats & features:
-  * Not defensive: Valija emulates "monkey patching" by adding in a "shadow" prototype chain, which _appears_ to change the object.
+  * Not defensive: Valija emulates "monkey patching", which _appears_ to change the object, so objects within the module can effectively violate each others' invariants.
   * Offensive:
     * Valija is rewritten into Cajita, which is rewritten by the cajoler into code with no free variables, so there's no way for valija code to get access statically to references other than by explicit grant
     * Runtime checks prevent dynamic access
