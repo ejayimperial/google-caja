@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Caja is a system for enabling the safe inclusion of untrusted third-party web content (HTML, CSS and javascript code) into a host page.  Each chunk of web content is rewritten, or "cajoled", into a form that can be isolated
+Caja is a system, written in Java and built using Ant, for enabling the safe inclusion of untrusted third-party web content (HTML, CSS and Javascript code) into a host page.  Each chunk of web content is rewritten, or "cajoled", into a "module" that is isolated from every other module except by means of object references granted to the modules by the host page.
 
 = Threat model =
 
@@ -55,3 +55,7 @@ Threats & features:
     * Runtime checks prevent dynamic access
   * Tools: Valija is a subset of JavaScript, so all the tools work unchanged.
   * Code: Nearly all of Javascript is supported
+
+== Tools ==
+
+Web content is rewritten using the Java cajoler.  There is a command-line version (bin/cajole_html), an interactive applet version (ant-www/testbed), a cajoling service on App Engine (http://caja.appspot.com), and a Java class for use by those that want to cajole code themselves (used by Yahoo! and Shindig, for example).
