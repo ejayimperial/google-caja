@@ -6,18 +6,18 @@ Caja is a system for enabling the safe inclusion of untrusted third-party web co
 
 = Threat model =
 
-== _*D*_efensive code problem ==
+== Defensive code problem ==
   * Mutually suspicious gadgets can cooperate
-== _*O*_ffensive code problem ==
+== Offensive code problem ==
   * A gadget can't interfere with the container
   * Gadgets can't interfere with other gadgets
 
 = Desired features = 
-== Legacy _*T*_ools problem ==
+== Legacy Tools problem ==
   * Existing tools can be easily adapted to support the language
-== Legacy _*C*_ode problem ==
+== Legacy Code problem ==
   *  Existing code can be easily adapted to work with the language
-== Support _*V*_irtualization ==
+== Support Virtualization ==
 
 = Languages =
 
