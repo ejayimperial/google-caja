@@ -6,7 +6,8 @@
 
 Caja is a system, written in Java and built using Ant, for enabling the safe inclusion of untrusted third-party web content (HTML, CSS and Javascript code) into a host page.  Each chunk of web content is rewritten, or "cajoled", into a "module" that is isolated from every other module except by means of object references granted to the modules by the host page.
 
-= Threat model =
+= Design considerations =
+== Threat model ==
 
   * Defensive code problem
     * Mutually suspicious gadgets can cooperate
@@ -14,14 +15,14 @@ Caja is a system, written in Java and built using Ant, for enabling the safe inc
     * A gadget can't interfere with the container
     * Gadgets can't interfere with other gadgets
 
-= Desired features = 
+== Desired features ==
   * Legacy Tools problem
     * Existing tools can be easily adapted to support the language
   * Legacy Code problem
     *  Existing code can be easily adapted to work with the language
   * Support Virtualization
 
-= Languages =
+= Resulting languages =
 
 == Cajita ==
 
