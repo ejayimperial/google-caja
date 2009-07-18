@@ -61,6 +61,10 @@ likely source of fatal security problems. The taming of innocent
 enforced by a cajoler together with the Cajita runtime are not
 violated by innocent !JavaScript. These security properties are:
 
+=== Integrity of Cajita Values ===
+
+Those invariants enumerated on the CajitaValues page.
+
 === Closure encapsulation === 
 
 !JavaScript today has only one almost working security mechanism --
@@ -114,39 +118,6 @@ enforced by (necessarily fallible) inspection of innocent code.
 
 === No Exophoric Functions ===
 
-(TODO: Move taxonomy to its own web page and flesh out.)
-
-For purposes of taming, we first classify !JavaScript values into one
-of the following categories:
-  # Primitive values. These are unconditionally accessible from both Cajita and !JavaScript.
-     # numbers, strings, booleans.
-     # null and undefined. Note that `typeof null === "object"`.
-  # Objects that Cajita code cannot create, but that can be made available to Cajita by taming. From Cajita's perspective, these are primitive objects not coded in Cajita.
-     # Constructors. A tamed constructor is a function mentioning `this`, typically meant to be invoked with `new`, whose `prototype` property points at a _prototypical object_ (defined below) whose `constructor` property points back at this constructor. Constructors are for expressing class-like inheritance, and so can also be invoked by a constructor representing a "subclass" in order to initialize their "superclass" portion of the object. Cajita code can only invoke constructors with `new`, which is fine since Cajita code cannot define "subclass" constructors anyway. To Cajita code, constructors are always frozen.
-     # Constructed objects. An object is a constructed object if it is not a function and the first prototypical object on its prototype chain is not `Object.prototype` or `Array.prototype`. The value of that prototypical object's `constructor` property is the _direct constructor_ of the constructed object. A constructed object should only be accessible to Cajita code if its direct constructor has been tamed as a constructor. Cajita code can only see whitelisted properties of constructed objects, and cannot extend constructed objects with new properties.
-     The allowed constructors and constructed objects necessarily includes the primitive value wrappers: Numbers, Strings, and Booleans. Good code should never create wrappers, but defensive code must be prepared to receive wrappers as arguments.
-  # Objects that Cajita code can create. These can also be made available by taming.
-     # Simple-functions. A function not mentioning `this`. Such a function can be safely invoked as a function, as a constructor using `new`, or as a method. Cajita code implicitly postpones freezing a named simple-function until its first use or escaping occurrence, so that it can initialize static properties on it. Anonymous simple-functions are born frozen. Tamed simple-functions, whether named or not, are also immediately frozen on taming. Any static property on a tamed function (a simple-function or constructor) must by tamed as non-writable.
-     # Records. A _record_ is a non-prototypical object (see below) that inherits directly from `Object.prototype` or from another record. Records do not need to be tamed as such to be considered records. Any object meeting these conditions will be considered a record. Cajita code can make records with object literal expressions (`{foo: 3}`), by `new Object()`, or by `cajita.beget(`_parentRecord_`)`. To prevent confusion with prototypical objects, there must not be any accessible function _F_ such that _F_`.prototype` is a record. Untamed records inheriting from records are problematic. If possible, innocent record inheritance should be rewritten to create the nested record by calling `cajita.beget(`_parentRecord_`)` explicitly.
-     # Arrays. An _array_ is an object inheriting directly from `Array.prototype` and with the special array behavior (such as length adjustment) as defined in the ES3 spec. For non-host objects, a reliable test of whether a specimen object is an array is `Object.prototype.toString.call(`_specimen_`) === '[object Array]'`. Cajita code can make arrays with array literal expressions (`['foo', 3]`) or by `new Array(`_elements..._`)`. Note that this constructor call has irregular behavior when given a single argument, so the array literal expression should always be preferred.
-     All properties of records or arrays that don't end in double underbar are visible to Cajita code. The attributes of the visible properties are not individually manipulable. Rather, a record or array as a whole is either frozen or not. If it is frozen, then it is not extensible and all its properties are non-writable, enumerable, and non-deletable. Otherwise, a record or array is extensible and all its visible properties are writable, enumerable, and deletable.
-  # !JavaScript values that must not be made available to Cajita code.
-     # The global object.
-     # Prototypical objects. By _prototypical_ object, informally we mean the object used as the prototype in the classical inheritance pattern. An object is considered prototypical if the value of its `constructor` property is a function whose `prototype` property points back at it.
-     # Exophoric functions. These are non-constructor functions that mention `this`. They are typically used by uncajoled !JavaScript as methods stored in prototypical objects.
-     # Functions not enumerated by a taming decision and their instances.
-     # Host objects. Because even the specified semantics of host objects is an unpredictable mess, we currently prevent Cajita code from ever obtaining access to a host object. However, for taming the browser DOM tree (without weak pointers or weak tables), this technique prevents the garbage collector from doing its job. We may relax this restriction until !JavaScript provides weak tables.
-  # !JavaScript values that must never be encountered by the Cajita runtime.
-     # Ill-formed prototype chains. Note that taming is too late to prevent this. Safest would be not to allow such cases into the frame.
-     # Genuine `arguments` objects. The object created by the !JavaScript expression `arguments` has bizarre semantics. It may or may not inherits from `Array.prototype`, it acts in some array-like ways but is not an array, it is typically joined to the parameter variables of the function that created it, and there is no test that can reliably determine whether a given object is an `arguments` object.
-     # Non-arrays that inherit (directly or indirectly) from `Array.prototype`.
-     # Non-functions that inherit (directly or indirectly) from `Function.prototype`.
-
-Most of this taxonomy should work as stated inter-frame, but this is
-an unsupported experimental use largely untested at this time.
-
-The most problematic aspect of the above taxonomy is exophoric
-functions. To be explained.
 
 == Taming API Naming Convention ==
 
