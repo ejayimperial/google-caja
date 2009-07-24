@@ -1,4 +1,5 @@
 #summary Using the Flash bridge.
+#labels flash
 
 = Introduction =
 
