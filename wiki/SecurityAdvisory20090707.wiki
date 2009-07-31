@@ -8,7 +8,7 @@ The second hole documented in our [SecurityAdvisory20090623 previous security ad
 
 was not successfully closed. The underlying problem is that Domita contains constructors whose purpose is to be used *internally* to construct tamed wrappers around DOM nodes, and to be available to cajoled code for use in type-testing those wrappers. However, by having access to these constructors themselves, cajoled code could call these constructors in ways that violate their assumptions.
 
-http://code.google.com/p/google-caja/issues/detail?id=1065 explains how some constructors were still accessible. In that issue thread, Ihab demonstrates that Felix's arbitrary code execution exploit was still feasible.
+http://code.google.com/p/google-caja/issues/detail?id=1065 explains how some constructors were still accessible. In that issue thread, Ihab demonstrated that Felix's arbitrary code execution exploit was still feasible.
 
 This remaining vulnerability affects Caja version r3545 (submitted 23 Jun 2009) or later. They are both fixed in version r3557 and thereafter.
 
