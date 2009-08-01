@@ -1,9 +1,0 @@
-#summary Dashboard displaying current performance data
-
-= Introduction =
-
-*THESE NUMBERS AND GRAPHS ARE DRAFT ONLY*
-
-<wiki:gadget url="http://www.thinkfu.com/size.xml" height="600" width="100%" border="0" /> 
-
-<wiki:gadget url="http://www.thinkfu.com/time.xml" height="600" width="100%" border="0" /> 
