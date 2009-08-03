@@ -25,7 +25,7 @@ The runtime performance of cajoled code on the client (for example in a browser)
 
 <wiki:gadget url="http://www.thinkfu.com/time.xml?1" height="600" width="100%" border="0" />
 
-For least runtime latency, a performance sensitive functions of a javascript program should be authored in _cajita mode_ using the cajita directive as follows:
+For least runtime latency, performance sensitive functions of a javascript program should be authored in _cajita mode_ using the cajita directive as follows:
 {{{
 function foo() {
   "use cajita";
