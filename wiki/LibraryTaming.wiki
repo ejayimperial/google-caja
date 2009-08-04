@@ -29,15 +29,64 @@ So, let's say that your library is exposed to your container through some object
 imports.mylibrary = mylibrary;
 }}}
 
-Now the Cajoled code can see the library, but it has no access to properties yet, these must be individually granted. So, for example
+Now the Cajoled code can see the library, but it has no access to properties yet, these must be individually granted.
+
+== Taming simple arguments ==
+
+Suppose your library exposes a property called `someProperty`.  You can grant a cajoled program read access to `someProperty` like this:
 
 {{{
 ___.grantRead(mylibrary, 'someProperty');
 }}}
 
-would allow the Cajoled code to read `mylibrary.someProperty` but not to write or execute it. Similarly write access is granted with `___.grantSet(object, 'property')`, calls with `___.grantCall(object, 'property')`. Constructors are a little more complex, these are done with `___.ctor(class, parent, 'classname')`.
+This would allow the Cajoled code to read `mylibrary.someProperty` but not to write or execute it. Similarly you can grant write access with `___.grantSet(object, 'property')` and call access with `___.grantCall(object, 'property')`. Constructors are a little more complex, these are done with `___.ctor(class, parent, 'classname')`.
 
-== Taming The Library ==
+== Taming callbacks and functions as arguments ==
+
+Some functions which you want to tame take other functions as parameters or return functions as results.  Taming these functions is slightly more involved.  Suppose you want to tame the following function in your library:
+
+{{{
+  function registerCallback(callback) {
+    var result = someOperation();
+    callback(result);
+  }
+}}}
+
+When a cajoled program calls `registerCallback`, the `callback` function it passes as an argument has already been cajoled.  Caja cajoled functions to an object literal which has three properties, `call`, `bind` and `apply`.  In order for your library to correctly call `callback`, it needs to know whether `callback` has been cajoled in cajita or valija mode and what the occurrences of the keyword `this` in `callback` should be bound to.  Remember that your taming code is not cajoled and thus wields an uncontrolled amount of  authority.  In particular, the default binding for occurrences of `this` is the global object `window`, and naively granting `callback` access to the global object will allow a cajoled program to break out of its sandbox completely.  The safe and recommended taming of a callback function like the one above would be to bind occurrences of `this` inside `callback` to something that was useless and granted no additional authority.  The caja library provides one such object called `USELESS`.  Suppose the `callback` function is cajoled in _cajita mode_ and expects one argument.  We can tame is as follows:
+
+{{{
+   function tameRegisterCallack(callback) {
+     var result = someOperation();
+     callback.call(USELESS, result);
+}}}
+
+All functions cajoled in _valija mode_ take an additional first parameter called `$dis`.  This is the global scope as perceived by that function.  In almost all circumstances, you want this perceived global scope to also be USELESS.  Thus if `callback` is cajoled in _valija mode_,  the appropriate taming for `registerCallback` is:
+
+{{{
+   function tameRegisterCallack(callback) {
+     var result = someOperation();
+     callback.call(USELESS, USELESS, result);
+}}}
+
+== Taming functions as returns values ==
+
+Similarly, your library function may return a function itself.  For example:
+{{{
+   function makeAdder() {
+     return function(s) { return s+1; }  
+   }
+}}}
+
+In this case, taming your library by marking `makeAdder` callable is not sufficient because the function it returns will not itself be callable by a cajoled program.  The solution is to tame `makeAdder` by marking the result it returns as callable:
+
+{{{
+  function tameMakeAdder() {
+    return ___.func(makeAdder());
+  }
+}}}
+
+
+== Caveats while taming libraries ==
 
 Obviously because the library you have exposed is not cajoled, it could do anything. So, you must ensure that it doesn't do anything that would allow the cajoled code to break out of its sandbox.
 
