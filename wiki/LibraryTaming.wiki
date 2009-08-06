@@ -49,9 +49,9 @@ then all its mentionable properties are accessible. Otherwise,
 mentionable properties must be individually granted in order to be
 accessible from cajoled code.
 
-== Taming simple arguments ==
+== Taming simple properties ==
 
-Suppose your library exposes a property called `someProperty`.  You
+Suppose your library exposes a property called `someProperty`. You
 can grant a cajoled program read access to `someProperty` like this:
 
 {{{
@@ -77,8 +77,8 @@ them as functions.
 == Taming callbacks and functions as arguments ==
 
 Some functions which you want to tame take other functions as
-parameters or return functions as results.  Taming these functions is
-more involved.  Suppose you want to tame the following function in
+parameters or return functions as results. Taming these functions is
+more involved. Suppose you want to tame the following function in
 your library:
 
 {{{
@@ -88,47 +88,36 @@ your library:
   }
 }}}
 
-STOP READING. TEXT BELOW HERE IS UNDER CONSTRUCTION.
-
 When a cajoled program calls `registerCallback`, the `callback`
-function it passes as an argument has already been cajoled.  Caja
-cajoled functions to an object literal which has three properties,
-`call`, `bind` and `apply`.  In order for your library to correctly
-call `callback`, it needs to know whether `callback` has been cajoled
-in cajita or valija mode and what the occurrences of the keyword
-`this` in `callback` should be bound to.  Remember that your taming
-code is not cajoled and thus wields an uncontrolled amount of
-authority.  In particular, the default binding for occurrences of
-`this` is the global object `window`, and naively granting `callback`
-access to the global object will allow a cajoled program to break out
-of its sandbox completely.  The safe and recommended taming of a
-callback function like the one above would be to bind occurrences of
-`this` inside `callback` to something that was useless and granted no
-additional authority.  The caja library provides one such object
-called `USELESS`.  Suppose the `callback` function is cajoled in
-_cajita mode_ and expects one argument.  We can tame is as follows:
+function it passes as an argument has already been cajoled. Caja
+cajoles functions to an object or function which has three properties,
+`call`, `bind` and `apply`. Remember that your taming code is not
+cajoled and thus wields an uncontrolled amount of authority. In
+particular, the default binding for occurrences of `this` is the
+global object `window`, and naively granting `callback` access to the
+global object will allow a cajoled program to break out of its sandbox
+completely. 
+
+The safe and recommended taming of a callback function like the one
+above would be to bind occurrences of `this` inside `callback` to
+something that was useless and granted no additional authority. The
+caja library provides one such object called `___.USELESS`. Suppose
+the `callback` function expects one argument.  We can tame is as
+follows:
 
 {{{
-   function tameRegisterCallack(callback) {
-     var result = someOperation();
-     callback.call(USELESS, result);
-}}}
-
-All functions cajoled in _valija mode_ take an additional first
-parameter called `$dis`.  This is the global scope as perceived by
-that function.  In almost all circumstances, you want this perceived
-global scope to also be USELESS.  Thus if `callback` is cajoled in
-_valija mode_, the appropriate taming for `registerCallback` is:
-
-{{{
-   function tameRegisterCallack(callback) {
-     var result = someOperation();
-     callback.call(USELESS, USELESS, result);
+   function tameRegisterCallack(cajoledCallback) {
+     function rawCallback(result) {
+       return ___.callPub(cajoledCallback, 'call', [___.USELESS, result]);
+     }
+     return registerCallback(rawCallback);
+   }
+   ___.markFuncFreez(tameRegisterCallack);
 }}}
 
 == Taming functions as returns values ==
 
-Similarly, your library function may return a function itself.  For example:
+Similarly, your library function may return a function itself. For example:
 {{{
    function makeAdder() {
      return function(s) { return s+1; }  
@@ -137,13 +126,14 @@ Similarly, your library function may return a function itself.  For example:
 
 In this case, taming your library by marking `makeAdder` callable is
 not sufficient because the function it returns will not itself be
-callable by a cajoled program.  The solution is to tame `makeAdder` by
+callable by a cajoled program. The solution is to tame `makeAdder` by
 marking the result it returns as callable:
 
 {{{
   function tameMakeAdder() {
-    return ___.func(makeAdder());
+    return ___.markFuncFreeze(makeAdder());
   }
+  ___.markFuncFreeze(tameMakeAddr);
 }}}
 
 
@@ -157,7 +147,7 @@ Firstly, only grant permissions to things you absolutely have to grant
 permissions to.
 
 Secondly, anything you do grant permission to has to be carefully
-reviewed to make sure it is safe. Things to avoid are
+reviewed to make sure it is safe. Some things to avoid are
 
   * Use of `eval()` on anything controlled by the caller.
     * If `eval()` is really necessary then you must construct what is evaled very carefully to ensure it cannot be abused by the caller.
@@ -165,5 +155,5 @@ reviewed to make sure it is safe. Things to avoid are
 
 Sometimes the easiest way to deal with these issues (especially if the
 library is a third-party library) is to wrap the dangerous functions
-in functions of your own that sanitized or otherwise restrict the
+in functions of your own that sanitize or otherwise restrict the
 inputs to the "real" functions.
