@@ -381,3 +381,7 @@ Be careful of the encoding of text documents.  The encoding of a document often 
 
 Don't use regular expressions to decompose URLs.  If you need to whitelist a particular domain and protocol, look at the domain and protocol fields individually.
 White-listing by regular expressions tends to be vulnerable to <a href="http://secunia.com/advisories/10395/">URL spoofing</a>.
+
+Almost all urls should be rewritten to be fetched by a proxy.  The proxy ought to have the same level of amount of access as the authors of the gadgets ie. if gadgets are fetched from the internet, urls ought to be rewritten to use a public proxy to prevent gadgets from scanning internal networks via url fetching errors.
+
+If a url must be fetched without proxying, the host name ought to be fully qualified and terminated with a dot suffix (http://www.example.com.).  If such a precaution is not taken, a gadget can be used to probe an internal network.
