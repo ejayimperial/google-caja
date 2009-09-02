@@ -52,4 +52,3 @@ Below is a list of known attack vectors.  We discuss the !EcmaScript 3 language,
   * UrlFetchingSideChannel -- Side-channels from unproxied connections leak information across closed networks
   * HistoryMining -- CSS can be used to determine whether a user has visited a URL.
   * RedirectWithoutUserAction -- JS and HTML both allow redirection with user interaction.
-  * PortScanning -- CSS and JS can be used to inspect the user's local network.
