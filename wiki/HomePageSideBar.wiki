@@ -1,6 +1,6 @@
-   * [http://groups.google.com/google-caja-discuss discusion group]
-   * AttackVectors
-   * CapabilityUseCases
-   * [http://cajadores.com/docs/rules/DefaultCajaRewriter.html draft rewrite rules]
-   * [http://cajadores.com/demos/testbed/ Caja Test Bed applet]
+   * [http://groups.google.com/google-caja-discuss Introduce yourself at the Caja Group]
+   * [http://cajadores.com/demos/testbed/ Try out Caja in the Test Bed]
+   * [AttackVectors Attack Vectors]
+   * [CapabilityUseCases Use Cases]
+   * [http://cajadores.com/docs/rules/DefaultCajaRewriter.html Draft Rewrite Rules]
    * [http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf ECMAScript-262 Third Edition (ES3) Specification]
