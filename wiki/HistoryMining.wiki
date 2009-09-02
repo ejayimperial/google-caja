@@ -21,10 +21,14 @@ This can be extended to not only affect color/voice/volume but also affect layou
 
 JavaScript can inspect both computed styles via {{{window.getComputedStyle}}} and can inspect layout information via {{{HTMLElement.offsetLeft}}}, {{{offsetWidth}}}, etc.
 
+Some CSS styles like {{{color}}} and various aural properties used by screen readers are commonly used to differentiate visited and unvisited links and the inability to use those styles might cause significant usability problems.  Indeed, users may use link styles to descide whether a link goes to a site that they trust.
 
 
 ==Assumptions==
-Untrusted code can specify a link to a target URL AND (untrusted code can specify a URL to a site they control in a CSS style that is loaded contingent on whether that target URL is visited OR (untrusted code can make the layout of the page differ depending on whether the target URL was visited)).
+Untrusted code can specify a link to a target URL
+AND (untrusted code can specify a URL to a site they control in a CSS style that is loaded contingent on whether that target URL is visited
+     OR (untrusted code can make the layout of the page differ depending on whether the target URL was visited)
+     OR (untrusted code can access the computed style of a CSS property that differs between visited and unvisited links).
 
 ==Versions==
 All
