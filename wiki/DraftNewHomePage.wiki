@@ -39,7 +39,7 @@ Our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> 
 are moderated to remove spam, so don't worry if your post doesn't show
 up immediately.
 
-===Reporting Bugs &amp; Security Issues===
+===Reporting Bugs & Security Issues===
 Please report bugs and potential vulnerabilities at the
 <a href="http://code.google.com/p/google-caja/issues/entry">issue tracker</a>.
 For security vulnerabilities, please mark it with the {{{Private}}}
