@@ -316,10 +316,13 @@ The caller.  Only the caller has enough information to resolve URLs correctly.  
 
 Maybe, but we should work with the few existing policy authors to rework them quickly.
 
+====What is responsible for fetching scripts and styles so the Cajoler can inline them?====
+
+The URL policy will no longer be responsible for this.  It doesn't need to be involved in URL fetching in the browser, so we will separate out URL loading into a separate concern: a java {{{interface UrlGetter}}} that can GET content from a URL that appears statically in HTML or CSS.
 
 ===Definition===
 
-A URL policy is a function from absolute normalized† URI references plus context hints to URI references or the special DENY value.
+A URL policy is a mapping from absolute normalized† URI references plus context hints to URI references or the special DENY value.
 
 URL policies are implemented as Javascript (or Cajita) objects with the API below.
 
