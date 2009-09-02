@@ -1,0 +1,127 @@
+#summary Draft of the new project home page
+
+Caja allows websites to <b>safely embed</b> DHTML web applications
+from third-parties and enables <b>rich-interaction</b> between the
+embedding page and the embedded applications.  It uses an
+<a href="http://en.wikipedia.org/wiki/Object-capability_model">object-capabilities</a> security model to allow for a wide-range
+of <b>flexible security policies</b> so that the containing page can
+effectively control the embedded applications' use of user data and to
+allow gadgets to prevent interference between gadgets' UI elements.
+
+Today, some websites embed third-party code using <tt>iframe</tt>s.
+This approach does not prevent a wide variety of attacks:
+<a href="http://code.google.com/p/google-caja/wiki/RedirectWithoutUserAction">redirection to phishing pages</a> which could pretend to be a login
+page for the embedding application, stopping the browser from working
+until the user
+<a href="http://code.google.com/p/google-caja/wiki/RedirectWithoutUserAction">downloads malware</a>,
+<a href="http://code.google.com/p/google-caja/wiki/HistoryMining">stealing history information</a> about which sites a user has visited
+so that more target phishing attacks can be done, and
+<a href="http://code.google.com/p/google-caja/wiki/UrlFetchingSideChannel">port scanning</a> the user's local network.  Finally, even though a
+website can choose not to give its data to an <tt>iframe</tt> app, once it has
+done so, it can place no further restrictions on what the <tt>iframe</tt> app
+can do with it &mdash; it cannot stop the <tt>iframe</tt> app from sending that
+data elsewhere.
+
+Caja addresses these problems which are not addressed
+by <tt>iframe</tt> jails; and it does so in a very <b>flexible</b>
+way.  If a container wishes to allow an embedded application to use a
+particular web service, but not send arbitrary network requests, then
+it can give the application an object that interacts with that
+web service, but deny access to {{{XMLHttpRequest}}}.  Under
+Caja, <b>passing object grants authority, and denying access to
+objects denies authority</b>, as is typical in an object capabilities
+environment.
+
+==Contacting the Caja Team==
+===Discussions===
+Our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> group is the best place to contact us.  First posts
+are moderated to remove spam, so don't worry if your post doesn't show
+up immediately.
+
+===Reporting Bugs &amp; Security Issues===
+Please report bugs and potential vulnerabilities at the
+<a href="http://code.google.com/p/google-caja/issues/entry">issue tracker</a>.
+For security vulnerabilities, please mark it with the {{{Private}}}
+label.  The Caja team encourages
+<a href="http://en.wikipedia.org/wiki/Responsible_disclosure">responsible disclosure</a> since production services rely on us for
+security and will work to resolve the issue and make sure credit is
+given.
+
+===Contributing===
+The Caja team includes people from a number of different companies
+and some private individuals.
+If you would like to contribute, introduce yourself on
+our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> group.
+
+==Motivation==
+Some websites embed code in <tt>iframe</tt>s, and pass user data.  The use of
+these sites has thus far been limited to teenagers and others who are
+comfortable with some aspects of their lives being very public.  The
+same development model &mdash; where one company provides a general
+storage layer for data, and third-parties provide custom interfaces
+and extensions &mdash; has not been extended to systems that deal with
+valuable data.
+
+This development model is promising though.  Large software companies
+have to target their user-interface efforts at a mythical average
+user; the high costs of researching and understanding the needs of
+niches of users means user interfaces tend to suffer from the "lowest
+common denominator" effect.  But there are many developers who
+understand niche markets, and know how to write custom user-interfaces
+and workflows.
+
+If we can safely embed third party user interfaces and work-flows into
+generic back-ends we can encourage a market for embedded applications that will make
+the web experience much ricer.  Caja aims to allow that safe embedding.
+
+==What is Caja==
+Caja (pronounced "KA-ha"), is a Spanish word that means box, bank,
+cash register, vault; a container for valuables.
+A <b>web developer uses traditional tools</b> like HTML, JavaScript,
+and CSS; and Caja provides a compiler (a "cajoler") that takes the
+web application and produces an HTML web application.  It tries to
+verify security properties by doing static analysis and where it cannot
+it rewrites the input to add runtime checks.
+
+Since web applications make common use of browser APIs, e.g. the DOM
+APIs, that give a huge amount of access to the web page, Caja
+provides <a href="http://www.erights.org/elib/legacy/taming.html">tamed</a>
+APIs that virtualize portions of the DOM, so that a containing page can
+set up the embedding application's environment so that the embedded
+application thinks it is interacting with a full page DOM, but is only
+manipulating a bounded portion of the containing page via a mechanism
+called <b>virtual iframes</b>.
+
+The JavaScript that a Caja application uses is written in
+a <a href="http://en.wikipedia.org/wiki/Fail-stop">fail stop
+subset</a> of JavaScript (actually EcmaScript5).  This subset
+includes almost the entire JavaScript language, but removes a few
+error prone constructs such as {{{with}}} and confines how {{{eval}}}
+can be used.
+
+==News==
+
+  * Just write your gadgets in Javascript/DHTML and they'll probably work right away.  [http://cajadores.com/demos/testbed/ Try it!]
+  * [http://developer.yahoo.com/yap/guide/caja-support.html Caja on YAP], the Yahoo Application Platform
+  * [http://developer.yahoo.net/blog/archives/2009/01/whaddyathink.html Article] on YDN discussing the benefits and gotchas of developing apps with Caja
+  * Containers looking to host gadgets on their pages
+  * [http://due-diligence.typepad.com/blog/2008/04/web-20-investor.html Tim Oren explains Caja]
+  * [GettingStarted How to build Caja]
+  * [CajaHostingModules A sample host page for use by a container]
+
+==Talks==
+
+  * [http://sites.google.com/site/io/secure-collaboration---how-web-applications-can-share-and-still-be-paranoid Secure Collaboration - How Web Applications can Share and Still Be Paranoid]
+  * [http://prog.vub.ac.be/doku.php?id=se_seminar_290408#tradeoffs_in_retrofitting_securityan_experience_report Tradeoffs in Retrofitting Security: An Experience Report]
+
+==Examples==
+
+<table width="75%" height="1600px">
+<tr><td height="1600px" width="42%">
+<wiki:gadget url="http://www.thinkfu.com/malicious-cajoled.xml" height="1600px" border="0" width="95%" title="Cajoled Gadget" container="sandbox" />
+</td>
+<td height="1600px" width="42%"><wiki:gadget url="http://www.thinkfu.com/malicious-uncajoled.xml" height="1600px" border="0" width="95%" title="Uncajoled Gadget" container="sandbox" caja=1 />
+</td></tr>
+<tr><td colspan="2"><wiki:gadget url="http://www.thinkfu.com/malicious-setup.xml" height="150px" border="0" width="95%" container="sandbox" />
+</td></tr>
+</table>
