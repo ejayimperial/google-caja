@@ -343,16 +343,16 @@ The API is a javascript object which has a single public method which dispatches
 
 {{{
 {
-  rewriteUrl: function (absUrl, hints, mimeType) {  // final public
+  rewriteUrl: function (absUrl, hints) {  // final public
     // Dispatch to other handlers based on hints.
   },
-  rewriteScriptUrl: function (absUrl, hints, mimeType),  // abstract protected
-  rewriteStylesheetUrl: function (absUrl, hints, mimeType),  // abstract protected
-  rewriteAudioVisualUrl: function (absUrl, hints, mimeType),  // abstract protected
-  rewriteDocumentUrl: function (absUrl, hints, mimeType),  // abstract protected
-  rewriteObjectUrl: function (absUrl, hints, mimeType),  // abstract protected
-  rewriteUrn: function (absUrl, hints, mimeType),  // abstract protected
-  rewriteOther: function (absUrl, hints, mimeType),  // abstract protected
+  rewriteScriptUrl: function (absUrl, hints),  // abstract protected
+  rewriteStylesheetUrl: function (absUrl, hints),  // abstract protected
+  rewriteAudioVisualUrl: function (absUrl, hints),  // abstract protected
+  rewriteDocumentUrl: function (absUrl, hints),  // abstract protected
+  rewriteObjectUrl: function (absUrl, hints),  // abstract protected
+  rewriteUrn: function (absUrl, hints),  // abstract protected
+  rewriteOther: function (absUrl, hints),  // abstract protected
 }
 }}}
 
