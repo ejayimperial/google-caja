@@ -63,16 +63,16 @@ storage layer for data, and third-parties provide custom interfaces
 and extensions---has not been extended to systems that deal with
 valuable data.
 
-This development model is promising though.  Large software companies
+This development model is promising, though.  Large software companies
 have to target their user-interface efforts at a mythical average
 user; the high costs of researching and understanding the needs of
 niches of users means user interfaces tend to suffer from the "lowest
 common denominator" effect.  But there are many developers who
-understand niche markets, and know how to write custom user-interfaces
+understand niche markets, and know how to write custom user interfaces
 and workflows.
 
-If we can safely embed third party user interfaces and work-flows into
-generic back-ends we can encourage a market for embedded applications that will make
+If we can safely embed third party user interfaces and workflows into
+generic backends we can encourage a market for embedded applications that will make
 the web experience much ricer.  Caja aims to allow that safe embedding.
 
 ==What is Caja==
@@ -80,14 +80,14 @@ Caja (pronounced "KA-ha"), is a Spanish word that means box, bank,
 cash register, vault; a container for valuables.
 A <b>web developer uses traditional tools</b> like HTML, JavaScript,
 and CSS; and Caja provides a compiler (a "cajoler") that takes the
-web application and produces an HTML web application.  It tries to
-verify security properties by doing static analysis and where it cannot
+web application and produces a "cajoled" HTML web application: it tries to
+verify security properties by doing static analysis, and where it cannot
 it rewrites the input to add runtime checks.
 
 Since web applications make common use of browser APIs, e.g. the DOM
-APIs, that give a huge amount of access to the web page, Caja
+APIs, that give a huge amount of control over the web page, Caja
 provides <a href="http://www.erights.org/elib/legacy/taming.html">tamed</a>
-APIs that virtualize portions of the DOM, so that a containing page can
+APIs that virtualize portions of the DOM.  A containing page can
 set up the embedding application's environment so that the embedded
 application thinks it is interacting with a full page DOM, but is only
 manipulating a bounded portion of the containing page via a mechanism
