@@ -1,4 +1,5 @@
 #summary Draft of the new project home page
+#sidebar HomePageSideBar
 
 Caja allows websites to <b>safely embed</b> DHTML web applications
 from third-parties and enables <b>rich-interaction</b> between the
