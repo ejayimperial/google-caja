@@ -58,9 +58,9 @@ our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> 
 Some websites embed code in <tt>iframe</tt>s, and pass user data.  The use of
 these sites has thus far been limited to teenagers and others who are
 comfortable with some aspects of their lives being very public.  The
-same development model &mdash; where one company provides a general
+same development model---where one company provides a general
 storage layer for data, and third-parties provide custom interfaces
-and extensions &mdash; has not been extended to systems that deal with
+and extensions---has not been extended to systems that deal with
 valuable data.
 
 This development model is promising though.  Large software companies
