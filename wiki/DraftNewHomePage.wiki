@@ -3,7 +3,7 @@
 
 <img src="http://google-caja.googlecode.com/svn/trunk/doc/images/invaders.png" align="right" title="Invaders in a container are contained in what they can do">
 Caja allows websites to <b>safely embed</b> DHTML web applications
-from third parties, and enables <b>rich-interaction</b> between the
+from third parties, and enables <b>rich interaction</b> between the
 embedding page and the embedded applications.  It uses an
 <a href="http://en.wikipedia.org/wiki/Object-capability_model">object-capability security model</a> to allow for a wide-range
 of <b>flexible security policies</b>, so that the containing page can
