@@ -13,7 +13,7 @@ allow gadgets to prevent interference between gadgets' UI elements.
 Today, some websites embed third-party code using <tt>iframe</tt>s.
 This approach does not prevent a wide variety of attacks:
 <a href="http://code.google.com/p/google-caja/wiki/RedirectWithoutUserAction">redirection to phishing pages</a> which could pretend to be a login
-page for the embedding application stopping the browser from working
+page for the embedding application; stopping the browser from working
 until the user
 <a href="http://code.google.com/p/google-caja/wiki/RedirectWithoutUserAction">downloads malware</a>;
 <a href="http://code.google.com/p/google-caja/wiki/HistoryMining">stealing history information</a> about which sites a user has visited
