@@ -1,6 +1,7 @@
 #summary Draft of the new project home page
 #sidebar HomePageSideBar
 
+<img src="http://google-caja.googlecode.com/svn/trunk/doc/images/invaders.png" align="right" title="Invaders in a container are contained in what they can do">
 Caja allows websites to <b>safely embed</b> DHTML web applications
 from third-parties and enables <b>rich-interaction</b> between the
 embedding page and the embedded applications.  It uses an
