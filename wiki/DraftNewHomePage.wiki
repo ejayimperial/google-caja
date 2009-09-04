@@ -39,7 +39,7 @@ environment.
 Our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> group is the best place to contact us.  First posts
 are moderated to remove spam, so don't worry if your post doesn't show
 up immediately.
-We also sit on the [irc://freenode.net/%23caja #caja IRC channel] on <tt>freenode.net</tt>.
+You can also find team members on the [irc://freenode.net/%23caja #caja IRC channel] on <tt>freenode.net</tt>.
 
 ===Reporting Bugs & Security Issues===
 Please report bugs and potential vulnerabilities at the
