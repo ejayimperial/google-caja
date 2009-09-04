@@ -19,9 +19,9 @@ until the user
 <a href="http://code.google.com/p/google-caja/wiki/HistoryMining">stealing history information</a> about which sites a user has visited
 so that more target phishing attacks can be done; and
 <a href="http://code.google.com/p/google-caja/wiki/UrlFetchingSideChannel">port scanning</a> the user's local network.  Finally, even though a
-website can choose not to give its data to an <tt>iframe</tt> app, once it has
+website can choose not to give data to an <tt>iframe</tt> app, once it has
 done so it can place no further restrictions on what the <tt>iframe</tt> app
-can do with it---it cannot stop the <tt>iframe</tt> app from sending that
+can do with it — it cannot stop the <tt>iframe</tt> app from sending that
 data elsewhere.
 
 Caja addresses these problems which are not addressed
@@ -39,6 +39,7 @@ environment.
 Our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> group is the best place to contact us.  First posts
 are moderated to remove spam, so don't worry if your post doesn't show
 up immediately.
+We also sit on the <a href="irc://freenode.net/%23caja"><tt>#caja</tt> IRC channel</a> on <tt>freenode.net</tt>.
 
 ===Reporting Bugs & Security Issues===
 Please report bugs and potential vulnerabilities at the
@@ -59,9 +60,9 @@ our <a href="http://groups.google.com/group/google-caja-discuss">discussion</a> 
 Some websites embed code in <tt>iframe</tt>s, and pass user data between them.  The use of
 these sites has thus far been limited to teenagers and others who are
 comfortable with some aspects of their lives being very public.  The
-same development model---where one company provides a general
+same development model — where one company provides a general
 storage layer for data, and third parties provide custom interfaces
-and extensions---has not been extended to systems that deal with
+and extensions — has not been extended to systems that deal with
 valuable data.
 
 This development model is promising, though.  Large software companies
