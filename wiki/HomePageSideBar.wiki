@@ -1,6 +1,0 @@
-   * [http://groups.google.com/google-caja-discuss Drop us a line]
-   * [http://cajadores.com/demos/testbed/ Try out Caja]
-   * [AttackVectors Attack Vectors]
-   * [CapabilityUseCases Use Cases]
-   * [http://cajadores.com/docs/rules/DefaultCajaRewriter.html Rewrite Rules]
-   * [http://www.ecma-international.org/publications/files/drafts/tc39-2009-025.pdf EcmaScript5 Draft]
