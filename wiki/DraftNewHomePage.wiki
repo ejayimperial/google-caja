@@ -32,7 +32,7 @@ it can give the application an object that interacts with that
 web service, but deny access to {{{XMLHttpRequest}}}.  Under
 Caja, <b>passing objects grants authority, and denying access to
 objects denies authority</b>, as is typical in an object-capability
-environment.
+environment.  Information leakage can be prevented by allowing user data to be encapsulated in objects that can be rendered in user-readable form but not read by scripts ; we can prevent leakage without solving the problem of covert channels.
 
 ==Contacting the Caja Team==
 ===Discussions===
