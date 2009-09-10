@@ -66,7 +66,7 @@ Mozilla/Firefox, versions not known.
 
 ==Example==
 {{{
-Host found: <div id="host"></div>
+<div>Host found: <div id="host"></div>
 <script type="text/javascript">
   var host_found=false;
   function notify() {
@@ -79,5 +79,5 @@ Host found: <div id="host"></div>
 <img src="http://print" onload="notify()" onerror="notify()">
 <script>
   setTimeout(displayMessage, 5000);
-</script>
+</script></div>
 }}}
