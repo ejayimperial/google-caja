@@ -25,6 +25,8 @@ Caja whitelists access to object properties, and so some properites
 from Caja.  Containers can choose to expose properties to Caja code by
 granting access on a property-by-property basis.
 
+As described at NiceNeighbor, array index properties, and the length property are always readable.
+
 === Methods as Properties ===
 
 ES3 methods are simply properties containing function objects.
