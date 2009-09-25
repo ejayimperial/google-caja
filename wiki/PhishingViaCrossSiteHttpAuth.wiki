@@ -16,7 +16,7 @@ In the attack scenario, the user has an account on site `example.com` and is bro
 <img src="evil.com/pony.jpg"/>
 }}}
 
-For example, if `example.com` is an email UI, the attacker may send the user an email. On the face of it, this content seems like harmless static HTML presenting no XSS risks, and an HTML sanitizer on `example.com` might validly choose to allow it.
+For example, if `example.com` is an email UI, the attacker may send the user an email containing the above HTML. On the face of it, this content seems like harmless static HTML presenting no XSS risks, and an HTML sanitizer on `example.com` might validly choose to allow it.
 
 The attacker arranges for the HTTP response for `evil.com/pony.jpg` to include a request for Basic HTTP authentication. The result is that the user of `example.com` sees a dialog that _looks_ like it came from something on `example.com`, saying (depending on the browser):
 
