@@ -77,8 +77,8 @@ cajoled JS:
 
 ==Code Eliminating Minifier==
 Next, we define a rewriter that reads the JSON file, and finds
-expressions in conditions that match those.  We then inline any
-assertions or their negations, constant fold over comparison
+expressions in conditions that match those and that contain non-global references.
+We then inline any assertions or their negations, and constant fold over comparison
 and logic operators.
 
 Finally the rewriter eliminates code paths that are inside conditionals or loops
