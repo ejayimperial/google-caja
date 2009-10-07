@@ -266,8 +266,8 @@ reads do not return a function.
 
 || *Current API* || *Meaning* ||
 || `___.grantFunc(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`]` is a safe simple-function, i.e., a function that does not mention `this` that should be invokable from Cajita. ||
-|| `___.grantGenericMethod(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, and _obj_`[`_name_`]` is safe to use _generically_ -- with its `this` bound to other objects via `apply`, `call`, and `bind`. For example, most methods on `Array.prototype` are tamed as generic. ||
-|| `___.grantTypedMethod(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, but when _obj_`[`_name_`]` is _not_ safe to use generically. This taming ensures that if its `this` is bound to other objects via `apply`, `call`, and `bind`, the function is only called if the alternate `this` inherits from _obj_. For example, most methods on `Date.prototype` are tamed as typed generic. ||
+|| `___.grantGenericMethod(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, and _obj_`[`_name_`]` is safe to use _generically_ -- with its `this` bound to other objects via `apply`, `call`, and `bind`. For example, most methods on `Array.prototype` are tamed as generic methods. ||
+|| `___.grantTypedMethod(`_obj_`,`_name_`)` || Use when _obj_`[`_name_`](`...`)` is safe to call directly from Cajita code, but when _obj_`[`_name_`]` is _not_ safe to use generically. This taming ensures that if its `this` is bound to other objects via `apply`, `call`, and `bind`, the function is only called if the alternate `this` inherits from _obj_. For example, most methods on `Date.prototype` are tamed as typed methods. ||
 || `___.grantMutatingMethod(`_obj_`,`_name_`)` || Then the method would mutate its `this` value, which must therefore be guarded by an `isFrozen` check. ||
 || `___.handleGenericMethod(`_obj_`,`_name_`,`_callHandler_`)` || All remaining cases, where the _callHandler_ supplies whatever alternate behavior is to be made available to Cajita code. ||
 
