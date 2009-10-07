@@ -59,7 +59,7 @@ environment and produces a JSON object like:
   "typeof window.JSON": 'undefined',
   "!!window.addEventListener": true,
   "!!window.attachEventr": true,
-  "(function () { 'use strict'; return this === null; })()": false
+  "!!(function () { 'use strict'; return this; })()": false
 })
 }}}
 where each key is a snippet of javascript that has no side-effect, and
