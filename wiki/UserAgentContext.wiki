@@ -105,8 +105,8 @@ enum UserAgentProperty {{
 }
 ...
 void optimize() {
-  Boolean negativeIndicesOnFns = myPluginEnvironment.getUserAgentJson() .get
-      (UserAgentProperty.NEGATIVE_INDICES_ON_FNS.code);  // null => don't know
+  Boolean negativeIndicesOnFns = myPluginEnvironment.getUserAgentJson().get(
+      UserAgentProperty.NEGATIVE_INDICES_ON_FNS.code);  // null &rarr; don't know
   if (!Boolean.FALSE.equals(negativeIndicesOnFns)) { return; }  // abort
   // optimize
 }
@@ -117,7 +117,8 @@ user-agent JSON based on the user agent header in the request headers.
 Each JSON file should include the user agent as a property, so we will
 probably have to write a function to strip out insignificant info (OS
 version, locale, etc.) from the user agent string.  It is always safe
-to use an empty JSON object as an environment object.
+to use an empty JSON object as an environment object because an undefined
+key means "don't know."
 
 ==Validating==
 We can check that the assumptions inherent in a user-agent JSON file hold in a container, and in the presence of the cajita supporting code by doing the following:
@@ -127,3 +128,6 @@ We can check that the assumptions inherent in a user-agent JSON file hold in a c
   # Compare the JSON from (2) with that from the environment file.
 
 This validation can be done by containers to make sure they're not violating the assumptions above, and could be done in the beginning of a module to make sure that it only runs in the proper environment.
+
+==Effect on Cachability==
+The User Agent definitions passed to the cajoler affect the cajoler output, so any cajoling service that caches the output of a module must incorporate a proxy for the user-agent into the cache key.  A good key to use would be {{{userAgentJson['navigator.userAgent']}}} along with the user's locale if the input contained message strings.
