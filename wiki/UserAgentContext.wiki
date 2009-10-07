@@ -37,7 +37,7 @@ optimize code for them.  As these bugs are fixed, the set of browsers
 for which we cannot optimize code should dwindle for any given bug.
 {{{ a[+i] = b[+i] }}}
 can be significantly optimized on all browsers except certain older
-Firefox versions.  And browers that implement EcmaScript 5 strict mode
+Firefox versions.  And browsers that implement EcmaScript 5 strict mode
 will require vastly fewer code transformations allowing smaller and
 faster cajoled code to work on those browsers.
 
@@ -62,8 +62,8 @@ environment and produces a JSON object like:
   "(function () { 'use strict'; return this === null; })()": false
 })
 }}}
-where each key is a snippet of javascrit that has no side-effect, and
-where each value is the result produced by evaling that code in a
+where each key is a snippet of javascript that has no side-effect, and
+where each value is the result produced by {{{eval}}}ing that code in a
 fresh execution context.
 
 We can generate JSON files for each user-agent we care about and store
@@ -73,7 +73,7 @@ them as artifacts in the source-code repository.
 We assume two things about containers that load our
 cajoled JS:
    # That they never delete a member of the global object
-   # That any additions to the global object will behave as specified.  So if a container provides its own implemention of window.JSON it is not observably different from that on a user-agent with a native implementation.
+   # That any additions to the global object will behave as specified.  So if a container provides its own implementation of window.JSON it is not observably different from that on a user-agent with a native implementation.
 
 ==Code Eliminating Minifier==
 Next, we define a rewriter that reads the JSON file, and finds
@@ -118,3 +118,12 @@ Each JSON file should include the user agent as a property, so we will
 probably have to write a function to strip out insignificant info (OS
 version, locale, etc.) from the user agent string.  It is always safe
 to use an empty JSON object as an environment object.
+
+==Validating==
+We can check that the assumptions inherent in a user-agent JSON file hold in a container, and in the presence of the cajita supporting code by doing the following:
+
+  # Load the container and/or cajita supporting code
+  # Run "environment-checks.js" to generate a new JSON object
+  # Compare the JSON from (2) with that from the environment file.
+
+This validation can be done by containers to make sure they're not violating the assumptions above, and could be done in the beginning of a module to make sure that it only runs in the proper environment.
