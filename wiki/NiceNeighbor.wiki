@@ -210,7 +210,6 @@ _constructors_ or as frozen _simple-functions_. In all cases, if _optName_ is pr
 || `___.markCtor(`_fun_`,`_optSuper_`,`_optName_`)` || Marks _fun_ as a constructor -- it can only be called with `new`. Returns _fun_. ||
 || `___.extend(`_hiddenFun_`,`_someSuper_`,`_optName_`)` || Use when _hiddenFun_ is a constructor which should not be exposed that makes tamed instances that should be exposed. Returns a new inert tamed constructor which will not make anything, but will be be `instanceof`-equivalent to _hiddenFun_. ||
 || `___.markFuncFreeze(`_fun_`,`_optName_`)` || Marks _fun_ as a simple-function -- one that does not mention `this` -- and freeze it. A simple function can be called as a function, method, or constructor. It is first class -- reading a readable property whose value is a simple-function obtains the simple-function itself. ||
-|| `___.markFuncOnly(`_fun_`,`_optName_`)` || Not a taming API. Should only be called by the cajoler's generated code. ||
 
 If _fun_ is a constructor and _fun_`.prototype` inherits directly from
 _aSuper_`.prototype`, then the _optSuper_ argument to `___.markCtor`
