@@ -14,7 +14,7 @@ According to EcmaScript
 
 The latest version of ICU specifies 0xad, 0x600-0x603, 0x70f,  0x17b4-0x17b5, 0x200c-0x200f, 0x202a-0x202e, 0x2060-0x206f, 0xfeff, 0xfff9-0xfffb, 0x1d173-0x1d17a, 0xe0001, 0xe0020-0xe007f as {{{[:Cf:]}}}.
 
-Both ES3.1 and ES4.0 are making sure that all codepoints allowed in string and regular expression literals are treated as significant, though as of this writing it is unclear whether they will ignore the default ignorable set outside literals.
+~~Both ES3.1 and ES4.0 are making sure that all codepoints allowed in string and regular expression literals are treated as significant, though as of this writing it is unclear whether they will ignore the default ignorable set outside literals.~~ The ES5 draft treat all format control characters as lexically significant.  It redefines a few codepoints (e.g. the BOM) as whitespace, but these are still lexically significant, not ignored.
 
 
 
