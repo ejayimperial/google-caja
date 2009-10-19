@@ -136,6 +136,23 @@ marking the result it returns as callable:
   ___.markFuncFreeze(tameMakeAddr);
 }}}
 
+== Simplified taming of libraries ==
+
+As you can see above, if a large number of functions in the library you are taming take functions as arguments or return other functions, taming a library can become very tedious and error prone.  Caja provides a simpler means of taming such functions using `tamesTo`, `tamesToSelf`, `tame` and `untame`.
+
+The `tamesTo` function allows you to associate an untamed function (which we call _feral_ functions) with their _tamed_ counterpart and vice versa. A feral object is one safe to make accessible to trusted but possibly innocent uncajoled code. A _tame_ object is one safe to make accessible to untrusted cajoled code. Most tamed objects should be both feral and tame and are safe to be accessed from both the feral and tame worlds.  An object can be marked safe to be accessed by both feral and tame worlds using `tamesToSelf`.
+
+Once feral and tamed objects have been paired, a container writer can easily tame a function using `tame`.  The function call `tame(f)` returns an object which can be safely passed to cajoled code.  In particular, marked functions will be wrapped such that their arguments are untamed before the original function is called and its result tamed before it is returned.  
+
+For example `makeAdder` can be tamed just by marking it as a function and calling `tame`:  
+
+{{{
+   function makeAdder() {
+     return function(s) { return s+1; }  
+   }
+   ___.markFunc(makeAdder);
+   tameAdder = ___.tame(makeAdder);
+}}}
 
 == Caveats while taming libraries ==
 
