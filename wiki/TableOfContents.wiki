@@ -1,4 +1,5 @@
 #summary documentation outline for docreader
+#sidebar TableOfContents
   * End-user's Guide
     * [Motivation Motivation]
       * [AttackVectors]
@@ -17,8 +18,6 @@
       * [EmbeddedEmulation]
       * [NiceNeighbor]
       * [WhatsMissing]
-
-    * [CajaLexicon Glossary of common terms]
   * Integration Guide
     * [CajaHostingModules Setting up a container]
     * [LibraryTaming Taming libraries]
@@ -33,11 +32,9 @@
     * [RunningJQueryTests]
     * [RunningPrototypeTests]
     * [InternalProperties]
-
   * [SecurityAdvisories Security Advisories]
   * [FAQ Frequently Asked Questions]
     * [HowDoesCajaStopX]
-
   * Internals
     * Design Decisions
       * [FlashBridge]
@@ -57,4 +54,4 @@
     * Mailing lists
     * [Ideas Ideas and feature requests]
       * [RefactoringToolFeatureRequests]
-
+  * [CajaLexicon Glossary of common terms]
