@@ -4,3 +4,4 @@
   * 23 Jun 2009 SecurityAdvisory20090623 Arbitrary code execution via DOM wrappers.
   * 23 Mar 2009 SecurityAdvisory20090323 Some code was not cajoled at all.
   * 20 Feb 2009 SecurityAdvisory20090220 Flaw in JSON parsing.
+  * 19 Oct 2009 SecurityAdvisory19Oct2009 iframes allowed in HTML whitelists.
