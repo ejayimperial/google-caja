@@ -1,4 +1,5 @@
 #summary Frames can redirect other frames
+#labels Attack-Vector
 
 =Any frame can redirect any nameable frame to any URL=
 
