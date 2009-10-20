@@ -1,0 +1,60 @@
+#summary documentation outline for docreader
+  * End-user's Guide
+    * [Motivation Motivation]
+      * [AttackVectors]
+      * [CapabilityUseCases]
+    * [GettingStarted Getting Started]
+    * [Debugging]
+      * [InternalProperties]
+    * Language spec
+      * [CajaOverview]
+      * [SimpleSubset]
+      * [FunctionSpecies]
+      * [SubsetRelationships]
+      * [CajitaValues]
+      * [CajaWhitelists]
+      * [TranslationTarget]
+      * [EmbeddedEmulation]
+      * [NiceNeighbor]
+      * [WhatsMissing]
+
+    * [CajaLexicon Glossary of common terms]
+  * Integration Guide
+    * [CajaHostingModules Setting up a container]
+    * [LibraryTaming Taming libraries]
+    * [JsHtmlSanitizer]
+    * [Performance]
+    * [PipelineConfiguration]
+  * Developer's Guide
+    * [CajaCajole]
+    * [ContributingCode]
+    * [DebuggingShindig]
+    * [RunningCaja]
+    * [RunningJQueryTests]
+    * [RunningPrototypeTests]
+    * [InternalProperties]
+
+  * [SecurityAdvisories Security Advisories]
+  * [FAQ Frequently Asked Questions]
+    * [HowDoesCajaStopX]
+
+  * Internals
+    * Design Decisions
+      * [FlashBridge]
+      * [UrlPolicy]
+      * [ObjectProperties]
+      * [UserAgentContext]
+      * [FunctionSpecies]
+      * [CssTemplating]
+      * [InnocentCodeRewriter]
+      * [UncaughtExceptionHandling]
+      * [OutputChecks]
+  * Releases
+    * [CajaVersions]
+  * Community
+    * External articles about caja
+    * Containers that use caja
+    * Mailing lists
+    * [Ideas Ideas and feature requests]
+      * [RefactoringToolFeatureRequests]
+
