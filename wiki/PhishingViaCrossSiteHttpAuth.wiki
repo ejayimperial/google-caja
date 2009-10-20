@@ -1,4 +1,5 @@
 #summary An attacker can display an HTTP authorization dialog that looks like it may have come from another site
+#labels Attack-Vector
 
 =Phishing Via Cross-Site HTTP Authorization=
 
