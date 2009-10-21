@@ -9,7 +9,8 @@ Caja compile time errors include information about what errors
 occured, the url of the offending content as well as a line number and
 offset.
 
-For example, suppose you try to cajole the following piece of code: {{{
+For example, suppose you try to cajole the following piece of code: 
+{{{
 <script>
 var top;
 with(top) { location = "http://www.evil.com" }
@@ -52,7 +53,8 @@ Some types of errors in your program won't get discovered until
 runtime.  On browsers that support a console, runtime errors are
 logged to the console configued by the container.
 
-For example, suppose you try to cajole and run the following piece of code: {{{
+For example, suppose you try to cajole and run the following piece of code:
+{{{
 <script>
 top.location = "http://www.evil.com";
 </script>
@@ -73,7 +75,8 @@ browser object other than the DOM.  As a result variables such as
 `window`, `top` and `navigator` which you may expect to be defined
 when you are running JavaScript in a browser will all be undefined.
 
-Here's another trivial piece of code with an error: {{{
+Here's another trivial piece of code with an error:
+{{{
 <script>
   function apply(func, val) {
     return func(val);
@@ -106,16 +109,17 @@ application is misbehaving.
 
 Here are some tips that you may find helpful:
 
-* [http://www.squarefree.com/shell/shell.html SquareFree Shell] provides a very useful [https://www.squarefree.com/bookmarklets/webdevel.html bookmarklet] which you can load in the same frame as a cajoled application.  In the shell, you can access what a cajoled gadget perceives its global scope to be as follows: {{{
+  * [http://www.squarefree.com/shell/shell.html Squarefree Shell] provides a very useful [https://www.squarefree.com/bookmarklets/webdevel.html bookmarklet] which you can load in the same frame as a cajoled application.  In the shell, you can access what a cajoled gadget perceives its global scope to be as follows:
+{{{
   var gadgetGlobal = ___.getNewModuleHandler().getImports().outers;
 }}}
 
-* You can test if some property of an object is readable, settable or callable by the gadget with `___.canRead(obj, property)`, `___.canSet(obj, property)` and `___.canCall(obj, property)` respectively.
+  * You can test if some property of an object is readable, settable or callable by the gadget with `___.canRead(obj, property)`, `___.canSet(obj, property)` and `___.canCall(obj, property)` respectively.
 
-* Other [InternalProperties internal properties] can also help identify why a cajoled program behaves differently from an uncajoled one
+  * Other [InternalProperties internal properties] can also help identify why a cajoled program behaves differently from an uncajoled one
 
-* By default, many containers will minify cajoled output for efficient delivery.  This is not ideal for debugging. If possible, request debug mode from the container or use the testbed for debugging.
+  * By default, many containers will minify cajoled output for efficient delivery.  This is not ideal for debugging. If possible, request debug mode from the container or use the testbed for debugging.
 
-* If you are using Firefox, install the Firebug extension.  Caja dumps useful logs and stack traces in the console.
+  * If you are using Firefox, install the Firebug extension.  Caja dumps useful logs and stack traces in the console.
 
-* If the container has made the `alert` function or the `console.log` functions available, they provide very useful feedback.
+  * If the container has made the `alert` function or the `console.log` functions available, they provide very useful feedback.
