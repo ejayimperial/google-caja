@@ -11,9 +11,8 @@ Caja requires
   * The [http://subversion.tigris.org/project_packages.html subversion] version manager
   * The [http://ant.apache.org/manual/install.html Apache Ant] build system.
   * The [http://sourceforge.net/project/showfiles.php?group_id=15278&package_id=12472 JUnit] testing framework.  Just drop {{{junit.jar}}} in the {{{$ANT_HOME/lib}}} directory you set up for Ant.
-  * [http://code.google.com/p/gvn gvn].
 
-If you intend to contribute patches to Caja (and we would love you to do that, see ContributingCode for how), you need to sign a Contributor Licence Agreement (either the [http://code.google.com/legal/individual-cla-v1.0.html individual CLA] or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate CLA], depending on your situation). Note that patches are accepted at the discretion of the development team. Membership of the development team will be offered to those who consistently make positive contributions.
+If you intend to contribute patches to Caja (and we would love you to do that, see [ContributingCode] for how), you need to sign a Contributor Licence Agreement (either the [http://code.google.com/legal/individual-cla-v1.0.html individual CLA] or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate CLA], depending on your situation). Note that patches are accepted at the discretion of the development team. Membership of the development team will be offered to those who consistently make positive contributions.
 
 == Building Caja via Ant ===
 
@@ -114,12 +113,6 @@ Now create an eclipse project:
 $ ./tools/myvn eclipse
 }}}
 
-You may have to create {{{~/.gvn/config}}} containing:
-
-`username=`_`your code.google.com user name`_
-
-before this works.
-
 From inside eclipse, import the project from the File -> Import -> Existing Project into Workspace option.  Select the Caja checkout directory as the root directory and import the project.
 
 Run the JUnit tests to ensure everything was checked out correctly.
@@ -159,8 +152,6 @@ google-caja
 |
 +--tests : test files and resources
 }}}
-
-
 
 == Other Resources ==
 

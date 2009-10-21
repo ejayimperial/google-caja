@@ -1,13 +1,5 @@
 #summary "Cajoling" is what we call the process of turning Caja input into JavaScript.
 
-=Decide what you want to cajole=
-
-Caja turns a piece of Web content -- roughly, a snippet of HTML, CSS and !JavaScript that you would see within the `body` tag of an HTML page -- into a Caja _module_. This module is represented as a single !JavaScript _module function_ that can be run within a Caja container. (The module function builds the supplied HTML and CSS dynamically.) Caja supports two input formats:
-
-*!OpenSocial.* Caja accepts an [http://code.google.com/apis/opensocial/ OpenSocial] [http://code.google.com/apis/gadgets/docs/spec.html gadget], producing as its output a similar gadget with a single `script` tag containing the module function.
-
-*Plain HTML.* When given a bare snippet of HTML content (including CSS, and !JavaScript `script` tags), Caja will produce a single !JavaScript file containing the module function.
-
 =Obtain a Caja build=
 
 To cajole your input, first build Caja from source.

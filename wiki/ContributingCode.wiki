@@ -106,3 +106,10 @@ $ ant runtests
   * `diffstats`    -  number of lines added/changed/removed
   * `files`        -  files changed in svn.  Pipeable to xargs 
   * `filetypes`    -  sets `svn:mime-type` of modified files based on file suffix
+
+= Legal =
+
+See also the Contributor Licence Agreement (either the
+[http://code.google.com/legal/individual-cla-v1.0.html individual CLA]
+or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate
+CLA]).
