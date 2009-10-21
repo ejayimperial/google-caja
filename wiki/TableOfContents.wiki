@@ -24,15 +24,15 @@
     * [Performance]
     * [PipelineConfiguration]
   * Developer's Guide
-    * [RunningCaja]
-    * [ContributingCode]
-    * [DebuggingShindig]
-    * [RunningJQueryTests]
-    * [RunningPrototypeTests]
-    * [InternalProperties]
+    * [RunningCaja Downloading and compiling Caja]
+    * [ContributingCode Contributing patches]
+    * [DebuggingShindig Debugging Shindig]
+    * [RunningJQueryTests Testing jQuery]
+    * [RunningPrototypeTests Testing prototype]
+    * [InternalProperties Internal properties]
+    * [HowDoesCajaStopX]
   * [SecurityAdvisories Security Advisories]
   * [FAQ Frequently Asked Questions]
-    * [HowDoesCajaStopX]
   * Internals
     * Design Decisions
       * [FlashBridge]
@@ -48,7 +48,7 @@
   * Releases
     * [CajaVersions]
   * Community
-    * External articles about caja
+    * [ExternalArticles External articles about caja]
     * [Containers Containers that use caja]
     * Mailing lists
     * [Ideas Ideas and feature requests]
