@@ -23,6 +23,10 @@ JavaScript can inspect both computed styles via {{{window.getComputedStyle}}} an
 
 Some CSS styles like {{{color}}} and various aural properties used by screen readers are commonly used to differentiate visited and unvisited links and the inability to use those styles might cause significant usability problems.  Indeed, users may use link styles to descide whether a link goes to a site that they trust.
 
+[https://bugzilla.mozilla.org/show_bug.cgi?id=147777#c132 This variation] is not currently prevented by Caja:
+<blockquote>
+Let's say a web page shows N hyperlinks that all say "Click here to continue." The unvisited links are styled to blend in with the background so the user can't see them. The visited links are visible because of the visited link styling, so the user only see the visited ones. Then the attacker can find out where the user's been by which link they click on.
+</blockquote>
 
 ==Assumptions==
 Untrusted code can specify a link to a target URL
