@@ -20,6 +20,8 @@ This combination of implicit constructors, and implicitly called methods makes i
 
 [http://www2007.org/papers/paper801.pdf Subspace] may have found a way to launder a function or object using discardable iframes and carefully choregraphed {{{document.domain}}} tricks to allow a function or object to be passed to another frame, but that only allows passing of primitive data since returning an object would reopen the attack vector.
 
+Also see [http://yura.thinkweb2.com/named-function-expressions/#spidermonkey-peculiarity SpiderMonkey Peculiarity] for a way in which changes to {{{Object.prototype}}} can violate the assumptions a closure makes about its containing scope.
+
 
 ==Assumptions==
 An attacker can modify the prototype of {{{Object}}} or {{{Array}}}.
@@ -36,7 +38,7 @@ and {{{Object}}} similarly
 
 
 ==Versions==
-Works in IE 6 and Firefox.  Example 2 works in Safari, but 1 is untested in Safari.
+Works in IE 6 and Firefox.  Example 2 works in Safari, but 1 is untested in Safari.  The function scope confusion trick works in the versions of SpiderMonkey that shipped with Firefox < 2.
 
 
 ==Example==
