@@ -132,5 +132,9 @@ We can check that the assumptions inherent in a user-agent JSON file hold in a c
 
 This validation can be done by containers to make sure they're not violating the assumptions above, and could be done in the beginning of a module to make sure that it only runs in the proper environment.
 
+An excellent place to do this check would be in a unit-testing framework since that is supposed to exercise a large portion of the code.
+
+Also, note that if the JSON from (2) does not match that in the environment file, then using the JSON object that contains only (key, value) pairs that are present in both, would yield a maximal set of optimization assumptions that *are* valid.
+
 ==Effect on Cachability==
 The User Agent definitions passed to the cajoler affect the cajoler output, so any cajoling service that caches the output of a module must incorporate a proxy for the user-agent into the cache key.  A good key to use would be {{{userAgentJson['navigator.userAgent']}}} along with the user's locale if the input contained message strings.
