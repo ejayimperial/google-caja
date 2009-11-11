@@ -44,7 +44,7 @@ faster cajoled code to work on those browsers.
 ==Goals==
 To reduce the amount of dead code shipped with our supporting JS, to
 allow optimizations on user-agents that don't have scary bugs, and to
-optimize out unnecessary code forking.
+optimize out unnecessary code branches.
 
 ==Overview==
 We want to be able to take into account, statically, knowledge about
@@ -74,6 +74,9 @@ We assume two things about containers that load our
 cajoled JS:
    # That they never delete a member of the global object
    # That any additions to the global object will behave as specified.  So if a container provides its own implementation of window.JSON it is not observably different from that on a user-agent with a native implementation.
+
+See [#Validating Validating] for ways these assumptions can be verified to hold for a wide range of programs.
+
 
 ==Code Eliminating Minifier==
 Next, we define a rewriter that reads the JSON file, and finds
@@ -120,7 +123,7 @@ version, locale, etc.) from the user agent string.  It is always safe
 to use an empty JSON object as an environment object because an undefined
 key means "don't know."
 
-==Validating==
+==<a name=Validating></a>Validating==
 We can check that the assumptions inherent in a user-agent JSON file hold in a container, and in the presence of the cajita supporting code by doing the following:
 
   # Load the container and/or cajita supporting code
