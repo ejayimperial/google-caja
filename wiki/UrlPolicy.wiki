@@ -304,9 +304,9 @@ No.  The URL policy API should be designed in such a way that a generic memoizin
 
 ====Where are URL policies evaluated?====
 
-Callers need to invoke the URL policy from both server-side java, and from client-side javascript.  We can use Rhino or another server-side JS interpreter to interpret a policy implemented in JS in the cajoler.
+Callers need to invoke the URL policy from both server-side java, and from client-side javascript.  There are two ways that these can be unified - either the policies are authored in Java and the client javascript is generated from the java class.  Alternatively, we can use Rhino or another server-side JS interpreter to interpret a policy implemented in JS in the cajoler.  The latter is preferred since a cajoling service that cajoles output for a variety of containers may need to supply different policies to the service.
 
-It is possible in the future, that there might be a cajoling service that cajoles output for a variety of containers.  In this case, each container might wish to supply their policy to the service.  So the policy might not be entirely trusted code, and might have to be specified via HTTP.
+The policy might not be entirely trusted code and may need to itself be cajoled before it is run or it may needed to be sandboxed in some other way.
 
 ====Is it the responsibility of the policy or the caller to resolve relative URLs?====
 
