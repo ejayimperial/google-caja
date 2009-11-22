@@ -13,11 +13,10 @@ Once access to the `Date` constructor and to `Math.random()` is removed from [Ca
 
   * Enumeration order of `for..in` loops 
   * Semantics of modifying a list that is being iterated over
-  * Stability of `Array.sort` on already sorted list of objects
-  * `Array.sort` of lists where the `valueOf` of elements in the array is not constant
-  * `Array.sort(comparator)` where `comparator` does not consistently compare values
+  * Several aspects of the behaviour of `Array.sort` (stability of the sort, ordering of calls to accessors and `valueOf`, behaviour when the comparison function is inconsistent, and a few other edge cases -- see ES5 section 15.4.4.11)
   * Order of callbacks queued using `setTimeout`
   * Some information about running time of a piece of code inferable from `setTimeout`
+  * Implementation-defined behaviour of base !JavaScript library functions (for example, `String.prototype.localeCompare`; any function called with extra arguments).
 
 == Sources of Non-determinism in Tamed Libraries ==
 
