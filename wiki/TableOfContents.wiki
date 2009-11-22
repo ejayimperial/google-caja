@@ -44,7 +44,8 @@
       * [InnocentCodeRewriter]
       * [UncaughtExceptionHandling]
       * [OutputChecks]
-    * [InternalProperties]
+    * [InternalProperties Internal Properties]
+    * [SourcesOfNonDeterminism Sources of Non-determinism]
   * Releases
     * [CajaVersions]
   * Community
