@@ -8,7 +8,6 @@
     * [CapabilityUseCases Capabilities in Web applications]
     * Language spec
       * [CajaOverview]
-      * [FunctionSpecies]
       * [CajitaValues]
       * [SubsetRelationships]
         * [NiceNeighbor]
