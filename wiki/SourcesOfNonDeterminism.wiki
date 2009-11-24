@@ -12,6 +12,7 @@ Once access to the `Date` constructor and to `Math.random()` is removed from [Ca
 == Sources of Non-Determinism in JavaScript ==
 
   * Enumeration order of `for..in` loops 
+  * Semantics of modifying a list that is being iterated over
   * Several aspects of the behaviour of `Array.sort` (stability of the sort, ordering of calls to accessors and `valueOf`, behaviour when the comparison function is inconsistent, and a few other edge cases -- see ES5 section 15.4.4.11)
   * Implementation-defined behaviour of base !JavaScript library functions (for example, `String.prototype.localeCompare`; any function called with extra arguments).
   * Non-deterministic exceptions like out of memory and stack overflow are catchable
