@@ -80,7 +80,7 @@ Here is a table of features and misfeatures, and the JavaScript family that they
 || `arguments.callee` || Yes || Yes || Yes || No || No || No ||
 || Modify meaning of `[...]` by rebinding `Array`|| Yes || Yes || No || No || No || No ||
 || `try`/`catch` || Yes  || Yes  || Yes || Yes || Yes || Yes ||
-|| Leak state between regular expressions || Yes || Yes || No || No || No || No ||
+|| Leak state between regular expressions || Yes || Varies || No || No || No || No ||
 || `with` || Yes || Yes || Yes || No || No || No ||
 || `this` promotes to global object || Yes || Yes || Yes || No || No || No ||
 || Joining `arguments` with parameter list || Yes || Yes || Yes || No || No || No ||
