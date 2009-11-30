@@ -16,6 +16,7 @@ Once access to the `Date` constructor and to `Math.random()` is removed from [Ca
   * Several aspects of the behaviour of `Array.sort` (stability of the sort, ordering of calls to accessors and `valueOf`, behaviour when the comparison function is inconsistent, and a few other edge cases -- see ES5 section 15.4.4.11)
   * Implementation-defined behaviour of base !JavaScript library functions (for example, `String.prototype.localeCompare`; any function called with extra arguments).
   * Non-deterministic exceptions like out of memory and stack overflow are catchable
+  * Non-determinism as a result of floating point operations
 
 == Sources of Non-determinism in Tamed Libraries ==
 
