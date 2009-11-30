@@ -64,3 +64,27 @@ Valija allows nested {{{function}}} declarations, but not yet with the block-sco
 
   * *Reflective attribute control* -- ES5 adds reflective attribute control operations on the {{{Object()}}} constructor (including the aforementioned {{{Object.getPrototype()}}}).
   * *getters and setters*
+
+
+== Summary ==
+
+Here is a table of features and misfeatures, and the JavaScript family that they are available in:
+
+||   || ES3 || ES3R || ES5 || ES5-strict || Cajita || Valija ||
+|| {{{__proto__}}} || Unspecified || Yes || Unspecified || No || No || No ||
+|| `delete` || Yes || Yes || ? || ? || No || No ||
+|| Function.caller || No || Yes || No || No || No || No ||
+|| Function.arguments || Yes || No || No || No || No || No ||
+|| {{{Function()}}} constructor || Yes || Yes ||  Yes || Yes || No || No ||
+|| arguments.caller ||Yes || Yes || Yes || No || No || No ||
+|| `arguments.callee` || Yes || Yes || Yes || No || No || No ||
+|| Modify meaning of `[]` by rebinding `Array`|| Yes || Yes || No || No || No || No ||
+|| `try`/`catch` || Yes  || Yes  || Yes || Yes || Yes || Yes ||
+|| Leak state between regular expressions || Yes || Yes || No || No || No || No ||
+|| `with` || Yes || Yes || Yes || No || No || No ||
+|| `this` promotes to global object || Yes || Yes || Yes || No || No || No ||
+|| Joining `arguments` with parameter list || Yes || Yes || Yes || No || No || No ||
+|| {{{eval()}}} || Yes || Yes || Yes || Yes || No || No ||
+|| Identifiers ending in a double underscore ("{{{__}}}") || Yes || Yes || Yes || Yes || No || No ||
+|| Reflective attribute control || No || No || Yes || Yes || No || No ||
+|| Getters and setters || No || Varies || Yes || Yes || No || Future ||
