@@ -14,7 +14,7 @@ Neither ES5 not Valija is settled yet, and actual browser behavior is determined
 
   * *{{{__proto__}}}*
 
-This feature as spelled this way is not expected to ever become standard, since Mozilla uses the double underscore specifically to signal "not standard". In any case, it is not mentionable in Cajita or Valija for that reason. ES5 will provide equivalent functionality by the static reflective method {{{Object.getPrototype()}}}. Once we upgrade Caja to emulate the ES5 APIs, we will probably provide this as well, but currently do not.
+This feature as spelled this way is not expected to ever become standard, since Mozilla uses the double underscore specifically to signal "not standard". In any case, it is not mentionable in Cajita or Valija for that reason. ES5 will provide equivalent functionality by the static reflective method {{{Object.getPrototypeOf()}}}. Once we upgrade Caja to emulate the ES5 APIs, we will probably provide this as well, but currently do not.
 
   * *{{{Function.caller}}}*
   * *{{{Function.arguments}}}*
@@ -76,16 +76,19 @@ Here is a table of features and misfeatures, and the JavaScript family that they
 || aFunction`.arguments`                                  || Unspecified || Yes     || Unspecified || No          || No        || No     ||
 || `Function()` constructor                               || Yes         || Yes     || Yes         || Yes         || No        || No     ||
 || `arguments.caller`                                     || Unspecified || Yes     || Unspecified || No          || No        || No     ||
-|| `arguments.callee`                                     || Unspecified || Yes     || Unspecified || No          || No        || No     ||
+|| `arguments.callee`                                     || Yes         || Yes     || Yes         || No          || No        || No     ||
 || Modify meaning of `[...]` by rebinding `Array`         || Unclear     || Varies  || No          || No          || No        || No     ||
 || `try`/`catch`                                          || Yes         || Yes     || Yes         || Yes         || Yes       || Yes    ||
 || Leak state between regular expressions                 || Yes         || Varies  || No          || No          || No        || No     ||
 || `with`                                                 || Yes         || Yes     || Yes         || No          || No        || No     ||
 || `this` promotes to global object                       || Yes         || Yes     || Yes         || No          || No        || No     ||
 || Joining `arguments` with parameter list                || Yes         || Yes     || Yes         || No          || No        || No     ||
-|| `eval()`                                               || Yes         || Yes     || Yes         || Yes         || No        || No     ||
+|| `eval()`                                               || Yes         || Yes     || Yes         || Yes^1^      || No        || No     ||
 || Identifiers ending in a double underscore ("{{{__}}}") || Yes         || Yes     || Yes         || Yes         || No        || No     ||
 || Reflective attribute control                           || No          || No      || Yes         || Yes         || No        || No     ||
-|| Getters and setters                                    || No          || 3/4 Yes || Yes         || Yes         || Future^1^ || Future ||
+|| Getters and setters                                    || No          || 3/4 Yes || Yes         || Yes         || Future^2^ || Future ||
 
-^1^ probably only the `get` and `set` syntax in object literals (see Issue 999)
+
+^1^ But without violating static scoping
+
+^2^ probably only the `get` and `set` syntax in object literals (see Issue 999)
