@@ -69,24 +69,23 @@ Valija allows nested {{{function}}} declarations, but not yet with the block-sco
 == Summary ==
 
 Here is a table of features and misfeatures, and the JavaScript family that they are available in:
-
-||   || ES3 || ES3R || ES5 || ES5-strict || Cajita || Valija ||
-|| `__proto__` || Unspecified || Yes || Unspecified || Unspecified || No || No ||
-|| `delete` variable || Yes || Yes || Yes || No || No || No ||
-|| aFunction`.caller` || No || Yes || No || No || No || No ||
-|| aFunction`.arguments` || Yes || No || No || No || No || No ||
-|| `Function()` constructor || Yes || Yes ||  Yes || Yes || No || No ||
-|| `arguments.caller` ||Yes || Yes || Yes || No || No || No ||
-|| `arguments.callee` || Yes || Yes || Yes || No || No || No ||
-|| Modify meaning of `[...]` by rebinding `Array`|| Yes || Yes || No || No || No || No ||
-|| `try`/`catch` || Yes  || Yes  || Yes || Yes || Yes || Yes ||
-|| Leak state between regular expressions || Yes || Varies || No || No || No || No ||
-|| `with` || Yes || Yes || Yes || No || No || No ||
-|| `this` promotes to global object || Yes || Yes || Yes || No || No || No ||
-|| Joining `arguments` with parameter list || Yes || Yes || Yes || No || No || No ||
-|| `eval()` || Yes || Yes || Yes || Yes || No || No ||
-|| Identifiers ending in a double underscore ("{{{__}}}") || Yes || Yes || Yes || Yes || No || No ||
-|| Reflective attribute control || No || No || Yes || Yes || No || No ||
-|| Getters and setters || No || Varies || Yes || Yes || Future^1^ || Future ||
+||                                                        || ES3         || ES3R    || ES5         || ES5-strict  || Cajita    || Valija ||
+|| `__proto__`                                            || Unspecified || 3/4 Yes || Unspecified || Unspecified || No        || No     ||
+|| `delete` variable                                      || Yes         || Yes     || Yes         || No          || No        || No     ||
+|| aFunction`.caller`                                     || Unspecified || Yes     || Unspecified || No          || No        || No     ||
+|| aFunction`.arguments`                                  || Unspecified || Yes     || Unspecified || No          || No        || No     ||
+|| `Function()` constructor                               || Yes         || Yes     || Yes         || Yes         || No        || No     ||
+|| `arguments.caller`                                     || Unspecified || Yes     || Unspecified || No          || No        || No     ||
+|| `arguments.callee`                                     || Unspecified || Yes     || Unspecified || No          || No        || No     ||
+|| Modify meaning of `[...]` by rebinding `Array`         || Unclear     || Varies  || No          || No          || No        || No     ||
+|| `try`/`catch`                                          || Yes         || Yes     || Yes         || Yes         || Yes       || Yes    ||
+|| Leak state between regular expressions                 || Yes         || Varies  || No          || No          || No        || No     ||
+|| `with`                                                 || Yes         || Yes     || Yes         || No          || No        || No     ||
+|| `this` promotes to global object                       || Yes         || Yes     || Yes         || No          || No        || No     ||
+|| Joining `arguments` with parameter list                || Yes         || Yes     || Yes         || No          || No        || No     ||
+|| `eval()`                                               || Yes         || Yes     || Yes         || Yes         || No        || No     ||
+|| Identifiers ending in a double underscore ("{{{__}}}") || Yes         || Yes     || Yes         || Yes         || No        || No     ||
+|| Reflective attribute control                           || No          || No      || Yes         || Yes         || No        || No     ||
+|| Getters and setters                                    || No          || 3/4 Yes || Yes         || Yes         || Future^1^ || Future ||
 
 ^1^ probably only the `get` and `set` syntax in object literals (see Issue 999)
