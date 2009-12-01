@@ -14,7 +14,7 @@ Neither ES5 not Valija is settled yet, and actual browser behavior is determined
 
   * *{{{__proto__}}}*
 
-This feature as spelled this way is not expected to ever become standard, since Mozilla uses the double underscore specifically to signal "not standard". In any case, it is not mentionable in Cajita or Valija for that reason. ES5 will provide equivalent functionality by the static reflective method {{{Object.getPrototypeOf()}}}. Once we upgrade Caja to emulate the ES5 APIs, we will probably provide this as well, but currently do not.
+This feature as spelled this way is not expected to ever become standard, since Mozilla uses the double underscore specifically to signal "not standard". In any case, it is not mentionable in Cajita or Valija for that reason. ES5 provides read-only access to an object's prototype by the static reflective method {{{Object.getPrototypeOf()}}}. Once we upgrade Caja to emulate the ES5 APIs, we will probably provide this as well, but currently do not.
 
   * *{{{Function.caller}}}*
   * *{{{Function.arguments}}}*
@@ -63,7 +63,7 @@ Valija allows nested {{{function}}} declarations, but not yet with the block-sco
 == In ES5-strict but not yet in Valija ==
 
   * *Reflective attribute control* -- ES5 adds reflective attribute control operations on the {{{Object()}}} constructor (including the aforementioned {{{Object.getPrototype()}}}).
-  * *getters and setters*
+  * *Getters and setters*
 
 
 == Summary ==
@@ -91,4 +91,4 @@ Here is a table of features and misfeatures, and the JavaScript family that they
 
 ^1^ But without violating static scoping
 
-^2^ probably only the `get` and `set` syntax in object literals (see Issue 999)
+^2^ Probably only the `get` and `set` syntax in object literals (see Issue 999)
