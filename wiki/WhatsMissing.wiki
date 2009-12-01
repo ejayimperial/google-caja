@@ -78,7 +78,6 @@ Here is a table of features and misfeatures, and the JavaScript family that they
 || `arguments.caller`                                     || Unspecified || Yes     || Unspecified || No          || No        || No     ||
 || `arguments.callee`                                     || Yes         || Yes     || Yes         || No          || No        || No     ||
 || Modify meaning of `[...]` by rebinding `Array`         || Unclear     || Varies  || No          || No          || No        || No     ||
-|| `try`/`catch`                                          || Yes         || Yes     || Yes         || Yes         || Yes       || Yes    ||
 || Leak state between regular expressions                 || Yes         || Varies  || No          || No          || No        || No     ||
 || `with`                                                 || Yes         || Yes     || Yes         || No          || No        || No     ||
 || `this` promotes to global object                       || Yes         || Yes     || Yes         || No          || No        || No     ||
