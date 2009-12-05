@@ -32,6 +32,7 @@ Below is a list of known attack vectors.  We discuss the !EcmaScript 3 language,
   * PostIncrementAndDecrementCanReturnNonNumber -- Incorrect implementations of postincrement and postdecrement can cause confusion as to which property is being accessed
   * MisOptimizations -- Some interpreters try to optimize javascript before execution subtly changing the semantics of builtin operators (PostIncrementAndDecrementCanReturnNonNumber is a specific example)
   * CompoundAssignmentsCanReturnNonNumber -- The type of assignment expressions may not be correct.
+  * FinallySkipped -- An exception that is thrown not inside a {{{try/catch}}} caught skips {{{finally}}} blocks.
 
 == Attack Vectors at the Browser Environment, DOM, HTML, or CSS levels ==
   * ScriptInHtml -- HTML Tags in Javascript Strings can allow Unsanitized Script Execution
