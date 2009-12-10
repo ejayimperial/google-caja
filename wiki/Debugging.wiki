@@ -135,3 +135,11 @@ The first step is to compile Caja sources with the debugging flag turned on. The
   * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/bin/cajole_html cajole_html], pass the argument `--renderer=debugger`.
 
   * *TODO(ihab.awad): Add argument to cajoling service.* When invoking the RESTful [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/service/CajolingService.java CajolingService] (e.g., on http://caja.appspot.com/), pass the argument `<not defined yet>`.
+
+You will be able to see a *Caja source* tab Firebug. Files cajoled using the debug flag will appear in their original form in the *Original Source* dropdown in this tab. You can set breakpoints on lines of original source, and otherwise continue to use Firebug as before:
+
+    [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorCajaSourceTab.png]
+
+If you select the *Script* tag, or if you hit a breakpoint, you will be in Firebug's usual *Script* tab. In the example below, the breakpoint set on a single line in the original source was mapped to several lines of Cajoled output. From any line in the Cajoled output, you can select *Show Original Source* to see the original source (in the *Caja source* tab) from which it was Cajoled:
+
+    [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorScriptTab.png]
