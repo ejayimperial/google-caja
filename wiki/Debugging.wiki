@@ -130,7 +130,7 @@ The Closure Inspector plugin to Firebug now has support for Caja source-level de
 
 The first step is to compile Caja sources with the debugging flag turned on. The ways to do this depend on the interface used to invoke Caja.
 
-  * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/opensocial/DefaultGadgetRewriter.java `DefaultGadgetRewriter`], call `setDebugMode(true)`.
+  * When invoking `[http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/opensocial/DefaultGadgetRewriter.java DefaultGadgetRewriter]`, call `setDebugMode(true)`.
 
   * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/bin/cajole_html `cajole_html`], pass the argument `--renderer=debugger`.
 
