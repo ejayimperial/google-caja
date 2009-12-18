@@ -126,9 +126,9 @@ Here are some tips that you may find helpful:
 
 = [[DRAFT]] Closure Inspector [[DRAFT]] =
 
-The Closure Inspector plugin to Firebug now has support for Caja source-level debugging! See the [http://code.google.com/closure/compiler/docs/inspector.html Closure Inspector page] for download links and installation instructions.
+The Closure Inspector plugin to Firebug now supports Caja source-level debugging! See the [http://code.google.com/closure/compiler/docs/inspector.html Closure Inspector page] for Inspector download links and installation instructions.
 
-The first step is to compile Caja sources with the debugging flag turned on. The ways to do this depend on the interface used to invoke Caja.
+To use the Closure Inspector to debug Caja source, first compile your Caja sources with the debugging flag turned on. The ways to do this depend on the interface used to invoke Caja.
 
   * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/opensocial/DefaultGadgetRewriter.java DefaultGadgetRewriter], call `setDebugMode(true)`.
 
@@ -136,10 +136,10 @@ The first step is to compile Caja sources with the debugging flag turned on. The
 
   * *TODO(ihab.awad): Add argument to cajoling service.* When invoking the RESTful [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/service/CajolingService.java CajolingService] (e.g., on http://caja.appspot.com/), pass the argument `<not defined yet>`.
 
-You will be able to see a *Caja source* tab Firebug. Files cajoled using the debug flag will appear in their original form in the *Original Source* dropdown in this tab. You can set breakpoints on lines of original source, and otherwise continue to use Firebug as before:
+When you load a page with your cajoled output in a browser and open Firebug, you will see a *Caja source* tab. Files cajoled in debug mode appear in their original form in the *Original Source* dropdown in this tab. You can set breakpoints on lines of original source, and otherwise continue to use Firebug as before:
 
     [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorCajaSourceTab.png]
 
-If you select the *Script* tag, or if you hit a breakpoint, you will be in Firebug's usual *Script* tab. In the example below, the breakpoint set on a single line in the original source was mapped to several lines of Cajoled output. From any line in the Cajoled output, you can select *Show Original Source* to see the original source (in the *Caja source* tab) from which it was Cajoled:
+If you select the *Script* tag, or if you hit a breakpoint, Firebug opens its *Script* tab. In the example below, the breakpoint set on a single line in the original source was mapped to several lines of Cajoled output. From any line in the Cajoled output, you can select *Show Original Source* to see the original source (in the *Caja source* tab) from which it was Cajoled:
 
     [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorScriptTab.png]
