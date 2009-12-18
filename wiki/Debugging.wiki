@@ -128,7 +128,7 @@ Here are some tips that you may find helpful:
 
 The Closure Inspector plugin to Firebug now supports Caja source-level debugging! See the [http://code.google.com/closure/compiler/docs/inspector.html Closure Inspector page] for Inspector download links and installation instructions.
 
-To use the Closure Inspector to debug Caja source, first compile your Caja sources with the debugging flag turned on. The ways to do this depend on the interface used to invoke Caja.
+To use the Closure Inspector to debug Caja source, first compile your Caja sources with the debugging flag turned on. How you do this depends on how you invoke Caja.
 
   * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/opensocial/DefaultGadgetRewriter.java DefaultGadgetRewriter], call `setDebugMode(true)`.
 
@@ -140,6 +140,6 @@ When you load a page with your cajoled output in a browser and open Firebug, you
 
     [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorCajaSourceTab.png]
 
-If you select the *Script* tag, or if you hit a breakpoint, Firebug opens its *Script* tab. In the example below, the breakpoint set on a single line in the original source was mapped to several lines of Cajoled output. From any line in the Cajoled output, you can select *Show Original Source* to see the original source (in the *Caja source* tab) from which it was Cajoled:
+If you select the *Script* tag, or if you hit a breakpoint, Firebug opens its *Script* tab. In the example below, the breakpoint set on a single line in the original source was mapped to several lines of cajoled output. From any line in the cajoled output, you can select *Show Original Source* to see the original source (in the *Caja source* tab) from which it was cajoled:
 
     [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorScriptTab.png]
