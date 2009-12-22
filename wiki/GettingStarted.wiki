@@ -7,6 +7,8 @@ and !JavaScript that you would see within the `body` tag of an HTML
 page -- into a Caja _module_. This module is represented as a single
 !JavaScript _module function_ that can be run within a Caja container.
 
+You can try out some examples running Caja in the CajaPlayground or by visiting [http://caja.appspot.com].
+
 Caja is currently used both for securing gadgets and plain webpages.
 
 = Caja for Gadgets =
@@ -17,7 +19,7 @@ YAP, Shindig, iGoogle, Code Wiki and Orkut) support Caja.
 
 To turn on caja, you require the caja feature with `<Require feature="caja" />`.
 
-For example, here is a trivial Hello World OpenSocial gadget:
+For example, here is a trivial Hello World !OpenSocial gadget:
 
 {{{
 <?xml version="1.0" encoding="UTF-8"?>
