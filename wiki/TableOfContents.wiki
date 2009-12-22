@@ -2,6 +2,7 @@
 #sidebar TableOfContents
   * End-user's Guide
     * [GettingStarted Getting Started]
+    * [CajaPlayground Try it out]
     * [Debugging]
     * [Motivation]
     * [AttackVectors Types of attacks]
