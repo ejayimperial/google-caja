@@ -1,4 +1,4 @@
-#summary How to contribute to code to Caja
+#summary How to contribute code to Caja
 
 = Introduction =
 
