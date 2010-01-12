@@ -30,7 +30,7 @@ Untrusted code can reference a function whose scope chain contains sensitive inf
 
 
 ==Versions==
-Firefox 2 and 3, but this feature is slated to be removed in Firefox 3.1 as it is widely recognized as a bug.
+Firefox 2 and 3, but this feature is slated to be removed in Firefox [https://bugzilla.mozilla.org/show_bug.cgi?id=531675 3.7] as it is widely recognized as a bug.
 
 
 ==Example==
