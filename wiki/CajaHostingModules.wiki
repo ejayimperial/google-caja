@@ -140,7 +140,7 @@ A Caja module host page is an HTML document.  It must do a few things:
   * Load the Caja trusted code base, which creates the {{{___}}} and {{{cajita}}} objects (3)
   * Supply a {{{provide}}} function for the Valija library to export its maker into (4)
   * Load the Valija library (5)
-  * Create divs to hold the cajoled content (26) (31).  The bounding box must have {{{position:relative}}} so that the virtual body is an offset parent for its content, and the {{{display}}} property should be specified to visually contain content, so the gadget cannot float content outside its bounding box.  Either {{{auto}}} or {{{hidden}}} are fine values for the display.
+  * Create divs to hold the cajoled content (26) (31).  The bounding box must have {{{position:relative}}} so that the virtual body is an offset parent for its content, and the {{{overflow}}} property should be specified to visually contain content, so the gadget cannot float content outside its bounding box.  Either {{{auto}}} or {{{hidden}}} are fine values for the overflow.
   * Create instances of the "virtual iframes" in the divs (28) (32)
   * Load the third-party code that will run in the virtual iframes (30) (34)
 The trusted code base and the Valija library are built by running "ant" after checking out the Caja project (1).
