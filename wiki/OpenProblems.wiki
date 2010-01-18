@@ -1,0 +1,9 @@
+#summary Open projects and ideas
+
+= Introduction =
+
+If you are interested in contributing in a larger way to the Caja effort, here are some open problems we would like to tackle.  If one of these problems or other related ones interest you, please contact us on the Caja mailing list.
+
+|| Formal semantics.  Formally capture the semantics of `cajita` and prove some of its security properties.  Explore whether these security properties are maintained by our implementation  ||
+
+|| Make changes to major libraries needed to get them to cajole. In addition to cajoling YUI, there has been some progress on cajoling Prototype and jQuery but other libraries have not been tackled.  ||
