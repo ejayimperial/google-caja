@@ -15,7 +15,6 @@
 package com.google.caja.ancillary.servlet;
 
 import com.google.caja.parser.ParseTreeNode;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.parser.js.StringLiteral;
 import com.google.caja.parser.quasiliteral.QuasiBuilder;
@@ -687,19 +686,18 @@ public class CajaWebToolsServletTest extends CajaTestCase {
     }
   }
 
-  private static final String HTML_NS = Namespaces.HTML_NAMESPACE_URI;
   /** Source code from an example link in index.quasi.html */
   private String exampleCode(String exampleTitle) throws Exception {
     Element root = html(fromResource("index.quasi.html"));
     for (Element example : Nodes.nodeListIterable(
-             root.getElementsByTagNameNS(HTML_NS, "li"),
+             root.getElementsByTagName("li"),
              Element.class)) {
       for (Element link : Nodes.nodeListIterable(
-          example.getElementsByTagNameNS(HTML_NS, "a"), Element.class)) {
+          example.getElementsByTagName("a"), Element.class)) {
         if (!exampleTitle.equals(link.getFirstChild().getNodeValue())) {
           continue;
         }
-        String uri = link.getAttributeNS(HTML_NS, "href");
+        String uri = link.getAttribute("href");
         if (!Strings.toLowerCase(uri).startsWith("javascript:")) { continue; }
         String js = URLDecoder.decode(
             uri.substring("javascript:".length()), "UTF-8");

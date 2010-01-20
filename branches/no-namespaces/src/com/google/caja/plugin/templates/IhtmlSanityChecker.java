@@ -21,6 +21,7 @@ import com.google.caja.parser.html.ElKey;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
+import com.google.caja.util.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +76,7 @@ public class IhtmlSanityChecker {
       for (HTML.Attribute attrDetails : elDetails.getAttributes()) {
         if (attrDetails.isOptional()) { continue; }
         AttribKey attrKey = attrDetails.getKey();
-        if (!ihtmlEl.hasAttributeNS(attrKey.ns.uri, attrKey.localName)) {
+        if (!ihtmlEl.hasAttribute(attrKey.qName)) {
           mq.addMessage(
               IhtmlMessageType.MISSING_ATTRIB,
               Nodes.getFilePositionFor(ihtmlEl), elKey, attrKey);
@@ -84,7 +85,7 @@ public class IhtmlSanityChecker {
       }
       for (Attr a : Nodes.attributesOf(ihtmlEl)) {
         AttribKey attrKey = AttribKey.forAttribute(elKey, a);
-        if (IHTML.is(ihtmlEl, "call") && IHTML.is(attrKey.ns)
+        if (IHTML.is(ihtmlEl, "call")
             && IHTML.isSafeIdentifier(a.getName())) {
           continue;
         }
@@ -146,7 +147,7 @@ public class IhtmlSanityChecker {
             FilePosition.span(
                 Nodes.getFilePositionFor(el.getFirstChild()),
                 Nodes.getFilePositionFor(el.getLastChild())),
-            MessagePart.Factory.valueOf(el.getLocalName())
+            MessagePart.Factory.valueOf(el.getNodeName())
             );
         markBroken(el);
       }
@@ -258,7 +259,7 @@ public class IhtmlSanityChecker {
         mq.addMessage(
             IhtmlMessageType.IHTML_IN_MESSAGE_OUTSIDE_PLACEHOLDER,
             Nodes.getFilePositionFor(el),
-            MessagePart.Factory.valueOf(el.getLocalName()));
+            MessagePart.Factory.valueOf(el.getNodeName()));
         for (Node p = el; (p = p.getParentNode()) != null;) {
           if (IHTML.isMessage(p)) {
             markBroken(p);
@@ -303,13 +304,16 @@ public class IhtmlSanityChecker {
   }
 
   private static boolean isIhtml(Node node) {
-    return node instanceof Element
-        && IHTML.NAMESPACE.equals(node.getNamespaceURI());
+    return node instanceof Element && node.getNodeName().startsWith("ihtml:");
   }
 
   private static Iterable<Element> allIhtml(Element root) {
-    return Nodes.nodeListIterable(
-        root.getElementsByTagNameNS(IHTML.NAMESPACE, "*"), Element.class);
+    List<Element> els = Lists.newArrayList();
+    for (Element el : Nodes.nodeListIterable(
+             root.getElementsByTagName("*"), Element.class)) {
+      if (IHTML.is(el.getNodeName())) { els.add(el); }
+    }
+    return els;
   }
 
   private static FilePosition posOf(Attr a) {

@@ -78,7 +78,7 @@ public class ResolveUriStage implements Pipeline.Stage<Jobs> {
         return uriFromBaseElement(el);
       } else {
         for (Element base : Nodes.nodeListIterable(
-            el.getElementsByTagNameNS(BASE.ns.uri, BASE.localName),
+            el.getElementsByTagName(BASE.qName),
             Element.class)) {
           URI uri = uriFromBaseElement(base);
           if (uri != null) { return uri; }
@@ -95,7 +95,7 @@ public class ResolveUriStage implements Pipeline.Stage<Jobs> {
   }
 
   private URI uriFromBaseElement(Element base) {
-    Attr a = base.getAttributeNodeNS(BASE_HREF.ns.uri, BASE_HREF.localName);
+    Attr a = base.getAttributeNode(BASE_HREF.qName);
     if (a == null) { return null; }
     String value = a.getValue();
     try {

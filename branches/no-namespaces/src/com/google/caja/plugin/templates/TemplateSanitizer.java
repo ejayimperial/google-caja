@@ -170,7 +170,7 @@ public final class TemplateSanitizer {
    */
   private static boolean isElementIgnorable(ElKey elKey) {
     if (!elKey.isHtml()) { return false; }
-    String lcName = elKey.localName;
+    String lcName = elKey.qName;
     return "noscript".equals(lcName) || "noembed".equals(lcName)
         || "noframes".equals(lcName) || "title".equals(lcName);
   }
@@ -205,7 +205,7 @@ public final class TemplateSanitizer {
       mq.addMessage(
           PluginMessageType.CANNOT_FOLD_ATTRIBUTE, Nodes.getFilePositionFor(a),
           MessagePart.Factory.valueOf(a.getNodeName()),
-          MessagePart.Factory.valueOf(el.getLocalName()));
+          MessagePart.Factory.valueOf(el.getNodeName()));
     }
 
     // Pick the subset of children to fold in.
@@ -232,7 +232,7 @@ public final class TemplateSanitizer {
   }
 
   private boolean removeBadAttribute(Element el, AttribKey attrKey) {
-    el.removeAttributeNS(attrKey.ns.uri, attrKey.localName);
+    el.removeAttribute(attrKey.qName);
     return true;
   }
 }

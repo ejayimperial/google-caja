@@ -27,7 +27,6 @@ import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.Visitor;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.render.Concatenator;
 import com.google.caja.render.CssPrettyPrinter;
 import com.google.caja.reporting.Message;
@@ -254,8 +253,7 @@ public final class CssRewriter {
     } else if (firstChild instanceof CssTree.IdentLiteral) {
       // "a#foo:visited" is legal; "p#foo:visited" is not
       String value = ((CssTree.IdentLiteral) firstChild).getValue();
-      if (!HTML_ANCHOR.equals(
-              ElKey.forElement(Namespaces.HTML_DEFAULT, value))) {
+      if (!HTML_ANCHOR.equals(ElKey.forElement(value))) {
         mq.addMessage(
             PluginMessageType.CSS_LINK_PSEUDO_SELECTOR_NOT_ALLOWED_ON_NONANCHOR,
             firstChild.getFilePosition());

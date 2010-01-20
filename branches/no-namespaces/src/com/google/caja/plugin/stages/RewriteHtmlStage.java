@@ -24,7 +24,6 @@ import com.google.caja.parser.Visitor;
 import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.html.AttribKey;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.parser.js.Block;
 import com.google.caja.plugin.Dom;
@@ -155,8 +154,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
   // javascript, so that when the DOM is rendered, we can properly interleave
   // the extract scripts with the scripts that generate markup.
   private Element placeholderFor(Node n, Block parsedScriptBody) {
-    Element placeholder = n.getOwnerDocument().createElementNS(
-        Namespaces.HTML_NAMESPACE_URI, "span");
+    Element placeholder = n.getOwnerDocument().createElement("span");
     Nodes.setFilePositionFor(placeholder, Nodes.getFilePositionFor(n));
     ExtractedHtmlContent.setExtractedScriptFor(placeholder, parsedScriptBody);
     return placeholder;
@@ -171,8 +169,7 @@ public class RewriteHtmlStage implements Pipeline.Stage<Jobs> {
   private void rewriteLinkEl(EmbeddedContent c, Jobs jobs) {
     Element linkEl = (Element) c.getSource();
     linkEl.getParentNode().removeChild(linkEl);
-    Attr media = linkEl.getAttributeNodeNS(
-        Namespaces.HTML_NAMESPACE_URI, "media");
+    Attr media = linkEl.getAttributeNode("media");
     extractStyles(linkEl, c, media, jobs);
   }
 

@@ -23,7 +23,6 @@ import com.google.caja.reporting.MessagePart;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.MessageType;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.w3c.dom.Attr;
@@ -42,13 +41,10 @@ import org.w3c.dom.Text;
 class XmlElementStack extends AbstractElementStack {
   private final MessageQueue mq;
 
-  XmlElementStack(
-      Document doc, Namespaces ns, boolean needsDebugData, MessageQueue mq) {
-    super(doc, ns, needsDebugData);
+  XmlElementStack(Document doc, boolean needsDebugData, MessageQueue mq) {
+    super(doc, needsDebugData);
     this.mq = mq;
   }
-
-  public boolean needsNamespaceFixup() { return false; }
 
   /** {@inheritDoc} */
   public void processTag(Token<HtmlTokenType> start, Token<HtmlTokenType> end,
@@ -67,43 +63,23 @@ class XmlElementStack extends AbstractElementStack {
       throws IllegalDocumentStateException {
     if (open) {
       OpenNode bottom = getBottom();
-      Namespaces ns = bottom.ns;
-      for (Iterator<AttrStub> it = attrs.iterator(); it.hasNext();) {
-        AttrStub a = it.next();
-        Namespaces fromAttr = a.toNamespace(ns, mq);
-        if (fromAttr != null) {
-          ns = fromAttr;
-          it.remove();
-        }
-      }
 
-      Namespaces elNs = ns.forElementName(elQName);
-      if (elNs == null) {
-        elNs = ns = unknownNamespace(start.pos, ns, elQName, mq);
-      }
-      String localName = Namespaces.localName(elNs.uri, elQName);
-      Element newElement = doc.createElementNS(elNs.uri, localName);
-      newElement.setPrefix(elNs.prefix);
+      Element newElement = doc.createElement(elQName);
       for (AttrStub a : attrs) {
         String attrQName = a.nameTok.text;
-        Namespaces attrNs = ns.forAttrName(elNs, attrQName);
-        if (attrNs == null) {
-          attrNs = ns = unknownNamespace(a.nameTok.pos, ns, attrQName, mq);
-        }
-        String localAttrName = Namespaces.localName(attrNs.uri, attrQName);
-        if (!newElement.hasAttributeNS(attrNs.uri, localAttrName)) {
+        if (!newElement.hasAttribute(attrQName)) {
           if (needsDebugData) {
-            Attr attrNode = a.toAttr(doc, attrNs.uri, localAttrName);
-            newElement.setAttributeNodeNS(attrNode);
+            Attr attrNode = a.toAttr(doc, attrQName);
+            newElement.setAttributeNode(attrNode);
           } else {
-            newElement.setAttributeNS(attrNs.uri, localAttrName, a.value);
+            newElement.setAttribute(attrQName, a.value);
           }
         } else {
           mq.addMessage(
               MessageType.DUPLICATE_ATTRIBUTE, a.nameTok.pos,
               MessagePart.Factory.valueOf(attrQName),
               Nodes.getFilePositionFor(
-                  newElement.getAttributeNodeNS(attrNs.uri, localAttrName)));
+                  newElement.getAttributeNode(attrQName)));
         }
       }
       if (needsDebugData) {
@@ -114,7 +90,7 @@ class XmlElementStack extends AbstractElementStack {
       if ("/>".equals(end.text)) {
         doAppend(newElement, bottom.n);
       } else {
-        push(newElement, ns, elQName);
+        push(newElement, elQName);
       }
     } else {
       String bottomElementName = getBottom().qname;
@@ -172,7 +148,7 @@ class XmlElementStack extends AbstractElementStack {
     }
     doAppend(textNode, parent);
   }
-  
+
   /**
    * Adds the given comment node to the DOM.
    */

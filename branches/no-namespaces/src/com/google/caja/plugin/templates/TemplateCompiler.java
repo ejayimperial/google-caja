@@ -184,15 +184,14 @@ public class TemplateCompiler {
         AttribKey attrKey = a.getKey();
         if (!htmlSchema.isAttributeAllowed(attrKey)) { continue; }
         Attr attr = null;
-        String aUri = attrKey.ns.uri;
-        String aName = attrKey.localName;
-        Attr unsafe = el.getAttributeNodeNS(aUri, aName);
+        String aName = attrKey.qName;
+        Attr unsafe = el.getAttributeNode(aName);
         if (unsafe != null && a.getValueCriterion().accept(unsafe.getValue())) {
           attr = unsafe;
         } else if ((a.getDefaultValue() != null
                     && !a.getValueCriterion().accept(a.getDefaultValue()))
                    || !a.isOptional()) {
-          attr = el.getOwnerDocument().createAttributeNS(aUri, aName);
+          attr = el.getOwnerDocument().createAttribute(aName);
           String safeValue;
           if (a.getType() == HTML.Attribute.Type.URI) {
             safeValue = "" + Nodes.getFilePositionFor(el).source().getUri();
@@ -205,7 +204,7 @@ public class TemplateCompiler {
             continue;
           }
           attr.setNodeValue(safeValue);
-          el.setAttributeNodeNS(attr);
+          el.setAttributeNode(attr);
         }
         if (attr != null) {
           inspectHtmlAttribute(attr, a);

@@ -55,8 +55,8 @@ final class AttrStub {
     return null;
   }
 
-  Attr toAttr(Document doc, String attrUri, String localAttrName) {
-    Attr attrNode = doc.createAttributeNS(attrUri, localAttrName);
+  Attr toAttr(Document doc, String qname) {
+    Attr attrNode = doc.createAttribute(qname);
     attrNode.setValue(value);
     Nodes.setFilePositionFor(attrNode, nameTok.pos);
     Nodes.setFilePositionForValue(attrNode, valueTok.pos);

@@ -31,33 +31,26 @@ import org.w3c.dom.Attr;
 public final class AttribKey implements MessagePart, Comparable<AttribKey> {
   /** The kind of element the attribute appears on. */
   public final ElKey el;
-  /** The namespace in which the attribute appears. */
-  public final Namespaces ns;
   /**
    * The normalized local name of the attribute.
    * For HTML, the normalized name is the lower case form of the name, but
    * for other namespaces, no normalization is done.
    */
-  public final String localName;
+  public final String qName;
 
-  private AttribKey(ElKey el, Namespaces ns, String localName) {
-    if (el == null || ns == null || localName == null) {
+  private AttribKey(ElKey el, String qName) {
+    if (el == null || qName == null) {
       throw new NullPointerException();
     }
     this.el = el;
-    this.ns = ns;
-    this.localName = this.ns.uri == Namespaces.HTML_NAMESPACE_URI
-        ? Strings.toLowerCase(localName) : localName;
+    this.qName = qName.indexOf(':') < 0
+        ? Strings.toLowerCase(qName) : qName;
   }
 
   public boolean is(Attr a) {
-    return ns.uri.equals(a.getNamespaceURI())
-        && localName.equals(a.getLocalName())
+    return qName.equals(a.getName())
         && el.is(a.getOwnerElement());
   }
-
-  private static final Namespaces HTML_NS = Namespaces.HTML_DEFAULT.forUri(
-      Namespaces.HTML_NAMESPACE_URI);
 
   /**
    * Looks up an attribute key by element and local name.
@@ -66,33 +59,18 @@ public final class AttribKey implements MessagePart, Comparable<AttribKey> {
    * @param localName unnormalized.
    */
   public static AttribKey forHtmlAttrib(ElKey el, String localName) {
-    return new AttribKey(el, HTML_NS, localName);
+    return new AttribKey(el, localName);
   }
 
   /**
    * Looks up an attribute key by qualified name.
    *
-   * @param inScope the set of namespaces in scope where the attribute appears.
    * @param el not null.  The key of the element that the attribute appears on.
    * @param qname the qualified name of the attribute.
    * @return null if qname does not specify a namespace in scope.
    */
-  public static AttribKey forAttribute(
-      Namespaces inScope, ElKey el, String qname) {
-    Namespaces ns;
-    String localName;
-    int colon = qname.indexOf(':');
-    if (colon < 0) {  // Same namespace as element
-      ns = el.ns;
-      localName = qname;
-    } else {
-      ns = inScope.forAttrName(el.ns, qname);
-      if (ns == null) { return null; }
-      // Normalize namespace.  Use the topmost one.
-      ns = inScope.forUri(ns.uri);
-      localName = qname.substring(colon + 1);
-    }
-    return new AttribKey(el, ns, localName);
+  public static AttribKey forAttribute(ElKey el, String qname) {
+    return new AttribKey(el, qname);
   }
 
   /**
@@ -103,16 +81,7 @@ public final class AttribKey implements MessagePart, Comparable<AttribKey> {
    * @return a key describing attr.
    */
   public static AttribKey forAttribute(ElKey el, Attr attr) {
-    String uri = attr.getNamespaceURI();
-    String localName = attr.getLocalName();
-    // uri can be null for weird elements like ISINDEX which the HTML5 parser
-    // emulates using other HTML elements.
-    Namespaces ns = uri != null ? Namespaces.HTML_DEFAULT.forUri(uri) : el.ns;
-    // If there's no common name for it, create a namespace that has the
-    // mandatory ancestors, and the attribute's namespace URI in the default
-    // namespace.
-    if (ns == null) { ns = new Namespaces(Namespaces.XML_SPECIAL, "", uri); }
-    return new AttribKey(el, ns, localName);
+    return new AttribKey(el, attr.getName());
   }
 
   /**
@@ -120,7 +89,7 @@ public final class AttribKey implements MessagePart, Comparable<AttribKey> {
    * namespace.
    */
   public AttribKey onAnyElement() {
-    return onElement(ElKey.wildcard(ns));
+    return onElement(ElKey.wildcard());
   }
 
   /**
@@ -128,60 +97,48 @@ public final class AttribKey implements MessagePart, Comparable<AttribKey> {
    */
   public AttribKey onElement(ElKey el) {
     if (el.equals(this.el)) { return this; }
-    return new AttribKey(el, ns, localName);
+    return new AttribKey(el, qName);
   }
 
   public void format(MessageContext mc, Appendable out) throws IOException {
-    if (el.ns.uri == ns.uri) {
-      out.append(localName);
-    } else {
-      appendQName(ns, localName, out);
-    }
+    appendQName(qName, out);
   }
 
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof AttribKey)) { return false; }
     AttribKey that = (AttribKey) o;
-    return this.ns.uri == that.ns.uri
-        && this.el.equals(that.el)
-        && this.localName.equals(that.localName);
+    return this.el.equals(that.el)
+        && this.qName.equals(that.qName);
   }
 
   @Override
   public int hashCode() {
-    return ns.uri.hashCode() + 31 * (localName.hashCode() + 31 * el.hashCode());
+    return (qName.hashCode() + 31 * el.hashCode());
   }
 
   @Override
   public String toString() {
     StringBuilder out = new StringBuilder();
     try {
-      appendQName(el.ns, el.localName, out);
+      appendQName(el.qName, out);
       out.append("::");
-      appendQName(ns, localName, out);
+      appendQName(qName, out);
     } catch (IOException ex) {
       throw new RuntimeException("Appending to StringBuilder", ex);
     }
     return out.toString();
   }
 
-  private static void appendQName(
-      Namespaces ns, String localName, Appendable out)
+  private static void appendQName(String qName, Appendable out)
       throws IOException {
-    if (!"".equals(ns.prefix)) {
-      out.append(ns.prefix).append(":");
-    }
-    out.append(localName);
+    out.append(qName);
   }
 
   public int compareTo(AttribKey that) {
     int delta = this.el.compareTo(that.el);
     if (delta == 0) {
-      delta = this.ns.uri.compareTo(that.ns.uri);
-      if (delta == 0) {
-        delta = this.localName.compareTo(that.localName);
-      }
+      delta = this.qName.compareTo(that.qName);
     }
     return delta;
   }

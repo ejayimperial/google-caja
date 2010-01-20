@@ -98,8 +98,6 @@ public interface OpenElementStack {
   void finish(FilePosition endOfFile)
       throws IllegalDocumentStateException;
 
-  boolean needsNamespaceFixup();
-
   /**
    * Constructors.
    */
@@ -120,8 +118,8 @@ public interface OpenElementStack {
      * @param mq receives parser warnings.
      */
     public static OpenElementStack createXmlElementStack(
-        Document doc, boolean needsDebugData, Namespaces ns, MessageQueue mq) {
-      return new XmlElementStack(doc, ns, needsDebugData, mq);
+        Document doc, boolean needsDebugData, MessageQueue mq) {
+      return new XmlElementStack(doc, needsDebugData, mq);
     }
 
     private Factory() {}

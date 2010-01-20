@@ -27,7 +27,6 @@ import com.google.caja.parser.css.CssTree;
 import com.google.caja.parser.css.CssTree.Combinator;
 import com.google.caja.parser.html.AttribKey;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.render.Concatenator;
 import com.google.caja.render.CssPrettyPrinter;
 import com.google.caja.reporting.Message;
@@ -246,7 +245,7 @@ public final class CssValidator {
     boolean valid = true;
     if (null != sel.getElementName()) {
       String elName = sel.getElementName();
-      ElKey elKey = ElKey.forElement(Namespaces.HTML_DEFAULT, elName);
+      ElKey elKey = ElKey.forElement(elName);
       if (null != htmlSchema.lookupElement(elKey)) {
         if (!htmlSchema.isElementAllowed(elKey)) {
           mq.addMessage(
@@ -271,9 +270,9 @@ public final class CssValidator {
     String qname = sel.getElementName();
     ElKey el;
     if (qname == null) {
-      el = ElKey.HTML_WILDCARD;
+      el = ElKey.WILDCARD;
     } else {
-      el = ElKey.forElement(Namespaces.HTML_DEFAULT, qname);
+      el = ElKey.forElement(qname);
     }
     boolean valid = true;
     for (CssTree n : sel.children()) {
@@ -288,8 +287,7 @@ public final class CssValidator {
    * Attribute must exist in HTML 4 whitelist.
    */
   private boolean validateAttrib(ElKey elId, CssTree.Attrib attr) {
-    AttribKey attrId = AttribKey.forAttribute(
-        Namespaces.HTML_DEFAULT, elId, attr.getIdent());
+    AttribKey attrId = AttribKey.forAttribute(elId, attr.getIdent());
     HTML.Attribute htmlAttribute = htmlSchema.lookupAttribute(attrId);
     if (null != htmlAttribute) {
       return validateAttribToSchema(elId, htmlAttribute, attr);
@@ -322,7 +320,7 @@ public final class CssValidator {
    */
   private static final Collection<AttribKey> DISALLOWED_SELECTOR_ATTRIBUTE_NAMES
       = Collections.unmodifiableList(Collections.singletonList(
-          AttribKey.forHtmlAttrib(ElKey.HTML_WILDCARD, "style")));
+          AttribKey.forHtmlAttrib(ElKey.WILDCARD, "style")));
 
   private boolean validateAttribToSchema(
       ElKey elId, HTML.Attribute htmlAttribute, CssTree.Attrib attr) {
@@ -341,7 +339,7 @@ public final class CssValidator {
       mq.addMessage(
           PluginMessageType.CSS_ATTRIBUTE_NAME_NOT_ALLOWED_IN_SELECTOR,
           invalidNodeMessageLevel,
-          MessagePart.Factory.valueOf(htmlAttribute.getKey().localName),
+          MessagePart.Factory.valueOf(htmlAttribute.getKey().qName),
           attr.getFilePosition());
       valid = false;
     }
@@ -393,7 +391,7 @@ public final class CssValidator {
           PluginMessageType.UNRECOGNIZED_ATTRIBUTE_VALUE,
           invalidNodeMessageLevel, attr.getFilePosition(),
           MessagePart.Factory.valueOf(value), elId,
-          MessagePart.Factory.valueOf(htmlAttribute.getKey().localName));
+          MessagePart.Factory.valueOf(htmlAttribute.getKey().qName));
       return false;
     }
     return true;

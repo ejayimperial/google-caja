@@ -16,7 +16,6 @@ package com.google.caja.ancillary.servlet;
 
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.HtmlQuasiBuilder;
-import com.google.caja.parser.html.Namespaces;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
@@ -53,10 +52,9 @@ final class HelpPage {
     return out;
   }
 
-  private static final String HTML_NS = Namespaces.HTML_NAMESPACE_URI;
   private static Element renderVerbHelp(HtmlQuasiBuilder b) {
-    Element verbs = b.getDocument().createElementNS(HTML_NS, "ul");
-    verbs.setAttributeNS(HTML_NS, "class", "verbs-help");
+    Element verbs = b.getDocument().createElement("ul");
+    verbs.setAttribute("class", "verbs-help");
     for (Verb v : Verb.values()) {
       Object reqPath = v.requestPath;
       if (v == Verb.INDEX) {
@@ -72,7 +70,7 @@ final class HelpPage {
   }
 
   private static Element renderParamHelp(Verb v, HtmlQuasiBuilder b) {
-    Element params = b.getDocument().createElementNS(HTML_NS, "table");
+    Element params = b.getDocument().createElement("table");
     String pn = "?";
     for (String name : Request.paramsAllowed(v)) {
       params.appendChild(b.substV(

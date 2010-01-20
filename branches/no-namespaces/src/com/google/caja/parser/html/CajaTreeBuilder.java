@@ -98,8 +98,7 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
     for (Node child = rootElement.getFirstChild();
          child != null; child = child.getNextSibling()) {
       if (child.getNodeType() == Node.ELEMENT_NODE
-          && Namespaces.isHtml(child.getNamespaceURI())
-          && htmlLocalName.equals(child.getLocalName())) {
+          && htmlLocalName.equals(child.getNodeName())) {
         return true;
       }
     }
@@ -237,15 +236,14 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
   protected void addAttributesToElement(Node node, HtmlAttributes attributes) {
     Element el = (Element) node;
     for (Attr a : Html5ElementStack.getAssociatedAttrs(attributes)) {
-      if (!el.hasAttributeNS(a.getNamespaceURI(), a.getLocalName())) {
-        el.setAttributeNodeNS(a);
+      String name = a.getName();
+      if (!el.hasAttribute(name)) {
+        el.setAttributeNode(a);
       } else {
-        String name = a.getName();
         mq.addMessage(
             MessageType.DUPLICATE_ATTRIBUTE, Nodes.getFilePositionFor(a),
             MessagePart.Factory.valueOf(name),
-            Nodes.getFilePositionFor(
-                el.getAttributeNodeNS(a.getNamespaceURI(), a.getLocalName())));
+            Nodes.getFilePositionFor(el.getAttributeNode(name)));
       }
     }
     if (attributes.getLength() != 0) {
@@ -255,20 +253,17 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
       } else {
         pos = null;
       }
-      String elNs = el.getNamespaceURI();
       for (int i = 0, n = attributes.getLength(); i < n; ++i) {
-        String ns = attributes.getURI(i);
-        if ("".equals(ns)) { ns = elNs; }
-        String localName = attributes.getLocalName(i);
-        if (el.hasAttributeNS(ns, localName)) { continue; }
+        String name = attributes.getQName(i);
+        if (el.hasAttribute(name)) { continue; }
         String value = attributes.getValue(i);
-        Attr a = doc.createAttributeNS(ns, localName);
+        Attr a = doc.createAttribute(name);
         a.setValue(value);
         if (pos != null) {
           Nodes.setFilePositionFor(a, pos);
           Nodes.setFilePositionForValue(a, pos);
         }
-        el.setAttributeNodeNS(a);
+        el.setAttributeNode(a);
       }
     }
   }
@@ -336,8 +331,7 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
         NamedNodeMap attrs = el.getAttributes();
         for (int i = 0, n = attrs.getLength(); i < n; ++i) {
           Attr a = (Attr) attrs.item(i);
-          Attr cloneA = cloneEl.getAttributeNodeNS(
-              a.getNamespaceURI(), a.getLocalName());
+          Attr cloneA = cloneEl.getAttributeNode(a.getName());
           if (needsDebugData) {
             Nodes.setFilePositionFor(cloneA, Nodes.getFilePositionFor(a));
             Nodes.setFilePositionForValue(
@@ -380,12 +374,7 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
     // Intern since the TreeBuilder likes to compare strings by reference.
     localName = localName.intern();
 
-    Element el;
-    if (localName.indexOf(':') < 0) {
-      el = doc.createElementNS(Namespaces.HTML_NAMESPACE_URI, localName);
-    } else {  // Will be fixed up later.  See DomParser#fixup.
-      el = doc.createElement(localName);
-    }
+    Element el = doc.createElement(localName);
     addAttributesToElement(el, attributes);
 
     if (needsDebugData) {
@@ -474,8 +463,7 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
   protected void bodyClosed() {
     if (DEBUG) { System.err.println("In bodyClosed " + unpoppedElements); }
     for (Element unpopped : unpoppedElements) {
-      if ("body".equals(unpopped.getTagName())
-          && HTML_NAMESPACE.equals(unpopped.getNamespaceURI())) {
+      if ("body".equals(unpopped.getTagName())) {
         elementPopped(HTML_NAMESPACE, "body", unpopped);
         return;
       }
@@ -485,8 +473,7 @@ final class CajaTreeBuilder extends TreeBuilder<Node> {
   protected void headClosed() {
     if (DEBUG) { System.err.println("In headClosed " + unpoppedElements); }
     for (Element unpopped : unpoppedElements) {
-      if ("head".equals(unpopped.getTagName())
-          && HTML_NAMESPACE.equals(unpopped.getNamespaceURI())) {
+      if ("head".equals(unpopped.getTagName())) {
         elementPopped(HTML_NAMESPACE, "head", unpopped);
         return;
       }

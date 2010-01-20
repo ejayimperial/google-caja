@@ -40,13 +40,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.w3c.dom.Attr;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 
@@ -65,21 +63,14 @@ public class DomParser {
   private final TokenQueue<HtmlTokenType> tokens;
   private final boolean asXml;
   private final MessageQueue mq;
-  private final Namespaces ns;
   private boolean needsDebugData = true;
   private boolean wantsComments = false;
   private DOMImplementation domImpl = null;
 
   public DomParser(
       TokenQueue<HtmlTokenType> tokens, boolean asXml, MessageQueue mq) {
-    this(tokens, asXml, Namespaces.HTML_DEFAULT, mq);
-  }
-
-  public DomParser(TokenQueue<HtmlTokenType> tokens, boolean asXml,
-                   Namespaces ns, MessageQueue mq) {
     this.tokens = tokens;
     this.asXml = asXml;
-    this.ns = ns;
     this.mq = mq;
   }
 
@@ -95,7 +86,6 @@ public class DomParser {
       HtmlLexer lexer, InputSource src, Namespaces ns, MessageQueue mq)
       throws ParseException {
     this.mq = mq;
-    this.ns = ns;
     LookaheadLexer la = new LookaheadLexer(lexer);
     lexer.setTreatedAsXml(
         this.asXml = (ns.forPrefix("").uri != Namespaces.HTML_NAMESPACE_URI
@@ -120,18 +110,9 @@ public class DomParser {
   }
 
   private OpenElementStack makeElementStack(Document doc, MessageQueue mq) {
-    Namespaces ns = this.ns;
-    DocumentType doctype = doc.getDoctype();
-    if (doctype != null) {
-      // If we have a DOCTYPE, use its SYSTEM ID to determine the default
-      // namespace.
-      String sysid = doctype.getSystemId();
-      String nsUri = DoctypeMaker.systemIdToNsUri(sysid);
-      if (nsUri != null) { ns = new Namespaces(ns, "", nsUri); }
-    }
     return asXml
         ? OpenElementStack.Factory.createXmlElementStack(
-            doc, needsDebugData, ns, mq)
+            doc, needsDebugData, mq)
         : OpenElementStack.Factory.createHtml5ElementStack(
             doc, needsDebugData, mq);
   }
@@ -238,10 +219,6 @@ public class DomParser {
 
     doc.appendChild(firstChild);
 
-    if (elementStack.needsNamespaceFixup()) {
-      fixup(firstChild, ns);
-    }
-
     return (Element) firstChild;
   }
 
@@ -299,118 +276,7 @@ public class DomParser {
       throw new ParseException(ex.getCajaMessage(), ex);
     }
 
-    DocumentFragment fragment = elementStack.getRootElement();
-    if (elementStack.needsNamespaceFixup()) {
-      fixup(fragment, ns);
-    }
-    return fragment;
-  }
-
-  private void fixup(Node node, Namespaces ns) {
-    switch (node.getNodeType()) {
-      case Node.ELEMENT_NODE:
-        Element el = (Element) node;
-        Document doc = el.getOwnerDocument();
-        // First, look at any xmlns:* attributes and add to the inScope
-        // namespace.
-        boolean hasNamespaceAttrs = false;
-        {
-          NamedNodeMap attrs = el.getAttributes();
-          for (int i = 0, n = attrs.getLength(); i < n; ++i) {
-            Attr a = (Attr) attrs.item(i);
-            if (a.getNamespaceURI() != null) { continue; }
-            String name = a.getName();
-            if (name.startsWith("xmlns:")) {
-              hasNamespaceAttrs = true;
-              String prefix = name.substring(6);
-              String uri = a.getValue();
-              ns = new Namespaces(ns, prefix, uri);
-            }
-          }
-        }
-        // Now we know what's in scope, find the element namespace.
-        Namespaces elNs;
-        if (el.getNamespaceURI() == null) {
-          String qname = el.getTagName();
-          elNs = ns.forElementName(qname);
-          if (elNs == null) {
-            FilePosition pos = Nodes.getFilePositionFor(el);
-            ns = elNs = AbstractElementStack.unknownNamespace(
-                pos, ns, qname, mq);
-          }
-          String localName = qname.substring(qname.indexOf(':') + 1);
-          Element replacement = doc.createElementNS(elNs.uri, localName);
-          replacement.setPrefix(elNs.prefix);
-          el.getParentNode().replaceChild(replacement, el);
-          for (Node child; (child = el.getFirstChild()) != null; ) {
-            replacement.appendChild(child);
-          }
-          NamedNodeMap attrs = el.getAttributes();
-          while (attrs.getLength() != 0) {
-            Attr a = (Attr) attrs.item(0);
-            el.removeAttributeNode(a);
-            replacement.setAttributeNodeNS(a);
-          }
-          if (needsDebugData) {
-            Nodes.setFilePositionFor(replacement, Nodes.getFilePositionFor(el));
-          }
-          node = el = replacement;
-        } else {
-          elNs = ns.forUri(el.getNamespaceURI());
-          if (elNs == null) {
-            FilePosition pos = Nodes.getFilePositionFor(el);
-            ns = elNs = AbstractElementStack.unknownNamespace(
-                pos, ns, el.getTagName(), mq);
-          }
-        }
-        // And finally, namespace all the attributes.
-        boolean modifiedAttrs;
-        do {
-          modifiedAttrs = false;
-          NamedNodeMap attrs = el.getAttributes();
-          for (int i = 0, n = attrs.getLength(); i < n; ++i) {
-            Attr a = (Attr) attrs.item(i);
-            String qname = a.getName();
-            if (hasNamespaceAttrs && qname.startsWith("xmlns:")) {
-              el.removeAttributeNode(a);
-              modifiedAttrs = true;
-              continue;
-            }
-            if (a.getNamespaceURI() != null) { continue; }
-            String localName = qname.substring(qname.indexOf(':') + 1);
-            Namespaces attrNs = ns.forAttrName(elNs, qname);
-            if (attrNs == null) {
-              FilePosition pos = Nodes.getFilePositionFor(a);
-              ns = attrNs = AbstractElementStack.unknownNamespace(
-                  pos, ns, qname, mq);
-            }
-            Attr newAttr = doc.createAttributeNS(attrNs.uri, localName);
-            if (attrNs.uri != elNs.uri) {
-              newAttr.setPrefix(attrNs.prefix);
-            }
-            newAttr.setValue(a.getValue());
-            if (needsDebugData) {
-              Nodes.setFilePositionFor(newAttr, Nodes.getFilePositionFor(a));
-              Nodes.setFilePositionForValue(
-                  newAttr, Nodes.getFilePositionForValue(a));
-              Nodes.setRawValue(newAttr, Nodes.getRawValue(a));
-            }
-            // This may screw up the count or change the order of attributes in
-            // attrs, so we do this operation in a loop to make sure that all
-            // attributes are considered.
-            el.removeAttributeNode(a);
-            el.setAttributeNodeNS(newAttr);
-            modifiedAttrs = true;
-          }
-        } while (modifiedAttrs);
-        break;
-      case Node.DOCUMENT_FRAGMENT_NODE:
-        break;
-      default: return;
-    }
-    for (Node c = node.getFirstChild(); c != null; c = c.getNextSibling()) {
-      fixup(c, ns);
-    }
+    return elementStack.getRootElement();
   }
 
   /**

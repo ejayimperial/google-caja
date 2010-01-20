@@ -18,7 +18,6 @@ import com.google.caja.lexer.FilePosition;
 import com.google.caja.parser.html.AttribKey;
 import com.google.caja.parser.html.DomParser;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageLevel;
@@ -298,7 +297,7 @@ public class IhtmlSanityCheckerTest extends CajaTestCase {
         new Message(
             IhtmlMessageType.IHTML_IN_MESSAGE_OUTSIDE_PLACEHOLDER,
             FilePosition.instance(is, 1, 74, 74, 30),
-            MessagePart.Factory.valueOf("dynamic")));
+            MessagePart.Factory.valueOf("ihtml:dynamic")));
   }
   public final void testTemplateNames() throws Exception {
     runTest(
@@ -329,7 +328,7 @@ public class IhtmlSanityCheckerTest extends CajaTestCase {
         + "<ihtml:template formals=\"\" name=\"hi\">\n"
         // TODO(mikesamuel): move parameters into a separate namespace so they
         // don't collide with the template param.
-        + "  <ihtml:call baz=\"boo\" foo=\"bar\" template=\"bye\" />\n"
+        + "  <ihtml:call baz=\"boo\" foo=\"bar\" ihtml:template=\"bye\" />\n"
         + "</ihtml:template>",
         ""
         + "<ihtml:template name='hi' formals=''>\n"
@@ -356,14 +355,8 @@ public class IhtmlSanityCheckerTest extends CajaTestCase {
             FilePosition.instance(is, 2, 63, 25, 13),
             elKey("ihtml:call"),
             AttribKey.forAttribute(
-                new Namespaces(Namespaces.XML_SPECIAL, "baz", "unknown:///baz"),
                 elKey("ihtml:call"), "baz:boo"),
-            MessagePart.Factory.valueOf("far")),
-        new Message(
-            MessageType.NO_SUCH_NAMESPACE,
-            FilePosition.fromLinePositions(is, 2, 25, 2, 32),
-            MessagePart.Factory.valueOf("baz"),
-            MessagePart.Factory.valueOf("baz:boo"))
+            MessagePart.Factory.valueOf("far"))
         );
   }
   public final void testMisplacedPlaceholderContent() throws Exception {
@@ -385,11 +378,11 @@ public class IhtmlSanityCheckerTest extends CajaTestCase {
         new Message(
             IhtmlMessageType.INAPPROPRIATE_CONTENT,
             FilePosition.instance(is, 3, 88, 24, 2),
-            MessagePart.Factory.valueOf("ph")),
+            MessagePart.Factory.valueOf("ihtml:ph")),
         new Message(
             IhtmlMessageType.INAPPROPRIATE_CONTENT,
             FilePosition.instance(is, 4, 117, 16, 5),
-            MessagePart.Factory.valueOf("eph")));
+            MessagePart.Factory.valueOf("ihtml:eph")));
   }
   public final void testBadAttr() throws Exception {
     runTest(
@@ -526,12 +519,10 @@ public class IhtmlSanityCheckerTest extends CajaTestCase {
   }
 
   static ElKey elKey(String qname) {
-    return ElKey.forElement(Namespaces.HTML_DEFAULT, qname);
+    return ElKey.forElement(qname);
   }
 
   static AttribKey attrKey(String elQName, String aQName) {
-    return AttribKey.forAttribute(
-        Namespaces.HTML_DEFAULT,
-        ElKey.forElement(Namespaces.HTML_DEFAULT, elQName), aQName);
+    return AttribKey.forAttribute(ElKey.forElement(elQName), aQName);
   }
 }

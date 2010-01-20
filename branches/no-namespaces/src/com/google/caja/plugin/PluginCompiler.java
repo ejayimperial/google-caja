@@ -26,7 +26,6 @@ import com.google.caja.plugin.stages.ConsolidateCodeStage;
 import com.google.caja.plugin.stages.DebuggingSymbolsStage;
 import com.google.caja.plugin.stages.InferFilePositionsStage;
 import com.google.caja.plugin.stages.InlineCssImportsStage;
-import com.google.caja.plugin.stages.LegacyNamespaceFixupStage;
 import com.google.caja.plugin.stages.OpenTemplateStage;
 import com.google.caja.plugin.stages.ResolveUriStage;
 import com.google.caja.plugin.stages.RewriteCssStage;
@@ -134,7 +133,6 @@ public final class PluginCompiler {
     };
 
     List<Pipeline.Stage<Jobs>> stages = compilationPipeline.getStages();
-    stages.add(new LegacyNamespaceFixupStage());
     stages.add(new ResolveUriStage(htmlSchema));
     stages.add(new RewriteHtmlStage(htmlSchema));
     stages.add(new InlineCssImportsStage());

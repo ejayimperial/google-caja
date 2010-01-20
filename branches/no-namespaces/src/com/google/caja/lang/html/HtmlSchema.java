@@ -20,7 +20,6 @@ import com.google.caja.config.WhiteList;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.html.AttribKey;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.reporting.Message;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.SimpleMessageQueue;
@@ -94,7 +93,7 @@ public final class HtmlSchema {
    */
   public static boolean isElementFoldable(ElKey el) {
     if (!el.isHtml()) { return false; }
-    String cname = el.localName;
+    String cname = el.qName;
     return "head".equals(cname) || "body".equals(cname) || "html".equals(cname);
   }
 
@@ -166,15 +165,14 @@ public final class HtmlSchema {
 
     this.allowedElements = Sets.newHashSet();
     for (String qualifiedName : tagList.allowedItems()) {
-      allowedElements.add(
-          ElKey.forElement(Namespaces.HTML_DEFAULT, qualifiedName));
+      allowedElements.add(ElKey.forElement(qualifiedName));
     }
     this.elementDetails = Maps.newHashMap();
     for (WhiteList.TypeDefinition def : tagList.typeDefinitions().values()) {
       String qualifiedTagName = (String) def.get("key", null);
-      ElKey key = ElKey.forElement(Namespaces.HTML_DEFAULT, qualifiedTagName);
+      ElKey key = ElKey.forElement(qualifiedTagName);
       Collection<HTML.Attribute> specific = attributeDetailsByElement.get(key);
-      ElKey wc = ElKey.wildcard(key.ns);
+      ElKey wc = ElKey.wildcard();
       Collection<HTML.Attribute> general = attributeDetailsByElement.get(wc);
       List<HTML.Attribute> attrs = Lists.newArrayList(specific);
       if (!general.isEmpty()) {
@@ -225,10 +223,9 @@ public final class HtmlSchema {
     int separator = key.indexOf("::");
     String elQName = key.substring(0, separator);
     String attrQName = key.substring(separator + 2);
-    ElKey el = ElKey.forElement(Namespaces.HTML_DEFAULT, elQName);
+    ElKey el = ElKey.forElement(elQName);
     if (el == null) { throw new NullPointerException(elQName); }
-    AttribKey a = AttribKey.forAttribute(
-        Namespaces.HTML_DEFAULT, el, attrQName);
+    AttribKey a = AttribKey.forAttribute(el, attrQName);
     if (a == null) { throw new NullPointerException(attrQName); }
     return a;
   }

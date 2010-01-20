@@ -1840,36 +1840,6 @@ public class DomParserTest extends CajaTestCase {
         null, false);
   }
 
-  public final void testDoctypeGuessAsSVG() throws Exception {
-    assertParsedMarkup(
-        Arrays.asList(
-            "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"",
-            " \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">",
-            "<svg><rect width='100' height='100' x='50' y='50'",
-            " style='color:red'/></svg>"
-            ),
-        Arrays.asList(
-            "Element : svg 3+1-4+27",
-            "  Element : rect 3+6-4+21",
-            "    Attrib : height 3+24-3+30",
-            "      Value : 100 3+31-3+36",
-            "    Attrib : style 4+2-4+7",
-            "      Value : color:red 4+8-4+19",
-            "    Attrib : width 3+12-3+17",
-            "      Value : 100 3+18-3+23",
-            "    Attrib : x 3+37-3+38",
-            "      Value : 50 3+39-3+43",
-            "    Attrib : y 3+44-3+45",
-            "      Value : 50 3+46-3+50"
-            ),
-        Arrays.<String>asList(),
-        Arrays.asList(
-            "<svg:svg><svg:rect height=\"100\" style=\"color:red\""
-            + " width=\"100\" x=\"50\" y=\"50\" /></svg:svg>"
-            ),
-        null, false);
-  }
-
   public final void testXmlPrologueTreatedAsXml() throws Exception {
     assertParsedMarkup(
         Arrays.asList(
@@ -1938,22 +1908,6 @@ public class DomParserTest extends CajaTestCase {
             "<xmp><br /></xmp>"
             ),
         null, true);
-  }
-
-  public final void testQualifiedNameTreatedAsXml() throws Exception {
-    assertParsedMarkup(
-        Arrays.asList(
-            "<html:xmp><br/></html:xmp>"
-            ),
-        Arrays.asList(
-            "Element : html:xmp 1+1-1+27",
-            "  Element : br 1+11-1+16"
-            ),
-        Arrays.<String>asList(),
-        Arrays.asList(
-            "<xmp><br /></xmp>"
-            ),
-        null, false);
   }
 
   public final void testAmbiguousAttributes() throws Exception {

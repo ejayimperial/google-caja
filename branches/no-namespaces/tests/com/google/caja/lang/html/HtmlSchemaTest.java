@@ -16,7 +16,6 @@ package com.google.caja.lang.html;
 
 import com.google.caja.parser.html.AttribKey;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.reporting.MessageQueue;
 import com.google.caja.reporting.SimpleMessageQueue;
 
@@ -128,18 +127,17 @@ public class HtmlSchemaTest extends TestCase {
   private HTML.Attribute lookupAttribute(
       String qualifiedEl, String qualifiedAttr) {
     AttribKey attr = AttribKey.forAttribute(
-        Namespaces.HTML_DEFAULT, el(qualifiedEl), qualifiedAttr);
+        el(qualifiedEl), qualifiedAttr);
     return schema.lookupAttribute(attr);
   }
 
   private static HTML.Attribute withName(HTML.Element el, String qname) {
     List<HTML.Attribute> attrs = el.getAttributes();
     AttribKey key = AttribKey.forAttribute(
-        Namespaces.HTML_DEFAULT, el.getKey(), qname);
+        el.getKey(), qname);
     HTML.Attribute result = null;
     for (HTML.Attribute a : attrs) {
-      if (key.localName.equals(a.getKey().localName)
-          && key.ns.uri == a.getKey().ns.uri) {
+      if (key.qName.equals(a.getKey().qName)) {
         if (result != null) { throw new IllegalStateException("DUPE " + key); }
         result = a;
       }
@@ -148,6 +146,6 @@ public class HtmlSchemaTest extends TestCase {
   }
 
   private static ElKey el(String qualifiedElName) {
-    return ElKey.forElement(Namespaces.HTML_DEFAULT, qualifiedElName);
+    return ElKey.forElement(qualifiedElName);
   }
 }

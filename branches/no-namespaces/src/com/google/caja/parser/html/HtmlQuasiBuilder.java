@@ -257,8 +257,7 @@ public class HtmlQuasiBuilder {
         return f;
       case Node.ELEMENT_NODE:
         Element el = (Element) quasiNode;
-        if ("body".equals(el.getLocalName())
-            && Namespaces.HTML_NAMESPACE_URI.equals(el.getNamespaceURI())) {
+        if ("body".equals(el.getNodeName())) {
           return substBody(el, bindings);
         } else {
           return substElement(el, bindings);
@@ -323,26 +322,25 @@ public class HtmlQuasiBuilder {
   private Attr substAttrib(Attr a, Map<String, ?> bindings) {
     String oldValue = Nodes.getRawValue(a);
     String quasiIdentifier = singleIdentifier(dequote(oldValue));
-    String uri = a.getNamespaceURI();
-    String localName = a.getLocalName();
+    String qname = a.getName();
     if (quasiIdentifier != null) {
       // Handle boolean attributes like checked, selected
       Object binding = bindings.get(quasiIdentifier);
       if (binding instanceof Boolean) {
         boolean present = ((Boolean) binding).booleanValue();
         if (!present) { return null; }
-        Attr result = doc.createAttributeNS(uri, localName);
+        Attr result = doc.createAttribute(qname);
         result.setNodeValue(result.getName());
         return result;
       } else if (binding instanceof Attr) {
         Attr bindingAttr = (Attr) binding;
-        Attr result = doc.createAttributeNS(uri, localName);
+        Attr result = doc.createAttribute(qname);
         result.setNodeValue(bindingAttr.getNodeValue());
         copyFilePositions(bindingAttr, result);
         return result;
       }
     }
-    Attr result = doc.createAttributeNS(uri, localName);
+    Attr result = doc.createAttribute(qname);
     result.setNodeValue(substAttrValue(oldValue, bindings));
     return result;
   }
@@ -370,11 +368,11 @@ public class HtmlQuasiBuilder {
   }
 
   private Element substElement(Element e, Map<String, ?> bindings) {
-    Element result = doc.createElementNS(e.getNamespaceURI(), e.getLocalName());
+    Element result = doc.createElement(e.getNodeName());
     for (Attr attr : Nodes.attributesOf(e)) {
       Attr newAttr = substAttrib(attr, bindings);
       if (newAttr != null) {
-        result.setAttributeNodeNS(newAttr);
+        result.setAttributeNode(newAttr);
       }
     }
     expandAll(e, bindings, result);
@@ -402,9 +400,7 @@ public class HtmlQuasiBuilder {
         }
         if (binding instanceof Element) {
           Element bindingEl = (Element) binding;
-          if ("frameset".equals(bindingEl.getLocalName())
-              && Namespaces.HTML_NAMESPACE_URI.equals(
-                  bindingEl.getNamespaceURI())) {
+          if ("frameset".equals(bindingEl.getNodeName())) {
             Element result = (Element) doc.importNode(bindingEl, true);
             copyFilePositions(bindingEl, result);
             return result;

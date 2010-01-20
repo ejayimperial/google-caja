@@ -54,7 +54,7 @@ import nu.validator.htmlparser.impl.Tokenizer;
 /**
  * A bridge between DomParser and html5lib which translates
  * {@code Token<HtmlTokenType>}s into SAX style events which are fed to the
- * TreeBuilder.  The TreeBuilder responds by issuing {@code createElementNS}
+ * TreeBuilder.  The TreeBuilder responds by issuing {@code createElement}
  * commands which are used to build a {@link DocumentFragment}.
  *
  * @author mikesamuel@gmail.com
@@ -67,7 +67,6 @@ public class Html5ElementStack implements OpenElementStack {
   private final boolean needsDebugData;
   private final Map<String, ElementName> elNames = Maps.newHashMap();
   private boolean isFragment;
-  private boolean needsNamespaceFixup;
   private boolean topLevelHtmlFromInput = false;
   private boolean processingFirstTag = true;
 
@@ -83,8 +82,6 @@ public class Html5ElementStack implements OpenElementStack {
   }
 
   public final Document getDocument() { return doc; }
-
-  public boolean needsNamespaceFixup() { return needsNamespaceFixup; }
 
   /** {@inheritDoc} */
   public void open(boolean isFragment) {
@@ -262,7 +259,7 @@ public class Html5ElementStack implements OpenElementStack {
     NamedNodeMap attrs = el.getAttributes();
     for (int i = 0, n = attrs.getLength(); i < n; ++i) {
       Attr a = (Attr) attrs.item(i);
-      if (el.hasAttributeNS(a.getNamespaceURI(), a.getLocalName())) {
+      if (el.hasAttribute(a.getName())) {
         return true;
       }
     }
@@ -335,8 +332,7 @@ public class Html5ElementStack implements OpenElementStack {
             isAttrHtml = isHtml && checkName(qname);
             if (isAttrHtml) {
               qname = Strings.toLowerCase(qname);
-              attrNode = doc.createAttributeNS(
-                  Namespaces.HTML_NAMESPACE_URI, qname);
+              attrNode = doc.createAttribute(qname);
             } else {
               attrNode = doc.createAttribute(qname);
             }
@@ -451,12 +447,7 @@ public class Html5ElementStack implements OpenElementStack {
   }
 
   private boolean checkName(String qname) {
-    if (qname.indexOf(':', 1) < 0) {
-      return true;
-    } else {
-      needsNamespaceFixup = true;
-      return false;
-    }
+    return qname.indexOf(':', 1) < 0;
   }
 
   private static final Map<HtmlAttributes, List<Attr>> HTML_ASSOCIATED_ATTRS

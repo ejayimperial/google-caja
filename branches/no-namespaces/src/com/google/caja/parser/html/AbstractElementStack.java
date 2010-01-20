@@ -44,11 +44,11 @@ abstract class AbstractElementStack implements OpenElementStack {
   /**
    * @param needsDebugData see {@link DomParser#setNeedsDebugData(boolean)}
    */
-  AbstractElementStack(Document doc, Namespaces ns, boolean needsDebugData) {
+  AbstractElementStack(Document doc, boolean needsDebugData) {
     this.doc = doc;
     this.needsDebugData = needsDebugData;
     this.rootElement = doc.createDocumentFragment();
-    this.openNodes.add(new OpenNode(rootElement, ns, null));
+    this.openNodes.add(new OpenNode(rootElement, null));
   }
 
   public final Document getDocument() { return doc; }
@@ -81,10 +81,10 @@ abstract class AbstractElementStack implements OpenElementStack {
    * Adds an element to the element stack, puts it on the previous head's
    * child list, and updates file positions.
    */
-  protected final void push(Element el, Namespaces ns, String qname) {
+  protected final void push(Element el, String qname) {
     if (DEBUG) System.err.println("push(" + el + ")");
     Node parent = getBottom().n;
-    openNodes.add(new OpenNode(el, ns, qname));
+    openNodes.add(new OpenNode(el, qname));
     doAppend(el, parent);
   }
 
@@ -167,11 +167,9 @@ abstract class AbstractElementStack implements OpenElementStack {
 
   static class OpenNode {
     final Node n;
-    final Namespaces ns;
     final String qname;
-    OpenNode(Node n, Namespaces ns, String qname) {
+    OpenNode(Node n, String qname) {
       this.n = n;
-      this.ns = ns;
       this.qname = qname;
     }
   }

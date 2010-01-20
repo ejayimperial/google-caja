@@ -17,7 +17,6 @@ package com.google.caja.plugin.stages;
 import com.google.caja.lang.html.HtmlSchema;
 import com.google.caja.lexer.FilePosition;
 import com.google.caja.parser.AncestorChain;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.js.Block;
 import com.google.caja.plugin.Dom;
 import com.google.caja.plugin.ExtractedHtmlContent;
@@ -215,8 +214,7 @@ public final class RewriteHtmlStageTest extends PipelineStageTestCase {
         Block extracted = ExtractedHtmlContent.getExtractedScriptFor(el);
         if (extracted != null) {
           int jobNum = jobs.getJobs().size();
-          el.setAttributeNS(
-              Namespaces.HTML_NAMESPACE_URI, "jobnum", "" + jobNum);
+          el.setAttribute("jobnum", "" + jobNum);
           jobs.getJobs().add(Job.jsJob(AncestorChain.instance(extracted)));
         }
         for (Node c = el.getFirstChild(); c != null; c = c.getNextSibling()) {

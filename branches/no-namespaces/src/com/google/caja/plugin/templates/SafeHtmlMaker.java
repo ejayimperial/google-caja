@@ -19,7 +19,6 @@ import com.google.caja.lexer.HtmlTextEscapingMode;
 import com.google.caja.parser.ParseTreeNode;
 import com.google.caja.parser.html.AttribKey;
 import com.google.caja.parser.html.ElKey;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.parser.js.Block;
 import com.google.caja.parser.js.Expression;
@@ -94,7 +93,7 @@ import org.w3c.dom.Text;
  */
 final class SafeHtmlMaker {
   private static final AttribKey ID = AttribKey.forHtmlAttrib(
-      ElKey.HTML_WILDCARD, "id");
+      ElKey.WILDCARD, "id");
 
   private final PluginMeta meta;
   private final MessageContext mc;
@@ -203,7 +202,7 @@ final class SafeHtmlMaker {
           return null;
         } else {
           FilePosition pos = Nodes.getFilePositionFor(el);
-          safe = doc.createElementNS(el.getNamespaceURI(), el.getLocalName());
+          safe = doc.createElement(el.getNodeName());
           Nodes.setFilePositionFor(safe, pos);
           bones.add(new NodeBone(n, safe));
 
@@ -328,7 +327,7 @@ final class SafeHtmlMaker {
    *     cause code to execute.
    */
   private void insertPlaceholderAfter(Node preceder) {
-    String dynId = meta.generateUniqueName(ID.localName);
+    String dynId = meta.generateUniqueName(ID.qName);
     emitStatement(quasiStmt(
         ""
         + "emitter___./*@synthetic*/discard("
@@ -354,10 +353,8 @@ final class SafeHtmlMaker {
       assert !containsOnlyText(parent);
     }
 
-    Element placeholder = doc.createElementNS(
-        Namespaces.HTML_NAMESPACE_URI, "span");
-    placeholder.setAttributeNS(
-        Namespaces.HTML_NAMESPACE_URI, ID.localName, dynId);
+    Element placeholder = doc.createElement("span");
+    placeholder.setAttribute(ID.qName, dynId);
     parent.insertBefore(placeholder, follower);
   }
 
@@ -367,7 +364,7 @@ final class SafeHtmlMaker {
     ElKey schemaKey = ElKey.forElement(el);
     if (schemaKey.isHtml()) {
       HtmlTextEscapingMode mode = HtmlTextEscapingMode.getModeForTag(
-          schemaKey.localName);
+          schemaKey.qName);
       return mode != HtmlTextEscapingMode.PCDATA;
     } else {
       return false;
@@ -405,8 +402,7 @@ final class SafeHtmlMaker {
       // Keep track of whether there is an ID so that we know whether or
       // not to remove any auto-generated ID later.
       Expression dynamicValue = (Expression) scriptsPerNode.get(a);
-      if (ID.ns.uri != attrKey.ns.uri
-          || !ID.localName.equals(attrKey.localName)) {
+      if (!ID.qName.equals(attrKey.qName)) {
         if (dynamicValue == null
             || dynamicValue instanceof StringLiteral) {
           emitStaticAttr(a, (StringLiteral) dynamicValue, safe);
@@ -436,8 +432,8 @@ final class SafeHtmlMaker {
 
     // Remove the dynamic ID if it is still present.
     if (dynId != null) {
-      assert !safe.hasAttributeNS(ID.ns.uri, ID.localName);
-      safe.setAttributeNS(ID.ns.uri, ID.localName, dynId);
+      assert !safe.hasAttribute(ID.qName);
+      safe.setAttribute(ID.qName, dynId);
       if (id == null) {
         emitStatement(quasiStmt("el___./*@synthetic*/removeAttribute('id');"));
       }
@@ -447,13 +443,12 @@ final class SafeHtmlMaker {
   private void emitStaticAttr(
       Attr a, StringLiteral dynamicValue, Element safe) {
     // Emit an attribute with a known value in the safe HTML.
-    Attr safeAttr = doc.createAttributeNS(
-        a.getNamespaceURI(), a.getLocalName());
+    Attr safeAttr = doc.createAttribute(a.getName());
     safeAttr.setValue(
         dynamicValue == null ? a.getValue() : dynamicValue.getUnquotedValue());
     Nodes.setFilePositionFor(safeAttr, Nodes.getFilePositionFor(a));
     Nodes.setFilePositionForValue(safeAttr, Nodes.getFilePositionForValue(a));
-    safe.setAttributeNodeNS(safeAttr);
+    safe.setAttributeNode(safeAttr);
   }
 
   private void emitDynamicAttr(Attr a, Expression dynamicValue) {
@@ -480,7 +475,7 @@ final class SafeHtmlMaker {
     if (dynId == null) {
       // We need a dynamic ID so that we can find the node so that
       // we can attach dynamic attributes.
-      dynId = meta.generateUniqueName(ID.localName);
+      dynId = meta.generateUniqueName(ID.qName);
       emitStatement(quasiStmt(
           "el___ = emitter___./*@synthetic*/byId(@id);",
           "id", StringLiteral.valueOf(pos, dynId)));

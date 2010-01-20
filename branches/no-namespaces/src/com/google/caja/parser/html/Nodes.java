@@ -211,23 +211,14 @@ public class Nodes {
    * @param rc a context where the token consumer is typically a
    *   {@link Concatenator}, and the {@link RenderContext#asXml} is significant.
    */
-  public static void render(Node node, Namespaces ns, RenderContext rc) {
+  public static void render(Node node, RenderContext rc) {
     StringBuilder sb = new StringBuilder(1 << 18);
-    new Renderer(sb, rc.asXml(), rc.isAsciiOnly()).render(node, ns);
+    new Renderer(sb, rc.asXml(), rc.isAsciiOnly()).render(node);
     TokenConsumer out = rc.getOut();
     FilePosition pos = getFilePositionFor(node);
     out.mark(FilePosition.startOf(pos));
     out.consume(sb.toString());
     out.mark(FilePosition.endOf(pos));
-  }
-
-  /**
-   * Serializes the given DOM node to HTML or XML.
-   * @param rc a context where the token consumer is typically a
-   *   {@link Concatenator}, and the {@link RenderContext#asXml} is significant.
-   */
-  public static void render(Node node, RenderContext rc) {
-    render(node, Namespaces.HTML_DEFAULT, rc);
   }
 
   public static String render(Node node) {
@@ -257,66 +248,36 @@ final class Renderer {
     this.isAsciiOnly = isAsciiOnly;
   }
 
-  private static final String HTML_NS = Namespaces.HTML_NAMESPACE_URI;
-
-  void render(Node node, Namespaces ns) {
+  void render(Node node) {
     switch (node.getNodeType()) {
       case Node.DOCUMENT_NODE: case Node.DOCUMENT_FRAGMENT_NODE:
         for (Node c = node.getFirstChild();
              c != null; c = c.getNextSibling()) {
-          render(c, ns);
+          render(c);
         }
         break;
       case Node.ELEMENT_NODE: {
         Element el = (Element) node;
         out.append('<');
         int tagNameStart = out.length();
-        boolean addElNs;
-        Namespaces elNs;
-        {
-          String nsUri = el.getNamespaceURI();
-          if (nsUri == null) { nsUri = HTML_NS; }
-          elNs = ns.forUri(nsUri);
-          addElNs = elNs == null;
-          if (addElNs) {
-            elNs = ns = addNamespace(ns, nsUri);
-          }
+        String qname = el.getNodeName();
+        if (!asXml && qname.indexOf(':') < 0) {
+          qname = Strings.toLowerCase(qname);
         }
-        if (elNs.prefix.length() != 0) {
-          out.append(elNs.prefix).append(':');
-        }
-        String localName = el.getLocalName();
-        boolean isHtml = elNs.uri == HTML_NS;
-        if (isHtml) { localName = Strings.toLowerCase(localName); }
-        out.append(localName);
+        out.append(qname);
         int tagNameEnd = out.length();
 
-        if (addElNs) {
-          out.append(' ');
-          renderNamespace(elNs);
-        }
         NamedNodeMap attrs = el.getAttributes();
         for (int i = 0, n = attrs.getLength(); i < n; ++i) {
           out.append(' ');
-          Attr a = (Attr) attrs.item(i);
-          String attrUri = a.getNamespaceURI();
           // Attributes created via setAttribute calls for ISINDEX elements
           // have no namespace URI.
-          if (attrUri != null && (attrUri = attrUri.intern()) != elNs.uri) {
-            Namespaces attrNs = ns.forUri(attrUri);
-            if (attrNs == null) {
-              attrNs = ns = addNamespace(ns, attrUri);
-              renderNamespace(attrNs);
-              out.append(' ');
-            }
-            out.append(attrNs.prefix).append(':');
-          }
-          renderAttr(a, HTML_NS.equals(attrUri));
+          renderAttr((Attr) attrs.item(i));
         }
 
-        HtmlTextEscapingMode m = asXml || !isHtml
+        HtmlTextEscapingMode m = asXml
             ? HtmlTextEscapingMode.PCDATA
-            : HtmlTextEscapingMode.getModeForTag(localName);
+            : HtmlTextEscapingMode.getModeForTag(qname);
         Node first = el.getFirstChild();
         if (first == null && (asXml || m == HtmlTextEscapingMode.VOID)) {
           // This is safe regardless of whether the output is XML or HTML since
@@ -342,23 +303,23 @@ final class Renderer {
                 String lcaseContent = Strings.toLowerCase(
                     cdataContent.toString());
                 for (int p = 1;
-                     (p = lcaseContent.indexOf(localName, p + 1)) >= 0;) {
+                     (p = lcaseContent.indexOf(qname, p + 1)) >= 0;) {
                   if (lcaseContent.regionMatches(p - 2, "</", 0, 2)) {
                     throw new IllegalStateException(
                         "XML document not renderable as HTML due to </"
-                        + localName + " in CDATA tag");
+                        + qname + " in CDATA tag");
                   }
                 }
               }
               out.append(cdataContent);
             } else {
               for (Node c = first; c != null; c = c.getNextSibling()) {
-                render(c, ns);
+                render(c);
               }
             }
           } else {
             for (Node c = first; c != null; c = c.getNextSibling()) {
-              render(c, ns);
+              render(c);
             }
           }
           // This is not correct for HTML <plaintext> nodes, but live with it,
@@ -386,26 +347,18 @@ final class Renderer {
         break;
       case Node.ATTRIBUTE_NODE: {
         Attr a = (Attr) node;
-        renderAttr(a, HTML_NS.equals(a.getNamespaceURI()));
+        renderAttr(a);
         break;
       }
     }
   }
 
-  private Namespaces addNamespace(Namespaces base, String uri) {
-    int depth = 0;
-    for (Namespaces p = base; p != null; p = p.parent) { ++depth; }
-    return new Namespaces(base, "_ns" + depth, uri);
-  }
-
-  private void renderNamespace(Namespaces ns) {
-    out.append("xmlns:").append(ns.prefix).append("=\"");
-    Escaping.escapeXml(ns.uri, isAsciiOnly, out);
-    out.append('"');
-  }
-
-  private void renderAttr(Attr a, boolean isHtml) {
-    emitLocalName(a.getLocalName(), isHtml);
+  private void renderAttr(Attr a) {
+    String qname = a.getName();
+    if (!asXml && qname.indexOf(':') < 0) {
+      qname = Strings.toLowerCase(qname);
+    }
+    out.append(qname);
     out.append("=\"");
     Escaping.escapeXml(a.getValue(), isAsciiOnly, out);
     out.append("\"");
@@ -423,21 +376,6 @@ final class Renderer {
     for (char ch = 'A'; ch <= 'Z'; ++ch) {
       CASE_SENS_NAME_CHARS[ch] = true;
     }
-  }
-
-  private void emitLocalName(String name, boolean isHtml) {
-    // speed up common case where we already have lower-cased letters and
-    // digits.
-    boolean[] simple = isHtml ? CASE_INSENS_NAME_CHARS : CASE_SENS_NAME_CHARS;
-    for (int i = 0, n = name.length(); i < n; ++i) {
-      char ch = name.charAt(i);
-      if (ch > 'z' || !simple[ch]) {
-        if (isHtml) { name = Strings.toLowerCase(name); }
-        Escaping.escapeXml(name, isAsciiOnly, out);
-        return;
-      }
-    }
-    out.append(name);
   }
 
   private static boolean containsEndTag(StringBuilder sb) {

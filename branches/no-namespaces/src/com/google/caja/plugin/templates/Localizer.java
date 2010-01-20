@@ -21,7 +21,6 @@ import com.google.caja.lexer.HtmlLexer;
 import com.google.caja.lexer.HtmlTokenType;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.lexer.Token;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.render.Concatenator;
 import com.google.caja.reporting.MessagePart;
@@ -148,10 +147,9 @@ public class Localizer {
     return byName;
   }
 
-  private static final String XML_NS = Namespaces.XML_NAMESPACE_URI;
   public IhtmlL10NContext extractMessages(Element ihtmlRoot) {
-    Locale locale = ihtmlRoot.hasAttributeNS(XML_NS, "lang")
-        ? new Locale(ihtmlRoot.getAttributeNS(XML_NS, "lang").replace('-', '_'))
+    Locale locale = ihtmlRoot.hasAttribute("xml:lang")
+        ? new Locale(ihtmlRoot.getAttribute("xml:lang").replace('-', '_'))
         // Choose a default that is independent of the default locale since we
         // typically run tests in the Turkish locale.
         : Locale.ENGLISH;
@@ -243,7 +241,7 @@ public class Localizer {
 
   private static Iterable<Element> allMessages(Element root) {
     return Nodes.nodeListIterable(
-        root.getElementsByTagNameNS(IHTML.NAMESPACE, "message"), Element.class);
+        root.getElementsByTagName("ihtml:message"), Element.class);
   }
 
   private static <T> List<T> snapshot(Iterable<T> it) {
@@ -385,9 +383,6 @@ public class Localizer {
   }
 
   private static String tagName(Element e) {
-    Namespaces ns = Namespaces.COMMON.forUri(e.getNamespaceURI());
-    String prefix = ns != null ? ns.prefix : "";
-    String localName = e.getLocalName();
-    return "".equals(prefix) ? localName : prefix + ":" + localName;
+    return e.getNodeName();
   }
 }

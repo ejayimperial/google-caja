@@ -44,11 +44,11 @@ import org.w3c.dom.Node;
  * @author mikesamuel@gmail.com
  */
 public class IHTML {
-  /** The URI namespace for IHTML elements. */
-  public static final String NAMESPACE = Namespaces.COMMON.forPrefix("ihtml")
-      .uri;
   /** The tag prefix reserved for IHTML elements. */
   public static final String PREFIX = "ihtml";
+  /** The URI namespace for IHTML elements. */
+  public static final String NAMESPACE = Namespaces.COMMON.forPrefix(PREFIX)
+      .uri;
 
   /**
    * Name of an attribute used to mark the kind of tag within which a template
@@ -101,35 +101,34 @@ public class IHTML {
   public static boolean is(Node n, String localElementName) {
     if (!(n instanceof Element)) { return false; }
     Element el = (Element) n;
-    return localElementName.equals(el.getLocalName())
-        && NAMESPACE.equals(el.getNamespaceURI());
+    return ("ihtml:" + localElementName).equals(el.getNodeName());
   }
 
-  public static boolean is(Namespaces ns) {
-    return ns.uri == NAMESPACE;
+  public static boolean is(String qName) {
+    return qName.startsWith("ihtml:");
   }
 
   public static boolean isAttribute(Node n) { return is(n, "attribute"); }
   public static Attr getName(Element ihtmlEl) {
-    return ihtmlEl.getAttributeNodeNS(NAMESPACE, "name");
+    return ihtmlEl.getAttributeNode("name");
   }
   public static boolean isCall(Node n) { return is(n, "call"); }
   public static Attr getCallTarget(Element callEl) {
-    return callEl.getAttributeNodeNS(NAMESPACE, "ihtml:template");  // TODO
+    return callEl.getAttributeNode("template");
   }
   public static boolean isDo(Node n) { return is(n, "do"); }
   public static Attr getInit(Element doEl) {
-    return doEl.getAttributeNodeNS(NAMESPACE, "init");
+    return doEl.getAttributeNode("init");
   }
   public static Attr getVars(Element doEl) {
-    return doEl.getAttributeNodeNS(NAMESPACE, "vars");
+    return doEl.getAttributeNode("vars");
   }
   public static Attr getWhile(Element doEl) {
-    return doEl.getAttributeNodeNS(NAMESPACE, "while");
+    return doEl.getAttributeNode("while");
   }
   public static boolean isDynamic(Node n) { return is(n, "dynamic"); }
   public static Attr getExpr(Element dynEl) {
-    return dynEl.getAttributeNodeNS(NAMESPACE, "expr");
+    return dynEl.getAttributeNode("expr");
   }
   public static boolean isElement(Node n) { return is(n, "element"); }
   public static boolean isElse(Node n) { return is(n, "else"); }
@@ -138,12 +137,12 @@ public class IHTML {
   public static boolean isPh(Node n) { return is(n, "ph"); }
   public static boolean isTemplate(Node n) { return is(n, "template"); }
   public static Attr getFormals(Element templateEl) {
-    return templateEl.getAttributeNodeNS(NAMESPACE, "formals");
+    return templateEl.getAttributeNode("formals");
   }
 
   public static boolean isIhtml(Node n) {
     if (!(n instanceof Element)) { return false; }
-    return NAMESPACE.equals(n.getNamespaceURI());
+    return n.getNodeName().startsWith("ihtml:");
   }
 
   public static boolean isSafeIdentifier(String ident) {
@@ -163,11 +162,11 @@ public class IHTML {
     switch (root.getNodeType()) {
       case Node.DOCUMENT_NODE:
         return Nodes.nodeListIterable(
-            ((Document) root).getElementsByTagNameNS(NAMESPACE, localName),
+            ((Document) root).getElementsByTagName("ihtml:" + localName),
             Element.class);
       case Node.ELEMENT_NODE:
         return Nodes.nodeListIterable(
-            ((Element) root).getElementsByTagNameNS(NAMESPACE, localName),
+            ((Element) root).getElementsByTagName("ihtml:" + localName),
             Element.class);
     }
     List<Element> els = new ArrayList<Element>();

@@ -23,7 +23,6 @@ import com.google.caja.opensocial.UriCallbackException;
 import com.google.caja.parser.AncestorChain;
 import com.google.caja.parser.quasiliteral.QuasiBuilder;
 import com.google.caja.parser.html.DomParser;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.parser.js.CajoledModule;
 import com.google.caja.parser.js.Expression;
@@ -223,9 +222,8 @@ public class HtmlHandler implements ContentHandler {
       output.append(Nodes.render(staticHtml));
     }
     if (javascript != null) {
-      String htmlNs = Namespaces.HTML_NAMESPACE_URI;
-      Element script = doc.createElementNS(htmlNs, "script");
-      script.setAttributeNS(htmlNs, "type", "text/javascript");
+      Element script = doc.createElement("script");
+      script.setAttribute("type", "text/javascript");
       script.appendChild(doc.createTextNode(
           renderJavascript(javascript, moduleCallback)));
       output.append(Nodes.render(script));

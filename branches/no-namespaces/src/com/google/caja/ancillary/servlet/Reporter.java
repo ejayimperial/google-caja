@@ -18,7 +18,6 @@ import com.google.caja.lexer.FilePosition;
 import com.google.caja.lexer.InputSource;
 import com.google.caja.lexer.ParseException;
 import com.google.caja.parser.html.HtmlQuasiBuilder;
-import com.google.caja.parser.html.Namespaces;
 import com.google.caja.parser.html.Nodes;
 import com.google.caja.reporting.HtmlSnippetProducer;
 import com.google.caja.reporting.Message;
@@ -66,10 +65,9 @@ final class Reporter {
       if (snippetHtml != null) {  // TODO: don't do this.
         try {
           DocumentFragment snippetF = b.toFragment(snippetHtml);
-          snippet = b.getDocument().createElementNS(
-              Namespaces.HTML_NAMESPACE_URI, "pre");
-          snippet.setAttributeNS(  // See third_party/js/prettify
-              Namespaces.HTML_NAMESPACE_URI, "class", "prettyprint snippet");
+          snippet = b.getDocument().createElement("pre");
+          snippet.setAttribute(  // See third_party/js/prettify
+              "class", "prettyprint snippet");
           for (Node snippetPart : Nodes.childrenOf(snippetF)) {
             snippet.appendChild(snippetPart);
           }

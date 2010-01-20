@@ -117,7 +117,7 @@ public final class HtmlDefinitions {
       List<IntegerLiteral> values = new ArrayList<IntegerLiteral>();
       for (Map.Entry<AttribKey, HTML.Attribute.Type> e : atypes.entrySet()) {
         AttribKey key = e.getKey();
-        if (ElKey.HTML_WILDCARD.equals(key.el)
+        if (ElKey.WILDCARD.equals(key.el)
             || schema.isElementAllowed(key.el)
             // Whitelisted to allow dynamic script loading via proxy
             || SCRIPT_SRC.equals(key)) {
@@ -221,7 +221,7 @@ public final class HtmlDefinitions {
       if (el.isEndTagOptional()) { flags.add(EFlag.OPTIONAL_ENDTAG); }
       if (el.isEmpty()) { flags.add(EFlag.EMPTY); }
       if (elementName.isHtml()) {
-        switch (HtmlTextEscapingMode.getModeForTag(elementName.localName)) {
+        switch (HtmlTextEscapingMode.getModeForTag(elementName.qName)) {
           case CDATA:
             flags.add(EFlag.CDATA);
             break;

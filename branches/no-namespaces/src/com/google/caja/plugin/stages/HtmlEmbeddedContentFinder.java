@@ -99,11 +99,11 @@ public class HtmlEmbeddedContentFinder {
   private static final AttribKey LINK_REL = AttribKey.forHtmlAttrib(
       LINK, "rel");
   private static final AttribKey SCRIPT_DEFER = AttribKey.forHtmlAttrib(
-      ElKey.HTML_WILDCARD, "defer");
+      ElKey.WILDCARD, "defer");
   private static final AttribKey SCRIPT_SRC = AttribKey.forHtmlAttrib(
       SCRIPT, "src");
   private static final AttribKey TYPE = AttribKey.forHtmlAttrib(
-      ElKey.HTML_WILDCARD, "type");
+      ElKey.WILDCARD, "type");
 
   private void findEmbeddedContent(Node node, List<EmbeddedContent> out) {
     if (node instanceof Element) {
@@ -118,13 +118,12 @@ public class HtmlEmbeddedContentFinder {
         extRef = externalReferenceFromAttr(el, SCRIPT_SRC);
         deferred = Strings.equalsIgnoreCase(
             "defer",
-            el.getAttributeNS(SCRIPT_DEFER.ns.uri, SCRIPT_DEFER.localName));
+            el.getAttribute(SCRIPT_DEFER.qName));
       } else if (STYLE.equals(key)) {
         expected = ContentType.CSS;
       } else if (LINK.equals(key)
                  && Strings.equalsIgnoreCase(
-                     "stylesheet",
-                     el.getAttributeNS(LINK_REL.ns.uri, LINK_REL.localName))) {
+                     "stylesheet", el.getAttribute(LINK_REL.qName))) {
         extRef = externalReferenceFromAttr(el, LINK_HREF);
         if (extRef != null) {
           expected = ContentType.CSS;
@@ -144,7 +143,7 @@ public class HtmlEmbeddedContentFinder {
           }
         } else {
           FilePosition typePos = Nodes.getFilePositionFor(el);
-          Attr a = el.getAttributeNodeNS(TYPE.ns.uri, TYPE.localName);
+          Attr a = el.getAttributeNode(TYPE.qName);
           if (a != null) {
             typePos = Nodes.getFilePositionForValue(a);
           }
@@ -319,7 +318,7 @@ public class HtmlEmbeddedContentFinder {
   }
 
   private ExternalReference externalReferenceFromAttr(Element el, AttribKey a) {
-    Attr attr = el.getAttributeNodeNS(a.ns.uri, a.localName);
+    Attr attr = el.getAttributeNode(a.qName);
     if (attr == null || "".equals(attr.getValue())) { return null; }
     URI uri;
     try {
@@ -373,7 +372,7 @@ public class HtmlEmbeddedContentFinder {
 
 
   private String getMimeTypeFromHtmlTypeAttribute(Element el, ElKey elKey) {
-    Attr type = el.getAttributeNodeNS(TYPE.ns.uri, TYPE.localName);
+    Attr type = el.getAttributeNode(TYPE.qName);
     if (type != null) { return type.getValue(); }
     HTML.Attribute attr = schema.lookupAttribute(TYPE.onElement(elKey));
     if (attr == null) { return null; }
