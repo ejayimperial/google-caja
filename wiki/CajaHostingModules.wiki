@@ -23,7 +23,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
       </script>
 
       <!-- In ant-lib/com/google/caja/plugin/ -->
-5     <script src="valija.co.js"></script>
+5     <script src="valija.out.js"></script>
     
       <script>
 6       var initValija = function(divId, extraOuters) {
