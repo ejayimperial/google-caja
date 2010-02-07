@@ -6,13 +6,13 @@ A much better and simpler code review scheme.
 
 = Details =
 
-  # Create your patch however you want.
   # Check out Caja from svn.
-  # Download [http://codereview.appspot.com/static/upload.py upload.py].
-  # Apply your patch to the trunk.
-  # Run {{{upload.py -r <reviewers> --send_mail}}}.
-  # Note the review number.
-  # Respond to comments, edit code.
-  # Run {{{upload.py -i <review number> --send_mail}}}.
-  # Loop until done.
-  # When done, commit with {{{svn ci}}}.
+  # Create your patch however you want.
+  # Run {{{myvn snapshot}}}.
+  # Mark any related bugs in the issue tracker Pending.
+  # Note the review number, and see your review at [http://codereview.appspot.com/mine]
+  # Respond to comments, edit code and snapshot again.
+  # Loop to (3) until done.
+  # When done, commit with {{{myvn submit}}}.
+  # Mark any related bugs in the issue tracker Fixed.
+  # Close the issue on {{{codereview.appspot.com}}} by clicking "Edit Issue", clicking the "Closed" checkbox, and clicking "Update issue"
