@@ -111,5 +111,4 @@ $ ant runtests
 
 See also the Contributor Licence Agreement (either the
 [http://code.google.com/legal/individual-cla-v1.0.html individual CLA]
-or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate
-CLA]).
+or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate CLA]).
