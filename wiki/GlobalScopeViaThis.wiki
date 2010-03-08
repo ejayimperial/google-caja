@@ -16,7 +16,7 @@ When javascript is executing in multiple frames, it may be hard to determine whe
 
 
 ==Assumptions==
-An untrusted function can be invoked not as a method and not via call or apply without the global scope (or {{{null}}} or {{{undefined}}}) as the first input.
+An untrusted function that references {{{this}}} can be invoked not as a method (or in ES5, a property accessor), and not via call or apply without the global scope (or {{{null}}} or {{{undefined}}}) as the first input.
 
 AND
 
