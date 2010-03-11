@@ -2,6 +2,8 @@
 
 = Project Ideas for Volunteers =
   * Figure out what problems we have in cajoling jQuery and fix them.
+  * Auditor framework
+    * One auditor should be able to prove that certain objects are immutable
   * Write documentation.
   * Static analysis and optimization
     * Plenty of places optimization could occur 
