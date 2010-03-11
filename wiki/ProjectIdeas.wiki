@@ -11,4 +11,4 @@
     * Take a username and password for a site and attenuate that authority so it can be doled out in smaller pieces
       * Given the URL of a webpage and authentication info, rewrite the page so that all URLs point back to the rewriter (a membrane)
       * Create a taming of the site so that only whitelisted parts of the page work (allowing finer divisions than not all-or-nothing)
-  * [http://code.google.com/p/google-caja-shahar/wiki/ShaharIntroduction Shahar]-related project ideas
+  * [http://code.google.com/p/google-caja-shahar/wiki/ShaharIntroduction Shahar]-related [http://code.google.com/p/google-caja-shahar/wiki/ProjectIdeas project ideas]
