@@ -1,7 +1,8 @@
 #summary Things you can work on if you're interested in contributing
 
 = Project Ideas for Volunteers =
-  * Writing documentation.
+  * Figure out what problems we have in cajoling jQuery and fix them.
+  * Write documentation.
   * Static analysis and optimization
     * Plenty of places optimization could occur 
   * Ambient-authority-to-capability membrane
