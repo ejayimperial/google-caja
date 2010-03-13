@@ -1,0 +1,3 @@
+#summary Redirect to real getting started page.
+
+Please see GettingStarted.
