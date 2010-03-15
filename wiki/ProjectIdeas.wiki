@@ -5,7 +5,7 @@
     * [http://jquery.com/ jQuery]
     * [http://www.prototypejs.org/ Prototype]
     * Other suggestions are welcome. 
-  * Auditor framework
+  * Create an [http://docs.google.com/viewer?a=v&q=cache:1VMOJxtnCkUJ:people.ischool.berkeley.edu/~ping/auditors/auditors.pdf&hl=en&gl=us&sig=AHIEtbRjmisE1ZPikrpSlNGdN4aZ_4I62Q Auditor] framework for Cajita or SES code
     * One auditor should be able to prove that certain objects are immutable
   * Static analysis and optimization
     * Plenty of places optimization could occur 
