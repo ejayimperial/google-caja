@@ -1,8 +1,10 @@
 #summary Things you can work on if you're interested in contributing
 
 = Project Ideas for Volunteers =
-  * Write documentation.
-  * Figure out what problems we have in cajoling jQuery and fix them.
+  * Tame popular libraries: [LibraryTaming the process of taming is described here]. Frameworks we are interested in are
+    * [http://jquery.com/ jQuery]
+    * [http://www.prototypejs.org/ Prototype]
+    * Other suggestions are welcome. 
   * Auditor framework
     * One auditor should be able to prove that certain objects are immutable
   * Static analysis and optimization
@@ -12,3 +14,5 @@
       * Given the URL of a webpage and authentication info, rewrite the page so that all URLs point back to the rewriter (a membrane)
       * Create a taming of the site so that only whitelisted parts of the page work (allowing finer divisions than not all-or-nothing)
   * [http://code.google.com/p/google-caja-shahar/wiki/ShaharIntroduction Shahar]-related [http://code.google.com/p/google-caja-shahar/wiki/ProjectIdeas project ideas]
+ * Write documentation.
+ 
