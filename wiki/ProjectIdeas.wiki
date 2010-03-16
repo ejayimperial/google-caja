@@ -16,7 +16,7 @@
       * removal of type checks and other runtime checks
       * improving the speed of the rewriter
       * etc.
-    * Contributor must know Java and !JavaScript 
+    * Contributor must know Java, and it would be better if they knew !JavaScript
   * Ambient-authority-to-capability membrane
     * Take a username and password for a site and attenuate that authority so it can be doled out in smaller pieces
       * Given the URL of a webpage and authentication info, rewrite the page so that all URLs point back to the rewriter (a membrane)
