@@ -26,5 +26,5 @@
   * Bridge building between [http://code.google.com/p/joe-e/ Joe-E], [http://code.google.com/webtoolkit/ GWT], and Caja
     * For example, [https://groups.google.com/group/google-caja-discuss/msg/2e6ca497d2cb450d Identify the intersection of GWT and Joe-E], and adapt GWT to compile it to Caja-compatible, Joe-E-security preserving JavaScript.
   * [http://groups.google.com/group/google-caja-discuss/post Suggest something!]
-  * Tech writing doesn't qualify for a GSoC project, but if you're a tech writer, we'd love to have you write documentation!
+  * Tech writing doesn't qualify for a GSoC project, but if you're a tech writer, we'd love to have you write documentation!  See DocumentationIdeas.
  
