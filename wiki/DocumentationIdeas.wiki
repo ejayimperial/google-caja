@@ -2,6 +2,9 @@
 
 If you're a tech-writer, and want to help out, we'd love your help.  Please drop us a line at [http://groups.google.com/group/google-caja-discuss/ our mailing list].  Below are some specific topics we think might be useful.
 
+If you're a coder who wants to contribute, please see our ProjectIdeas page.
+
+
 == How to write code for Caja ==
 You might want to cover the differences between Cajita and Valija, features removed such as `with`, common ways `eval` is used that doesn't need to be, a bit on CSS and HTML schemas and the kinds of messages one sees, optimizing to make as much of your HTML and CSS statically analyzable. 
 
@@ -21,4 +24,3 @@ Talk to Ihab Awad for more directions
 Talk to Jasvir Nagra and Mark Miller for directions
 
 == Sophisticated Caja integration into your Web application by embedding the Caja codebase  in a Java or C# application ==	
-
