@@ -29,10 +29,10 @@ For example, here is a trivial Hello World !OpenSocial gadget:
   </ModulePrefs>
   <Content type="html">
     <![CDATA[
-       <div id="message"></div>
+      <div id="message"></div>
       <script type="text/javascript">
-         document.getElementById('message').innerHTML = "Hello World";
-       </script>
+        document.getElementById('message').innerHTML = "Hello World";
+      </script>
     ]]>
   </Content>
 </Module>
