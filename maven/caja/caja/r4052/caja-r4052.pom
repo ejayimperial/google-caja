@@ -24,9 +24,9 @@
         - Includes trunk/third_party/java/htmlparser 
         - as described at http://about.validator.nu/htmlparser/
         -->
-      <groupId>nu.validator.htmlparser</groupId>
+      <groupId>caja</groupId>
       <artifactId>htmlparser</artifactId>
-      <version>1.0.7</version>
+      <version>r4052</version>
     </dependency>
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
