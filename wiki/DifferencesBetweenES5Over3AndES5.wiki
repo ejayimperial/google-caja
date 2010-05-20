@@ -25,7 +25,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
   * Only supports bracketed numeric indexing into strings if the underlying ES3 engine does
   * If a variable is statically known to contain only numbers after being initialized and it is used as a property name before initialization, then it may be converted to the property name 'NaN' rather than the property name 'undefined'.
 
-ES Harmony
+= Differences between ES5/3 and selected ES-Harmony features =
 
   * Proxies
     * Proxies can only inherit, whether directly or indirectly, from non-extensible objects or from other proxies.
