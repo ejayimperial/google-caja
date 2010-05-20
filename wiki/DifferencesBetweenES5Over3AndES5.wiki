@@ -21,7 +21,7 @@ There will be some differences between ES5/3 and ES5, detailed below.
   * Properties may not end in two underscores
   * Does not support creating objects with null prototype
   * Only supports bracketed numeric indexing into strings if the underlying ES3 engine does
-  * If a variable is statically known to contain only numbers after being initialized and it is used as an property name before initialization, then it may be converted to the property name 'NaN' rather than the property name 'undefined'.
+  * If a variable is statically known to contain only numbers after being initialized and it is used as a property name before initialization, then it may be converted to the property name 'NaN' rather than the property name 'undefined'.
 
 ES Harmony
 
