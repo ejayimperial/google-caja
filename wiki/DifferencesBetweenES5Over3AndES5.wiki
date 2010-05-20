@@ -8,7 +8,7 @@ SES5/3 will upwards compatible from Cajita. ES5/3 will be upwards compatible fro
 
 There will be some differences between ES5/3 and ES5, detailed below. For code written with these in mind, ES5 will effectively be upwards compatible from ES5/3, etc...
 
-= Details =
+= Differences between ES5/3 and ES5 =
 
   * Strict mode only
   * Does not support FF2
