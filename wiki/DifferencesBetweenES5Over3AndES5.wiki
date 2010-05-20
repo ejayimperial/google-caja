@@ -26,7 +26,7 @@ There will be some differences between ES5/3 and ES5, detailed below.
 ES Harmony
 
   * Proxies
-    * Proxies can't inherit from non-frozen objects
+    * Proxies can't descend from from non-frozen objects
     * Proxies can't trap numeric properties or length
   * "Leaky" ephemeron tables
     * Membranes hold onto all references that they wrap until the membrane is revoked
