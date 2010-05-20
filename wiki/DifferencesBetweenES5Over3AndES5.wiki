@@ -11,7 +11,6 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
 = Differences between ES5/3 and ES5 =
 
   * Strict mode only
-  * Does not support FF2
   * No eval
   * No Function constructor
   * Object.prototype is frozen
@@ -19,6 +18,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
   * Property names may not end in two underscores
   * Does not support creating objects with null prototype
   * Numerically named properties and 'length'
+    * Does not support FF2
     * All numeric properties share one property descriptor
     * Numeric properties must be data properties
     * 'length' is a non-configurable accessor property on arrays
