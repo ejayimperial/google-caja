@@ -2,7 +2,7 @@
 
 = Introduction =
 
-We're working on an implementation of ES5 that runs on ES3 browsers; we anticipate that this implementation, which we call "ES5/3", will take the place of Valija; we anticipate it will run around 15 times faster.  SES5/3, the Cajita replacement, is exactly the same with the exception of freezing all the primordials.
+We're working on an implementation of ES5 that runs on ES3 browsers; we anticipate that this implementation, which we call "ES5/3", will take the place of Valija. We anticipate ES5/3 will run around 15 times faster than Valija, i.e., with roughly 20% overhead compared to uncajoled ES3 code; though it is still too early to measure this. SES5/3, the Cajita replacement, is exactly the same with the exception of freezing all the primordials.
 
 SES5/3 will upwards compatible from Cajita. ES5/3 will be upwards compatible from Valija, Cajita, and SES5/3. 
 
