@@ -168,3 +168,15 @@ Instead, we capture the library's module function and invoke it on each gadget's
 The divs playing the role of virtual iframes should have the same class and id (19) (22).
 
 The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (21) (24) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".vo.js" means that the resulting "Valija object code" is just more-complicated JavaScript.
+
+= What else do I need? =
+
+Caja adds bookkeeping properties to Object.prototype.  These properties are added to Objects on the container page when you load caja.  Since ES3 does not provide a means for marking properties non-enumerable, these properties show up unexpectedly when you loop over objects using for..in.  To avoid this problem, Caja provides an innocent code transformer which must be run over _uncajoled_ scripts that are loaded on a container page - even if they do not interact  with cajoled code.  The innocent code transformer rewrites loops as follows:
+
+|| {{{ for ( i in j ) { ...XXX... }; }}} || becomes || {{{ if (i.match(/___$/)) { continue; } }}} ||
+
+In addition, the innocent code transformer adds runtime checks to functions which use the `this` keyword to ensure `this` isn't pointing to the global scope.  This check makes it harder for privileged container code to accidentally grant unexpected authority.
+
+To run the innocent code transformer on `foo.js` use the following command: {{{
+  $ java -jar pluginc.jar com.google.caja.render.Innocent foo.js > foo.innocent.js
+}}}
