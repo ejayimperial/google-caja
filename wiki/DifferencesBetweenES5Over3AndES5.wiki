@@ -11,9 +11,9 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
 = Differences between ES5/3 and ES5 =
 
   * Strict mode only
-  * No eval
-  * No Function constructor
-  * Object.prototype is frozen
+  * No `eval`
+  * No `Function` constructor
+  * `Object.prototype` is frozen
   * The true global object is inaccessible
   * Property names may not end in two underscores
   * Does not support creating objects with null prototype
@@ -21,10 +21,10 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
     * Does not support FF2
     * All numeric own properties of the same object share one property descriptor
     * Numeric properties must be data properties
-    * 'length' is a non-configurable accessor property on arrays
-    * 'length' must not be an accessor property on non-arrays
-    * Only supports bracketed numeric indexing into strings if the underlying ES3 engine does
-    * If a variable is statically known to contain only numbers after being initialized and it is used as a property name before initialization, then it may be converted to the property name 'NaN' rather than the property name 'undefined'.
+    * `'length'` is a non-configurable accessor property on arrays
+    * `'length'` must not be an accessor property on non-arrays
+    * Only supports bracketed numeric indexing into strings (e.g. `'foo'[1]`) if the underlying ES3 engine does
+    * If we can statically determine that a variable will only contain numbers after being initialized and this variable is used as a property name before initialization (e.g., `x[i]`), then it may be converted to the property name `'NaN'` rather than the property name `'undefined'` (e.g., as if translated to `x[+i]`).
 
 
 
