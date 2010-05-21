@@ -19,7 +19,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
   * Does not support creating objects with null prototype
   * Numerically named properties and 'length'
     * Does not support FF2
-    * All numeric properties share one property descriptor
+    * All numeric own properties of the same object share one property descriptor
     * Numeric properties must be data properties
     * 'length' is a non-configurable accessor property on arrays
     * 'length' must not be an accessor property on non-arrays
