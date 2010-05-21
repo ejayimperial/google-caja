@@ -177,6 +177,7 @@ Caja adds bookkeeping properties to Object.prototype.  These properties are adde
 
 In addition, the innocent code transformer adds runtime checks to functions which use the `this` keyword to ensure `this` isn't pointing to the global scope.  This check makes it harder for privileged container code to accidentally grant unexpected authority.
 
-To run the innocent code transformer on `foo.js` use the following command: {{{
+To run the innocent code transformer on `foo.js` use the following command:
+{{{
   $ java -jar pluginc.jar com.google.caja.render.Innocent foo.js > foo.innocent.js
 }}}
