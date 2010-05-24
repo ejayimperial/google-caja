@@ -171,7 +171,11 @@ The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript func
 
 = What else do I need? =
 
-Caja adds bookkeeping properties to Object.prototype.  These properties are added to Objects on the container page when you load caja.  Since ES3 does not provide a means for marking properties non-enumerable, these properties show up unexpectedly when you loop over objects using for..in.  To avoid this problem, Caja provides an innocent code transformer which must be run over _uncajoled_ scripts that are loaded on a container page - even if they do not interact  with cajoled code.  The innocent code transformer rewrites loops as follows:
+Caja adds bookkeeping properties to Object.prototype.  These properties are added to Objects on the container page when you load caja and while they remain invisible to cajoled code, they are visible to the container.  To avoid tripping over these properties, container authors should use the following precautions:
+
+== Filter for..in loops ==
+
+ES3 does not provide a means for marking properties non-enumerable, these properties show up unexpectedly when you loop over objects using for..in.  To avoid this problem, Caja provides an innocent code transformer which must be run over _uncajoled_ scripts that are loaded on a container page - even if they do not interact  with cajoled code.  The innocent code transformer rewrites loops as follows:
 
 || {{{ for ( i in j ) { ...XXX... }; }}} || becomes || {{{ if (i.match(/___$/)) { continue; } }}} ||
 
@@ -181,3 +185,13 @@ To run the innocent code transformer on `foo.js` use the following command:
 {{{
   $ java -jar pluginc.jar com.google.caja.render.Innocent foo.js > foo.innocent.js
 }}}
+
+== JSON.stringify ==
+
+JSON.stringify serializes all properties of an object including the internal Caja properties.  Not only is this not the intended effect (internal properties gets exposed), they cause further problems because the two special Caja properties happen to point to one another and form a cycle.  Stringifying these properties can result in errors or an infinite loop.
+
+To avoid these problems, a container can either use safeJSON.stringify instead of JSON.stringify in tamed functions or simply alias window.JSON as follows: {{{
+window.JSON = safeJSON;
+}}}
+
+...after loading `cajita.js`.
