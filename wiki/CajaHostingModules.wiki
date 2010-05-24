@@ -190,8 +190,15 @@ To run the innocent code transformer on `foo.js` use the following command:
 
 JSON.stringify serializes all properties of an object including the internal Caja properties.  Not only is this not the intended effect (internal properties gets exposed), they cause further problems because the two special Caja properties happen to point to one another and form a cycle.  Stringifying these properties can result in errors or an infinite loop.
 
-To avoid these problems, a container can either use safeJSON.stringify instead of JSON.stringify in tamed functions or simply alias window.JSON as follows: {{{
-window.JSON = safeJSON;
+To avoid these problems, a container can either use `safeJSON.stringify` instead of `JSON.stringify` in tamed functions after loading `cajita.js`.
+
+Alternatively, the container can use the two-argument `JSON.stringify` to remove the Caja specific properties.  `JSON.stringify` optionally takes a `replacer` as a second argument.  The `replacer` is called on each key-value pair and the value returned is stringified.  We use the fact that if the `replacer` returns `null`, the key-value  pair is skipped. {{{
+  var endsWith___ = /___$/;
+  window.JSON.stringify(obj, function(k,v) {
+    return !endsWith___.test(k) ? v : null;
+  });
 }}}
 
-...after loading `cajita.js`.
+
+
+ called on every property being stringified and gives the 
