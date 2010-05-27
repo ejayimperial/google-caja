@@ -13,6 +13,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
 1     <!-- In ant-lib/com/google/caja/plugin/ -->
 2     <script src="html-sanitizer-minified.js"></script>
 3     <script src="domita-minified.js"></script>
+      <script src="log-to-console.js"></script>
     
       <script>
       (function(){
