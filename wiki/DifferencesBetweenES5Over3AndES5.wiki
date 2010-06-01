@@ -14,6 +14,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
   * No `eval`
   * No `Function` constructor
   * `Object.prototype` is frozen
+  * The `Function.prototype.call` and `Function.prototype.apply` properties are non-writable and non-configurable.
   * The true global object is inaccessible
   * Property names may not end in two underscores
   * Does not support creating objects with null prototype
