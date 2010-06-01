@@ -1,0 +1,18 @@
+#summary example URI policies
+
+= URI Policy Examples =
+
+Below are examples of interesting URI policies and how they can be implemented.
+
+It depends on the [http://codereview.appspot.com/1229046/show URI policy] definitions of URI effect and loader type.  As of 1 June 2010, these are pending.  (TODO: remove this caveat once the change is submitted).
+
+TODO: rewrite these examples in JavaScript once the JS->UriPolicy bridge has been implemented.
+
+== Whitelist ==
+{{{
+Set<URI> allowed = ...;
+
+String rewriteUri(ExternalReference u, UriEffect effect, LoaderType loader, String hint) {
+  return allowed.contains(u.getUri()) ? u.getUri().toString() : null;
+}
+}}}
