@@ -51,3 +51,15 @@ public String rewriteUri(
   return null;
 }
 }}}
+
+
+
+== Display an interstitial before transition to uncajoled pages ==
+{{{
+public String rewriteUri(
+    ExternalReference u, UriEffect effect,
+    LoaderType loader, String hint) {
+  if (effect == UriEffect.NEW_DOCUMENT && isExternalUri(uri)) {
+    return "javascript:displayWarning(uri)";
+  }
+}
