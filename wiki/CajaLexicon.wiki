@@ -16,6 +16,6 @@ Caja is a fairly intricate and complex project with a lot of very specialized as
 
   * _Taming_ - The act of exposing a safe interface to uncajoled code, usually because it is not feasible to transform the code to Valija.
 
-  * _Object Capabilities Language_ - A language that protects the outside world from objects. Objects cannot act on one another without somehow being passed an explicit reference in an object capabilities language. Objects cannot cause effects outside of themselves without these references. See also the Wikipedia article on [http://en.wikipedia.org/wiki/Object-capability_model Object-Capability Models]
+  * _Object-capability language_ - A language that protects the outside world from objects. Objects cannot act on one another without somehow being passed an explicit reference in an object-capability language. Objects cannot cause effects outside of themselves without these references. See also the Wikipedia article on [http://en.wikipedia.org/wiki/Object-capability_model Object-Capability Models]
 
  * _Innocent Code_ -  Code that is assumed to be ignorant of Caja. Innocent code is not considered to be actively malicious, but may be buggy, and  therefore, accidentally harmful or exploitable. Innocent code is often legacy code such as libraries that end up being run tamed or otherwise untranslated into Valija or Cajita.
