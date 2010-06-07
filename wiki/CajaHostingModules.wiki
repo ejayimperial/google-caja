@@ -131,7 +131,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
 32      initValija("gadget2___", {set : shared.set});
 33      sharedCode.inject();
       </script>
-34    <script src="gadget2.vo.js"></script>
+34    <script src="gadget2.out.js"></script>
     </body>
   </html>
 }}}
@@ -168,7 +168,7 @@ Instead, we capture the library's module function and invoke it on each gadget's
 
 The divs playing the role of virtual iframes should have the same class and id (19) (22).
 
-The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (21) (24) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".vo.js" means that the resulting "Valija object code" is just more-complicated JavaScript.
+The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (21) (24) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".out.js" indicates that the file is a product of the cajoler and is JavaScript that may be safely executed.
 
 = What else do I need? =
 
