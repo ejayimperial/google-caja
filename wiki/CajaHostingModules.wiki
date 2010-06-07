@@ -107,7 +107,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
 25      sharedCode.capture();
       </script>
       <!-- Load the library code -->
-      <script src="library.vo.js"></script>
+      <script src="library.out.js"></script>
   
 26    <div id="gadget1" class="gadget1___"
        style="position:relative; overflow: auto"></div>  
@@ -123,7 +123,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
 29      sharedCode.inject();
       </script>
       <!-- Load the gadget -->
-30    <script src="gadget1.vo.js"></script>
+30    <script src="gadget1.out.js"></script>
   
 31    <div id="gadget2" class="gadget2___"
        style="position:relative; overflow: auto"></div>
