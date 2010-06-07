@@ -4,7 +4,7 @@
 
 Caja is a fairly intricate and complex project with a lot of very specialized aspects. As such, it can be especially useful to understand some of the key terminology that you'll commonly find in the source code and existing documentation. This page is an attempt at getting a simple lexicon started that will facilitate learning for newcomers to the project as well as help the existing project team communicate important changes to central aspects of the project as it evolves.
 
-= Details =
+= Concepts =
 
   * _Caja_ - An open source project that allows you to run untrusted !JavaScript code in a web page in a secure manner by providing what may be thought of as a "virtual iframe". A few examples of the ways that the Caja project allows untrusted code to run securely is by providing mechanisms for proxying URLs that appear in anchor elements, protecting against known XSS vulnerabilities, sanitizing HTML/CSS, and exposing the Valija and Cajita languages, which are both subsets of !JavaScript. Note: Caja itself is a project, not a language. Note: a traditional way of running untrusted code in a web page is by using iframes such that the domain of the untrusted code is different from the domain of the parent page, and thus, having the browser enforce basic cross-domain security.
 
@@ -19,3 +19,14 @@ Caja is a fairly intricate and complex project with a lot of very specialized as
   * _Object-capability language_ - A language that protects the outside world from objects. Objects cannot act on one another without somehow being passed an explicit reference in an object-capability language. Objects cannot cause effects outside of themselves without these references. See also the Wikipedia article on [http://en.wikipedia.org/wiki/Object-capability_model Object-Capability Models]
 
  * _Innocent Code_ -  Code that is assumed to be ignorant of Caja. Innocent code is not considered to be actively malicious, but may be buggy, and  therefore, accidentally harmful or exploitable. Innocent code is often legacy code such as libraries that end up being run tamed or otherwise untranslated into Valija or Cajita.
+
+= Detailed terminology =
+
+ * _Module_ - A JavaScript file which is the output of the cajoling process, which may be loaded into a host page under its control. Modules may or may not include HTML. Cajoling a gadget produces a module.
+
+ * _Gadget_ - An [http://code.google.com/apis/opensocial/ OpenSocial gadget]. Some text incorrectly refers to modules as gadgets.
+
+ * _Container_ - A web site which displays gadgets. Some text incorrectly refers to host pages as containers.
+
+ * _Host page_ - A web page which loads Caja modules, and may or may not use Valija to display HTML in those modules to the user.
+
