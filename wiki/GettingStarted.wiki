@@ -42,3 +42,7 @@ You can run this gadget by loading it in an opensocial container such as Code Wi
 {{{
 <wiki:gadget url="http://example.com/gadget.xml" height="200" border="0" /> 
 }}}
+
+= Hosting Caja Gadgets =
+
+If you want to host your own gadgets or user-submitted content, see CajaHostingModules for how to write a host page and RunningCaja for getting the cajoler and Cajita runtime set up.
