@@ -167,7 +167,7 @@ Next, we add to {{{imports}}} a reference to the div containing the gadget and w
 
 The cajoler assumes that the valija library is named {{{$v}}} (14), so we have to use that name when instantiating the library.  This call must occur after {{{attachDocumentStub}}} so that it gets the proper {{{outers}}} object.
 
-Finally, we tell the module handler to use these imports (15).  This step is necessary because {{{<script>}}} tags do not return a value; if they did, we'd return the module function instead and invoke it directly with these imports. After the module's <script> runs, we run {{{clearImports()}}} (5) to ensure that if, for example, the setup for {{{gadget2}}} fails, it will crash instead of going ahead and running with {{{gadget1}}}'s authority.
+Finally, we tell the module handler to use these imports (15).  This step is necessary because {{{<script>}}} tags do not return a value; if they did, we'd return the module function instead and invoke it directly with these imports. After the module's {{{<script>}}} runs, we run {{{clearImports()}}} (5) to ensure that if, for example, the setup for {{{gadget2}}} fails, it will crash instead of going ahead and running with {{{gadget1}}}'s authority.
 
 The properties of {{{extraImports}}} may be host-specific APIs, like the OpenSocial APIs; they may also be objects that enable communication between gadgets.  In this example, the host page creates a pair of closures for manipulating a string (16).  The getter is added to gadget1's imports, while the setter is added to gadget2's imports.  The variable {{{get}}} appears to be a built-in global function to gadget1, while gadget2 sees a global variable {{{set}}}.  Thus the code in gadget2 can send a message to gadget1, but gadget1 cannot send a message back.
 
@@ -204,13 +204,10 @@ JSON.stringify serializes all properties of an object including the internal Caj
 
 To avoid these problems, a container can either use `safeJSON.stringify` instead of `JSON.stringify` in tamed functions after loading `cajita.js`.
 
-Alternatively, the container can use the two-argument `JSON.stringify` to remove the Caja specific properties.  `JSON.stringify` optionally takes a `replacer` as a second argument.  The `replacer` is called on each key-value pair and the value returned is stringified.  We use the fact that if the `replacer` returns `null`, the key-value  pair is skipped. {{{
+Alternatively, the container can use the two-argument `JSON.stringify` to remove the Caja specific properties.  `JSON.stringify` optionally takes a `replacer` as a second argument.  The `replacer` is called on each key-value pair and the value returned is stringified.  We use the fact that if the `replacer` returns `null`, the key-value  pair is skipped.
+{{{
   var endsWith___ = /___$/;
   window.JSON.stringify(obj, function(k,v) {
     return !endsWith___.test(k) ? v : null;
   });
 }}}
-
-
-
- called on every property being stringified and gives the 
