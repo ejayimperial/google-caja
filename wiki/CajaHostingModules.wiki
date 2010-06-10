@@ -3,7 +3,7 @@
 
 This document is intended for those who want to host [CajaModule Caja modules] within pages that they serve.  If you simply want to write Caja modules for someone else to host, check out the [CajaCajole Cajoler] docs.
 
-Here's a sample Caja module host page; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text. You can also [http://code.google.com/p/google-caja/downloads/list download this code and sample gadgets].
+Here's a sample Caja module host page; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text. You can also [http://code.google.com/p/google-caja/source/browse/#svn/trunk/src/com/google/caja/demos/container download this code and sample gadgets; it is called "container-interaction.html"]. If you have the Caja source tree, "ant containers" will cajole the sample gadgets and put all the needed files in {{{ant-www/container/}}}.
 
 {{{
   <html>
