@@ -18,7 +18,7 @@
       * [WhatsMissing]
       * [CajaWhitelists]
   * Integration Guide
-    * [CajaHostingModules Setting up a container]
+    * [HostingModules Setting up a container]
     * [LibraryTaming Taming libraries]
     * [JsHtmlSanitizer]
     * [Performance]

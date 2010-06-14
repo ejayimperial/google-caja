@@ -1,0 +1,213 @@
+#summary How to host Caja modules
+= How to host a Caja module =
+
+This document is intended for those who want to host [CajaModule Caja modules] within pages that they serve.  If you simply want to write Caja modules for someone else to host, check out the [CajaCajole Cajoler] docs.
+
+Here's a sample Caja module host page; the numbers at the left are footnotes and will be referred to in the text below.  You may want to print out the source code and refer to it as you read the text. You can also [http://code.google.com/p/google-caja/source/browse/#svn/trunk/src/com/google/caja/demos/container download this code and sample gadgets; it is called "container-interaction.html"]. If you have the Caja source tree, "ant containers" will cajole the sample gadgets and put all the needed files in {{{ant-www/container/}}}.
+
+{{{
+  <html>
+    <head>
+      <title>A simple host page for Caja gadgets</title>
+    
+1     <!-- In ant-lib/com/google/caja/plugin/ -->
+2     <script src="domita-minified.js"></script>
+      <!-- In ant-lib/com/google/caja/ -->
+      <script src="log-to-console.js"></script>
+    
+      <script>
+      (function(){
+3       // Give the module a variable into which it can export the valija maker
+        var imports = ___.getNewModuleHandler().getImports();
+        imports.loader = {provide:___.markFuncFreeze(function(v){valijaMaker = v;})};
+      })();
+      </script>
+
+      <!-- In ant-lib/com/google/caja/plugin/ -->
+4     <script src="valija.out.js"></script>
+    
+      <script>
+5       var clearImports = function () {
+          // Ensure that the next gadget cannot get the previous gadget's
+          // authorities even if setup fails.
+          ___.getNewModuleHandler().setImports(null);
+        };
+      
+6       var initValija = function(divId, extraOuters) {
+          // Make a copy of the standard objects
+7         var imports = ___.copy(___.sharedImports);
+        
+          // Reify the imports for use by Valija
+8         imports.outers = imports;
+        
+          // Create a fake document object, attach it to the given div,
+          // and put a reference in imports
+9         var htmlContainer = document.getElementById(divId);
+10        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
+11        imports.getCssContainer___ = function () {
+            return htmlContainer;
+          };
+          
+          // The function attachDocumentStub() copies each property of
+          // imports.outers to tameWindow, a constructed object, then sets 
+          //   imports.outers = tameWindow
+          // so after this call, imports.outers !== imports.  Also, if
+          // you set a property on imports.outers after this point, 
+          // you have to grant access to it explicitly.
+12        attachDocumentStub(
+              "-" + divId,
+              // Don't proxy urls
+              { rewrite: function(uri, mimetype) { return uri; } },
+              imports,
+              document.getElementById(divId));
+            
+          // Add the extra, possibly shared state
+          // forOwnKeys is like for...in but skips inherited and 
+          // Caja-bookkeeping properties.
+13        cajita.forOwnKeys(extraOuters, ___.markFuncFreeze(function (i) {
+            // setPub makes the property readable from Cajita code
+            cajita.setPub(imports.outers, i, extraOuters[i]);
+          }));
+  
+          // Create the Valija runtime instance
+          // This must be called after attachDocumentStub().
+14        imports.$v = valijaMaker.CALL___(imports.outers);
+
+          // Use these imports
+15        ___.getNewModuleHandler().setImports(imports);
+        };
+      </script>
+    </head>
+    <body>
+      <script>
+        // Some state to share between the gadgets
+16      var shared = (function (x) {
+          return { 
+17            get: ___.markFuncFreeze(function () { return x; }),
+18            set: ___.markFuncFreeze(function (y) { x = String(y); })
+            };
+        })("");
+      </script>
+        
+      <script>
+        // Code for capturing, restoring, and calling a module function
+        // for sharing code between gadgets but having isolated instances
+        var sharedCode = (function () {
+20        var oldModuleHandler = ___.getNewModuleHandler();
+          var module;
+21        var capturingModuleHandler = ___.freeze({
+              handle: ___.markFuncFreeze(function handleOnly(newModule) {
+                module = newModule;
+              })});
+          return {
+22            capture: function() { ___.setNewModuleHandler(capturingModuleHandler); },
+23            restore: function() { ___.setNewModuleHandler(oldModuleHandler); },
+24            inject: function() { module.instantiate(___, oldModuleHandler.getImports()); }
+            };
+        })();
+        
+        // Prepare to capture the module function of the library
+25      sharedCode.capture();
+      </script>
+      <!-- Load the library code -->
+      <script src="library.out.js"></script>
+  
+26    <div id="gadget1" class="gadget1___"
+       style="position:relative; overflow: auto"></div>  
+      <script>
+        // Restore the default new-module handler
+27      sharedCode.restore();
+
+        // Set up the valija instance for gadget1 
+        // and grant access to the getter
+        // The string should match the id and class above as shown.
+28      initValija("gadget1", {set : shared.set});
+
+        // Create an instance of the library in gadget1's environment
+29      sharedCode.inject();
+      </script>
+      <!-- Load the gadget -->
+30    <script src="gadget1.out.js"></script>
+      <script>
+        // Inhibit any further use of gadget1's environment, in case initValija
+        // for gadget2 fails.
+        clearImports();
+      </script>
+  
+31    <div id="gadget2" class="gadget2___"
+       style="position:relative; overflow: auto"></div>
+      <script>
+32      initValija("gadget2", {get : shared.get});
+33      sharedCode.inject();
+      </script>
+34    <script src="gadget2.out.js"></script>
+      <script>
+        clearImports();
+      </script>
+    </body>
+  </html>
+}}}
+
+A Caja module host page is an HTML document.  It must do a few things:
+  * Load the Caja trusted code base, which creates the {{{___}}} and {{{cajita}}} objects (2)
+  * Supply a {{{provide}}} function for the Valija library to export its maker into (3)
+  * Load the Valija library (4)
+  * Create divs to hold the cajoled content (26) (31).  The bounding box must have {{{position:relative}}} so that the virtual body is an offset parent for its content, and the {{{overflow}}} property should be specified to visually contain content, so the gadget cannot float content outside its bounding box.  Either {{{auto}}} or {{{hidden}}} are fine values for the overflow.
+  * Create instances of the "virtual iframes" in the divs (28) (32)
+  * Load the third-party code that will run in the virtual iframes (30) (34)
+The trusted code base and the Valija library are built by running "ant" after checking out the Caja project (1).
+
+Optionally, the host page may supply some APIs for accessing shared state (16) or may instantiate code in the gadget's environment before loading the gadget [usually library code like Prototype, jQuery, YUI, etc.] (29) (33).
+
+The real substance of this file is in the code that sets up the virtual iframes (6-15).  This function takes the id of a {{{div}}} and a mix-in object containing host-specific APIs and shared state.  Next, it makes a copy (7) of the default set of objects, called {{{imports}}}, that JavaScript code assumes are universally accessible: JavaScript builtins like {{{Object}}}, {{{Array}}}, and {{{Math}}}.  
+  
+The valija library is written entirely in the small-but-secure "cajita" dialect of JavaScript, so it cannot modify {{{imports}}} directly---only modify its properties.  In particular, it assumes that all the objects visible as global variables to a gadget are properties of an import named {{{outers}}}.  By setting {{{imports.outers}}} equal to {{{imports}}} (8), all the builtins in {{{imports}}} become visible to the gadget as globals.
+
+Next, we add to {{{imports}}} a reference to the div containing the gadget and wrappers for the DOM objects like {{{document}}} and {{{window}}} (9-12).  The function {{{attachDocumentStub}}} creates a new {{{outers}}} property by mixing the old one into a {{{tameWindow}}} object so that {{{window}}} is the global scope.  Then we add the properties of the mix-in object to {{{imports.outers}}} (13).
+
+The cajoler assumes that the valija library is named {{{$v}}} (14), so we have to use that name when instantiating the library.  This call must occur after {{{attachDocumentStub}}} so that it gets the proper {{{outers}}} object.
+
+Finally, we tell the module handler to use these imports (15).  This step is necessary because {{{<script>}}} tags do not return a value; if they did, we'd return the module function instead and invoke it directly with these imports. After the module's {{{<script>}}} runs, we run {{{clearImports()}}} (5) to ensure that if, for example, the setup for {{{gadget2}}} fails, it will crash instead of going ahead and running with {{{gadget1}}}'s authority.
+
+The properties of {{{extraImports}}} may be host-specific APIs, like the OpenSocial APIs; they may also be objects that enable communication between gadgets.  In this example, the host page creates a pair of closures for manipulating a string (16).  The getter is added to gadget1's imports, while the setter is added to gadget2's imports.  The variable {{{get}}} appears to be a built-in global function to gadget1, while gadget2 sees a global variable {{{set}}}.  Thus the code in gadget2 can send a message to gadget1, but gadget1 cannot send a message back.
+
+All functions that gadgets need to call must be explicitly whitelisted; {{{get}}} and {{{set}}} are functions that only reference a string, so they can be whitelisted with the {{{markFuncFreeze}}} method of the Caja runtime library (17) (18).  In general, we may want to restrict or alter the behavior of functions, so simple whitelisting isn't sufficient.  This process is called "taming" and forms part of the trusted code base; new tamed methods should only be provided to gadgets after an extensive security review.  About half of the trusted code base (2) consists of taming the DOM; see [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domita.js src/com/google/caja/plugin/domita.js] for examples of tamings ranging from trivial to intricate.
+
+A library like Prototype or YUI needs access to each gadget's {{{document}}} object, but we don't want to incur the overhead of loading the library multiple times as part of each gadget.  If we load the library as its own, isolated gadget, we could extract any global variables it created and pass them to the gadgets rather like we did with {{{get}}} and {{{set}}}; however, this may allow gadgets to communicate that should be isolated from each other.  A more serious issue is that a library loaded this way effectively closes over the {{{document}}} provided to the library's gadget, and cannot modify any other gadget's document!
+
+Instead, we capture the library's module function and invoke it on each gadget's imports.  This has the cost of a separate instance of the library for each gadget, but has the benefit that the code is reused.  To capture the module function, we swap out the default module handler (20)---which invokes the module---with one that copies the module reference so that it can be invoked multiple times (21).  We turn on capturing (25) and load the library, then restore the old module handler (27), prepare the valija instance (28), and invoke the library module with that instance (29) (33).  Finally, we load the gadget (30), (32) which sees its own instance of the library as a global variable, isolated from any other instance of the library.
+
+The divs playing the role of virtual iframes should have the same class and id (19) (22).
+
+The Cajoler takes HTML/CSS/JavaScript code and produces a single JavaScript function (21) (24) that renders the content by means of the DOM taming, and whose execution is mediated by the Caja runtime.  The extension ".out.js" indicates that the file is a product of the cajoler and is JavaScript that may be safely executed. To cajole the example gadgets, run {{{cajole_html --only_js_emitted --input gadget1.html}}} and so on for {{{gadget2.html}}} and {{{library.html}}}.
+
+= What else do I need? =
+
+Caja adds bookkeeping properties to Object.prototype.  These properties are added to Objects on the container page when you load caja and while they remain invisible to cajoled code, they are visible to the container.  To avoid tripping over these properties, container authors should use the following precautions:
+
+== Filter for..in loops ==
+
+ES3 does not provide a means for marking properties non-enumerable, these properties show up unexpectedly when you loop over objects using for..in.  To avoid this problem, Caja provides an innocent code transformer which must be run over _uncajoled_ scripts that are loaded on a container page - even if they do not interact  with cajoled code.  The innocent code transformer rewrites loops as follows:
+
+|| {{{ for ( i in j ) { ...XXX... }; }}} || becomes || {{{ if (i.match(/___$/)) { continue; } }}} ||
+
+In addition, the innocent code transformer adds runtime checks to functions which use the `this` keyword to ensure `this` isn't pointing to the global scope.  This check makes it harder for privileged container code to accidentally grant unexpected authority.
+
+To run the innocent code transformer on `foo.js` use the following command:
+{{{
+  $ java -jar pluginc.jar com.google.caja.render.Innocent foo.js > foo.innocent.js
+}}}
+
+== JSON.stringify ==
+
+JSON.stringify serializes all properties of an object including the internal Caja properties.  Not only is this not the intended effect (internal properties gets exposed), they cause further problems because the two special Caja properties happen to point to one another and form a cycle.  Stringifying these properties can result in errors or an infinite loop.
+
+To avoid these problems, a container can either use `safeJSON.stringify` instead of `JSON.stringify` in tamed functions after loading `cajita.js`.
+
+Alternatively, the container can use the two-argument `JSON.stringify` to remove the Caja specific properties.  `JSON.stringify` optionally takes a `replacer` as a second argument.  The `replacer` is called on each key-value pair and the value returned is stringified.  We use the fact that if the `replacer` returns `null`, the key-value  pair is skipped.
+{{{
+  var endsWith___ = /___$/;
+  window.JSON.stringify(obj, function(k,v) {
+    return !endsWith___.test(k) ? v : null;
+  });
+}}}

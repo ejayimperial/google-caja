@@ -10,4 +10,4 @@ A [http://code.google.com/p/google-caja/ Caja] module is the output of the Caja 
 }}}
 that (currently--we're reserving this for potential later use) returns undefined.  The code is guaranteed to obey [http://en.wikipedia.org/wiki/Object_capability_model object capabilities] rules.
 
-At the moment, the most common kind of Caja module is one produced from an [http://code.google.com/apis/opensocial/ OpenSocial] gadget spec, but anyone can write a container to [CajaHostingModules host Caja modules].
+At the moment, the most common kind of Caja module is one produced from an [http://code.google.com/apis/opensocial/ OpenSocial] gadget spec, but anyone can write a container to [HostingModules host Caja modules].
