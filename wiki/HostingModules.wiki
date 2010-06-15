@@ -25,6 +25,8 @@ TODO write the rest of this section
 
 TODO explain Domita.
 
+Each virtual document body should have the CSS class “{{{vdoc-body___}}}”, and a stylesheet with the rule “{{{.vdoc-body___ { position: relative; overflow: auto;} }}}” (or {{{overflow: hidden;}}}); the first declaration ensures that CSS absolute positioning within the virtual document is relative to its own root rather than the whole page (and is therefore for the benefit of the gadget), and the second ensures that the gadget cannot have any visible content anywhere else on the page.
+
 domita-minified.js includes cajita.js.
 
 TODO explain Valija.
