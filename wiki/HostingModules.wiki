@@ -49,7 +49,7 @@ If you want to dynamically load modules and not worry about any of this, take a 
 
 All of these use the above-described “single JavaScript file” format of cajoled gadgets.
 
-  * An utterly trivial example: CajaTrivialHost. This does nothing but load and display a gadget.
+  * An utterly trivial example: [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-trivial.html container-trivial.html]. This does nothing but load and display a gadget.
 
   * An example of “dynamically loading” gadgets: [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-dynamic.html container-dynamic.html]. The code in this may in the future get folded into a convenience library for host pages.
 
