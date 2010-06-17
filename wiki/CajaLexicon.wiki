@@ -24,9 +24,12 @@ Caja is a fairly intricate and complex project with a lot of very specialized as
 
  * _Module_ - A JavaScript file which is the output of the cajoling process, which may be loaded into a host page under its control. Modules may or may not include HTML. Cajoling a gadget produces a module.
 
- * _Gadget_ - An [http://code.google.com/apis/opensocial/ OpenSocial gadget]. Some text incorrectly refers to modules as gadgets.
+ * _Gadget_ - A module which presents HTML, especially an [http://code.google.com/apis/opensocial/ OpenSocial gadget]. Some text incorrectly refers to modules as gadgets. It is not quite settled whether the term “gadget” refers strictly to OpenSocial gadgets.
 
  * _Container_ - A web site which displays gadgets. Some text incorrectly refers to host pages as containers.
 
  * _Host page_ - A web page which loads Caja modules, and may or may not use Valija to display HTML in those modules to the user.
 
+= Caja project internals =
+
+  * _Plugin_, as in the com.google.caja.plugin package name - An obsolete synonym for _gadget_.
