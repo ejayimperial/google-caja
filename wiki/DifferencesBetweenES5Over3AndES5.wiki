@@ -14,7 +14,6 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
   * No `eval`
   * No `Function` constructor
   * `Object.prototype` is frozen
-  * The `Function.prototype.call` and `Function.prototype.apply` properties are non-writable and non-configurable.
   * The true global object is inaccessible
   * Property names may not end in two underscores
   * Does not support creating objects with null prototype
@@ -27,7 +26,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
     * `'length'` must not be an accessor property on non-arrays
     * Only supports bracketed numeric indexing into strings (e.g. `'foo'[1]`) if the underlying ES3 engine does
     * If we can statically determine that a variable will only contain numbers after being initialized and this variable is used as a property name before initialization (e.g., `x[i]`), then it may be converted to the property name `'NaN'` rather than the property name `'undefined'` (e.g., as if translated to `x[+i]`).
-
+  * Invoking `Function.prototype` throws an error instead of returning undefined.
 
 
 = Differences between ES5/3 and selected ES-Harmony features =
