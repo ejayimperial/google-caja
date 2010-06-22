@@ -1,6 +1,10 @@
 #summary "Cajoling" is what we call the process of turning Caja input into JavaScript.
 
-=Obtain a Caja build=
+The cajoler is written in Java and can be run either from the command line or a web service (of which the CajaPlayground is an instance).
+
+==Running the cajoler yourself==
+
+===Obtain a Caja build===
 
 To cajole your input, first build Caja from source.
 
@@ -19,7 +23,7 @@ You should now have a directory called `ant-jars`, relative to your current dire
 cd ..
 }}}
 
-=Cajole your input=
+===Command-line cajoling===
 
 *!OpenSocial.* To cajole an !OpenSocial gadget, do the following:
 
@@ -33,7 +37,7 @@ where:
 
   _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./listfriends-cajoled.xml`.
 
-*Plain HTML.* To cajole a plain HTML snippet, do the following:
+*Plain HTML.* To cajole a plain HTML+!JavaScript snippet, do the following:
 
 {{{
 bin/cajole_html -i <inputHtmlUrl> -o <targetJsFile>
@@ -44,3 +48,18 @@ where:
   _<inputHtmlFile>_ - The absolute URL of the input HTML snippet, such as `file:/Users/example/test.html`.
 
   _<targetJsFile>_ - The file path where you want your JavaScript module function to be stored, such as `./test-cajoled.js`.
+
+== Cajoler web service ==
+
+The cajoling service is appropriate when you want the client (browser) to request third-party gadgets/modules to be cajoled at runtime (as opposed to choosing the content to be cajoled on your own server). The `cajita-module.js` library works well with the cajoling service.
+
+To start the Cajoler web service, download Caja as above, build it with `ant playground`, then do `ant runserver`. You can then use the service at `http://localhost:8080/cajole`.
+
+The parameters to the service are [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/service/CajaArguments.java somewhat documented]. A sample invocation (line breaks added):
+{{{
+  http://caja.appspot.com/cajole
+      ?url=http%3A%2F%2Fwww.thinkfu.com%2Ftrivial.html
+      &input-mime-type=text/html
+      &output-mime-type=application/javascript
+}}}
+The `url` is fetched and used as the input. The `input-mime-type` specifies what kind of content to expect there; in particular, it is usually either a HTML file possibly with embedded JavaScript, `text/html`, or a JavaScript file, `application/javascript`. The `output-mime-type` specifies what kind of content to return; always use `application/javascript` for client-side loading. TODO: discuss other use cases.
