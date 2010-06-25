@@ -9,7 +9,10 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
   <html>
     <head>
       <title>A simple host page for Caja gadgets</title>
-    
+      
+      <!-- Provides rules for visually confining vdoc-body___ elements -->
+0     <link rel="stylesheet" href="caja-gadget.css" type="text/css">
+      
 1     <!-- In ant-lib/com/google/caja/plugin/ -->
 2     <script src="domita-minified.js"></script>
       <!-- In ant-lib/com/google/caja/ -->
@@ -55,7 +58,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
           // you set a property on imports.outers after this point, 
           // you have to grant access to it explicitly.
 12        attachDocumentStub(
-              "-" + divId,
+              "-" + divId + "___",
               // Don't proxy urls
               { rewrite: function(uri, mimetype) { return uri; } },
               imports,
@@ -112,8 +115,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
       <!-- Load the library code -->
       <script src="library.out.js"></script>
   
-26    <div id="gadget1" class="gadget1___"
-       style="position:relative; overflow: auto"></div>  
+26    <div id="gadget1" class="gadget1___ vdoc-body___"></div>  
       <script>
         // Restore the default new-module handler
 27      sharedCode.restore();
@@ -134,8 +136,7 @@ Here's a sample Caja module host page; the numbers at the left are footnotes and
         clearImports();
       </script>
   
-31    <div id="gadget2" class="gadget2___"
-       style="position:relative; overflow: auto"></div>
+31    <div id="gadget2" class="gadget2___ vdoc-body___"></div>
       <script>
 32      initValija("gadget2", {get : shared.get});
 33      sharedCode.inject();
@@ -152,7 +153,7 @@ A Caja module host page is an HTML document.  It must do a few things:
   * Load the Caja trusted code base, which creates the {{{___}}} and {{{cajita}}} objects (2)
   * Supply a {{{provide}}} function for the Valija library to export its maker into (3)
   * Load the Valija library (4)
-  * Create divs to hold the cajoled content (26) (31).  The bounding box must have {{{position:relative}}} so that the virtual body is an offset parent for its content, and the {{{overflow}}} property should be specified to visually contain content, so the gadget cannot float content outside its bounding box.  Either {{{auto}}} or {{{hidden}}} are fine values for the overflow.
+  * Create divs to hold the cajoled content (26) (31).
   * Create instances of the "virtual iframes" in the divs (28) (32)
   * Load the third-party code that will run in the virtual iframes (30) (34)
 The trusted code base and the Valija library are built by running "ant" after checking out the Caja project (1).
@@ -164,6 +165,8 @@ The real substance of this file is in the code that sets up the virtual iframes 
 The valija library is written entirely in the small-but-secure "cajita" dialect of JavaScript, so it cannot modify {{{imports}}} directly---only modify its properties.  In particular, it assumes that all the objects visible as global variables to a gadget are properties of an import named {{{outers}}}.  By setting {{{imports.outers}}} equal to {{{imports}}} (8), all the builtins in {{{imports}}} become visible to the gadget as globals.
 
 Next, we add to {{{imports}}} a reference to the div containing the gadget and wrappers for the DOM objects like {{{document}}} and {{{window}}} (9-12).  The function {{{attachDocumentStub}}} creates a new {{{outers}}} property by mixing the old one into a {{{tameWindow}}} object so that {{{window}}} is the global scope.  Then we add the properties of the mix-in object to {{{imports.outers}}} (13).
+
+The elements containing the cajoled content (26) (31) must have {{{position:relative}}} so that the virtual body is an offset parent for its content, and the {{{overflow}}} property should be specified to visually contain content, so the gadget cannot float content outside its bounding box.  Either {{{auto}}} or {{{hidden}}} are fine values for the overflow property. This is automatically handled by {{{caja-gadget.css}}} (0) for divs with the class {{{vdoc-body___}}}.
 
 The cajoler assumes that the valija library is named {{{$v}}} (14), so we have to use that name when instantiating the library.  This call must occur after {{{attachDocumentStub}}} so that it gets the proper {{{outers}}} object.
 
