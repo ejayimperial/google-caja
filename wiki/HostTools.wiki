@@ -1,0 +1,50 @@
+#summary Library for host pages.
+
+host-tools.js is a library for Caja gadget/module host pages.
+
+It provides a single global variable, !HostTools, which is a constructor with no parameters. You generally only need one !HostTools object per page, but it's not a singleton just in case.
+
+See [HostingModules#Caja's_JavaScript_files] for information on what JS files to load along with host-tools.js.
+
+== !HostTools object ==
+
+{{{
+    var hostTools = new HostTools();
+}}}
+
+The methods of !HostTools objects are:
+
+  * setBaseURL(_url_) — Specify a URL (string) which module loading should be relative to. The default is `document.location.toString()` (though it ought to be the base URL of the page instead).
+
+  * setCajolerService(_url_) — Specify the URL to the cajoling service. The default is `"http://caja.appspot.com/cajole"`. You should change this to your own server if you don't want to rely on ours, or are testing and cajoling content from `http://localhost`.
+
+ * Sandbox() — Constructor for Sandbox objects.
+
+In the typical case, you don't need to do any configuration and can just create Sandboxes.
+
+== Sandbox object ==
+
+{{{
+    var sandbox = new hostTools.Sandbox();
+}}}
+
+A Sandbox object manages particular authorities a module will receive. In particular, for gadgets (modules which control portions of a HTML document), there is one Sandbox per gadget.
+
+The methods of Sandbox objects are:
+
+  * attach(_vdocBody_`[`, _options_`]`) — Grant access to a particular portion of the page. _vdocBody_ should be a HTML DOM element, such as a `<div>`. _options_ is an optional object; currently the only significant property is `valija`, which may be given a value of `false` to disable loading Valija in the sandbox, which is not usually of interest. It is not recommended to `attach` the same Sandbox more than once; the consequences are not well considered.
+
+  * imports — This property is the imports object which will be given to loaded modules. You can add objects of your own to it to give additional authority/communication channels to the module, or instantiate modules with it if you've loaded them by other means.
+
+  * run("moduleID") — Load and instantiate the specified module with the current imports. Unless otherwise configured (not currently possible), the module ID is a relative URL to uncajoled HTML or JavaScript.
+
+== Complete example ==
+
+{{{
+<div id="theGadget"></div>
+<script type="text/javascript">
+    var sandbox = new ht.Sandbox();
+    sandbox.attach(document.getElementById("theGadget"));
+    sandbox.run("http://www.thinkfu.com/trivial.html");
+</script>
+}}}
