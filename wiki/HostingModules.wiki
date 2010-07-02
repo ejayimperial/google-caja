@@ -53,11 +53,9 @@ It is also possible for a module to have no HTML in it at all, such as if it wer
     * {{{uri.js}}}
     * {{{cajita-promise.js}}}
     * {{{cajita-module.js}}}
+  * To use the host page support library {{{host-tools.js}}}, load all of the above first.
 
-(
-TODO: explain what all these individual files are good for, and note the standalone html-sanitizer -- or should 'all of Caja's !JavaScript' be a separate page?
-TODO: mention HostTools once it is committed.
-)
+(TODO: explain what all these individual files are good for, and note the standalone html-sanitizer -- or should 'all of Caja's !JavaScript' be a separate page?)
 
 == Loading modules: the {{{<script>}}} problem ==
 
