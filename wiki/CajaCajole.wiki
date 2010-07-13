@@ -62,4 +62,9 @@ The parameters to the service are [http://code.google.com/p/google-caja/source/b
       &input-mime-type=text/html
       &output-mime-type=application/javascript
 }}}
-The `url` is fetched and used as the input. The `input-mime-type` specifies what kind of content to expect there; in particular, it is usually either a HTML file possibly with embedded JavaScript, `text/html`, or a JavaScript file, `application/javascript`. The `output-mime-type` specifies what kind of content to return; always use `application/javascript` for client-side loading. TODO: discuss other use cases.
+The `url` is fetched and used as the input. The `input-mime-type` specifies what kind of content to expect there; in particular, it is usually either a HTML file possibly with embedded JavaScript, `text/html`, or a JavaScript file, `application/javascript`. 
+
+The `output-mime-type` specifies what kind of content to return. It may be:
+  * `application/javascript`; the result is a Caja module (possibly with the effect of generating HTML on load); this is suitable for use with the `cajita-module.js`/HostTools dynamic loading facilities (and is automatically used by HostTools by default).
+  * `text/html`; a HTML fragment with `<script>` which is a Caja module. Use this if you want to just embed the gadget in a HTML document you're generating, and have set up the new-module handler in a previous `<script>`.
+  * `application/json`; The result contains HTML and JS text as strings in a JSON object with properties `"html"`, `"js"`, and `"messages"`. Use this if you want to handle the HTML and JS separately.
