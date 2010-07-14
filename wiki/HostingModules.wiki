@@ -5,17 +5,17 @@
 
 So you want to write a host page — a web page which contains Caja modules. 
 
-This page is intended to give a broad overview of the major moving parts, with enough technical detail to make informed choices. If you want a concrete explained example, see InteractingModulesExample.
+This page is intended to give a broad overview of the major moving parts, with enough technical detail to make informed choices.
 
 == Types of [CajaCajole Cajoling] ==
 
 There are two ways cajoled code may be represented:
 
-  * as a HTML file and !JavaScript file; the HTML is included in the host page by the server and the !JavaScript referenced by a {{{<script>}}} element. This is the default.
+  * as a HTML file and !JavaScript file; the HTML is included in the host page by the server and the !JavaScript referenced by a {{{<script>}}} element. This is the default mode of operation of the command-line cajoler.
 	
 	* as a single !JavaScript file. In this case, the first thing the cajoled code does is generate the HTML it originally came in (as if, but not actually, by {{{document.write}}}). To produce this type of output from the command-line {{{cajole_html}}}, use the {{{--only_js_emitted}}} option.
 
-All of the examples here use the second method, because they do not use build systems or web servers to include the cajoler output in the host page.
+All of the examples here use the second method, because they do not use build systems or web servers to include the cajoler output in the host page. For further information on running the cajoler, see CajaCajole.
 
 == Cajita, Domita, and Valija ==
 
@@ -23,41 +23,21 @@ Cajita is the basic "secure JavaScript" language and runtime which almost everyt
 
 Domita is a _[CajaLexicon taming]_ and virtualization of the DOM. Each gadget in a web page gets control over the contents of a specific element; Domita arranges this by presenting the element _as if_ it were the {{{<body>}}} of an independent HTML document (the "virtual document body" or "vdoc body"); it provides a 'document' object which is given to the gadget.
 
-Each virtual document body should have the CSS class “{{{vdoc-body___}}}”, and a stylesheet with the rule “{{{.vdoc-body___ { position: relative; overflow: auto;} }}}” (or {{{overflow: hidden;}}}); the first declaration ensures that CSS absolute positioning within the virtual document is relative to its own root rather than the whole page (and is therefore for the benefit of the gadget), and the second ensures that the gadget cannot have any visible content anywhere else on the page.
+Each virtual document body should have the CSS class “{{{vdoc-body___}}}”, and a stylesheet with the rule “{{{.vdoc-body___ { position: relative; overflow: auto;} }}}” (or {{{overflow: hidden;}}}); the first declaration ensures that CSS absolute positioning within the virtual document is relative to its own root rather than the whole page (and is therefore for the benefit of the gadget), and the second ensures that the gadget cannot have any visible content anywhere else on the page. This is available in Caja's files as "caja-gadget.css".
 
 TODO explain Valija.
 
 It is also possible for a module to have no HTML in it at all, such as if it were a !JavaScript library.
 
-== Caja's !JavaScript files ==
+== The Cajita runtime and Caja's JavaScript files. ==
 
-(TODO(kpreid): explain where in the Caja tree to get these files from. src is wrong since some of them are built, and ant-lib only gets them if the tests are built --- which is wrong w.r.t jars, I hear.)
+The Cajita runtime, in order to implement the taming and other features, must add properties to Object.prototype and many other objects. This can interfere with existing code. We are therefore moving away from loading the Cajita runtime into host pages, but rather (transparently) loading it and all cajoled code into an iframe, then giving it access to the DOM in the host page. The examples linked from this page all use this technique, but it is also possible to load Caja into the host page and this can be useful for some use cases (if you want to synchronously load a Caja module before the rest of your page finishes loading).
 
-  * The Cajita runtime ({{{cajita.js}}}) is fundamental and must be loaded before any cajoled module.
-  * To load Cajita and Domita, it suffices to load {{{domita-minified.js}}}, which combines Domita with all of its dependencies; specifically, it consists of:
-    * {{{json_sans_eval.js}}}
-    * {{{cajita.js}}}
-    * {{{unicode.js}}}
-    * {{{css-defs.js}}}
-    * {{{html4-defs.js}}}
-    * {{{html-sanitizer.js}}}
-    * {{{html-emitter.js}}}
-    * {{{bridal.js}}}
-    * {{{domita.js}}}
-  Loading these unminified files separately may be useful for debugging.
-  * Valija is itself a cajoled module. To load Valija, load these files:
-    * {{{setup-valija.js}}}
-    * {{{valija.out.js}}}
-  The former sets up the new module handler (explained below) so that the Valija constructor is stored in a global variable {{{valijaMaker}}} when the latter is loaded.
-  * To use the module-loading library {{{cajita-module.js}}}, load either {{{module-promise-minified.js}}} or these files:
-    * {{{uri.js}}}
-    * {{{cajita-promise.js}}}
-    * {{{cajita-module.js}}}
-  * To use the host page support library {{{host-tools.js}}}, load all of the above first.
-
-(TODO: explain what all these individual files are good for, and note the standalone html-sanitizer -- or should 'all of Caja's !JavaScript' be a separate page?)
+So, load `caja.js` (`http://caja.appspot.com/caja.js`, `src/com/google/caja/plugin/caja.js`), and take a look at CajaRuntimeFiles if you care about the other option.
 
 == Loading modules: the {{{<script>}}} problem ==
+
+Please skip to the next section; this is no longer applicable to the typical case. TODO(kpreid): Figure out where to migrate this documentation to.
 
 The most straightforward way to load a module into a page is to include a {{{<script>}}} element referring to the cajoled !JavaScript.
 
@@ -69,7 +49,7 @@ The major problem with this mechanism is that it requires the correct ordering o
 
 The other primitive facility is that the [CajaCajole cajoler] may be directed to generate code which invokes another specified function, rather than the new module handler (in the style of JSONP). This has the advantage that there is no single global new-module-handler to be carefully managed; but it requires that the module be cajoled with an identifier unique within the loading page.
 
-If you want to dynamically load modules and not worry about any of this, take a look at [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/cajita-module.js cajita-module.js], which implements a queue to manage {{{<script>}}} loading, and provides !XMLHTTPRequest-based loading as an alternative. Additionally, it presents a promise-based API for waiting for modules to load, and supports modules requesting other modules as dependencies.
+If you want to dynamically load modules and not worry about any of this, take a look at [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/cajita-module.js cajita-module.js], which implements a queue to manage {{{<script>}}} loading, and provides !XMLHTTPRequest-based loading as an alternative. Additionally, it presents a promise-based API for waiting for modules to load, and supports modules requesting other modules as dependencies. (TODO(kpreid): HostTools and caja.js instead.)
 
 == Host page examples ==
 
@@ -77,7 +57,4 @@ All of these use the above-described “single !JavaScript file” format of caj
 
   * An utterly trivial example: [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-trivial.html container-trivial.html]. This does nothing but load and display a gadget.
 
-  * An example of “dynamically loading” gadgets: [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-dynamic.html container-dynamic.html]. The code in this may in the future get folded into a convenience library for host pages.
-
-  * Multiple gadgets, with interaction between them, are demonstrated with extensive comments at InteractingModulesExample.
-  
+  * Multiple gadgets, with interaction between them, are demonstrated in [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-interaction.html container-interaction.html]. The wiki page InteractingModulesExample explains an older version of this page which did not use caja.js.

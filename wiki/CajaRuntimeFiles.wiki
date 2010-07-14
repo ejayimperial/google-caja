@@ -1,0 +1,27 @@
+#summary Info on the Caja runtime components and their relations.
+
+(TODO(kpreid): explain where in the Caja tree to get these files from. src is wrong since some of them are built, and ant-lib only gets them if the tests are built --- which is wrong w.r.t jars, I hear. After issue 1246, the story will hopefully be much simpler.)
+
+  * The Cajita runtime ({{{cajita.js}}}) is fundamental and must be loaded before any cajoled module.
+  * To load Cajita and Domita, it suffices to load {{{domita-minified.js}}}, which combines Domita with all of its dependencies; specifically, it consists of:
+    * {{{json_sans_eval.js}}}
+    * {{{cajita.js}}}
+    * {{{unicode.js}}}
+    * {{{css-defs.js}}}
+    * {{{html4-defs.js}}}
+    * {{{html-sanitizer.js}}}
+    * {{{html-emitter.js}}}
+    * {{{bridal.js}}}
+    * {{{domita.js}}}
+  Loading these unminified files separately may be useful for debugging.
+  * Valija is itself a cajoled module. To load Valija, load these files:
+    * {{{setup-valija.js}}}
+    * {{{valija.out.js}}}
+  The former sets up the new module handler (explained below) so that the Valija constructor is stored in a global variable {{{valijaMaker}}} when the latter is loaded.
+  * To use the module-loading library {{{cajita-module.js}}}, load either {{{module-promise-minified.js}}} or these files:
+    * {{{uri.js}}}
+    * {{{cajita-promise.js}}}
+    * {{{cajita-module.js}}}
+  * To use the host page support library {{{host-tools.js}}}, load all of the above first.
+
+(TODO: explain what all these individual files are good for, and note the standalone html-sanitizer -- or should 'all of Caja's !JavaScript' be a separate page?)
