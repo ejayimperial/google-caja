@@ -27,6 +27,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
     * Only supports bracketed numeric indexing into strings (e.g. `'foo'[1]`) if the underlying ES3 engine does
     * If we can statically determine that a variable will only contain numbers after being initialized and this variable is used as a property name before initialization (e.g., `x[i]`), then it may be converted to the property name `'NaN'` rather than the property name `'undefined'` (e.g., as if translated to `x[+i]`).
   * Invoking `Function.prototype` throws an error instead of returning undefined.
+  * The `[[Construct]]` behavior on bound functions throws a "not yet implemented" complaint.
 
 
 = Differences between ES5/3 and selected ES-Harmony features =
