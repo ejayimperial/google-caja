@@ -4,7 +4,7 @@ host-tools.js is a library for Caja gadget/module host pages.
 
 It provides a single global variable, !HostTools, which is a constructor with no parameters. You generally only need one !HostTools object per page, but it's not a singleton just in case.
 
-See [HostingModules#Caja's_JavaScript_files] for information on what JS files to load along with host-tools.js.
+See CajaRuntimeFiles for information on what JS files host-tools.js depends on. (Irrelevant if you are using caja.js.)
 
 == !HostTools object ==
 
@@ -18,6 +18,8 @@ The methods of !HostTools objects are:
 
   * setCajolerService(_url_) — Specify the URL to the cajoling service. The default is `"http://caja.appspot.com/cajole"`. You should change this to your own server if you don't want to rely on ours, or are testing and cajoling content from `http://localhost`.
 
+ * getLoad() — Return a module loading function (`load`(_moduleID_) ⇒ _moduleFunction_) configured according to the above settings. Usually `Sandbox.run` is used instead.
+
  * Sandbox() — Constructor for Sandbox objects.
 
 In the typical case, you don't need to do any configuration and can just create Sandboxes.
@@ -30,20 +32,38 @@ In the typical case, you don't need to do any configuration and can just create 
 
 A Sandbox object manages particular authorities a module will receive. In particular, for gadgets (modules which control portions of a HTML document), there is one Sandbox per gadget.
 
-The methods of Sandbox objects are:
+The methods/properties of Sandbox objects are:
 
   * attach(_vdocBody_`[`, _options_`]`) — Grant access to a particular portion of the page. _vdocBody_ should be a HTML DOM element, such as a `<div>`. _options_ is an optional object; currently the only significant property is `valija`, which may be given a value of `false` to disable loading Valija in the sandbox, which is not usually of interest. It is not recommended to `attach` the same Sandbox more than once; the consequences are not well considered.
 
   * imports — This property is the imports object which will be given to loaded modules. You can add objects of your own to it to give additional authority/communication channels to the module, or instantiate modules with it if you've loaded them by other means.
 
-  * run("moduleID") — Load and instantiate the specified module with the current imports. Unless otherwise configured (not currently possible), the module ID is a relative URL to uncajoled HTML or JavaScript.
+  * run(_moduleID_) — Load and instantiate the specified module with the current imports. Unless otherwise configured (not currently possible), the module ID is a relative URL to uncajoled HTML or !JavaScript.
+
+  * runCajoledModuleString(_moduleSource_) — Load and instantiate the module whose _cajoled_ form is the provided string. *THIS IS NOT A SAFE EVAL. DO NOT PROVIDE UNTRUSTED INPUT.* The purpose of this operation is to allow pages which include cajoled HTML in their source to also embed the cajoled !JavaScript.
 
 == Complete example ==
+
+With `caja.js`:
 
 {{{
 <div id="theGadget"></div>
 <script type="text/javascript">
-    var sandbox = new ht.Sandbox();
+    loadCaja(function (caja) {
+        var sandbox = new caja.hostTools.Sandbox();
+        sandbox.attach(document.getElementById("theGadget"));
+        sandbox.run("http://www.thinkfu.com/trivial.html");
+    });
+</script>
+}}}
+
+Without `caja.js`:
+
+{{{
+<div id="theGadget"></div>
+<script type="text/javascript">
+    var hostTools = new HostTools();
+    var sandbox = new hostTools.Sandbox();
     sandbox.attach(document.getElementById("theGadget"));
     sandbox.run("http://www.thinkfu.com/trivial.html");
 </script>
