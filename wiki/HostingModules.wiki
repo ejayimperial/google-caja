@@ -7,25 +7,31 @@ So you want to write a host page — a web page which contains Caja modules.
 
 This page is intended to give a broad overview of the major moving parts, with enough technical detail to make informed choices.
 
+Terminology note: A host page is any web page that embeds cajoled content and therefore uses the Caja runtime. A _container_ is a web site/application which works with Caja [CajaLexicon gadgets] and therefore serves host pages.
+
 == Types of [CajaCajole Cajoling] ==
 
-There are two ways cajoled code may be represented:
+There are two ways cajoled code may be represented in the data sent to a browser:
 
   * as a HTML file and !JavaScript file; the HTML is included in the host page by the server and the !JavaScript referenced by a {{{<script>}}} element. This is the default mode of operation of the command-line cajoler.
 	
-	* as a single !JavaScript file. In this case, the first thing the cajoled code does is generate the HTML it originally came in (as if, but not actually, by {{{document.write}}}). To produce this type of output from the command-line {{{cajole_html}}}, use the {{{--only_js_emitted}}} option.
+  * as a single !JavaScript file. In this case, the first thing the cajoled code does is generate the HTML it originally came in (as if, but not actually, by {{{document.write}}}). To produce this type of output from the command-line {{{cajole_html}}}, use the {{{--only_js_emitted}}} option.
 
-All of the examples here use the second method, because they do not use build systems or web servers to include the cajoler output in the host page. For further information on running the cajoler, see CajaCajole.
+The second method is simpler, because it does not involve any dynamic content generation or build system to include the cajoler output in the host page. However, it means that if what is being cajoled is HTML+scripting rather than something necessarily requiring !JavaScript, the HTML will not show up at all if the browser has !JavaScript disabled since loading of the HTML occurs through the Caja runtime.
+
+For further information on running the cajoler, see CajaCajole.
 
 == Cajita, Domita, and Valija ==
 
-Cajita is the basic "secure JavaScript" language and runtime which almost everything else uses.
+*Cajita* is the basic "secure !JavaScript" language and runtime which almost everything else uses.
 
-Domita is a _[CajaLexicon taming]_ and virtualization of the DOM. Each gadget in a web page gets control over the contents of a specific element; Domita arranges this by presenting the element _as if_ it were the {{{<body>}}} of an independent HTML document (the "virtual document body" or "vdoc body"); it provides a 'document' object which is given to the gadget.
+*Domita* is a _[CajaLexicon taming]_ and virtualization of the DOM. Each gadget in a web page gets control over the contents of a specific element; Domita arranges this by presenting the element _as if_ it were the {{{<body>}}} of an independent HTML document (the "virtual document body" or "vdoc body"); it provides a 'document' object which is given to the gadget.
 
-Each virtual document body should have the CSS class “{{{vdoc-body___}}}”, and a stylesheet with the rule “{{{.vdoc-body___ { position: relative; overflow: auto;} }}}” (or {{{overflow: hidden;}}}); the first declaration ensures that CSS absolute positioning within the virtual document is relative to its own root rather than the whole page (and is therefore for the benefit of the gadget), and the second ensures that the gadget cannot have any visible content anywhere else on the page. This is available in Caja's files as "caja-gadget.css".
+In order to accomplish its virtualization, Domita uses some special id and class names. If you set up Domita explicitly, you will provide an `idSuffix` of the form `-foo___`. Every element ID defined by the gadget is suffixed with this value. Furthermore, the vdoc body has two special class names applied: the `idSuffix` without the hyphen, which is used to mark the root element so that the virtualized `element.parentNode` can go that far up by no farther, and `vdoc-body___`.
 
-TODO explain Valija.
+The host page should have a stylesheet with the rule “{{{.vdoc-body___ { position: relative; overflow: auto;} }}}” (or {{{overflow: hidden;}}}); the first declaration ensures that CSS absolute positioning within the virtual document is relative to its own root rather than the whole page (and is therefore for the benefit of the gadget), and the second ensures that the gadget cannot have any visible content anywhere else on the page. This is available in Caja's files as "caja-gadget.css".
+
+*Valija* is an emulation layer, built on top of the Cajita language, which provides a virtualized ES3 (!JavaScript) environment for running code that is unaware of Caja. For example, in Cajita you can't modify Object.prototype, but in Valija you can modify your own virtual copy of it.
 
 It is also possible for a module to have no HTML in it at all, such as if it were a !JavaScript library.
 
@@ -37,7 +43,7 @@ So, load `caja.js` (`http://caja.appspot.com/caja.js`, `src/com/google/caja/plug
 
 == Loading modules: the {{{<script>}}} problem ==
 
-Please skip to the next section; this is no longer applicable to the typical case. TODO(kpreid): Figure out where to migrate this documentation to.
+Please skip to the next section; this is no longer applicable to the typical case. TODO(kpreid): Figure out where to migrate this documentation to; write documentation covering iframe-and-therefore-async loading, and HostTools.
 
 The most straightforward way to load a module into a page is to include a {{{<script>}}} element referring to the cajoled !JavaScript.
 
@@ -53,8 +59,12 @@ If you want to dynamically load modules and not worry about any of this, take a 
 
 == Host page examples ==
 
-All of these use the above-described “single !JavaScript file” format of cajoled gadgets.
+These two examples use the above-described “single !JavaScript file” format of cajoled gadgets.
 
   * An utterly trivial example: [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-trivial.html container-trivial.html]. This does nothing but load and display a gadget.
 
   * Multiple gadgets, with interaction between them, are demonstrated in [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/container/container-interaction.html container-interaction.html]. The wiki page InteractingModulesExample explains an older version of this page which did not use caja.js.
+
+This example is a container site which embeds cajoled HTML, and therefore actually invokes the cajoling service from its own server:
+
+  * The Caja [http://caja-corkboard.appspot.com corkboard demo] is an example of using Caja to sandbox, not explicitly authored "gadgets", but rather whatever random HTML a user of your site types in (e.g. in blog comments, forum posts, user profiles, ...). For technical discussion see [CorkboardDemo].
