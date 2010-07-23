@@ -49,6 +49,10 @@ where:
 
   _<targetJsFile>_ - The file path where you want your JavaScript module function to be stored, such as `./test-cajoled.js`.
 
+`cajole_html` defaults to generating separate HTML and !JavaScript files, which is appropriate if you are going to be embedding the HTML in a host page. If you are dynamically loading modules, or if there is no HTML in the input, then you can pass `--only_js_emitted`.
+
+To see other available options, run `bin/cajole_html` with no arguments.
+
 == Cajoler web service ==
 
 The cajoling service is appropriate when you want the client (browser) to request third-party gadgets/modules to be cajoled at runtime (as opposed to choosing the content to be cajoled on your own server). The `cajita-module.js` library works well with the cajoling service.
