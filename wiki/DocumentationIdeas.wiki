@@ -11,8 +11,8 @@ You might want to cover the differences between Cajita and Valija, features remo
 == Kinds of attacks that Caja prevents ==
 You might want to start talking about the differences between containment vs isolation and why iframes are the latter.  Then the front page talks briefly about the various kinds of ambient authority that caja contains.
 
-== URL Policies	==
-There are already wiki pages on the kinds of URLs.  Maybe give examples of each and example scenarios where they might want to be rewritten or proxied, with examples of URL policies that implement these requirements.
+== URI Policies	==
+There are already wiki pages on the kinds of URLs.  Maybe give examples of each and example scenarios where they might want to be rewritten or proxied, with examples of URI policies that implement these requirements.
 
 == Simplest possible Caja integration into your page using the cajoling service ==
 See HostingModules (and talk to Mike Stay for more directions)

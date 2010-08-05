@@ -37,7 +37,7 @@
   * Internals
     * Design Decisions
       * [FlashBridge]
-      * [UrlPolicy]
+      * [UriPolicy]
       * [ObjectProperties]
       * [UserAgentContext]
       * [FunctionSpecies]

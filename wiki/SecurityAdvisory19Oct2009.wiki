@@ -32,4 +32,4 @@ The patch is available at
 discussion of the change at [http://codereview.appspot.com/124069/show].
 
 CajaWhitelists explains how to modify HTML and CSS schemas, and
-UrlPolicy explains URL policies.
+UriPolicy explains URI policies.

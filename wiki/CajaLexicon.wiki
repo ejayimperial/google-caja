@@ -29,7 +29,13 @@ Caja is a fairly intricate and complex project with a lot of very specialized as
  * _Container_ - A web site which displays gadgets. Some text incorrectly refers to host pages as containers.
 
  * _Host page_ - A web page which loads Caja modules, and may or may not use Valija to display HTML in those modules to the user.
+ 
+ * _URI policy_ - A policy used by the [CajaCajole cajoler] and DOM taming to rewrite URIs/URLs in cajoled content for various reasons. See UriPolicy.
 
 = Caja project internals =
 
   * _Plugin_, as in the com.google.caja.plugin package name - An obsolete synonym for _gadget_.
+  
+  * _URL policy_ - An obsolete synonym for URI policy.
+
+  
