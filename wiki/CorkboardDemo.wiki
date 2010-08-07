@@ -23,7 +23,7 @@ First, do the [http://code.google.com/appengine/docs/python/gettingstarted/ Goog
 
 == Adding the cajoler ==
 
-All of the talking-to-the-cajoler logic is in [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/corkboard/cajole.py cajole.py] in the corkboard demo. This module (which should stand alone, so you could drop it into your own application if you want) provides a function `cajole(html)` which returns a dict:
+All of the talking-to-the-cajoler logic is in [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/demos/corkboard/cajole.py cajole.py] in the corkboard demo. This module (which stands alone except for some easily-replaced dependencies on App Engine, so you could drop it into your own application if you want) provides a function `cajole(html)` which returns a dict:
 
 {{{
 {
