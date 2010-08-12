@@ -18,11 +18,14 @@
       * [WhatsMissing]
       * [CajaWhitelists]
   * Integration Guide
-    * [HostingModules Setting up a container]
+    * [HostingModules Setting up a host page]
+      * [HostTools HostTools API]
+      * [ModuleLoading Ways to load modules]
     * [LibraryTaming Taming libraries]
     * [JsHtmlSanitizer]
     * [Performance]
-    * [PipelineConfiguration]
+    * [CajaCajole Cajoler as a command or web service]
+    * [PipelineConfiguration Cajoler as a Java library]
   * Developer's Guide
     * [RunningCaja Downloading and compiling Caja]
     * [ContributingCode Contributing patches]

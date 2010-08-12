@@ -4,7 +4,9 @@ host-tools.js is a library for Caja gadget/module host pages.
 
 It provides a single global variable, !HostTools, which is a constructor with no parameters. You generally only need one !HostTools object per page, but it's not a singleton just in case.
 
-See CajaRuntimeFiles for information on what JS files host-tools.js depends on. (Irrelevant if you are using caja.js.)
+If you're using caja.js, then `caja.hostTools` is an instance of !HostTools; see HostingModules for configuration information.
+
+If you're not using caja.js, you construct HostTools yourself; and see CajaRuntimeFiles for information on what JS files host-tools.js depends on.
 
 == !HostTools object ==
 

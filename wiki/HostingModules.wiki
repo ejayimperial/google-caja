@@ -41,21 +41,26 @@ The Cajita runtime, in order to implement the taming and other features, must ad
 
 So, load `caja.js` (`http://caja.appspot.com/caja.js`, `src/com/google/caja/plugin/caja.js`), and take a look at CajaRuntimeFiles if you care about the other option.
 
-== Loading modules: the {{{<script>}}} problem ==
+== Loading Caja and loading modules ==
 
-Please skip to the next section; this is no longer applicable to the typical case. TODO(kpreid): Figure out where to migrate this documentation to; write documentation covering iframe-and-therefore-async loading, and HostTools.
+Since `caja.js` loads Caja in an iframe, we have to wait for the iframe itself to load -- and for that matter wait for the enough of the page DOM to be ready so that the iframe can be constructed. Therefore, a host page does something like this (from container-trivial.html):
 
-The most straightforward way to load a module into a page is to include a {{{<script>}}} element referring to the cajoled !JavaScript.
+{{{
+  ...
+  <script src="caja.js" type="text/javascript"></script>
+</head>
+<body>
+  ...
+  <script type="text/javascript">
+    loadCaja(function (caja) {
+      // ... Do stuff with 'caja' ...
+    });
+  </script>
+}}}
 
-However, Cajita modules execute in a chosen environment (imports) which determines the authority they get, in capability fashion, and they may have a return value. Some mechanism must be used to establish this association, since {{{<script>}}} merely gives access to !JavaScript globals.
+`loadCaja` is defined by `caja.js` and constructs an iframe, then calls the provided callback function. The Caja runtime is loaded into the iframe from a _Caja server_ (defaulting to our `caja.appspot.com` so getting started is simple) which is also used for dynamically cajoling code.
 
-There are two primitive facilities available. One is the _new module handler_, which may be set by {{{___.setNewModuleHandler(...)}}}. This function will be called by the module when it is loaded, passing in the module object. The default new module handler (TODO explain how to create more) immediately instantiates the module, using a specific set of imports (which can be controlled with {{{handler.setImports(...)}}} and {{{handler.getImports()}}}).
-
-The major problem with this mechanism is that it requires the correct ordering of a series of events (set up handler; load module; set up handler; load module; ...), even in the face of errors and asynchronicity.
-
-The other primitive facility is that the [CajaCajole cajoler] may be directed to generate code which invokes another specified function, rather than the new module handler (in the style of JSONP). This has the advantage that there is no single global new-module-handler to be carefully managed; but it requires that the module be cajoled with an identifier unique within the loading page.
-
-If you want to dynamically load modules and not worry about any of this, take a look at [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/cajita-module.js cajita-module.js], which implements a queue to manage {{{<script>}}} loading, and provides !XMLHTTPRequest-based loading as an alternative. Additionally, it presents a promise-based API for waiting for modules to load, and supports modules requesting other modules as dependencies. (TODO(kpreid): HostTools and caja.js instead.)
+Once Caja is loaded, modules may be loaded using the `caja.hostTools.Sandbox` utility; see HostTools for the API, or read the examples below.
 
 == Host page examples ==
 

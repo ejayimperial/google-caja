@@ -1,0 +1,27 @@
+The most straightforward way to load a module ([CajaCajole cajoled] !JavaScript) is to place a {{{<script>}}} element referring to the cajoled !JavaScript in the page which contains the Cajita runtime.
+
+There are two problems with this approach.
+
+Firstly, Cajita modules execute in a chosen environment (imports) which determines the authority they get, in capability fashion, and they may have a return value -- but {{{<script>}}} merely gives access to !JavaScript globals without having any specific-to-that-script incoming or outgoing connectivity.
+
+Secondly, because the runtime adds properties to many global objects, and to avoid other conflicts with uncajoled code on host pages, we (normally) load the runtime -- and therefore all modules as well -- into an iframe in the host page, which is its own page with its own set of globals (`window`, `document`, `Object`, etc.)
+
+==Solving the connectivity problem==
+
+There are two primitive facilities available. One is the _new module handler_, which may be set by {{{___.setNewModuleHandler(...)}}}. This function will be called by the module when it is loaded, passing in the module object. The default new module handler (TODO explain how to create more) immediately instantiates the module, using a specific set of imports (which can be controlled with {{{handler.setImports(...)}}} and {{{handler.getImports()}}}).
+
+The major problem with this mechanism is that it requires the correct ordering of a series of events (set up handler; load module; set up handler; load module; ...), even in the face of errors and asynchronicity.
+
+The other primitive facility is that the [CajaCajole cajoler] may be directed to generate code which invokes another specified function, rather than the new module handler (in the style of JSONP). This has the advantage that there is no single global new-module-handler to be carefully managed; but it requires that the module be cajoled with an identifier unique within the loading page.
+
+==Dynamic loading==
+
+The higher-level functionality, supporting dynamic module loading, is defined in [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/cajita-module.js cajita-module.js], which implements a queue to manage setting up the new module handler for {{{<script>}}} loading, and provides !XMLHTTPRequest-based loading as an alternative. Additionally, it presents a promise-based API for waiting for modules to load, and supports modules requesting other modules as dependencies.
+
+In both cases, `cajita-module.js` interacts with the loaded code by setting the new module handler just before it is evaluated.
+
+HostTools ([http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/host-tools.js host-tools.js]) builds on top of the interface provided by cajita-module to provide convenient setup of Domita and Valija in a module's imports.
+
+==Solving the iframe problem==
+
+The currently-recommended entry point for loading Caja, [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/caja.js caja.js], internally constructs an iframe, then hands out a HostTools instance which was created from inside the frame. Thus any modules loaded using it are evaluated inside the frame, but can easily be given access to the host page's DOM since the host page author's code runs in their page.
