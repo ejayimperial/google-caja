@@ -28,7 +28,7 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
     * If we can statically determine that a variable will only contain numbers after being initialized and this variable is used as a property name before initialization (e.g., `x[i]`), then it may be converted to the property name `'NaN'` rather than the property name `'undefined'` (e.g., as if translated to `x[+i]`).
   * Invoking `Function.prototype` throws an error instead of returning undefined.
   * The `[[Construct]]` behavior on bound functions throws a "not yet implemented" complaint.
-
+  * RegExps are not callable, and thus `(typeof` _aRegExp_`)` should return `"object"` according to the ES5 spec. Instead, it returns either `"function"` or `"object"` according to the underlying platform. Practically, this impacts Safari and Rhino. 
 
 = Differences between ES5/3 and selected ES-Harmony features =
 
