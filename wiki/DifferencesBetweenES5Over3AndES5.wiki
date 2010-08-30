@@ -37,3 +37,11 @@ There will be some differences between ES5/3 and ES5, detailed below. For code w
     * Proxies can't trap numeric properties or 'length'
   * "Leaky" ephemeron tables
     * Membranes hold onto all references that they wrap until the membrane is revoked
+
+= Draft Sources for the ES5/3 additions to Caja =
+
+[http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/es53.js es53.js], 
+
+[http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/parser/quasiliteral/ES53Rewriter.java ES53Rewriter.java]
+
+[http://code.google.com/p/google-caja/source/browse/trunk/tests/com/google/caja/parser/quasiliteral/ES53RewriterTest.java ES53RewriterTest.java]
