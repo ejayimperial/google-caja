@@ -2,7 +2,7 @@
 
 = Introduction =
 
-ES5/3 is an implementation of ES5 that runs on ES3 browsers. ES5/3 will take the place of Valija and we will deprecate and eventually end-of-life Valija. SES5/3, the Cajita replacement, is exactly the same with the exception of freezing all the primordials.
+ES5/3 is an implementation of ES5 that runs on ES3 browsers. ES5/3 will take the place of Valija; we will deprecate and eventually end-of-life Valija. SES5/3, the Cajita replacement, is exactly the same with the additional feature of freezing all the accessible primordials (i.e., all the primordials other than the global object).
 
 SES5/3 will upwards compatible from Cajita. ES5/3 will be upwards compatible from Valija, Cajita, and SES5/3. 
 
