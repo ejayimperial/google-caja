@@ -6,7 +6,7 @@ ES5/3 is an implementation of ES5 that runs on ES3 browsers. ES5/3 will take the
 
 SES5/3 will upwards compatible from Cajita. ES5/3 will be upwards compatible from Valija, Cajita, and SES5/3. 
 
-There will be some differences between ES5/3 and ES5, detailed below. For code written with these in mind, ES5 will effectively be upwards compatible from ES5/3. 
+There will be some differences between ES5/3 and ES5, detailed below. For code written with these in mind, ES5 will effectively be upwards compatible from ES5/3. SES and SES5/3 are true object-capability languages.
 
 = Differences between ES5/3 and ES5 =
 
