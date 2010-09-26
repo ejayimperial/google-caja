@@ -38,9 +38,12 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
 
   * Proxies
     * Proxies cannot trap numeric properties or 'length'.
-    * Might not be fixed: Proxies cannot (yet?) inherit from extensible objects.
-    * To be fixed: Proxies cannot yet inherit from other proxies.
-    * To be fixed: Non-proxies inheriting from proxies is currently broken.
+    * Might not ever be implemented: 
+      * Proxies cannot (yet?) inherit from extensible objects.
+    * To be implemented: 
+      * Proxies cannot yet inherit from other proxies.
+      * Non-proxies inheriting from proxies is not yet fully implemented.
+      * The default set trap behavior is not yet implemented
   * "Leaky" ephemeron tables
     * Membranes hold onto all references that they wrap until the membrane is revoked.
 
