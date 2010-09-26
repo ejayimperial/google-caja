@@ -17,10 +17,11 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
   * No `Function` constructor
   * `Object.prototype` is frozen
   * The true global object is inaccessible
-  * Property names may not end in two underscores
+  * Property names must not end in two underscores
   * Does not support creating objects with null prototype
   * In a method call, the getter is called after arguments are evaluated ([http://code.google.com/p/v8/issues/detail?id=691 V8 has the same issue])
   * Whereas ES5/strict specifies no `this` coercion, ES5/3 will coerce primitive values to wrappers (as ES3 and ES5/non-strict do), and will coerce `null` and the global object to `undefined`.
+  * Many coercions to string that should be implemented by `String(obj)` are instead implemented by `('' + obj)` since the latter is noticeably faster. The difference is that `valueOf` gets called first in circumstances where `toString` should have been called first. 
   * Numerically named properties and `'length'`
     * Does not support FF2
     * All numeric own properties of the same object share one property descriptor
@@ -36,9 +37,12 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
 = Differences between ES5/3 and selected ES-Harmony features =
 
   * Proxies
-    * Proxies can't trap numeric properties or 'length'
+    * Proxies cannot trap numeric properties or 'length'.
+    * Might not be fixed: Proxies cannot (yet?) inherit from extensible objects.
+    * To be fixed: Proxies cannot yet inherit from other proxies.
+    * To be fixed: Non-proxies inheriting from proxies is currently broken.
   * "Leaky" ephemeron tables
-    * Membranes hold onto all references that they wrap until the membrane is revoked
+    * Membranes hold onto all references that they wrap until the membrane is revoked.
 
 = Sources for the ES5/3 additions to Caja =
 
