@@ -44,7 +44,7 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
       * Proxies cannot yet inherit from other proxies.
       * Non-proxies inheriting from proxies is not yet fully implemented.
       * The default set trap behavior is not yet implemented
-  * "Leaky" ephemeron tables
+  * "Leaky" WeakMaps
     * Membranes hold onto all references that they wrap until the membrane is revoked.
 
 = Sources for the ES5/3 additions to Caja =
