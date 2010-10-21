@@ -1,8 +1,6 @@
 #summary Performance of cajoled code
 #labels Draft
 
-*THIS IS A DRAFT PAGE*
-
 The process of cajoling rewrites your html, javascript and css.  This rewriting can have an effect on the size, execution speed and user perceived latency of javascript programs.  While the cajoler tries to minimize the impact on performance, there are some additional steps a developer can take to further improve the performance of their cajoled code.  
 
 = Size =
@@ -25,7 +23,9 @@ There are several aspects of performance that are important to someone using caj
 
 == Run time Performance ==
 
-The runtime performance of cajoled code on the client (for example in a browser) is affected primarily by the subset of caja that is used and by the use of globals.  The semantics of HTML require that variables created and set in one `<script>` block must be accessible to subsequent `<script>` blocks.  To support this legacy behavior, all opeations on global variables result in expensive read and set operations in code cajoled in _valija mode_.
+The runtime performance of cajoled code on the client (for example in a browser) is affected primarily by the mode in which input is cajoled, the subset of caja that is used and by the use of globals.  The semantics of HTML require that variables created and set in one `<script>` block must be accessible to subsequent `<script>` blocks.  To support this legacy behavior, all opeations on global variables result in expensive read and set operations in code cajoled in _valija mode_.
+
+There are also differences in the optimization and performance in the javascript engines used by browsers.  The following measurements were made using Rhino 1.6.7.
 
 <wiki:gadget url="http://www.thinkfu.com/time.xml?1" height="600" width="100%" border="0" />
 
