@@ -2,8 +2,6 @@
 
 = Introduction =
 
-To contribute to Caja, you will need to install python2.4 and gvn.
-
 = Directory structure =
 
 Use the following directory structure for your changes:
