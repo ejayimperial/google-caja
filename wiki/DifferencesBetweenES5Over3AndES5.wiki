@@ -23,7 +23,6 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
   * Whereas ES5/strict specifies no `this` coercion, ES5/3 will coerce primitive values to wrappers (as ES3 and ES5/non-strict do), and will coerce `null` and the global object to `undefined`.
   * Many coercions to string that should be implemented by `String(obj)` are instead implemented by `('' + obj)` since the latter is noticeably faster. The difference is that `valueOf` gets called first in circumstances where `toString` should have been called first. 
   * Numerically named properties and `'length'`
-    * Does not support FF2
     * All numeric own properties of the same object share one property descriptor
     * Numeric properties must be data properties
     * `'length'` is a non-configurable accessor property on arrays
