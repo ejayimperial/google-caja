@@ -33,9 +33,9 @@ bin/cajole_gadget -i <sourceGadgetUrl> -o <targetGadgetFile>
 
 where:
 
-  _<sourceGadgetUrl>_ - The absolute URL of a gadget spec, such as `http://example.com/listfriends.xml` or `file:/Users/example/listfriends.xml`.
+  _`<sourceGadgetUrl>`_ - The absolute URL of a gadget spec, such as `http://example.com/listfriends.xml` or `file:/Users/example/listfriends.xml`.
 
-  _<targetGadgetFile>_ - The file path where you want your Cajoled gadget spec to be stored, such as `./listfriends-cajoled.xml`.
+  _`<targetGadgetFile>`_ - The file path where you want your Cajoled gadget spec to be stored, such as `./listfriends-cajoled.xml`.
 
 *Plain HTML.* To cajole a plain HTML+!JavaScript snippet, do the following:
 
@@ -45,9 +45,9 @@ bin/cajole_html -i <inputHtmlUrl> -o <targetJsFile>
 
 where:
 
-  _<inputHtmlFile>_ - The absolute URL of the input HTML snippet, such as `file:/Users/example/test.html`.
+  _`<inputHtmlFile>`_ - The absolute URL of the input HTML snippet, such as `file:/Users/example/test.html`.
 
-  _<targetJsFile>_ - The file path where you want your JavaScript module function to be stored, such as `./test-cajoled.js`.
+  _`<targetJsFile>`_ - The file path where you want your JavaScript module function to be stored, such as `./test-cajoled.js`.
 
 `cajole_html` defaults to generating separate HTML and !JavaScript files, which is appropriate if you are going to be embedding the HTML in a host page. If you are dynamically loading modules, or if there is no HTML in the input, then you can pass `--only_js_emitted`.
 
