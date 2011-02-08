@@ -1,0 +1,17 @@
+#summary ES5/3 taming layer
+
+= Introduction =
+
+This is a quick description of some aspects of the ES5/3 taming layer. This layer is implemented in [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/es53.js es53.js].
+
+= General design =
+
+Our taming layer is an objective membrane. It is a _membrane_ because it wraps the entire API reachable from a tamed object, allowing functions in that API to be called but unwrapping and wrapping, respectively, their arguments and return value. It is _objective_ because, to each feral object, it assigns exactly one tamed object, and all Caja clients of the feral object receive the same tamed object.
+
+
+
+
+
+
+|| arrays                 || pass by copy        ||
+|| everything else || objective proxies ||
