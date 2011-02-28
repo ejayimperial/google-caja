@@ -78,7 +78,8 @@ number of {{{ant-*}}} directories
 
 === Problems running Ant ===
 
-If you see the following error when running ant, ant is using a built in and obsolete version of xerces rather than the more recent one included with Caja.  {{{
+If you see the following error when running ant, ant is using a built in and obsolete version of xerces rather than the more recent one included with Caja.
+{{{
 com.google.caja.SomethingWidgyHappenedError: Missing DOM implementation.  Is Xerces on the classpath? (DOMImplementationRegistry.getDOMImplementation returned null.)
 	at com.google.caja.parser.html.DomParser.makeDocument(DomParser.java:174)
 	at com.google.caja.parser.html.DomParser.makeDocument(DomParser.java:187)
@@ -86,11 +87,13 @@ com.google.caja.SomethingWidgyHappenedError: Missing DOM implementation.  Is Xer
 ...
 }}}
 
-Try setting your classpath before running ant or run ant like this: {{{
+Try setting your classpath before running ant or run ant like this:
+{{{
   CLASSPATH=third_party/java/xerces/xercesImpl.jar ant
 }}}
 
-If you see the following error when running ant, try upgrading to Ant 1.7: {{{
+If you see the following error when running ant, try upgrading to Ant 1.7:
+{{{
 google-caja/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/types/ResourceCollection
         at org.apache.tools.ant.IntrospectionHelper$Creator.create(IntrospectionHelper.java:1166)
         at org.apache.tools.ant.UnknownElement.handleChild(UnknownElement.java:549)
