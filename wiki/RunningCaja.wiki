@@ -101,10 +101,10 @@ google-caja/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/
 ...
 }}}
 
-If you get a complaint about Java running out of heap memory, set {{{ANT_OPTS}}} to the additional option to be passed to your Java for increasing heap memory. For example, if you use bash and Sun's JDK, placing the following in your {{{~/.bashrc}}} file increase your maximum Java heap size to 100MB:
+If you get a complaint about Java running out of heap memory, set {{{ANT_OPTS}}} to the additional option to be passed to your Java for increasing heap memory. For example, if you use bash and Sun's JDK, placing the following in your {{{~/.bashrc}}} file increase your maximum Java heap size to 200MB:
 
 {{{
-export ANT_OPTS=-Xmx100M
+export ANT_OPTS=-Xmx200M
 }}}
 
 == Building Caja via Eclipse ===
