@@ -86,6 +86,12 @@ com.google.caja.SomethingWidgyHappenedError: Missing DOM implementation.  Is Xer
 	at com.google.caja.plugin.stages.CompileHtmlStage.apply(CompileHtmlStage.java:108)
 ...
 }}}
+or
+{{{
+org.w3c.dom.DOMException: NAMESPACE_ERR: An attempt is made to create or change an object in a way which is incorrect with regard to namespaces.
+	at com.sun.org.apache.xerces.internal.dom.ElementNSImpl.setName(ElementNSImpl.java:105)
+	at com.sun.org.apache.xerces.internal.dom.ElementNSImpl.<init>(ElementNSImpl.java:80)
+}}}
 
 Try setting your classpath before running ant or run ant like this:
 {{{
@@ -101,10 +107,10 @@ google-caja/build.xml:144: java.lang.NoClassDefFoundError: org/apache/tools/ant/
 ...
 }}}
 
-If you get a complaint about Java running out of heap memory, set {{{ANT_OPTS}}} to the additional option to be passed to your Java for increasing heap memory. For example, if you use bash and Sun's JDK, placing the following in your {{{~/.bashrc}}} file increase your maximum Java heap size to 200MB:
+If you get a complaint about Java running out of heap memory, set {{{ANT_OPTS}}} to the additional option to be passed to your Java for increasing heap memory. For example, if you use bash and Sun's JDK, placing the following in your {{{~/.bashrc}}} file increase your maximum Java heap size to 300MB:
 
 {{{
-export ANT_OPTS=-Xmx200M
+export ANT_OPTS=-Xmx300M
 }}}
 
 == Building Caja via Eclipse ===
