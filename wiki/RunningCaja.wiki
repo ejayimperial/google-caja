@@ -4,42 +4,30 @@
 
 == Prerequisites ==
 
-Assumes basic familiarity with Java including how to manage a CLASSPATH and how to run a java app from the command line or from within an IDE like [http://www.eclipse.org/downloads/ Eclipse].  If you are not familiar with java, see [http://java.sun.com/docs/books/tutorial/essential/environment/paths.html PATH and CLASSPATH], [http://java.sun.com/docs/books/tutorial/essential/environment/cmdLineArgs.html the command line].
+Basic familiarity with Java, including
+  * how to manage a CLASSPATH
+  * how to run a Java app from the command line
+  * how to run a Java app from within an IDE like [http://www.eclipse.org/downloads/ Eclipse].
+For more information on those topics, see [http://java.sun.com/docs/books/tutorial/essential/environment/paths.html PATH and CLASSPATH], [http://java.sun.com/docs/books/tutorial/essential/environment/cmdLineArgs.html the command line].
 
 Caja requires
   * [http://java.sun.com/javase/downloads/index.jsp JDK] 6
   * The [http://subversion.tigris.org/project_packages.html subversion] version manager
   * The [http://ant.apache.org/manual/install.html Apache Ant] build system.
-  * The [http://sourceforge.net/project/showfiles.php?group_id=15278&package_id=12472 JUnit] testing framework.  Just drop {{{junit.jar}}} in the {{{$ANT_HOME/lib}}} directory you set up for Ant.
 
 If you intend to contribute patches to Caja (and we would love you to do that, see [ContributingCode] for how), you need to sign a Contributor Licence Agreement (either the [http://code.google.com/legal/individual-cla-v1.0.html individual CLA] or the [http://code.google.com/legal/corporate-cla-v1.0.html corporate CLA], depending on your situation). Note that patches are accepted at the discretion of the development team. Membership of the development team will be offered to those who consistently make positive contributions.
 
 == Building Caja via Ant ===
 
-Once you have subversion installed, create a directory for your caja working copies.  Here we assume you name it caja:
-
-  mkdir caja; cd caja
-
-Next make a directory named "{{{svn-changes}}}".  This is necessary for certain scripts to work, if you are planning to contribute patches.
-
-  mkdir svn-changes; cd svn-changes
-
-Then make a directory for a new working copy.  Here we assume you name it "pristine":
-
-  mkdir pristine; cd pristine
-
-Repeat this step in the {{{svn-changes}}} directory every time you check out a new working copy.
-
-(Note: You can safely skip all of the above steps and perform an ordinary svn checkout if you are not planning to contribute patches and only run an unmodified Caja.)
-
-Finally, follow the instructions at [http://code.google.com/p/google-caja/source/checkout] to checkout the Caja source.
+Follow the instructions at [http://code.google.com/p/google-caja/source/checkout] to checkout the Caja source.
 
 You should see a lot of lines like:
 {{{
 A  google-caja
 A  google-caja/docs
+...
 }}}
-ad nauseam as it pulls source files from {{{code.google.com}}}.
+as it pulls source files from {{{code.google.com}}}.
 
 Then, from the command line:
 {{{
@@ -47,7 +35,7 @@ $ cd google-caja
 $ ant
 }}}
 
-If Ant is properly installed, you should see the following:
+If Ant is properly installed, you should see something like this:
 {{{
 Buildfile: build.xml
 
@@ -55,30 +43,33 @@ dirs:
     [mkdir] Created dir: ...
 ...
 
-docs:
-  [javadoc] Generating javadoc
-...
+jars:
+     [copy] Copying 13 files to ant-jars
+      [jar] Building jar: ant-jars/pluginc.jar
+      [jar] Building jar: ant-jars/pluginc-src.jar
+
+default:
 
 BUILD SUCCESSFUL
-Total time: 5 seconds
+Total time: 55 seconds
 }}}
 
-You can see the set of build targets by running {{{ant -projecthelp}}}, and those targets can follow the {{{ant}}} command,
-so {{{ant runtests}}} will build and run tests, and {{{ant clean}}}
-will wipe out all generated files, so you can build from scratch.
+You can see the set of ant targets by running {{{ant -projecthelp}}}.
+  * {{{ant runtests}}} will build and run tests
+  * {{{ant clean}}} will wipe out all generated files, so you can rebuild from scratch
 
 If you look at the directory structure after building, you'll see a
 number of {{{ant-*}}} directories
   * {{{ant-lib}}} - compiled class files and resources
-  * {{{ant-jars}}} - all the jars you need to run the Cajoler.  You can run caja by doing {{{java -cp "$(ls ant-jars/*.jar | tr ' ' :)" com.google.caja.plugin.PluginCompilerMain ...}}}.  {{{ant-jars/pluginc.jar}}} contains the compiled Cajoler.
+  * {{{ant-jars}}} - all the jars needed to run the Cajoler.  To run the Cajoler from a command-line, use the {{{bin/runcaja}}} script.
   * {{{ant-reports/tests/index.html}}} - unit test status and logs
-  * {{{ant-reports/coverage/index.html}}} - emma test coverage reports.  See {{{ant emma runtests}}}.
+  * {{{ant-reports/coverage/index.html}}} - EMMA test coverage reports.  See {{{ant emma runtests}}}.
   * {{{ant-www}}} - demo output.  See {{{ant demos}}}
   * {{{ant-docs}}} - javadoc (and eventually jsdoc) output.
 
 === Problems running Ant ===
 
-If you see the following error when running ant, ant is using a built in and obsolete version of xerces rather than the more recent one included with Caja.
+If you see the following error when running ant, ant is using an obsolete version of xerces rather than the more recent one included with Caja.
 {{{
 com.google.caja.SomethingWidgyHappenedError: Missing DOM implementation.  Is Xerces on the classpath? (DOMImplementationRegistry.getDOMImplementation returned null.)
 	at com.google.caja.parser.html.DomParser.makeDocument(DomParser.java:174)
@@ -93,7 +84,7 @@ org.w3c.dom.DOMException: NAMESPACE_ERR: An attempt is made to create or change 
 	at com.sun.org.apache.xerces.internal.dom.ElementNSImpl.<init>(ElementNSImpl.java:80)
 }}}
 
-Try setting your classpath before running ant or run ant like this:
+Try setting your classpath before running ant, or run ant like this:
 {{{
   CLASSPATH=third_party/java/xerces/xercesImpl.jar ant
 }}}
