@@ -60,7 +60,7 @@ You can see the set of ant targets by running {{{ant -projecthelp}}}.
 If you look at the directory structure after building, you'll see a
 number of {{{ant-*}}} directories
   * {{{ant-lib}}} - compiled class files and resources
-  * {{{ant-jars}}} - all the jars needed to run the Cajoler.  To run the Cajoler from a command-line, use the {{{bin/runcaja}}} script.
+  * {{{ant-jars}}} - all the jars needed to run the Cajoler.  To run the Cajoler from a command-line, use the {{{bin/cajole_html}}} script.
   * {{{ant-reports/tests/index.html}}} - unit test status and logs
   * {{{ant-reports/coverage/index.html}}} - EMMA test coverage reports.  See {{{ant emma runtests}}}.
   * {{{ant-www}}} - demo output.  See {{{ant demos}}}
