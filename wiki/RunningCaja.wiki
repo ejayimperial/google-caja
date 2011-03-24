@@ -21,13 +21,12 @@ If you intend to contribute patches to Caja (and we would love you to do that, s
 
 Follow the instructions at [http://code.google.com/p/google-caja/source/checkout] to checkout the Caja source.
 
-You should see a lot of lines like:
+You should see a lot of lines like this:
 {{{
 A  google-caja
 A  google-caja/docs
 ...
 }}}
-as it pulls source files from {{{code.google.com}}}.
 
 Then, from the command line:
 {{{
