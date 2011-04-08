@@ -1,4 +1,5 @@
 #summary Library for host pages.
+#labels Deprecated
 
 host-tools.js is a library for Caja gadget/module host pages.
 
