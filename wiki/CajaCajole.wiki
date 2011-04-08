@@ -25,18 +25,6 @@ cd ..
 
 ===Command-line cajoling===
 
-*!OpenSocial.* To cajole an !OpenSocial gadget, do the following:
-
-{{{
-bin/cajole_gadget -i <sourceGadgetUrl> -o <targetGadgetFile>
-}}}
-
-where:
-
-  _`<sourceGadgetUrl>`_ - The absolute URL of a gadget spec, such as `http://example.com/listfriends.xml` or `file:/Users/example/listfriends.xml`.
-
-  _`<targetGadgetFile>`_ - The file path where you want your Cajoled gadget spec to be stored, such as `./listfriends-cajoled.xml`.
-
 *Plain HTML.* To cajole a plain HTML+!JavaScript snippet, do the following:
 
 {{{
