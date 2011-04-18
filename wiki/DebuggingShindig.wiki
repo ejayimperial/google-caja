@@ -13,7 +13,6 @@ mvn -Prun
   # Once it runs you should see which port it puts itself on (usually 8080).
   # Browse to http://localhost:8080/gadgets/files/samplecontainer/samplecontainer.html and make sure gadgets work at all.
   # If that all works ok, then check Caja out.
-  # (Optional) In {{{caja/build.xml}}} replace every instance of "minify" with "pretty" - this will mean you can see original code in Shindig instead of minified code (see [http://code.google.com/p/google-caja/issues/detail?id=1004 issue 1004] for whether this is still needed).
   # Each time you modify Caja, build:
 {{{
 ant jars
