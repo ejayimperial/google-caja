@@ -32,6 +32,7 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
   * Invoking `Function.prototype` throws an error instead of returning undefined.
   * The `[[Construct]]` behavior on bound functions throws a "not yet implemented" complaint.
   * !RegExps are not callable, and thus `(typeof` _aRegExp_`)` should return `"object"` according to the ES5 spec. Instead, it returns either `"function"` or `"object"` according to the underlying platform. Practically, this impacts Safari and Rhino. 
+  * Checking whether a non-whitelisted property on an object exists using the "in" keyword returns false even though assigning to the property causes an error to be thrown that says "This property is not writable."
 
 = Differences between ES5/3 and selected ES-Harmony features =
 
