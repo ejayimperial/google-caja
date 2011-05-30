@@ -39,7 +39,7 @@ To try out ES5/3 in the [http://caja.appspot.com/ Caja playground], select the "
   * Proxies
     * Proxies cannot trap numeric properties or 'length'.
     * Might not ever be implemented: 
-      * Proxies cannot (yet?) inherit from extensible objects.
+      * Proxies cannot (yet?) inherit from extensible non-proxy objects.
     * To be implemented: 
       * Proxies cannot yet inherit from other proxies.
       * Non-proxies inheriting from proxies is not yet fully implemented.
