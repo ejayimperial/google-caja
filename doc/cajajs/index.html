@@ -7,7 +7,7 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script><script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 <link href="apidoc.css" type="text/css" rel="stylesheet">
 <script type="text/javascript" src="apidoc.js"></script>
-<title></title>
+<title>Caja host page API documentation</title>
 </head>
 <body onload="initialize();">
 <div class="container">
@@ -26,7 +26,7 @@
   the object reachable from it is described here.</p>
 </div>
 <div class="container">
-<div class="object-name" hidecontrol="object caja">
+<div class="object-name" hidecontrol="caja">
 <code>caja</code>
 </div>
 <div class="content" id="caja">
@@ -35,12 +35,12 @@
     API.</p>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section caja_properties">
+<div class="section-header" hidecontrol="caja_properties">
           Properties
         </div>
 <div class="content" id="caja_properties">
 <div class="container">
-<div class="item-header" hidecontrol="item caja_properties_iframe">
+<div class="item-header" hidecontrol="caja_properties_iframe">
 <code>iframe</code>
 </div>
 <div class="content" id="caja_properties_iframe">
@@ -57,26 +57,26 @@
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_properties_policy">
+<div class="item-header" hidecontrol="caja_properties_policy">
 <code>policy</code>
 </div>
 <div class="content" id="caja_properties_policy">
 <div class="doc">
-<p>A pre-configured set of <code>uriPolicies</code> for use
-      by host code, as an alternative to constructing a
-      <code>uriPolicy</code> from scratch.</p>
+<p>A pre-configured set of policies (see
+      <code>policy</code>) for use by host code, as an alternative to
+      constructing a <code>uriPolicy</code> from scratch.</p>
 </div>
 </div>
 </div>
 </div>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section caja_methods">
+<div class="section-header" hidecontrol="caja_methods">
           Methods
         </div>
 <div class="content" id="caja_methods">
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_setDefaults">
+<div class="item-header" hidecontrol="caja_methods_setDefaults">
 <code>setDefaults
     (
     params
@@ -94,7 +94,7 @@
       Caja in a consistent state.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_setDefaults_params">
+<div class="sub-item-header" hidecontrol="caja_methods_setDefaults_params">
 <code>params</code>
 </div>
 <div class="content" id="caja_methods_setDefaults_params">
@@ -123,7 +123,7 @@
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_whenReady">
+<div class="item-header" hidecontrol="caja_methods_whenReady">
 <code>whenReady
     (
     callback
@@ -136,7 +136,7 @@
       ready to provide services.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_whenReady_callback">
+<div class="sub-item-header" hidecontrol="caja_methods_whenReady_callback">
 <code>callback</code>
 </div>
 <div class="content" id="caja_methods_whenReady_callback">
@@ -148,7 +148,7 @@
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_load">
+<div class="item-header" hidecontrol="caja_methods_load">
 <code>load
     (
     div, uriPolicy, callback
@@ -161,7 +161,7 @@
       code.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_load_div">
+<div class="sub-item-header" hidecontrol="caja_methods_load_div">
 <code>div</code>
 </div>
 <div class="content" id="caja_methods_load_div">
@@ -177,7 +177,7 @@
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_load_uriPolicy">
+<div class="sub-item-header" hidecontrol="caja_methods_load_uriPolicy">
 <code>uriPolicy</code>
 </div>
 <div class="content" id="caja_methods_load_uriPolicy">
@@ -192,7 +192,7 @@
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_load_callback">
+<div class="sub-item-header" hidecontrol="caja_methods_load_callback">
 <code>callback</code>
 </div>
 <div class="content" id="caja_methods_load_callback">
@@ -205,7 +205,7 @@
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_tame">
+<div class="item-header" hidecontrol="caja_methods_tame">
 <code>tame
     (
     aDefensiveObject
@@ -281,7 +281,7 @@ var t = aFrameGroup.tame(f);
         
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_tame_aDefensiveObject">
+<div class="sub-item-header" hidecontrol="caja_methods_tame_aDefensiveObject">
 <code>aDefensiveObject</code>
 </div>
 <div class="content" id="caja_methods_tame_aDefensiveObject">
@@ -294,7 +294,7 @@ var t = aFrameGroup.tame(f);
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_tame__returnvalue__">
+<div class="sub-item-header" hidecontrol="caja_methods_tame__returnvalue__">
         Returns
       </div>
 <div class="content" id="caja_methods_tame__returnvalue__">
@@ -308,7 +308,7 @@ var t = aFrameGroup.tame(f);
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_markReadWrite">
+<div class="item-header" hidecontrol="caja_methods_markReadWrite">
 <code>markReadWrite
     (
     f
@@ -334,7 +334,7 @@ var t = aFrameGroup.tame(f);
         property, or add a new property <code>y</code>.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markReadWrite_f">
+<div class="sub-item-header" hidecontrol="caja_methods_markReadWrite_f">
 <code>f</code>
 </div>
 <div class="content" id="caja_methods_markReadWrite_f">
@@ -344,7 +344,7 @@ var t = aFrameGroup.tame(f);
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markReadWrite__returnvalue__">
+<div class="sub-item-header" hidecontrol="caja_methods_markReadWrite__returnvalue__">
         Returns
       </div>
 <div class="content" id="caja_methods_markReadWrite__returnvalue__">
@@ -356,7 +356,7 @@ var t = aFrameGroup.tame(f);
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_markXo4a">
+<div class="item-header" hidecontrol="caja_methods_markXo4a">
 <code>markXo4a
     (
     f
@@ -402,7 +402,7 @@ aVictimObject.method( /* ... */ );
       last resort.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markXo4a_f">
+<div class="sub-item-header" hidecontrol="caja_methods_markXo4a_f">
 <code>f</code>
 </div>
 <div class="content" id="caja_methods_markXo4a_f">
@@ -412,7 +412,7 @@ aVictimObject.method( /* ... */ );
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markXo4a__returnvalue__">
+<div class="sub-item-header" hidecontrol="caja_methods_markXo4a__returnvalue__">
         Returns
       </div>
 <div class="content" id="caja_methods_markXo4a__returnvalue__">
@@ -424,7 +424,7 @@ aVictimObject.method( /* ... */ );
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_markCtor">
+<div class="item-header" hidecontrol="caja_methods_markCtor">
 <code>markCtor
     (
     c
@@ -479,7 +479,7 @@ var o = new TamedCtor(19);
       the example, are tamed correctly.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markCtor_c">
+<div class="sub-item-header" hidecontrol="caja_methods_markCtor_c">
 <code>c</code>
 </div>
 <div class="content" id="caja_methods_markCtor_c">
@@ -489,7 +489,7 @@ var o = new TamedCtor(19);
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markCtor__returnvalue__">
+<div class="sub-item-header" hidecontrol="caja_methods_markCtor__returnvalue__">
         Returns
       </div>
 <div class="content" id="caja_methods_markCtor__returnvalue__">
@@ -501,7 +501,7 @@ var o = new TamedCtor(19);
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_methods_markConstructed">
+<div class="item-header" hidecontrol="caja_methods_markConstructed">
 <code>markConstructed
     (
     o
@@ -531,7 +531,7 @@ function makeInstance(x) {
       
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markConstructed_o">
+<div class="sub-item-header" hidecontrol="caja_methods_markConstructed_o">
 <code>o</code>
 </div>
 <div class="content" id="caja_methods_markConstructed_o">
@@ -541,7 +541,7 @@ function makeInstance(x) {
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem caja_methods_markConstructed__returnvalue__">
+<div class="sub-item-header" hidecontrol="caja_methods_markConstructed__returnvalue__">
         Returns
       </div>
 <div class="content" id="caja_methods_markConstructed__returnvalue__">
@@ -555,12 +555,12 @@ function makeInstance(x) {
 </div>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section caja_examples">
+<div class="section-header" hidecontrol="caja_examples">
           Examples
         </div>
 <div class="content" id="caja_examples">
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_1">Setting defaults</div>
+<div class="item-header" hidecontrol="caja_examples_1">Setting defaults</div>
 <div class="content" id="caja_examples_1">
 <div class="doc">
 
@@ -579,7 +579,7 @@ caja.setDefaults({
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_2">Erroneous <code>setDefaults</code>
+<div class="item-header" hidecontrol="caja_examples_2">Erroneous <code>setDefaults</code>
 </div>
 <div class="content" id="caja_examples_2">
 <div class="doc">
@@ -597,7 +597,7 @@ caja.setDefaults({ /* ... */ });
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_3">Erroneous <code>setDefaults</code>
+<div class="item-header" hidecontrol="caja_examples_3">Erroneous <code>setDefaults</code>
 </div>
 <div class="content" id="caja_examples_3">
 <div class="doc">
@@ -615,7 +615,7 @@ caja.setDefaults({ /* ... */ });
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_4">Incorrect taming</div>
+<div class="item-header" hidecontrol="caja_examples_4">Incorrect taming</div>
 <div class="content" id="caja_examples_4">
 <div class="doc">
 
@@ -634,7 +634,7 @@ caja.markTameAsFunction( /* ... */ );
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_5">Successful taming</div>
+<div class="item-header" hidecontrol="caja_examples_5">Successful taming</div>
 <div class="content" id="caja_examples_5">
 <div class="doc">
 
@@ -654,7 +654,7 @@ caja.whenReady(function() {
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_6">Running guest HTML from a URL</div>
+<div class="item-header" hidecontrol="caja_examples_6">Running guest HTML from a URL</div>
 <div class="content" id="caja_examples_6">
 <div class="doc">
         
@@ -688,7 +688,7 @@ the guest page is loaded.</p>
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_7">Running guest JavaScript from content</div>
+<div class="item-header" hidecontrol="caja_examples_7">Running guest JavaScript from content</div>
 <div class="content" id="caja_examples_7">
 <div class="doc">
         
@@ -721,7 +721,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item caja_examples_8">Providing a restricted user alert function</div>
+<div class="item-header" hidecontrol="caja_examples_8">Providing a restricted user alert function</div>
 <div class="content" id="caja_examples_8">
 <div class="doc">
         
@@ -775,7 +775,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="object-name" hidecontrol="object frame">
+<div class="object-name" hidecontrol="frame">
 <code>frame</code>
 </div>
 <div class="content" id="frame">
@@ -785,12 +785,12 @@ caja.load(
     with an optional confined DOM <code>document</code>.</p>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section frame_properties">
+<div class="section-header" hidecontrol="frame_properties">
           Properties
         </div>
 <div class="content" id="frame_properties">
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_iframe">
+<div class="item-header" hidecontrol="frame_properties_iframe">
 <code>iframe</code>
 </div>
 <div class="content" id="frame_properties_iframe">
@@ -806,7 +806,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_imports">
+<div class="item-header" hidecontrol="frame_properties_imports">
 <code>imports</code>
 </div>
 <div class="content" id="frame_properties_imports">
@@ -819,7 +819,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_loader">
+<div class="item-header" hidecontrol="frame_properties_loader">
 <code>loader</code>
 </div>
 <div class="content" id="frame_properties_loader">
@@ -832,7 +832,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_div">
+<div class="item-header" hidecontrol="frame_properties_div">
 <code>div</code>
 </div>
 <div class="content" id="frame_properties_div">
@@ -845,7 +845,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_idSuffix">
+<div class="item-header" hidecontrol="frame_properties_idSuffix">
 <code>idSuffix</code>
 </div>
 <div class="content" id="frame_properties_idSuffix">
@@ -859,7 +859,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_innerContainer">
+<div class="item-header" hidecontrol="frame_properties_innerContainer">
 <code>innerContainer</code>
 </div>
 <div class="content" id="frame_properties_innerContainer">
@@ -872,7 +872,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_properties_outerContainer">
+<div class="item-header" hidecontrol="frame_properties_outerContainer">
 <code>outerContainer</code>
 </div>
 <div class="content" id="frame_properties_outerContainer">
@@ -887,12 +887,12 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section frame_methods">
+<div class="section-header" hidecontrol="frame_methods">
           Methods
         </div>
 <div class="content" id="frame_methods">
 <div class="container">
-<div class="item-header" hidecontrol="item frame_methods_cajoled">
+<div class="item-header" hidecontrol="frame_methods_cajoled">
 <code>cajoled
     (
     uri, js, html
@@ -909,7 +909,7 @@ caja.load(
       code; and wishes to inject it for use.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_cajoled_uri">
+<div class="sub-item-header" hidecontrol="frame_methods_cajoled_uri">
 <code>uri</code>
 </div>
 <div class="content" id="frame_methods_cajoled_uri">
@@ -920,7 +920,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_cajoled_js">
+<div class="sub-item-header" hidecontrol="frame_methods_cajoled_js">
 <code>js</code>
 </div>
 <div class="content" id="frame_methods_cajoled_js">
@@ -931,7 +931,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_cajoled_html">
+<div class="sub-item-header" hidecontrol="frame_methods_cajoled_html">
 <code>html</code>
 </div>
 <div class="content" id="frame_methods_cajoled_html">
@@ -942,7 +942,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_cajoled__returnvalue__">
+<div class="sub-item-header" hidecontrol="frame_methods_cajoled__returnvalue__">
         Returns
       </div>
 <div class="content" id="frame_methods_cajoled__returnvalue__">
@@ -954,7 +954,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_methods_code">
+<div class="item-header" hidecontrol="frame_methods_code">
 <code>code
     (
     uri, mimeType, content
@@ -969,7 +969,7 @@ caja.load(
       code.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_code_uri">
+<div class="sub-item-header" hidecontrol="frame_methods_code_uri">
 <code>uri</code>
 </div>
 <div class="content" id="frame_methods_code_uri">
@@ -979,7 +979,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_code_mimeType">
+<div class="sub-item-header" hidecontrol="frame_methods_code_mimeType">
 <code>mimeType</code>
 </div>
 <div class="content" id="frame_methods_code_mimeType">
@@ -993,7 +993,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_code_content">
+<div class="sub-item-header" hidecontrol="frame_methods_code_content">
 <code>content</code>
 </div>
 <div class="content" id="frame_methods_code_content">
@@ -1007,7 +1007,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_code__returnvalue__">
+<div class="sub-item-header" hidecontrol="frame_methods_code__returnvalue__">
         Returns
       </div>
 <div class="content" id="frame_methods_code__returnvalue__">
@@ -1019,7 +1019,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_methods_api">
+<div class="item-header" hidecontrol="frame_methods_api">
 <code>api
     (
     o
@@ -1032,7 +1032,7 @@ caja.load(
       code.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_api_o">
+<div class="sub-item-header" hidecontrol="frame_methods_api_o">
 <code>o</code>
 </div>
 <div class="content" id="frame_methods_api_o">
@@ -1045,7 +1045,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_api__returnvalue__">
+<div class="sub-item-header" hidecontrol="frame_methods_api__returnvalue__">
         Returns
       </div>
 <div class="content" id="frame_methods_api__returnvalue__">
@@ -1057,7 +1057,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item frame_methods_run">
+<div class="item-header" hidecontrol="frame_methods_run">
 <code>run
     (
     callback
@@ -1072,7 +1072,7 @@ caja.load(
       <code>api</code>.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_run_callback">
+<div class="sub-item-header" hidecontrol="frame_methods_run_callback">
 <code>callback</code>
 </div>
 <div class="content" id="frame_methods_run_callback">
@@ -1087,7 +1087,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem frame_methods_run__returnvalue__">
+<div class="sub-item-header" hidecontrol="frame_methods_run__returnvalue__">
         Returns
       </div>
 <div class="content" id="frame_methods_run__returnvalue__">
@@ -1103,74 +1103,74 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="object-name" hidecontrol="object uriPolicies">
-<code>uriPolicies</code>
+<div class="object-name" hidecontrol="policy">
+<code>policy</code>
 </div>
-<div class="content" id="uriPolicies">
+<div class="content" id="policy">
 <div class="doc">
-<p>A pre-configured set of <code>uriPolicy</code> objects for
-    use by host code.</p>
+<p>A pre-configured set of policies for use by host
+    code.</p>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section uriPolicies_properties">
+<div class="section-header" hidecontrol="policy_properties">
           Properties
         </div>
-<div class="content" id="uriPolicies_properties">
+<div class="content" id="policy_properties">
 <div class="container">
-<div class="item-header" hidecontrol="item uriPolicies_properties_NO_NETWORK">
-<code>NO_NETWORK</code>
+<div class="item-header" hidecontrol="policy_properties_net.NO_NETWORK">
+<code>net.NO_NETWORK</code>
 </div>
-<div class="content" id="uriPolicies_properties_NO_NETWORK">
+<div class="content" id="policy_properties_net.NO_NETWORK">
 <div class="doc">
-<p>A policy that disallows all network access.</p>
+<p>A <code>uriPolicy</code> that disallows all network access.</p>
 </div>
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item uriPolicies_properties_ALL">
-<code>ALL</code>
+<div class="item-header" hidecontrol="policy_properties_net.ALL">
+<code>net.ALL</code>
 </div>
-<div class="content" id="uriPolicies_properties_ALL">
+<div class="content" id="policy_properties_net.ALL">
 <div class="doc">
-<p>A policy that allows all network access.</p>
+<p>A <code>uriPolicy</code> that allows all network access.</p>
 </div>
 </div>
 </div>
 </div>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section uriPolicies_methods">
+<div class="section-header" hidecontrol="policy_methods">
           Methods
         </div>
-<div class="content" id="uriPolicies_methods">
+<div class="content" id="policy_methods">
 <div class="container">
-<div class="item-header" hidecontrol="item uriPolicies_methods_only">
-<code>only
+<div class="item-header" hidecontrol="policy_methods_net.only">
+<code>net.only
     (
     uri
     )
   </code>
 </div>
-<div class="content" id="uriPolicies_methods_only">
+<div class="content" id="policy_methods_net.only">
 <div class="doc">
-<p>Constructs a policy that allows only access to a
+<p>Constructs a <code>uriPolicy</code> that allows only access to a
       specified URI.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem uriPolicies_methods_only_uri">
+<div class="sub-item-header" hidecontrol="policy_methods_net.only_uri">
 <code>uri</code>
 </div>
-<div class="content" id="uriPolicies_methods_only_uri">
+<div class="content" id="policy_methods_net.only_uri">
 <div class="doc">
 <p>the sole URI to be allowed.</p>
 </div>
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem uriPolicies_methods_only__returnvalue__">
+<div class="sub-item-header" hidecontrol="policy_methods_net.only__returnvalue__">
         Returns
       </div>
-<div class="content" id="uriPolicies_methods_only__returnvalue__">
+<div class="content" id="policy_methods_net.only__returnvalue__">
 <div class="doc">
 <p>a <code>uriPolicy</code> allowing access only to the specified
       URI.</p>
@@ -1184,7 +1184,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="object-name" hidecontrol="object uriPolicy">
+<div class="object-name" hidecontrol="uriPolicy">
 <code>uriPolicy</code>
 </div>
 <div class="content" id="uriPolicy">
@@ -1194,12 +1194,12 @@ caja.load(
     URIs.</p>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section uriPolicy_methods">
+<div class="section-header" hidecontrol="uriPolicy_methods">
           Methods
         </div>
 <div class="content" id="uriPolicy_methods">
 <div class="container">
-<div class="item-header" hidecontrol="item uriPolicy_methods_rewrite">
+<div class="item-header" hidecontrol="uriPolicy_methods_rewrite">
 <code>rewrite
     (
     uri
@@ -1212,7 +1212,7 @@ caja.load(
       permitted.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem uriPolicy_methods_rewrite_uri">
+<div class="sub-item-header" hidecontrol="uriPolicy_methods_rewrite_uri">
 <code>uri</code>
 </div>
 <div class="content" id="uriPolicy_methods_rewrite_uri">
@@ -1223,7 +1223,7 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="subitem uriPolicy_methods_rewrite__returnvalue__">
+<div class="sub-item-header" hidecontrol="uriPolicy_methods_rewrite__returnvalue__">
         Returns
       </div>
 <div class="content" id="uriPolicy_methods_rewrite__returnvalue__">
@@ -1238,12 +1238,12 @@ caja.load(
 </div>
 </div>
 <div class="container">
-<div class="section-header" hidecontrol="section uriPolicy_examples">
+<div class="section-header" hidecontrol="uriPolicy_examples">
           Examples
         </div>
 <div class="content" id="uriPolicy_examples">
 <div class="container">
-<div class="item-header" hidecontrol="item uriPolicy_examples_1">Restricted domain</div>
+<div class="item-header" hidecontrol="uriPolicy_examples_1">Restricted domain</div>
 <div class="content" id="uriPolicy_examples_1">
 <div class="doc">
 
@@ -1264,7 +1264,7 @@ var aPolicy = {
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="item uriPolicy_examples_2">Unrestricted</div>
+<div class="item-header" hidecontrol="uriPolicy_examples_2">Unrestricted</div>
 <div class="content" id="uriPolicy_examples_2">
 <div class="doc">
 
