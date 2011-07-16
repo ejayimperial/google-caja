@@ -76,28 +76,28 @@
         </div>
 <div class="content" id="caja_methods">
 <div class="container">
-<div class="item-header" hidecontrol="caja_methods_setDefaults">
-<code>setDefaults
+<div class="item-header" hidecontrol="caja_methods_initialize">
+<code>initialize
     (
     params
     )
   </code>
 </div>
-<div class="content" id="caja_methods_setDefaults">
+<div class="content" id="caja_methods_initialize">
 <div class="doc">
 <p>Sets the default parameters for Caja.</p>
 <p>This method
       must be called before any calls to <code>whenReady</code> or
       <code>load</code>. If either of these is called first, a built-in
       set of parameters will be used and any subsequent calls to
-      <code>setDefaults</code> will throw. The resulting exceptions leave
+      <code>initialize</code> will throw. The resulting exceptions leave
       Caja in a consistent state.</p>
 </div>
 <div class="container">
-<div class="sub-item-header" hidecontrol="caja_methods_setDefaults_params">
+<div class="sub-item-header" hidecontrol="caja_methods_initialize_params">
 <code>params</code>
 </div>
-<div class="content" id="caja_methods_setDefaults_params">
+<div class="content" id="caja_methods_initialize_params">
 <div class="doc">
 <p>a map of configuration parameters. These include:</p>
 <ul>
@@ -566,7 +566,7 @@ function makeInstance(x) {
 
 <pre class="prettyprint lang-javascript">
 /* <strong>host page code</strong> */
-caja.setDefaults({
+caja.initialize({
   cajaServer: 'http://caja.appspot.com/',
   debug: false
 });
@@ -579,7 +579,7 @@ caja.setDefaults({
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="caja_examples_2">Erroneous <code>setDefaults</code>
+<div class="item-header" hidecontrol="caja_examples_2">Erroneous <code>initialize</code>
 </div>
 <div class="content" id="caja_examples_2">
 <div class="doc">
@@ -587,17 +587,17 @@ caja.setDefaults({
 <pre class="prettyprint lang-javascript">
 /* <strong>host page code</strong> */
 caja.whenReady(function() { /* ... */ });
-caja.setDefaults({ /* ... */ });
+caja.initialize({ /* ... */ });
 </pre>
         
-<p>The call to <code>setDefaults</code> throws since
+<p>The call to <code>initialize</code> throws since
         <code>whenReady</code> has already been called.</p>
       
 </div>
 </div>
 </div>
 <div class="container">
-<div class="item-header" hidecontrol="caja_examples_3">Erroneous <code>setDefaults</code>
+<div class="item-header" hidecontrol="caja_examples_3">Erroneous <code>initialize</code>
 </div>
 <div class="content" id="caja_examples_3">
 <div class="doc">
@@ -605,10 +605,10 @@ caja.setDefaults({ /* ... */ });
 <pre class="prettyprint lang-javascript">
 /* <strong>host page code</strong> */
 caja.load( /* ... */ );
-caja.setDefaults({ /* ... */ });
+caja.initialize({ /* ... */ });
 </pre>
         
-<p>The call to <code>setDefaults</code> throws since
+<p>The call to <code>initialize</code> throws since
         <code>load</code> has already been called.</p>
       
 </div>
@@ -668,7 +668,7 @@ caja.whenReady(function() {
 
 <pre class="prettyprint lang-javascript">
 /* <strong>host page code</strong> */
-caja.setDefaults({ cajaServer: 'http://caja.appspot.com' });
+caja.initialize({ cajaServer: 'http://caja.appspot.com' });
 caja.load(
     document.getElementById('guestDiv'),
     undefined,  // no network access
@@ -696,7 +696,7 @@ the guest page is loaded.</p>
 
 <pre class="prettyprint lang-javascript">
 /* <strong>host page code</strong> */
-caja.setDefaults({ cajaServer: 'http://caja.appspot.com' });
+caja.initialize({ cajaServer: 'http://caja.appspot.com' });
 caja.load(
     undefined,  // no DOM access
     undefined,  // no network access
@@ -745,7 +745,7 @@ var restrictedAlert = function(s) {
   alert(String(s));
 };
 
-caja.setDefaults({ cajaServer: 'http://caja.appspot.com' });
+caja.initialize({ cajaServer: 'http://caja.appspot.com' });
 caja.whenReady(function() {
   caja.markTameAsFunction(restrictedAlert);
 });
