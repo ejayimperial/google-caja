@@ -1,8 +1,8 @@
 #summary documentation outline for docreader
 #sidebar TableOfContents
   * End-user's Guide
-    * [GettingStarted Getting Started]
-    * [CajaPlayground Try it out]
+    * [http://code.google.com/caja Getting Started]
+    * [http://caja.appspot.com/ Try it out]
     * [Debugging]
     * [Motivation]
     * [AttackVectors Types of attacks]
@@ -18,10 +18,6 @@
       * [WhatsMissing]
       * [CajaWhitelists]
   * Integration Guide
-    * [HostingModules Setting up a host page]
-      * [HostTools HostTools API]
-      * [ModuleLoading Ways to load modules]
-    * [LibraryTaming Taming libraries]
     * [JsHtmlSanitizer]
     * [Performance]
     * [CajaCajole Cajoler as a command or web service]
