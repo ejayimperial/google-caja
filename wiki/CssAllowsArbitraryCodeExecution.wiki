@@ -34,7 +34,7 @@ Untrusted code can generate style elements or style attributes or otherwise add 
 
 
 ==Versions==
-IE 5 and later (but [http://blogs.msdn.com/ie/archive/2008/10/16/ending-expressions.aspx not IE 8 in "standards mode"]).
+IE 5 and later (but [http://blogs.msdn.com/ie/archive/2008/10/16/ending-expressions.aspx not IE 8 or later in "standards mode"]).
 
 Mozilla/Firefox, versions not known.
 
