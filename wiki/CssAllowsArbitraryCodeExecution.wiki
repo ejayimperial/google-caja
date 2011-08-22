@@ -11,9 +11,7 @@ Crafted CSS stylesheets can execute unsanitized javascript in the global scope o
 ==Background==
 CSS includes several mechanisms for changing the surrounding markup and executing expressions.
 
-The {{{content:}}} property allows text to be added around the modified node.
-
-IE also has an extension that allows execution of arbitrary javascript.  The {{{expression}}} property is described at [http://msdn2.microsoft.com/en-us/library/ms537634.aspx]
+IE has an extension that allows execution of arbitrary javascript.  The {{{expression}}} property is described at [http://msdn2.microsoft.com/en-us/library/ms537634.aspx]
 
     Using the power of dynamic properties, it is now possible to declare property values not only as constants, but also as formulas.
     ...
@@ -26,7 +24,7 @@ IE also has an extension that allows execution of arbitrary javascript.  The {{{
 [http://developer.mozilla.org/en/docs/XBL:XBL_1.0_Reference:Elements#binding]
     {{{-moz-binding}}} allows binding via the XML interface (also using data: URLs)
 
-
+The `content` property allows specifying text that is included in the DOM but it is unknown whether this is exploitable if controllable by an attacker.
 
 
 ==Assumptions==
