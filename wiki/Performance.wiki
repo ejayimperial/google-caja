@@ -9,7 +9,7 @@ The size of cajoled code is affected by the subset of caja that is used, by the 
 
 <wiki:gadget url="http://www.thinkfu.com/size.xml" height="600" width="100%" border="0" />
 
-For least network latency, a cajoled program should be rendered "minified" and delivered gzip-encoded.  If the effects of a javascript program are not expected to affect the rest of the page, a developer incurring the cost of reading and setting globals by wrapping their program in a function wrapper:
+For least network latency, a cajoled program should be rendered "minified" and delivered gzip-encoded.  If the effects of a javascript program are not expected to affect the rest of the page, a developer can avoid incurring the cost of reading and setting globals by wrapping their program in a function wrapper:
 
 {{{
 (function () {
