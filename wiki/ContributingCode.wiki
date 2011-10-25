@@ -68,6 +68,7 @@ $ myvn change
 {{{
 $ myvn submit
 }}}
+  This will also cause your change to be tested before submission. You'll need a modern Firefox (FF5+) to run the tests.
   # Show the change description
 {{{
 $ myvn describe
