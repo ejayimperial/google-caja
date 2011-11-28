@@ -59,14 +59,11 @@ If {{{onerror}}} is defined locally as by {{{var onerror = null;}}} or {{{functi
 
 If the container wants to maintain any invariants it can provide a new module handler that overrides {{{handleUncaughtException}}}.
 
-The default {{{handleUncaughtException}}} implementation does
-  # Call {{{___.tameException(ex)}}} which will rethrow the exception.  This avoids trapping uncatchable exceptions such as stack overflows.
+The default ES5/3 {{{handleUncaughtException}}} implementation does
+  # Cast the exception to a string if it's an object.  This is a work around to avoid trapping uncatchable exceptions such as stack overflows.
   # Extract the error message from {{{ex}}} ensuring it is a string.
   # {{{var result = (typeof onerror) === 'function' ? onerror(message, sourceUri, lineNumber) : onerror !== null;}}}
   # If {{{result !== false}}} invoke {{{caja.log}}} with the error message, sourceUri, and lineNumber.
-
-In debug mode, {{{caja-debugmode.js}}} will wrap {{{getNewModuleHandler}}} to extract a more accurate error position from the debug stack, and will dump the entire stack to the console if possible.
-
 
 == Open Questions ==
 Does providing the source file and line number lead to non-determinism?
