@@ -7,7 +7,7 @@ The Caja project includes a html-sanitizer written in javascript which can be us
 Use a {{{<script>}}} tag to include the resulting {{{com/google/caja/plugin/html-sanitizer-minified.js}}} in your program.  To sanitize a snippet of javascript, use the {{{html_sanitize(htmlSnippet, urlTransformer, nameIdClassTransformer)}}} to sanitize your html snippet where:
 
   * {{{htmlSnippet}}} is the snippet you want to sanitize
-  * {{{urlTransformer}}} is a function which is called on every url in {{{htmlSnippet}}}.  This is a good place to ensure there are no {{{javascript:}}} urls.  In fact, you want always to _whitelist_ only urls you know to be safe.  For example, you may only want to allow urls to a particular domain.
+  * {{{urlTransformer}}} is a function which is called on every url in {{{htmlSnippet}}}.  {{{javascript:}}} urls are removed before being passed to the urlTransformer.  The transformer allows you to _whitelist_ urls or rewrite them.  For example, you may only want to allow urls to a particular domain.
 
   * {{{nameIdClassTransformer}}} is a function which is called on every id, name and class in {{{htmlSnippet}}}
 
