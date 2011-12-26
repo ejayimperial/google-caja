@@ -8,7 +8,7 @@ This page is for hard core developers, to document precisely the differences bet
 
 = Idealized SES vs ES5 =
 
-= SES vs CES (Confined EcmaScript) =
+= SES vs CES (Confined !EcmaScript) =
 
 = Source SES vs Target SES =
 
