@@ -14,11 +14,13 @@ This page is for hard core developers, to document precisely the differences bet
 
 == Script Code vs Eval Code ==
 
+== Powerless thrown Errors, etc. ==
+
 == Extra APIs ==
 
-== !WeakMap, !StringMap ==
+=== !WeakMap, !StringMap ===
 
-== cajaVM ==
+=== cajaVM ===
 
 = SES-on-ES5 vs Idealized SES =
 
@@ -39,6 +41,10 @@ This page is for hard core developers, to document precisely the differences bet
 == typeof _variable_ ==
 
 == `this`-binding of Global Function Calls ==
+
+== Safety of Thrown Values ==
+
+== Translations == 
 
 = Browser and Platform Differences =
 
