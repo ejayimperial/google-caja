@@ -1,0 +1,15 @@
+#summary Documents differences between SES (Secure EcmaScript) and ES5 (EcmaScript 5).
+
+= Introduction =
+
+SES is mostly defined as a fail-stop subset of ES5 that should compatibly run all ES5 code that follows recognized ES5 best practices. The SES restrictions support the writing of defensively consistent abstractions -- object abstractions that can defend their integrity while being exposed to untrusted but confined objects.
+
+This page is for hard core developers, to document precisely the differences between the various forms of SES, and how these differ from ES5.
+
+= Idealized SES vs ES5 =
+
+= SES vs CES (Confined EcmaScript) =
+
+= Source SES vs Target SES =
+
+= Browser Differences =
