@@ -8,8 +8,38 @@ This page is for hard core developers, to document precisely the differences bet
 
 = Idealized SES vs ES5 =
 
+== Whitelist Primordial State ==
+
+== No Monkey Patching Primordials ==
+
+== Script Code vs Eval Code ==
+
+== Extra APIs ==
+
+== WeakMap, StringMap ==
+
+== cajaVM ==
+
+= SES-on-ES5 vs Idealized SES =
+
+== Tamper Proofing vs Freezing ==
+
 = SES vs CES (Confined !EcmaScript) =
+
+== Waive Monkey Patching Prohibition ==
+
+== Multi-Frame Operation ==
+
+== Defensiveness Despite Monkey Patching ==
 
 = Source SES vs Target SES =
 
-= Browser Differences =
+== Top Level Declarations ==
+
+== typeof _variable_ ==
+
+== `this`-binding of Global Function Calls ==
+
+= Browser and Platform Differences =
+
+== Tamper Proofing vs Freezing, revisited ==
