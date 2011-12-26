@@ -16,7 +16,7 @@ This page is for hard core developers, to document precisely the differences bet
 
 == Extra APIs ==
 
-== WeakMap, StringMap ==
+== !WeakMap, !StringMap ==
 
 == cajaVM ==
 
