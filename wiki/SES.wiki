@@ -57,7 +57,7 @@ We express our translations using !JavaScript [http://wiki.ecmascript.org/doku.p
     set b(n) { b = n; }
   }
 }}}
-as proposed at the end of [http://wiki.ecmascript.org/doku.php?id=strawman:object_initialiser_shorthand#discussion object initializer discussion page].
+as proposed at the end of [http://wiki.ecmascript.org/doku.php?id=strawman:object_initialiser_shorthand#discussion object initializer discussion section].
 
 Together, this means that ({{{quasiParser`stuff${{varName}}stuff`}}}) can create an object that can be used as a pattern, placing the values extracted from the specimen into {{{varName}}}, which must have already been declared. As a further elaboration, we assume predicate pattern functions that wrap such a literal ({{{quasiParser`stuff${isThing({varName})}stuff`}}}) and report whether the proposed assignment meets it criteria. If not, that match fails.
 
