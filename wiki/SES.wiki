@@ -46,12 +46,30 @@ This page is for hard core developers, to document precisely the differences bet
 
 == Translations == 
 
+We express our translations using !JavaScript [http://wiki.ecmascript.org/doku.php?id=harmony:quasis quasiliterals] and a hypothetical !JavaScript quasi-parser named "{{{js}}}". We additionally assume that the expression syntax {{{ {a, b} }}} is shorthand not for {{{ {a: a, b: b} }}} as currently proposed, but rather for 
+{{{ 
+  {
+    get a() { return a; }, 
+    set a(n) { a = n; }, 
+    get b() { return b; },
+    set b(n) { b = n; }
+  }
+}}}
+
+Together, this means that {{{quasiParser`stuff${{varName}}stuff`}}} can create an object that can be used as a pattern, placing the values extracted from the specimen into {{{varName}}}, which must have already been declared.
+
+Separately from the rules below, we also prohibit identifiers ending in {{{___}}} (triple underbar) in the input, so that we may use them in the output without fear of capture.
+
+When a variable such as {{{nameIn}}} appears on the left and {{{nameOut}}} appears on the right, then {{{nameOut}}}'s value is {{{nameIn}}} as transformed by a recursive application of these rules.
+
+The !JavaScript quasiParser accepts one additional element besides !JavaScript syntax and {{{$}}} holes. In addition, when an "{{{*}}}", "{{{+}}}", or "{{{?}}}" appears immediately to the right of a {{{$}}} hole with no intervening space, then it is taken as a quantifier on the binding of the {{{$}}} hole to consecutive AST elements.
+
 Taking each of the above issues in order:
 
 === Top Level Declarations ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { $progOut })(this);`}}} ||
+|| {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { $progOut }).call(this, this);`}}} ||
 || {{{js`var ${{name}}` && isGlobal(name)}}} || {{{js`global___.name`}}} ||
 
 === typeof _variable_ ===
