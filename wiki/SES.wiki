@@ -63,7 +63,7 @@ Together, this means that ({{{quasiParser`stuff${{varName}}stuff`}}}) can create
 
 Separately from the rules below, we also prohibit identifiers ending in {{{___}}} (triple underbar) in the input, so that we may use them in the output without fear of capture.
 
-When a variable such as {{{nameIn}}} appears on the left and {{{nameOut}}} appears on the right, then {{{nameOut}}}'s value is {{{nameIn}}} as transformed by a recursive application of these rules.
+When a variable such as {{{fooIn}}} appears on the left and {{{fooOut}}} appears on the right, then {{{fooOut}}}'s value is {{{fooIn}}} as transformed by a recursive application of these rules.
 
 The !JavaScript quasiParser accepts one additional element besides !JavaScript syntax and {{{$}}} holes. In addition, when an "{{{*}}}", "{{{+}}}", or "{{{?}}}" appears immediately to the right of a {{{$}}} hole with no intervening space, then it is taken as a quantifier on the binding of the {{{$}}} hole to consecutive AST elements.
 
