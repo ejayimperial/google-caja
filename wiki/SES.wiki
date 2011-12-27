@@ -85,7 +85,7 @@ Taking each of the above issues in order:
 === typeof _variable_ ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`typeof ${{name}}` && isFree(name)}}} || {{{js`$name in global___`}}} ||
+|| {{{js`typeof ${{name}}` && isFree(name)}}} || {{{js`($name in global___) ? typeof $name : 'undefined'`}}} ||
 
 === `this`-binding of Global Function Calls ===
 
