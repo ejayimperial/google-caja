@@ -59,7 +59,7 @@ We express our translations using !JavaScript [http://wiki.ecmascript.org/doku.p
 }}}
 as proposed at the end of [http://wiki.ecmascript.org/doku.php?id=strawman:object_initialiser_shorthand#discussion object initializer discussion page].
 
-Together, this means that {{{quasiParser`stuff${{varName}}stuff`}}} can create an object that can be used as a pattern, placing the values extracted from the specimen into {{{varName}}}, which must have already been declared.
+Together, this means that ({{{quasiParser`stuff${{varName}}stuff`}}}) can create an object that can be used as a pattern, placing the values extracted from the specimen into {{{varName}}}, which must have already been declared. As a further elaboration, we assume predicate pattern functions that wrap such a literal ({{{quasiParser`stuff${isThing({varName})}stuff`}}}) and report whether the proposed assignment meets it criteria. If not, that match fails.
 
 Separately from the rules below, we also prohibit identifiers ending in {{{___}}} (triple underbar) in the input, so that we may use them in the output without fear of capture.
 
@@ -98,10 +98,10 @@ Ignore the line divisions below and the leading dots. It's just one rule and the
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
 || {{{js`try {}}}                                                   || {{{js`try {}}} ||
-|| {{{.....${{tIn}} }}}                                             || {{{.....$tOut}}} ||
-|| {{{...} catch (${doesNotShadow({param})}) {}}} || {{{...} catch (e___) { var $param = cleanErr___(e___);}}} ||
-|| {{{.....${{cIn}} }}}                                             || {{{.....$cOut}}} ||
-|| {{{...}` }}}                                                      || {{{...}` }}} ||
+|| {{{.....${{tIn}} }}}                                              || {{{.....$tOut}}} ||
+|| {{{...} catch (${mustNotShadow({param})}) {}}} || {{{...} catch (e___) { var $param = cleanErr___(e___);}}} ||
+|| {{{.....${{cIn}} }}}                                              || {{{.....$cOut}}} ||
+|| {{{...}` }}}                                                       || {{{...}` }}} ||
 
 = Browser and Platform Differences =
 
