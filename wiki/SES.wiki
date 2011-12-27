@@ -72,37 +72,36 @@ Taking each of the above issues in order:
 === Completion Value ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`${{progIn}}; ${{eIn}}` && isProgram(progIn) && isExpr(eIn)}}} || {{{js`(function(global___) { $progOut; return $eOut; }).call(this, this);`}}} ||
-|| {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { $progOut }).call(this, this);`}}} ||
+|| {{{js`${isProgram({progIn})}; ${isExpr({eIn})}`}}} || {{{js`(function(global___) { $progOut; return $eOut; }).call(this, this);`}}} ||
+|| {{{js`${isProgram({progIn})}`}}} || {{{js`(function(global___) { $progOut }).call(this, this);`}}} ||
 
 
 === Top Level Declarations ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`var ${{name}};` && isGlobal(name)}}} || {{{js`global___.$name` = void 0;`}}} ||
-|| {{{js`var ${{name}} = ${{eIn}};` && isGlobal(name)}}} || {{{js`global___.$name = $eOut;`}}} ||
+|| {{{js`var ${isGlobal({name})};`}}} || {{{js`global___.$name` = void 0;`}}} ||
+|| {{{js`var ${isGlobal({name})} = ${{eIn}};`}}} || {{{js`global___.$name = $eOut;`}}} ||
 
 === typeof _variable_ ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`typeof ${{name}}` && isFree(name)}}} || {{{js`($name in global___) ? typeof $name : 'undefined'`}}} ||
+|| {{{js`typeof ${isFree({name})}`}}} || {{{js`($name in global___) ? typeof $name : 'undefined'`}}} ||
 
 === `this`-binding of Global Function Calls ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`${{name}}(${{paramsIn}}*)` && isGlobalOrFree(name)}}} || {{{js`$name.call(void 0, $paramsOut*)`}}} ||
+|| {{{js`${isGlobalOrFree({name})}(${{paramsIn}}*)`}}} || {{{js`$name.call(void 0, $paramsOut*)`}}} ||
 
 === Safety of Thrown Values ===
 
 Ignore the line divisions below and the leading dots. It's just one rule and the dots should be leading spaces, but I don't know how to say this in a table in this wiki syntax.
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`try {}}}                         || {{{js`try {}}} ||
-|| {{{.....${{tIn}} }}}                   || {{{.....$tOut}}} ||
-|| {{{...} catch (${{param}}) {}}} || {{{...} catch (e___) { var $param = cleanErr___(e___);}}} ||
-|| {{{.....${{cIn}} }}}                   || {{{.....$cOut}}} ||
-|| {{{...}` }}}                             || {{{...}` }}} ||
-|| {{{&& !shadows(param)}}}    ||  ||
+|| {{{js`try {}}}                                                   || {{{js`try {}}} ||
+|| {{{.....${{tIn}} }}}                                             || {{{.....$tOut}}} ||
+|| {{{...} catch (${doesNotShadow({param})}) {}}} || {{{...} catch (e___) { var $param = cleanErr___(e___);}}} ||
+|| {{{.....${{cIn}} }}}                                             || {{{.....$cOut}}} ||
+|| {{{...}` }}}                                                      || {{{...}` }}} ||
 
 = Browser and Platform Differences =
 
