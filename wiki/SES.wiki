@@ -79,7 +79,7 @@ Taking each of the above issues in order:
 === Top Level Declarations ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`var ${{name}};` && isGlobal(name)}}} || {{{js`global___.$name` = void 0;}}} ||
+|| {{{js`var ${{name}};` && isGlobal(name)}}} || {{{js`global___.$name` = void 0;`}}} ||
 || {{{js`var ${{name}} = ${{eIn}};` && isGlobal(name)}}} || {{{js`global___.$name = $eOut;`}}} ||
 
 === typeof _variable_ ===
