@@ -70,7 +70,8 @@ Taking each of the above issues in order:
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
 || {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { $progOut }).call(this, this);`}}} ||
-|| {{{js`var ${{name}}` && isGlobal(name)}}} || {{{js`global___.name`}}} ||
+|| {{{js`var ${{name}};` && isGlobal(name)}}} || {{{js`global___.$name` = void 0;}}} ||
+|| {{{js`var ${{name}} = ${{eIn}};` && isGlobal(name)}}} || {{{js`global___.$name = $eOut;`}}} ||
 
 === typeof _variable_ ===
 
