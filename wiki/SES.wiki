@@ -90,7 +90,7 @@ Taking each of the above issues in order:
 === `this`-binding of Global Function Calls ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`${{name}}(${{paramsIn}}*)` && isGlobalOrFree(name)}}} || {{{js`name.call(void 0, $paramsOut*)`}}} ||
+|| {{{js`${{name}}(${{paramsIn}}*)` && isGlobalOrFree(name)}}} || {{{js`$name.call(void 0, $paramsOut*)`}}} ||
 
 === Safety of Thrown Values ===
 
