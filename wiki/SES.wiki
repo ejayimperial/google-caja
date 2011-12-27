@@ -46,6 +46,29 @@ This page is for hard core developers, to document precisely the differences bet
 
 == Translations == 
 
+Taking each of the above issues in order:
+
+=== Top Level Declarations ===
+
+|| Source SES quasi-pattern || Target SES quasi-expression ||
+|| {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { ${{progOut}} })(this);`}}} ||
+|| {{{js`var ${{name}}` && isGlobal(name)}}} || {{{js`global___.${{name}}`}}} ||
+
+=== typeof _variable_ ===
+
+|| Source SES quasi-pattern || Target SES quasi-expression ||
+|| {{{js`typeof ${{name}}` && isFree(name) || {{{js`${{name}} in global___`}}} ||
+
+=== `this`-binding of Global Function Calls ===
+
+|| Source SES quasi-pattern || Target SES quasi-expression ||
+|| {{{js`${{name}}(${{paramsIn}}*)` && isGlobalOrFree(name) || js`${{name}}.call(void 0, ${{paramsOut}}*)`}}}
+
+=== Safety of Thrown Values ===
+
+|| Source SES quasi-pattern || Target SES quasi-expression ||
+|| {{{js`try { ${{tIn}} } catch (${{param}}) { ${{cIn}} }` || {{{js`try { ${{tIn}} } catch (e___) { var ${{param}} = cleanErr___(e___); ${{cIn}} }` ||
+
 = Browser and Platform Differences =
 
 == Tamper Proofing vs Freezing, revisited ==
