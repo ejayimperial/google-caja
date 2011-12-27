@@ -36,6 +36,8 @@ This page is for hard core developers, to document precisely the differences bet
 
 = Source SES vs Target SES =
 
+== Completion Value ==
+
 == Top Level Declarations ==
 
 == typeof _variable_ ==
@@ -66,10 +68,16 @@ The !JavaScript quasiParser accepts one additional element besides !JavaScript s
 
 Taking each of the above issues in order:
 
+=== Completion Value ===
+
+|| Source SES quasi-pattern || Target SES quasi-expression ||
+|| {{{js`${{progIn}}; ${{eIn}}` && isProgram(progIn) && isExpr(eIn)}}} || {{{js`(function(global___) { $progOut; return $eOut; }).call(this, this);`}}} ||
+|| {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { $progOut }).call(this, this);`}}} ||
+
+
 === Top Level Declarations ===
 
 || Source SES quasi-pattern || Target SES quasi-expression ||
-|| {{{js`${{progIn}}` && isProgram(progIn)}}} || {{{js`(function(global___) { $progOut }).call(this, this);`}}} ||
 || {{{js`var ${{name}};` && isGlobal(name)}}} || {{{js`global___.$name` = void 0;}}} ||
 || {{{js`var ${{name}} = ${{eIn}};` && isGlobal(name)}}} || {{{js`global___.$name = $eOut;`}}} ||
 
