@@ -102,6 +102,7 @@ Ignore the line divisions below and the leading dots. It's just one rule and the
 || {{{...} catch (${{param}}) {}}} || {{{...} catch (e___) { var $param = cleanErr___(e___);}}} ||
 || {{{.....${{cIn}} }}}                   || {{{.....$cOut}}} ||
 || {{{...} }}}                              || {{{...} }}} ||
+|| {{{&& !shadows(param)}}}    ||  ||
 
 = Browser and Platform Differences =
 
