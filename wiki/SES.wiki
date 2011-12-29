@@ -6,9 +6,31 @@ SES is mostly defined as a fail-stop subset of ES5 that should compatibly run al
 
 This page is for hard core developers, to document precisely the differences between the various forms of SES, and how these differ from ES5.
 
-= Idealized SES vs ES5 =
+= Idealized SES vs ES5 vs ES5 best practices =
+
+== Strict and Non-Strict Code ==
+
+By default, ES5 code is non-strict, which is compatible enough with legacy ES3 code in exhange for preserving most of the semantic minefields that make ES3 programming hell. For example, ES5 non-strict code, like ES3 code, is not lexically scoped, and in ways almost no one understood. Non-strict failed assignments are silent, allowing control flow to proceed on paths that assumed success.
+
+So ES5 best practice is to always [http://wiki.ecmascript.org/doku.php?id=conventions:avoid_strictness_contagion opt-in to strict mode].
+
+SES enforces that all SES code is strict, i.e., as if it had opted into strict mode, whether it does so explicitly or not. For ES5 code that follows ES5 best practices, this enforcement of strict code makes no difference.
 
 == Whitelist Primordial State ==
+
+The notorious [http://es5.github.com/#x16 Chapter 16 exemptions] of the ES5 spec says that
+
+  An implementation may provide additional types, values, objects, *_properties_*, and functions 
+  beyond those described in this specification. This may cause constructs (such as looking up 
+  a variable in the global scope) to have implementation-defined behaviour instead of throwing 
+  an error (such as !ReferenceError).
+_emphasis added_
+
+Implementations do indeed make use of this freedom and provide all sorts of non-standard properties, many of which are semantically problematic (e.g., `RegExp.prototype.compile`, `RegExp.leftContext`), and that often differ from browser to browser (e.g., `__proto__`). Nevertheless, some properties that are not _de jure_ standards are unproblematic and universal, and have come to be recognized as harmless _de facto_ standards (e.g., `String.prototype.anchor`).
+
+ES5 best practice limits code to relying only on such _de jure_ or harmless _de facto_ properties. While best practice code may attempt to use non-standard features when present, all such uses should be conditioned on feature tests for the presence of these properties, and the code should continue to work correctly in their absence.
+
+SES is partially specified by its [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js whitelist], which includes all ES5 standard properties and those _de facto_ properties that we judge to be safe. SES guarantees the absence of any primordial properties that are absent from its whitelist. For ES5 code that follows ES5 best practices, these absences are unproblematic.
 
 == No Monkey Patching Primordials ==
 
