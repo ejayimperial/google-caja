@@ -90,6 +90,8 @@ Note that the parser-free _Target-SES_ implementation explained below cannot pro
 
 == Tamper Proofing vs Freezing ==
 
+== Direct and Indirect `eval` ==
+
 = SES vs CES (Confined !EcmaScript) =
 
 == Waive Monkey Patching Prohibition ==
