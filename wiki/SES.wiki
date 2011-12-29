@@ -6,6 +6,10 @@ SES is mostly defined as a fail-stop subset of ES5 that should compatibly run al
 
 This page is for hard core developers, to document precisely the differences between the various forms of SES, and how these differ from ES5.
 
+= ES6 extras: `WeakMaps` =
+
+There is one crucial way in which SES is more that a subset of ES5 though still a subset of ES6 -- the inclusion of the [http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps `WeakMap` abstraction] proposed for !EcmaScript 6. Over time, as more of ES6 settles down and becomes available of !JavaScript implementations, we expect to make more of these features available within SES as well. Note that `WeakMap` is always available in SES, whether or not it is available yet on the underlying !JavaScript platform. (When it does not derive from platform provided `WeakMap`s, the [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/WeakMap.js emulated WeakMaps] are necessarily leaky, but this is technically a quality of implementation issue rather than a correctness issue.)
+
 = Idealized SES vs ES5 vs ES5 best practices =
 
 == Strict and Non-Strict Code ==
@@ -16,7 +20,7 @@ So ES5 best practice is to always [http://wiki.ecmascript.org/doku.php?id=conven
 
 SES enforces that all SES code is strict, i.e., as if it had opted into strict mode, whether it does so explicitly or not. For ES5 code that follows ES5 best practices, this enforcement of strict code makes no difference.
 
-== Whitelist Primordial State ==
+== Whitelist Primordial Properties ==
 
 The notorious [http://es5.github.com/#x16 Chapter 16 exemptions] of the ES5 spec says that
 
@@ -32,7 +36,30 @@ ES5 best practice limits code to relying only on such _de jure_ or harmless _de 
 
 SES is partially specified by its [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js whitelist], which includes all ES5 standard properties and those _de facto_ properties that we judge to be safe. SES guarantees the absence of any primordial properties that are absent from its whitelist. For ES5 code that follows ES5 best practices, these absences are unproblematic.
 
+== Whitelist Global Variables ==
+
+
+
+== Only Standard Syntax ==
+
+The notorious [http://es5.github.com/#x16 Chapter 16 exemptions] of the ES5 spec also says that
+
+  An implementation may extend program syntax and regular expression pattern or flag 
+  syntax. To permit this, all operations (such as calling eval, using a regular expression 
+  literal, or using the Function or RegExp constructor) that are allowed to throw SyntaxError 
+  are permitted to exhibit implementation-defined behaviour instead of throwing 
+  SyntaxError when they encounter an implementation-defined extension to the program 
+  syntax or regular expression pattern or flag syntax.
+
+When this additional syntax adds only sugar whose meaning is equivalent to code that could have been written in the standard language, it presents no great problem. However, this exemption allows non-standard syntax that could express non-standard semantics, including semantics that is [https://bugzilla.mozilla.org/show_bug.cgi?id=695579 impossible to secure]. Whereas programs can feature test for additional non-standard properties, as above, it is much more difficult (though possible using `eval`) to feature test for non-standard syntax.
+
+ES5 best practice is to write code that uses only standard syntaxes.
+
+SES accepts only standard syntax, or at most those non-syntactic elements of the underlying platform that are morally equivalent to sugar. For ES5 code that follows ES5 best practices, this restriction makes no difference.
+
 == No Monkey Patching Primordials ==
+
+== No Mutable Globals ==
 
 == Script Code vs Eval Code ==
 
