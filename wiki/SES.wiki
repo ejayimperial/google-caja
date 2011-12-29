@@ -57,7 +57,7 @@ To write _platform independent_ !JavaScript code, i.e., code that is independent
 
 Beyond the whitelisted globals, SES code may see additional global variable names depending on how it is spawned, including names like `document`, etc, which are bound to values emulating the traditional browser environment. _*We need to explain these spawning and scoping options somewhere*_
 
-For ES5 best practice code that assumes (without testing) a hosting environment with additional globals, the SES code setting up the spawning environment can endow it with an emulation of the additional globals it assumes.
+For ES5 best practice code that assumes (without testing) a hosting environment with additional globals, the SES code setting up the spawning environment can endow it with an emulation of the additional globals assumed by code expecting to run in that environment. Caja's [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/domado.js Domado library] provides just such a safe emulation of the browser environment.
 
 == Only Standard Syntax ==
 
