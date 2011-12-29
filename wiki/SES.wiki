@@ -38,7 +38,7 @@ ES5 best practice limits code to relying only on such _de jure_ or harmless _de 
 
 SES is partially specified by its [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js whitelist], which includes all ES5 standard properties and those _de facto_ properties that we judge to be safe. SES guarantees the absence of any primordial properties that are absent from its whitelist. For ES5 code that follows ES5 best practices, these absences are unproblematic.
 
-== Whitelist and Freeze Global Variables ==
+== Whitelist Global Variables ==
 
 Likewise, ES5 allows the global object to contain arbitrary properties, thereby defining arbitrary new global variables of the same names. The [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js SES whitelist] also defines what global variables are visible to SES code. The whitelisted globals include all the ES5 standard globals, the harmless _de facto_ standard *[http://es5.github.com/#B.2.1 escape]* and *[http://es5.github.com/#B.2.2 unescape]*, *`WeakMap`* as mentioned above, *[http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/StringMap.js StringMap]*, which is a special case of the [http://wiki.ecmascript.org/doku.php?id=harmony:simple_maps_and_sets proposed ES6 Map], and (for now) the global *`cajaVM`*, which provides a collection of other SES and Caja specific additional APIs. Notably absent from SES itself are authority providing globals such as `document`, `window`, or `location`.
 
