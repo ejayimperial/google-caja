@@ -40,19 +40,22 @@ SES is partially specified by its [http://code.google.com/p/google-caja/source/b
 
 == Whitelist and Freeze Global Variables ==
 
-Likewise, ES5 allows the global object to contain arbitrary properties, thereby defining arbitrary new global variables of the same names. The [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js SES whitelist] also defines what global variables are visible to SES code. The whitelisted globals include all the ES5 standard globals, the harmless _de facto_ standard [http://es5.github.com/#B.2.1 escape] and [http://es5.github.com/#B.2.2 unescape], `WeakMap` as mentioned above, http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/StringMap.js StringMap], which is a special case of the [http://wiki.ecmascript.org/doku.php?id=harmony:simple_maps_and_sets proposed ES6 Map], and a collection of other SES and Caja specific additional APIs as found on the global `cajaVM`. Notably absent are authority providing globals such as `document`, `window`, or `location`.
+Likewise, ES5 allows the global object to contain arbitrary properties, thereby defining arbitrary new global variables of the same names. The [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js SES whitelist] also defines what global variables are visible to SES code. The whitelisted globals include all the ES5 standard globals, the harmless _de facto_ standard *[http://es5.github.com/#B.2.1 escape]* and *[http://es5.github.com/#B.2.2 unescape]*, *`WeakMap`* as mentioned above, [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/StringMap.js StringMap], which is a special case of the [http://wiki.ecmascript.org/doku.php?id=harmony:simple_maps_and_sets proposed ES6 Map], and for now the global *`cajaVM`*, which provides a collection of other SES and Caja specific additional APIs. Notably absent from SES itself are authority providing globals such as `document`, `window`, or `location`.
 
 To write _platform independent_ !JavaScript code, i.e., code that is independent of whether its hosting environment is a browser, server, or whatever, ES5 best practice is to not rely on any non-standard globals. As with non-standard properties, best practice code may attempt to use such non-standard globals if present, but should condition such usage on feature testing whether those variables are present and have a value other than `undefined`, such as by testing
 {{{
-    if (typeof someGlobal === 'undefined') {
-      // If someGlobal is either absent or has value undefined
+    if (typeof someConventionalGlobal === 'undefined') {
+      // If someConventionalGlobal is either absent or has value undefined
       // Fallback behavior may simply be to terminate with an informative diagnostic
     } else {
-      // If someGlobal is both present and has a non-undefined value
+      // If someConventionalGlobal is both present and has a non-undefined value
+      // we may use it, assuming it has its conventional meaning
     }
 }}}
 
 Beyond the whitelisted globals, SES code may see additional global variable names depending on how it is spawned, including names like `document`, etc, which are bound to values emulating the traditional browser environment. _*We need to explain these spawning and scoping options somewhere*_
+
+For ES5 best practice code that assumes (without testing) a hosting environment with additional globals, the SES code setting up the spawning environment can endow it with an emulation of the additional globals it assumes.
 
 == Only Standard Syntax ==
 
@@ -80,12 +83,6 @@ Note that the parser-free _Target-SES_ implementation explained below cannot pro
 == Script Code vs Eval Code ==
 
 == Powerless thrown Errors, etc. ==
-
-== Extra APIs ==
-
-=== !WeakMap, !StringMap ===
-
-=== cajaVM ===
 
 = SES-on-ES5 vs Idealized SES =
 
