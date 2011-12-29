@@ -8,7 +8,7 @@ This page is for hard core developers, to document precisely the differences bet
 
 = ES6 extras: `WeakMaps` =
 
-There is one crucial way in which SES is more that a subset of ES5 though still a subset of ES6 -- the inclusion of the [http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps `WeakMap` abstraction] proposed for !EcmaScript 6. Over time, as more of ES6 settles down and becomes available of !JavaScript implementations, we expect to make more of these features available within SES as well. Note that `WeakMap` is always available in SES, whether or not it is available yet on the underlying !JavaScript platform. (When it does not derive from platform provided `WeakMap`s, the [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/WeakMap.js emulated WeakMaps] are necessarily leaky, but this is technically a quality of implementation issue rather than a correctness issue.)
+There is one crucial way in which SES is more that a subset of ES5 though still a subset of ES6 -- the inclusion of the [http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps WeakMap abstraction] proposed for !EcmaScript 6. Over time, as more of ES6 settles down and becomes available of !JavaScript implementations, we expect to make more of these features available within SES as well. Note that `WeakMap` is always available in SES, whether or not it is available yet on the underlying !JavaScript platform. (When it does not derive from platform provided `WeakMap`s, the [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/WeakMap.js emulated WeakMaps] are necessarily leaky, but this is technically a quality of implementation issue rather than a correctness issue.)
 
 = Idealized SES vs ES5 vs ES5 best practices =
 
