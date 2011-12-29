@@ -84,13 +84,13 @@ Note that the parser-free _Target-SES_ implementation explained below cannot pro
 
 == Script Code vs Eval Code ==
 
+== Direct and Indirect `eval`, and the `Function` Constructor ==
+
 == Powerless thrown Errors, etc. ==
 
 = SES-on-ES5 vs Idealized SES =
 
 == Tamper Proofing vs Freezing ==
-
-== Direct and Indirect `eval` ==
 
 = SES vs CES (Confined !EcmaScript) =
 
