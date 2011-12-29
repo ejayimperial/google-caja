@@ -65,9 +65,9 @@ The notorious [http://es5.github.com/#x16 Chapter 16 exemptions] of the ES5 spec
 
   An implementation may extend program syntax and regular expression pattern or flag 
   syntax. To permit this, all operations (such as calling eval, using a regular expression 
-  literal, or using the Function or RegExp constructor) that are allowed to throw SyntaxError 
+  literal, or using the Function or !RegExp constructor) that are allowed to throw !SyntaxError 
   are permitted to exhibit implementation-defined behaviour instead of throwing 
-  SyntaxError when they encounter an implementation-defined extension to the program 
+  !SyntaxError when they encounter an implementation-defined extension to the program 
   syntax or regular expression pattern or flag syntax.
 
 When this additional syntax adds only sugar whose meaning is equivalent to code that could have been written in the standard language, it presents no great problem. However, this exemption allows non-standard syntax that could express non-standard semantics, including semantics that is [https://bugzilla.mozilla.org/show_bug.cgi?id=695579 impossible to secure]. Whereas programs can feature test for additional non-standard properties, as above, it is much more difficult (though possible using `eval`) to feature test for non-standard syntax.
