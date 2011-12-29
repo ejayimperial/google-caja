@@ -1,5 +1,7 @@
 #summary Documents differences between SES (Secure EcmaScript) and ES5 (EcmaScript 5).
 
+_All mentions of "ES5" below actually refer to !EcmaScript 5.1_
+
 = Introduction =
 
 SES is mostly defined as a fail-stop subset of ES5 that should compatibly run all ES5 code that follows recognized ES5 best practices. The SES restrictions support the writing of defensively consistent abstractions -- object abstractions that can defend their integrity while being exposed to untrusted but confined objects.
@@ -36,9 +38,21 @@ ES5 best practice limits code to relying only on such _de jure_ or harmless _de 
 
 SES is partially specified by its [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js whitelist], which includes all ES5 standard properties and those _de facto_ properties that we judge to be safe. SES guarantees the absence of any primordial properties that are absent from its whitelist. For ES5 code that follows ES5 best practices, these absences are unproblematic.
 
-== Whitelist Global Variables ==
+== Whitelist and Freeze Global Variables ==
 
+Likewise, ES5 allows the global object to contain arbitrary properties, thereby defining arbitrary new global variables of the same names. The [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/whitelist.js SES whitelist] also defines what global variables are visible to SES code. The whitelisted globals include all the ES5 standard globals, the harmless _de facto_ standard [http://es5.github.com/#B.2.1 escape] and [http://es5.github.com/#B.2.2 unescape], `WeakMap` as mentioned above, http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/StringMap.js StringMap], which is a special case of the [http://wiki.ecmascript.org/doku.php?id=harmony:simple_maps_and_sets proposed ES6 Map], and a collection of other SES and Caja specific additional APIs as found on the global `cajaVM`. Notably absent are authority providing globals such as `document`, `window`, or `location`.
 
+To write _platform independent_ !JavaScript code, i.e., code that is independent of whether its hosting environment is a browser, server, or whatever, ES5 best practice is to not rely on any non-standard globals. As with non-standard properties, best practice code may attempt to use such non-standard globals if present, but should condition such usage on feature testing whether those variables are present and have a value other than `undefined`, such as by testing
+{{{
+    if (typeof someGlobal === 'undefined') {
+      // If someGlobal is either absent or has value undefined
+      // Fallback behavior may simply be to terminate with an informative diagnostic
+    } else {
+      // If someGlobal is both present and has a non-undefined value
+    }
+}}}
+
+Beyond the whitelisted globals, SES code may see additional global variable names depending on how it is spawned, including names like `document`, etc, which are bound to values emulating the traditional browser environment. _*We need to explain these spawning and scoping options somewhere*_
 
 == Only Standard Syntax ==
 
@@ -55,7 +69,9 @@ When this additional syntax adds only sugar whose meaning is equivalent to code 
 
 ES5 best practice is to write code that uses only standard syntaxes.
 
-SES accepts only standard syntax, or at most those non-syntactic elements of the underlying platform that are morally equivalent to sugar. For ES5 code that follows ES5 best practices, this restriction makes no difference.
+SES accepts only standard syntax, or at most those non-syntactic elements of the underlying platform that are morally equivalent to sugar. For ES5 code that follows ES5 best practices, this restriction makes no difference. 
+
+Note that the parser-free _Target-SES_ implementation explained below cannot prohibit non-standard syntaxes, but rather simply refuse to run if it detects the acceptance of specific non-standard syntaxes that it knows to worry about, [https://bugzilla.mozilla.org/show_bug.cgi?id=695577 such as E4X].
 
 == No Monkey Patching Primordials ==
 
