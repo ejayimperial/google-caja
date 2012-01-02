@@ -147,17 +147,45 @@ TODO
 
 = Source-SES vs Target-SES =
 
-On an ES5 platform, the SES initialization results in a object-capability system that can accept untrusted code without parsing or translation, and safely run it confined under object-capability rules. However, because of the means we use to secure it without parsing or translation, the language in which this untranslated code is written differs from SES in five minor ways, which we enumerate below. 
+On an ES5 platform, the SES initialization results in a object-capability system that can accept untrusted code without parsing or translation, and safely run it confined under object-capability rules. However, because of the means we use to secure it without parsing or translation, the language in which this untranslated code is written differs from SES in several minor ways, which we enumerate below. 
 
-When we distinguish this untranslated almost-SES language from SES, we refer to the untranslated language as _Target-SES_ and real SES as _Source-SES_. At [http://code.google.com/p/google-caja/source/browse/trunk/experimental/src/com/google/caja/ses/expandProgramToExpr.js expandProgramToExpr.js] is pseudo-code explaining our translation from Source-SES to Target-SES. If you are writing using this translator in order to write in Source-SES, _and_ if all code of concern that you don't trust is also required to pass through the Source-SES to Target-SES translator, then you can ignore these five differences. Otherwise, they are relevant.
+When we distinguish this untranslated almost-SES language from SES, we refer to the untranslated language as _Target-SES_ and real SES as _Source-SES_. At [http://code.google.com/p/google-caja/source/browse/trunk/experimental/src/com/google/caja/ses/expandProgramToExpr.js expandProgramToExpr.js] is pseudo-code explaining our translation from Source-SES to Target-SES. If you are using this translator in order to write in Source-SES, _and_ if all code of concern that you don't trust is also required to pass through the Source-SES to Target-SES translator, then you can ignore these differences. Otherwise, they are relevant.
 
 == Completion Value ==
 
+[http://es5.github.com/#x15.1.2.1 ES5's eval] is specified to evaluate a [http://es5.github.com/#x14 Program] and to return the Program's [http://es5.github.com/#x8.9 completion value]. SES instead specifies the [http://wiki.ecmascript.org/doku.php?id=harmony:completion_reform completion value reform] specified for ES6. However, this is impossible to emulate in Target-SES without parsing or translation. Instead, Target-SES's `eval` makes the following compromise:
 
+If the source test happens to parse as an Expression, then `eval` returns the value this expression evaluates to. Otherwise, it just evaluates the program and returns `undefined`.
+
+== eval, Function ==
+
+Since the functions bound to `eval` and `Function` are first class values, it would create confusion for these to seem to be different values in Source-SES and Target-SES. We specify these to accept Source-SES, requiring a client side translator. However, since we do not yet have a client-side Source-SES to Target-SES translator, our current implementation has both of these accept Target-SES.
 
 == Top Level Declarations ==
 
+In SES and ES5-strict, a [http://es5.github.com/#x14 Program] may be evaluated as _global code_ or as _eval code_. Practically, in a browser, scripts as brought in by a script tag are global code. A top level variable declaration has two different meaning for these two types of evaluation. In a script, a top level declaration adds a property of that same name to the global object, so that two scripts in the same context (frame) can use top level variable declarations for inter-script linkage. By contrast, a top level declaration in strict eval code is local to that program and does not effect the global object.
+
+Source-SES and Target-SES operate likewise (but for one complexity explained below). Further, SES script code sees the full global environment and the real global object, and so wields the full authority of its frame. Thus, SES script code should only bring in untrusted code as SES eval code, to be evaluated by one of the SES safe evaluators, including `eval` and `Function`. 
+
+Unfortunately, the situation is not quite so simple. SES is typically used alongside DOM virtualization libraries like Domado. These must translate untrusted html into safe html. To do so, it must translate untrusted scripts embedded in html into safely confined scripts. Only SES eval code is safely confined, which would break the linkage between scripts on the html page. Instead, we translate these embedded scripts into calls to `cajaVM.compileExpr(src)(imports)`, where the `imports` argument represents the pseudo-global that these sources can use for inter-script linkage. For Source-SES, that's the end of the story, and there is no observed incompatibility because of this issue.
+
+For Target-SES, the problem is that we know of no technique for feasibly and safely implementing compileExpr without parsing or translation that allows top level declarations to be used in this way. Instead, to write code that works as both regular JavaScript script code and as Target-SES script code, use the following pattern:
+
+{{{
+(function(global) {
+  "use strict";
+
+  global.foo = 8; // as if a top-level "var foo = 8;"
+
+  .... foo + 3 ....  // foo is now a property on imports and in the "global" scope for this script.
+
+})(this);
+}}}
+  
+
 == typeof _variable_ ==
+
+
 
 == `this`-binding of Global Function Calls ==
 
