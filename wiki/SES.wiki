@@ -94,8 +94,13 @@ A no-argument call to the `Date` constructor, {{{new Date()}}}, as well as a cal
  
 === `Math.random()`===
 
+`Math.random()` is a standard primordial method that provides a new random-enough number (between 0.0 and 1.0) each time it is called. This is clearly not immutable, in that each call is clearly mutating some hidden state. Were it cryptographically pseudo-random, then to any computation that does not know the hidden state, the behavior of `Math.random()` would not be observably different (for feasible observations) from a source of true random numbers, e.g., from tapping a source of physical entropy. Such a source of physical entropy need not be affected in any way by a call to Math.random(), and so we could safely consider it a read-only channel, like Date.
+
+However, `Math.random()` is not specified to provide such high quality entropy, and actually implementations are know to provide low enough entropy to lead to actual security problems. But again, since SES makes no claims to prevent or inhibit covert channels, SES currently does not tighten this spec, and current SES implementations do not replace `Math.random()` with a higher quality source.
 
 ===Accidentally Unfreezable Mutable  State===
+
+
 
 ===Inability to Override Read-only Data Properties with Assignment===
 
