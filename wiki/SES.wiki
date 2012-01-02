@@ -104,10 +104,12 @@ However, `Math.random()` is not specified to provide such high quality entropy, 
 
 Even though `Date.prototype instanceof Date` returns `false`, nevertheless, `Date.prototype` is itself specified to be a Date object. (In spec language, its `[[Class]]` is `"Date"`.) Doing `Object.freeze(Date.prototype)` as well as freezing all the methods found there does not suppress all implicitly shared mutable state. Date objects have an internal property, not freezable with `Object.freeze`, that can be accessed only by the built-in Date setting methods found on `Date.prototype`.
 
-We specify SES so that using any of the Date setting method on a Date prototype from any context (frame) causes no mutation and instead throws a TypeError. On conforming ES5 platforms, the SES implementation realizes this spec by monkey patching the Date setting methods. On IE10, the Date setting methods indeed cause no mutation, but instead of throwing a TypeError, they fail silently. Since the IE10 behavior is SES-safe, we currently do not monkey patch these to throw a TypeError on IE, but may change out mind.
+We specify SES so that using any of the Date setting method on a Date prototype from any context (frame) causes no mutation and instead throws a !TypeError. On conforming ES5 platforms, the SES implementation realizes this spec by monkey patching the Date setting methods. On IE10, the Date setting methods indeed cause no mutation, but instead of throwing a !TypeError, they fail silently. Since the IE10 behavior is SES-safe, we currently do not monkey patch these to throw a !TypeError on IE, but may change out mind.
 
 
 == No Mutable Globals ==
+
+
 
 == Script Code vs Eval Code ==
 
