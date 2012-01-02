@@ -88,8 +88,7 @@ SES, to enforce object-capability rules, must prevent all un-granted communicati
 
 Some old libraries, like _Prototype_, made use of this pervasive mutability to install its own extension, e.g., to `Array.prototype`. However, these extensions would often conflict with each other, especially if two versions of the same monkey patching library were loaded into the same context. So ES3 and ES5 best practice is to avoid mutating (or monkey patching) any built-in primordial objects. So in this regard, ES5 best practice is consistent with frozen primordial state.
 
-Unfortunately, due to a [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake mistake made when specifying ES5], there is one bit of ES5 best practice which would break given simply frozen primordials. Suffice it to say that we specify SES to not suffer from [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake mistake made when specifying ES5], and so not be in conflict with ES5 best practice. And on ES5 platforms, we implement a reasonable approximation of this spec. We return to this topic below at "Tamper Proofing vs Freezing". 
-
+Unfortunately, due to a [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake mistake made when specifying ES5], there is one bit of ES5 best practice which would break given naively frozen primordials. Suffice it to say that we specify SES to not suffer from [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake mistake made when specifying ES5], and so not be in conflict with ES5 best practices. And on conforming ES5 platforms, we implement a reasonable approximation of this spec to have only a minor impact on code following ES5 best practices. We return to this topic below at "Tamper Proofing vs Freezing". 
 
 ===Current date and time===
 
@@ -104,6 +103,8 @@ However, `Math.random()` is not specified to provide such high quality entropy, 
 ===Accidentally Unfreezable Mutable  State===
 
 Even though `Date.prototype instanceof Date` returns `false`, nevertheless, `Date.prototype` is itself specified to be a Date object. (In spec language, its `[[Class]]` is `"Date"`.) Doing `Object.freeze(Date.prototype)` as well as freezing all the methods found there does not suppress all implicitly shared mutable state. Date objects have an internal property, not freezable with `Object.freeze`, that can be accessed only by the built-in Date setting methods found on `Date.prototype`.
+
+We specify SES so that using any of the Date setting method on a Date prototype from any context (frame) causes no mutation and instead throws a TypeError. On conforming ES5 platforms, the SES implementation realizes this spec by monkey patching the Date setting methods. On IE10, the Date setting methods indeed cause no mutation, but instead of throwing a TypeError, they fail silently. Since the IE10 behavior is SES-safe, we currently do not monkey patch these to throw a TypeError on IE, but may change out mind.
 
 
 == No Mutable Globals ==
