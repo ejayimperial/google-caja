@@ -84,9 +84,12 @@ Note that the parser-free _Target-SES_ implementation explained below cannot pro
 
 In ES5, almost all specified properties of build in primordial objects are specified to start in the writable and configurable state. And the built in primordial objects are themselves specified to start in the extensible state. Since all code loaded into a context (frame) implicitly shares much of this primordial state, this implicit access to shared mutable state represents an un-granted communications channel. Worse, it allows any code in that context to engage in _prototype poisoning_, replacing inherited utility methods, like Function.prototype.call, whose meaning other code relies on for its integrity.
 
-Some old libraries, like _Prototype_, made use of this pervasive mutability to install its own extension, e.g., to `Array.prototype`. However, these extensions would often conflict with each other, especially if two versions of the same monkey patching library were loaded into the same context. So ES3 and ES5 best practice is to avoid mutating (or monkey patching) any built-in primordial objects.
+SES, to enforce object-capability rules, must prevent all un-granted communications channels. So in SES, all built-in primordial objects are transitively frozen, which would ideally make them immutable. However, there are three remaining sources of primordial mutability left, which we enumerate below.
 
-SES, to enforce object-capability rules, must prevent all un-granted communications channels. So in SES, all built-in primordial objects are transitively frozen, which would ideally make them immutable. However, there are three remaining sources of primordial mutability left:
+Some old libraries, like _Prototype_, made use of this pervasive mutability to install its own extension, e.g., to `Array.prototype`. However, these extensions would often conflict with each other, especially if two versions of the same monkey patching library were loaded into the same context. So ES3 and ES5 best practice is to avoid mutating (or monkey patching) any built-in primordial objects. So in this regard, ES5 best practice is consistent with frozen primordial state.
+
+Unfortunately, due to a [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake mistake made when specifying ES5], there is one bit of ES5 best practice which would break given simply frozen primordials. Suffice it to say that we specify SES to not suffer from [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake mistake made when specifying ES5], and so not be in conflict with ES5 best practice. And on ES5 platforms, we implement a reasonable approximation of this spec. We return to this topic below at "Tamper Proofing vs Freezing". 
+
 
 ===Current date and time===
 
@@ -100,9 +103,8 @@ However, `Math.random()` is not specified to provide such high quality entropy, 
 
 ===Accidentally Unfreezable Mutable  State===
 
+Even though `Date.prototype instanceof Date` returns `false`, nevertheless, `Date.prototype` is itself specified to be a Date object. (In spec language, its `[[Class]]` is `"Date"`.) Doing `Object.freeze(Date.prototype)` as well as freezing all the methods found there does not suppress all implicitly shared mutable state. Date objects have an internal property, not freezable with `Object.freeze`, that can be accessed only by the built-in Date setting methods found on `Date.prototype`.
 
-
-===Inability to Override Read-only Data Properties with Assignment===
 
 == No Mutable Globals ==
 
@@ -115,6 +117,22 @@ However, `Math.random()` is not specified to provide such high quality entropy, 
 = SES-on-ES5 vs Idealized SES =
 
 == Tamper Proofing vs Freezing ==
+
+The following code does not violate any ES5 best practice:
+
+{{{
+  function Point(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  Point.prototype.toString = function() {
+    return '<' + x + ',' + y + '>';
+  };
+}}}
+
+However, if SES simply freezes the ES5 primordials, then the above code would fail. The reason being that ES5 specifies that an attempt to override a non-writable data property with assignment fails, and we were assuming that `Point.prototype.toString` was made simply non-writable non-configurable, by freezing `Point.prototype`.
+
+TODO
 
 = SES vs CES (Confined !EcmaScript) =
 
