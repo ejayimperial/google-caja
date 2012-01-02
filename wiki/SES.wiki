@@ -147,9 +147,13 @@ TODO
 
 = Source-SES vs Target-SES =
 
-See [http://code.google.com/p/google-caja/source/browse/trunk/experimental/src/com/google/caja/ses/expandProgramToExpr.js expandProgramToExpr.js] for pseudo-code explaining the translation from Source-SES to Target-SES.
+On an ES5 platform, the SES initialization results in a object-capability system that can accept untrusted code without parsing or translation, and safely run it confined under object-capability rules. However, because of the means we use to secure it without parsing or translation, the language in which this untranslated code is written differs from SES in five minor ways, which we enumerate below. 
+
+When we distinguish this untranslated almost-SES language from SES, we refer to the untranslated language as _Target-SES_ and real SES as _Source-SES_. At [http://code.google.com/p/google-caja/source/browse/trunk/experimental/src/com/google/caja/ses/expandProgramToExpr.js expandProgramToExpr.js] is pseudo-code explaining our translation from Source-SES to Target-SES. If you are writing using this translator in order to write in Source-SES, _and_ if all code of concern that you don't trust is also required to pass through the Source-SES to Target-SES translator, then you can ignore these five differences. Otherwise, they are relevant.
 
 == Completion Value ==
+
+
 
 == Top Level Declarations ==
 
