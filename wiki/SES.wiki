@@ -82,6 +82,23 @@ Note that the parser-free _Target-SES_ implementation explained below cannot pro
 
 == No Monkey Patching Primordials ==
 
+In ES5, almost all specified properties of build in primordial objects are specified to start in the writable and configurable state. And the built in primordial objects are themselves specified to start in the extensible state. Since all code loaded into a context (frame) implicitly shares much of this primordial state, this implicit access to shared mutable state represents an un-granted communications channel. Worse, it allows any code in that context to engage in _prototype poisoning_, replacing inherited utility methods, like Function.prototype.call, whose meaning other code relies on for its integrity.
+
+Some old libraries, like _Prototype_, made use of this pervasive mutability to install its own extension, e.g., to `Array.prototype`. However, these extensions would often conflict with each other, especially if two versions of the same monkey patching library were loaded into the same context. So ES3 and ES5 best practice is to avoid mutating (or monkey patching) any built-in primordial objects.
+
+SES, to enforce object-capability rules, must prevent all un-granted communications channels. So in SES, all built-in primordial objects are transitively frozen, which would ideally make them immutable. However, there are three remaining sources of primordial mutability left:
+
+===Current date and time===
+
+A no-argument call to the `Date` constructor, {{{new Date()}}}, as well as a call to {{{Date.now()}}} gives access access to the current date and time, which is an un-granted read-only access to be effected by state change of the outside world (the advance of time). Further, but providing undeniable access to time, we widen the information leakage possible through covert timing channels. Since SES makes no claims to prevent or even inhibit covert channels, and since this channel is really read-only, SES leaves it undisturbed, which is technically in violation of object-capability rules.
+ 
+=== `Math.random()`===
+
+
+===Accidentally Unfreezable Mutable  State===
+
+===Inability to Override Read-only Data Properties with Assignment===
+
 == No Mutable Globals ==
 
 == Script Code vs Eval Code ==
