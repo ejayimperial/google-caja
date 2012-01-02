@@ -2,6 +2,8 @@
 
 _All mentions of "ES5" below actually refer to !EcmaScript 5.1_
 
+<wiki:toc max_depth="8" />
+
 = Introduction =
 
 SES is mostly defined as a fail-stop subset of ES5 that should compatibly run all ES5 code that follows recognized ES5 best practices. The SES restrictions support the writing of defensively consistent abstractions -- object abstractions that can defend their integrity while being exposed to untrusted but confined objects.
