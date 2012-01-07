@@ -133,9 +133,10 @@ The following code does not violate any ES5 best practice:
   };
 }}}
 
-However, if SES simply freezes the ES5 primordials, then the above code would fail. The reason being that ES5 specifies that an attempt to override a non-writable data property with assignment fails, and we were assuming that `Point.prototype.toString` was made simply non-writable non-configurable, by freezing `Point.prototype`.
+However, if SES simply freezes the ES5 primordials, then the above code would fail. The reason being that ES5 specifies that an attempt to override a non-writable data property with assignment fails, and we were assuming that `Point.prototype.toString` was made simply non-writable non-configurable, by freezing `Point.prototype`. So instead of simply transitively "freezing" all the primordials, we instead "tamper proof" them. Tamper proofing differs from freezing as necessary so that SES does accept the above code, in order to avoid rejecting code obeying ES5 best practices.
 
-TODO
+To do so on browsers which correctly implement the ES5 spec, SES does this by classifying objects into "prototypical" and everything else. We make the pragmatic assumption that only properties of prototypical objects need to be overridable by assignment. SES makes these properties into accessor (getter/setter) properties whose setter accepts the above code. For these properties, it emulates the situation where [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake ES5 Override Mistake] is fixed.
+
 
 = SES vs CES (Confined !EcmaScript) =
 
