@@ -137,6 +137,7 @@ However, if SES simply freezes the ES5 primordials, then the above code would fa
 
 To do so on browsers which correctly implement the ES5 spec, SES does this by classifying objects into "prototypical" and everything else. We make the pragmatic assumption that only properties of prototypical objects need to be overridable by assignment. SES makes these properties into accessor (getter/setter) properties whose setter accepts the above code. For these properties, it emulates the situation where [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake ES5 Override Mistake] is fixed.
 
+As of this writing, Chrome/V8 and Safari/JSC both already act in accordance with [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake ES5 Override Mistake] being fixed. Thus, on these platforms, and frozen data property is overridable by assignment and no special case need be made for prototypical objects.
 
 = SES vs CES (Confined !EcmaScript) =
 
@@ -186,12 +187,8 @@ For Target-SES, the problem is that we know of no technique for feasibly and saf
 
 == typeof _variable_ ==
 
-
+In ES5, in most way, `typeof` acts as a unary operator -- the operand expression is evaluated to a value, and then `typeof` examines that value. If the evaluation of the operand throws an error, the throw propagates and the `typeof` work is skipped. However, ES5 and Source-SES make one special case: If the operand is a simple variable name which names a non-existent variable, i.e., if there is no corresponding variable definition or global property, then the variable name as expression would normally throw a `ReferenceError`. This is indeed its behavior under Target-SES because we have no other choice. But under ES5 and Source-SES, in this special circumstance, no error is thrown and the `typeof` expression returns the string `"undefined"`.
 
 == `this`-binding of Global Function Calls ==
 
 == Safety of Thrown Values ==
-
-= Browser and Platform Differences =
-
-== Tamper Proofing vs Freezing, revisited ==
