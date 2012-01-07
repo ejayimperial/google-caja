@@ -140,11 +140,11 @@ To do so on browsers which correctly implement the ES5 spec, SES does this by cl
 
 = SES vs CES (Confined !EcmaScript) =
 
-== Waive Monkey Patching Prohibition ==
+SES will support spawning a !JavaScript context (frame) running with a weaker kind of safety, in order to be more compatible with legacy !JavaScript. The rules in this other frame are a variant of SES we call CES, or Confined !EcmaScript. The difference is that in CES the built-in primordial state is not frozen. As a result, legacy code which monkey patches their built in primordials, such as the Prototype library, should still be able to run. However, this code cannot feasibly defend its own integrity against prototype poisoning. Which should be fine, since the only code that should be run under CES is legacy pre-SES code that is ignorant of the possibility of defending its integrity anyway.
 
-== Multi-Frame Operation ==
+The safety that is preserved is that the CES context as a whole is confined, and so can only effect the world outside itself according to what authority its spawner explicit grants it. The spawner (itself presumably in SES) is in a good position to defend itself from the CES frame.
 
-== Defensiveness Despite Monkey Patching ==
+Whereas in SES, the unit of protection is the individual object, in CES the unit of protection is the context (frame) as a whole. The granularity is like an HTML5 sandboxed unique origin iframe, but the security is much stronger.
 
 = Source-SES vs Target-SES =
 
