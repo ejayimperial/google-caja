@@ -189,6 +189,8 @@ For Target-SES, the problem is that we know of no technique for feasibly and saf
 
 In ES5, in most way, `typeof` acts as a unary operator -- the operand expression is evaluated to a value, and then `typeof` examines that value. If the evaluation of the operand throws an error, the throw propagates and the `typeof` work is skipped. However, ES5 and Source-SES make one special case: If the operand is a simple variable name which names a non-existent variable, i.e., if there is no corresponding variable definition or global property, then the variable name as expression would normally throw a `ReferenceError`. This is indeed its behavior under Target-SES because we have no other choice. But under ES5 and Source-SES, in this special circumstance, no error is thrown and the `typeof` expression returns the string `"undefined"`.
 
+To write `typeof` tests that operates the same way under ES5, SES, and Target-SES, using the above framework giving us a `global` binding, replace `typeof name` with `typeof global.name`.
+
 == `this`-binding of Global Function Calls ==
 
 In ES3, ES5-non-strict, when a global function is called as a function, its `this`-binding is the global object. In ES5-strict and in Source-SES, its `this`-binding is `undefined`. Unfortunately, the Target-SES behavior is more like the ES3 and ES5-non-strict behavior, but the global in question is the imports object (or virtual global) for that Target-SES evaluation.
