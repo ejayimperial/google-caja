@@ -1,4 +1,5 @@
 #summary All our security advisories (latest first).
+  * 16 Jan 2012 SecurityAdvisory20120116 Overflow of content beyond container DIV.
   * 02 Aug 2011 SecurityAdvisory20110802 innerText of script tags editable.
   * 19 Oct 2009 SecurityAdvisory19Oct2009 iframes allowed in HTML whitelists.
   *  7 Jul 2009 SecurityAdvisory20090707 Really fix the previous issue.
