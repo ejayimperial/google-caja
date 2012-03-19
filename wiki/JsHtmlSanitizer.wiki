@@ -11,7 +11,13 @@ Use a {{{<script>}}} tag to include the resulting {{{com/google/caja/plugin/html
 
   * {{{nameIdClassTransformer}}} is a function which is called on every id, name and class in {{{htmlSnippet}}}
 
-The return value is the html snippet with all script and style tags removed (style tags can include code which is interpreted as javascript on some browsers), and urls, ids, names and classes rewritten according to the transformers. 
+The return value is the html snippet with all script and style tags removed, and urls, ids, names and classes rewritten according to the transformers. 
+
+== Sanitizing CSS ==
+
+The sanitizer removes style tags because they can include code which is interpreted as javascript on some browsers and because styles can affect the entire page, not just the snippet being sanitized.  Style attributes can be safely contained if they are sanitized.  If you'd like to sanitize style attributes (rather than style tags), you can include {{{com/google/caja/plugin/html-css-sanitizer-minified.js}}} instead.  This exposes exactly the same api as {{{html_sanitize}}} but also allows sanitized css property names and values in style attributes and rewrites any urls in inline styles using the {{{urlTransformer}}}.
+
+= Advanced Use =
 
 If you need more control, you can use {{{html.makeSaxParser}}} to create your own SAX style processor.  {{{makeSaxParser}}} takes as its argument, an object that contains event handlers like:
 {{{
