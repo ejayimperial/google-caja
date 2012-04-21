@@ -12,8 +12,6 @@ There are literally an infinite number of ways to encode a string in any turing 
 
 Given that there are an infinite number of ways of producing the same string, any approach that tries to statically prove that certain strings cannot be produced by a computation by analyzing only string constants is doomed to fail.
 
-Some security systems analyze HTML and try to predict whether javascript embedded in it will produce 
-
 Javascript's {{{[]}}} operator allows a string constant to be converted to an object reference -- {{{window['eval']}}} is the same as {{{window.eval}}}.
 
 
