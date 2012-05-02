@@ -1,8 +1,9 @@
 #summary All our security advisories (latest first).
+  * 02 May 2012 SecurityAdvisory20120502 JavaScript URLs in style attributes not sanitized
   * 16 Jan 2012 SecurityAdvisory20120116 Guest HTML can overflow container-supplied boundary.
   * 02 Aug 2011 SecurityAdvisory20110802 innerText of script tags editable.
   * 19 Oct 2009 SecurityAdvisory19Oct2009 iframes allowed in HTML whitelists.
-  *  7 Jul 2009 SecurityAdvisory20090707 Really fix the previous issue.
+  * 07 Jul 2009 SecurityAdvisory20090707 Really fix the previous issue.
   * 23 Jun 2009 SecurityAdvisory20090623 Arbitrary code execution via DOM wrappers.
   * 23 Mar 2009 SecurityAdvisory20090323 Some code was not cajoled at all.
   * 20 Feb 2009 SecurityAdvisory20090220 Flaw in JSON parsing.
