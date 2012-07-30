@@ -26,9 +26,7 @@
     * [RunningCaja Downloading and compiling Caja]
     * [ContributingCode Contributing patches]
     * [DebuggingShindig Debugging Shindig]
-    * [InternalProperties Internal properties]
     * [HowDoesCajaStopX]
-    * [OpenProblems Open problems]
   * [SecurityAdvisories Security Advisories]
   * [FAQ Frequently Asked Questions]
   * Internals
