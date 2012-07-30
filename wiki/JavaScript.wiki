@@ -1,7 +1,0 @@
-#summary The dialects of JavaScript used by the Caja project.
-
-Cajita: "the good parts version" of JavaScript.  Small, elegant, secure.  The library supporting Cajita is part of the TCB.
-
-Valija: Essentially ECMAScript 5 strict mode.  Simulated on top of Cajita, not part of the TCB.
-
-See also WhatsMissing.
