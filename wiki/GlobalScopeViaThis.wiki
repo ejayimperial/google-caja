@@ -12,7 +12,7 @@ Untrusted functions invoked naively by trusted code can steal access to the glob
 
 When javascript is executing in multiple frames, it may be hard to determine whether an object is a global scope.
 
-!EcmaScript 5 changes the reflective {{{myFunction.{call,apply}}}} methods to not coerce null to the global scope in strict mode.  Technically, {{{this}}} is null when null is passed to {{{call}}} or {{{apply}}} but when code references {{{this}}}, the global object is substituted for {{{null}}} or {{{undefined}}}. In strict mode, the interpreter will not perform this coercion.
+!EcmaScript 5 changes the reflective {{{myFunction.{call,apply}}}} methods to not coerce null to the global scope in strict mode.  Technically, {{{this}}} is undefined when null or undefined is passed to {{{call}}} or {{{apply}}} but when code references {{{this}}}, the global object is substituted for {{{null}}} or {{{undefined}}}. In strict mode, the interpreter will not perform this coercion.
 
 
 ==Assumptions==
