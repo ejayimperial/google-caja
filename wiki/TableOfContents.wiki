@@ -4,7 +4,6 @@
     * [http://code.google.com/caja Getting Started]
     * [http://caja.appspot.com/ Try it out]
     * [Debugging]
-    * [Motivation]
     * [AttackVectors Types of attacks]
     * [CapabilityUseCases Capabilities in Web applications]
     * Language spec
