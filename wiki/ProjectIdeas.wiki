@@ -6,8 +6,8 @@
     * Contributor must know !JavaScript.
     * Contributor must be comfortable working with the Document Object Model in web browsers.
     * If the problems are insurmountable (unlikely, but possible) then the popular libraries will need [LibraryTaming taming].
-  * Create an [http://docs.google.com/viewer?a=v&q=cache:1VMOJxtnCkUJ:people.ischool.berkeley.edu/~ping/auditors/auditors.pdf&hl=en&gl=us&sig=AHIEtbRjmisE1ZPikrpSlNGdN4aZ_4I62Q Auditor] framework for Cajita or SES code
-    * Contributor must know Java and !JavaScript.
+  * Create an [http://docs.google.com/viewer?a=v&q=cache:1VMOJxtnCkUJ:people.ischool.berkeley.edu/~ping/auditors/auditors.pdf&hl=en&gl=us&sig=AHIEtbRjmisE1ZPikrpSlNGdN4aZ_4I62Q Auditor] framework for SES code
+    * Contributor must know !JavaScript.
     * An understanding of object-capabilities principles would be helpful.
     * One auditor should be able to prove that certain objects are immutable
   * Static analysis and optimization
