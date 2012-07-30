@@ -123,23 +123,3 @@ Here are some tips that you may find helpful:
   * If you are using Firefox, install the Firebug extension.  Caja dumps useful logs and stack traces in the console.
 
   * If the container has made the `alert` function or the `console.log` functions available, they provide very useful feedback.
-
-= [[DRAFT]] Closure Inspector [[DRAFT]] =
-
-The Closure Inspector plugin to Firebug now supports Caja source-level debugging! See the [http://code.google.com/closure/compiler/docs/inspector.html Closure Inspector page] for Inspector download links and installation instructions.
-
-To use the Closure Inspector to debug Caja source, first compile your Caja sources with the debugging flag turned on. How you do this depends on how you invoke Caja.
-
-  * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/opensocial/DefaultGadgetRewriter.java DefaultGadgetRewriter], call `setDebugMode(true)`.
-
-  * When invoking [http://code.google.com/p/google-caja/source/browse/trunk/bin/cajole_html cajole_html], pass the argument `--renderer=debugger`.
-
-  * *TODO(ihab.awad): Add argument to cajoling service.* When invoking the RESTful [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/service/CajolingService.java CajolingService] (e.g., on http://caja.appspot.com/), pass the argument `<not defined yet>`.
-
-When you load a page with your cajoled output in a browser and open Firebug, you will see a *Caja source* tab. Files cajoled in debug mode appear in their original form in the *Original Source* dropdown in this tab. You can set breakpoints on lines of original source, and otherwise continue to use Firebug as before:
-
-    [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorCajaSourceTab.png]
-
-If you select the *Script* tag, or if you hit a breakpoint, Firebug opens its *Script* tab. In the example below, the breakpoint set on a single line in the original source was mapped to several lines of cajoled output. From any line in the cajoled output, you can select *Show Original Source* to see the original source (in the *Caja source* tab) from which it was cajoled:
-
-    [http://google-caja.googlecode.com/svn/trunk/doc/images/closureInspectorScriptTab.png]
