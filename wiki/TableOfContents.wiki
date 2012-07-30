@@ -26,8 +26,6 @@
     * [RunningCaja Downloading and compiling Caja]
     * [ContributingCode Contributing patches]
     * [DebuggingShindig Debugging Shindig]
-    * [RunningJQueryTests Testing jQuery]
-    * [RunningPrototypeTests Testing prototype]
     * [InternalProperties Internal properties]
     * [HowDoesCajaStopX]
     * [OpenProblems Open problems]
