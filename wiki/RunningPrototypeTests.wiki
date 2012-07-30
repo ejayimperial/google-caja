@@ -1,8 +1,0 @@
-#summary How to test Cajoled Prototype.
-
-Get a copy of Caja from subversion.
-
-  # {{{ant jars}}}
-  # {{{cd experimental/prototype}}}
-  # {{{rake caja:cajole_gadgets CAJA_SRC_PATH=../..}}} (yes, you need Ruby and rake)
-  # you will find in {{{test/unit/tmp}}} a bunch of html pages and javascript and logs. Read the logs to see compile-time errors. Load the HTML in your favourite browser (== FF3 with Firebug) and enjoy. Start with truth_test.
