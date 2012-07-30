@@ -1,8 +1,0 @@
-#summary A minimal JavaScript to JavaScript translator for innocent code
-
-See NiceNeighbor for context.
-
-The InnocentCodeRewriter rewrites innocent !JavaScript code, i.e., code that is assumed unaware of Caja, that is assumed non-hostile, but must coexist with Caja via taming. The rewriter makes only two changes:
-
-  # It rewrites all for-in loops to skip property names ending with triple underbar. This typically prevents Cajita's internal bookkeeping from interfering with the operation of the innocent code.
-  # It instruments all functions mentioning `this` so that, if they are called with `this` bound to the global object -- as happens in ES3R if a function is called as a function -- then something safe happens. (Currently, the "safe" behavior is to throw an error. However, as explained in issue 1019, this caused valid code to fail.)
