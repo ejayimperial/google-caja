@@ -1,4 +1,8 @@
 #summary "Cajoling" is what we call the process of turning Caja input into JavaScript.
+#labels Deprecated
+
+This page is deprecated.  Please see instructions on [https://developers.google.com/caja/]
+
 
 The cajoler is written in Java and can be run either from the command line or a web service (of which the CajaPlayground is an instance).
 
