@@ -1,5 +1,5 @@
 #summary About the corkboard demo (caja-corkboard.appspot.com, src/com/google/demos/corkboard/)
-#labels Deprecated
+#labels Draft
 
 =Code on this page uses a deprecated api=
 
