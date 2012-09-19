@@ -1,5 +1,5 @@
 #summary All our security advisories (latest first).
-  * 02 May 2012 SecurityAdvisory20120502 JavaScript URLs in style attributes not sanitized
+  * 02 May 2012 SecurityAdvisory20120502 !JavaScript URLs in style attributes not sanitized
   * 16 Jan 2012 SecurityAdvisory20120116 Guest HTML can overflow container-supplied boundary.
   * 02 Aug 2011 SecurityAdvisory20110802 innerText of script tags editable.
   * 19 Oct 2009 SecurityAdvisory19Oct2009 iframes allowed in HTML whitelists.
