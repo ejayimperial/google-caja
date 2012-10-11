@@ -44,7 +44,7 @@ A white-list is a [http://www.json.org/ JSON file] like:
   ],
 
   "types": [
-    { "key": "OBJECT", "optionalEndTag": false, "empty": false, "breaksFlow": false }
+    { "key": "OBJECT", "optionalEnd": false, "empty": false }
   ]
 }
 }}}
@@ -111,8 +111,7 @@ This allows white-lists to be used in several distinct ways:
 == Type information in WhiteLists ==
 For HTML Elements, we need the following type information:
   * {{{empty}}} - does the element not contain any other elements?  {{{<INPUT>}}}, {{{<BR>}}}, and {{{<HR>}}} are examples of empty elements in HTML 4.
-  * {{{optionalEndTag}}} - does the element require an end tag?  {{{<P>}}} elements do not require end tags in HTML 4, but {{{<TABLE>}}} elements do,
-  * {{{breaksFlow}}} - does the element break the flow of text?
+  * {{{optionalEnd}}} - does the element require an end tag?  {{{<P>}}} elements do not require end tags in HTML 4, but {{{<TABLE>}}} elements do.
 
 For HTML Attributes, we need the following type information:
   * {{{type}}} - one of the values in {{{com.google.caja.html.HTML.Type}}}: {{{NONE}}}, {{{SCRIPT}}}, {{{STYLE}}}, {{{URI}}}, {{{ID}}}, {{{IDREF}}}, {{{NMTOKEN}}}, {{{NMTOKENS}}}, or {{{FRAME}}}.
