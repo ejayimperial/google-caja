@@ -1,4 +1,5 @@
 #summary All our security advisories (latest first).
+  * 8 Nov 2012 SecurityAdvisory20121108 Foreign nodes are not protected; host methods may be misapplied; tighter user-interaction-only restrictions.
   * 19 Sep 2012 SecurityAdvisory20120919 Arbitrary code execution via setTimeout.
   * 02 May 2012 SecurityAdvisory20120502 !JavaScript URLs in style attributes not sanitized.
   * 16 Jan 2012 SecurityAdvisory20120116 Guest HTML can overflow container-supplied boundary.
