@@ -26,6 +26,7 @@
     * [ContributingCode Contributing patches]
     * [DebuggingShindig Debugging Shindig]
     * [HowDoesCajaStopX]
+    * [CajaTesting]
   * [SecurityAdvisories Security Advisories]
   * [FAQ Frequently Asked Questions]
   * Internals
