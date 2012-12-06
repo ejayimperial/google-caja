@@ -1,3 +1,5 @@
+#summary All about Caja testing and browser tests
+
 <wiki:toc/>
 
 = Running tests =
@@ -58,14 +60,24 @@ ant brserve+
 -Dtest.filter=*Test
 }}}
 
-    `test.filter` limits `runtests` to Java classes that match
-    the given glob pattern.
+    `runtests` will only run Java test classes that match
+    the `test.filter` glob pattern.
 
 {{{
 -Dtest.method.filter=*
 }}}
 
-    Doesn't work right.  It needs to be fixed.
+    `runtests` will only run Java test methods that match the
+    `test.method.filter` pattern.
+    (This is supposed to be a glob, but the pattern matching is
+    a little buggy, and "x" is the same as "*x*".)
+
+    Note: we don't really have a way to skip running a test method.
+    Instead, methods that do not
+    match `test.method.filter` will pass without running.
+    (That makes it a little tricky to tell the difference between
+    test that pass because they ran, vs tests that pass because
+    they were skipped.)
 
 {{{
 -Dtest.threads=2
