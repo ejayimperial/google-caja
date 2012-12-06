@@ -49,10 +49,10 @@ ant brserve+
 == `runtests` flags ==
 
 {{{
--Dtest.debug
+-Dtest.debug=false
 }}}
 
-    If `test.debug` is set, `runtests` will listen on port 9999
+    If `test.debug` is true, `runtests` will listen on port 9999
     and wait for a Java debugger to connect, before starting
     tests.
 
@@ -120,10 +120,10 @@ ant brserve+
     `Contents/MacOS/Google_Chrome` file inside the app bundle.
 
 {{{
--Dcaja.test.headless
+-Dcaja.test.headless=false
 }}}
 
-    If `caja.test.headless` is set, all browser tests are
+    If `caja.test.headless` is true, all browser tests are
     skipped.
 
 {{{
