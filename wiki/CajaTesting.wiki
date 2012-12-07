@@ -179,7 +179,8 @@ ant brtest -Dcaja.test.browser=chrome
     If you're using MacOS Homebrew,
     you can `"brew install chromedriver"`
 
-    The test driver tries to run `chromedriver` from your PATH.
+    The test driver tries to run `chromedriver` from your PATH
+    (note: PATH entries using `~` will not work).
     You can override that with `"-Dwebdriver.chrome.driver=..."`
 
     `chromedriver` looks for Chrome in the standard system
