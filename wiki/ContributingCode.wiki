@@ -51,11 +51,6 @@ $ myvn change
 $ myvn mail
 }}}
     This will upload to codereview.appspot.com, send mail to the reviewers specified using {{{myvn change}}}, and automatically CC google-caja-discuss.
-  # File a bug to track the review
-{{{
-$ myvn bug
-}}}
-    and copy and paste the url into your browser.
   # Update your changes based on feedback and snapshot for review
 {{{
 $ myvn snapshot
@@ -75,7 +70,7 @@ $ myvn describe
 }}}
   # Delete the change branch
 {{{
-$ myvn change --delete
+$ myvn reset
 }}}
 
 = Eclipse =
