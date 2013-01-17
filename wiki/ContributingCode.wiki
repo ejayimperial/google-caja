@@ -50,7 +50,7 @@ $ myvn change
 {{{
 $ myvn mail
 }}}
-    This will upload to codereview.appspot.com, send mail to the reviewers specified using {{{myvn change}}}, and automatically CC google-caja-discuss.
+    This will upload to codereview.appspot.com, send mail to the reviewers specified using {{{myvn change}}}, and automatically CC google-caja-discuss (or, if the change's Private flag is set, then it will instead be CC'd to caja-discuss-undisclosed and the core Caja team).
   # Update your changes based on feedback and snapshot for review
 {{{
 $ myvn snapshot
