@@ -204,6 +204,8 @@ To write `typeof` tests that operates the same way under ES5, SES, and Target-SE
 
 In ES3, ES5-non-strict, when a global function is called as a function, its `this`-binding is the global object. In ES5-strict and in Source-SES, its `this`-binding is `undefined`. Unfortunately, the Target-SES behavior is more like the ES3 and ES5-non-strict behavior, but the global in question is the imports object (or virtual global) for that Target-SES evaluation.
 
+The above transformation which turns global functions into function expressions also addresses this difference in semantics.
+
 == Safety of Thrown Values ==
 
 
@@ -211,4 +213,4 @@ In Source-SES, when some thrown value is caught, the value as caught is guarante
 
 None of the other differences between Source-SES and Target-SES creates any significant insecurity. Mostly they are just annoyances because they make Target-SES less compatible with ES5. However, this issue is different. The Target-SES behavior does not violate object-capability formal properties. But experience shows that in code reviews, it is infeasible for reviewers -- no matter how much they try to be vigilant -- to remember to think about what may escape on the exceptional control flow pathway. The solution adopted by several other object-capability languages is the same as Source-SES -- prevent anything from being transmitted along this pathway that would enable the catcher to cause additional effects. However, we don't have this option in Target-SES.
 
-This leaves us with a hard choice: Do we allow untrusted code be loaded and run as Target-SES code, or do we insist that all untrusted code be Source-SES code and be translated by the Source-SES to Target-SES translator? Currently, since we have not yet built this translator, we have no choice. By the time we have a choice, we may have a legacy of Target-SES code.
+This leaves us with a hard choice: Do we allow untrusted code to be loaded and run as Target-SES code, or do we insist that all untrusted code be Source-SES code and be translated by the Source-SES to Target-SES translator? Currently, since we have not yet built this translator, we have no choice. By the time we have a choice, we may have a legacy of Target-SES code.
