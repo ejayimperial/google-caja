@@ -70,7 +70,7 @@ ant brserve+
     `runtests` will only run Java test methods that match the
     `test.method.filter` pattern.
     (This is supposed to be a glob, but the pattern matching is
-    a little buggy, and "x" is the same as "*x*".)
+    a little buggy, and "x" is the same as "`*x*`".)
 
     Note: we don't really have a way to skip running a test method.
     Instead, methods that do not
@@ -168,16 +168,16 @@ ant brtest
 
 == Chrome ==
 
-{{{
-ant brtest -Dcaja.test.browser=chrome
-}}}
-
     Testing Chrome requires an additional program `chromedriver`,
     which is available
     [http://code.google.com/p/chromedriver/downloads/list here].
 
     If you're using MacOS Homebrew,
     you can `"brew install chromedriver"`
+
+{{{
+ant brtest -Dcaja.test.browser=chrome
+}}}
 
     The test driver tries to run `chromedriver` from your PATH
     (note: PATH entries using `~` will not work).
@@ -191,30 +191,12 @@ ant brtest -Dcaja.test.browser=chrome
     `Contents/MacOS/Google_Chrome` binary inside the app bundle.
 
     If you want more control over `chromedriver` settings, start
-    it manually and treat it like a remote browser.
+    it manually and treat it like a remote browser, described below.
 
 = Remote browser testing =
 
-{{{
-ant brtest -Dcaja.test.browser=... -Dcaja.test.remote=http://...
-}}}
-
     First you need to start a webdriver server on the remote
-    host, as described below.  Then you can run the above
-    command.
-
-    You can verify the remote webdriver works by fetching the URL
-    `http://remote:4444/wd/hub/status` or
-    `http://remote:4444/status`
-
-    `caja.test.browser` can be `"firefox"` (default), `"chrome"`,
-    or `"ie"`.
-
-    For remote Linux and MacOS, `caja.test.remote` should be
-    something like `http://remote:4444/wd/hub`
-
-    For remote Windows, `caja.test.remote` should be something
-    like `http://remote:4444/`
+    host.
 
 == webdriver server for Firefox and Chrome ==
 
@@ -222,7 +204,7 @@ ant brtest -Dcaja.test.browser=... -Dcaja.test.remote=http://...
 java -jar selenium-server-standalone-{VERSION}.jar
 }}}
 
-    Run that command on the remote host, which can be Linux,
+    Run that on the remote host, which can be Linux,
     MacOS, or Windows.  There's a copy of
     `selenium-server-standalone` in `third_party/java/webdriver`,
     but any recent version should be fine.
@@ -242,3 +224,22 @@ java -jar selenium-server-standalone-{VERSION}.jar
     [http://code.google.com/p/selenium/wiki/InternetExplorerDriver This page]
     has more information on starting and configuring the IE
     webdriver server.
+
+== running the tests ==
+
+    You can verify the remote webdriver works by fetching the URL
+    `http://remote:4444/wd/hub/status` or
+    `http://remote:4444/status`
+
+{{{
+ant brtest -Dcaja.test.browser=... -Dcaja.test.remote=http://...
+}}}
+
+    `caja.test.browser` can be `"firefox"` (default), `"chrome"`,
+    or `"ie"`.
+
+    For remote Linux and MacOS, `caja.test.remote` should be
+    something like `http://remote:4444/wd/hub`
+
+    For remote Windows, `caja.test.remote` should be something
+    like `http://remote:4444/`
