@@ -153,6 +153,8 @@ On an ES5 platform, the SES initialization results in a object-capability system
 
 When we distinguish this untranslated almost-SES language from SES, we refer to the untranslated language as _Target-SES_ and real SES as _Source-SES_. At [http://code.google.com/p/google-caja/source/browse/trunk/experimental/src/com/google/caja/ses/expandProgramToExpr.js?r=4754 expandProgramToExpr.js] is pseudo-code explaining our translation from Source-SES to Target-SES. If you are using this translator in order to write in Source-SES, _and_ if all code of concern that you don't trust is also required to pass through the Source-SES to Target-SES translator, then you can ignore these differences. Otherwise, they are relevant.
 
+The SES implementation also provides an optional "mitigateGotchas stage" that uses a parser and rewriter to minimize these differences between _Source-SES_ and _Target-SES_ where possible.  We note in the relevant sections below where such mitigation is performed and it's limitations.  TODO(jasvir): Flesh out the actual mitigation.
+
 == Completion Value ==
 
 [http://es5.github.com/#x15.1.2.1 ES5's eval] is specified to evaluate a [http://es5.github.com/#x14 Program] and to return the Program's [http://es5.github.com/#x8.9 completion value]. SES instead specifies the [http://wiki.ecmascript.org/doku.php?id=harmony:completion_reform completion value reform] specified for ES6. However, this is impossible to emulate in Target-SES without parsing or translation. Instead, Target-SES's `eval` makes the following compromise:
@@ -183,7 +185,13 @@ For Target-SES, the problem is that we know of no technique for feasibly and saf
 
 })(this);
 }}}
-  
+
+The mitigateGotchas stage implemented by SES rewrites variable declarations of the form:
+
+{{{var x = expression;}}} to {{{this.x = expression;}}}
+{{{var x; }}} to {{{this.x = this.x}}}
+
+Variable declaration in top-level for..in loops, however, are not rewritten into top-level variable declarations and thus remain a gotcha.
 
 == typeof _variable_ ==
 
