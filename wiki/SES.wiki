@@ -137,8 +137,6 @@ However, if SES simply freezes the ES5 primordials, then the above code would fa
 
 To do so on browsers which correctly implement the ES5 spec, SES does this by classifying objects into "prototypical" and everything else. We make the pragmatic assumption that only properties of prototypical objects need to be overridable by assignment. SES makes these properties into accessor (getter/setter) properties whose setter accepts the above code. For these properties, it emulates the situation where [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake ES5 Override Mistake] is fixed.
 
-As of this writing, Chrome/V8 and Safari/JSC both already act in accordance with [http://wiki.ecmascript.org/doku.php?id=strawman:fixing_override_mistake ES5 Override Mistake] being fixed. Thus, on these platforms, and frozen data property is overridable by assignment and no special case need be made for prototypical objects.
-
 = SES vs CES (Confined !EcmaScript) =
 
 SES will support spawning a !JavaScript context (frame) running with a weaker kind of safety, in order to be more compatible with legacy !JavaScript. The rules in this other frame are a variant of SES we call CES, or Confined !EcmaScript. The difference is that in CES the built-in primordial state is not frozen. As a result, legacy code which monkey patches their built in primordials, such as the Prototype library, should still be able to run. However, this code cannot feasibly defend its own integrity against prototype poisoning. Which should be fine, since the only code that should be run under CES is legacy pre-SES code that is ignorant of the possibility of defending its integrity anyway.
