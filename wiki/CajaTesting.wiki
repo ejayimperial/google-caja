@@ -57,6 +57,12 @@ ant brserve+
     tests.
 
 {{{
+-Dtest.exclude=--none--
+}}}
+
+    `runtests` will skip Java test classes that match this glob pattern.
+
+{{{
 -Dtest.filter=*Test
 }}}
 
@@ -118,13 +124,6 @@ ant brserve+
 
     On MacOS, this should point at the
     `Contents/MacOS/Google_Chrome` file inside the app bundle.
-
-{{{
--Dcaja.test.headless=false
-}}}
-
-    If `caja.test.headless` is true, all browser tests are
-    skipped.
 
 {{{
 -Dcaja.test.remote=...
