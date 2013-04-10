@@ -126,10 +126,10 @@ ant brserve+
 }}}
 
     `caja.test.browserPath` overrides the location of the Chrome
-    binary when testing Chrome. This should be a full pathname.
+    binary when testing Chrome. This should be an absolute pathname.
 
-    On MacOS, this should point at the
-    `Contents/MacOS/Google_Chrome` file inside the app bundle.
+    On OS X, this should point at the 
+    `Contents/MacOS/Google Chrome` executable inside the app bundle.
 
 {{{
 -Dcaja.test.closeBrowser=false
