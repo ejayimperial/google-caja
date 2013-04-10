@@ -21,12 +21,18 @@ ant runtests
     The test summary is at `ant-reports/tests/index.html`
 
 {{{
+ant nobrtest
+}}}
+
+    Runs only non-browser tests.
+    This is identical to `"ant runtests -Dtest.exclude=*BrowserTest"`
+
+{{{
 ant brtest
 }}}
 
     Runs only browser tests (but not jQuery tests).
-    `brtest` is shorthand for
-        `ant runtests -Dtest.filter=*BrowserTest`
+    This is identical to `"ant runtests -Dtest.filter=*BrowserTest"`
 
 {{{
 ant brserve
@@ -36,8 +42,8 @@ ant brserve
     waits forever, which is useful for manually running and
     debugging browser tests.
 
-    `breserve` will print a URL `.../test-index.html` that has
-    links to all the individual browser tests.
+    `brserve` will print a URL `.../test-index.html` that is a
+    page with links to all the individual browser tests.
 
 {{{
 ant brserve+
@@ -80,9 +86,9 @@ ant brserve+
 
     Note: we don't really have a way to skip running a test method.
     Instead, methods that do not
-    match `test.method.filter` will pass without running.
-    (That makes it a little tricky to tell the difference between
-    test that pass because they ran, vs tests that pass because
+    match `test.method.filter` will pass without running
+    (which makes it a little tricky to tell the difference between
+    tests that pass because they ran vs tests that pass because
     they were skipped.)
 
 {{{
@@ -112,18 +118,27 @@ ant brserve+
 }}}
 
     Chooses which browser to test.
-    Local `"firefox"` and `"chrome"` work.
-    Remote `"firefox"`, `"chrome"`, and `"ie"` work.
+    `"firefox"` and `"chrome"` work for local browser testing.
+    `"firefox"`, `"chrome"`, and `"ie"` work for remote browser testing.
 
 {{{
 -Dcaja.test.browserPath=...
 }}}
 
     `caja.test.browserPath` overrides the location of the Chrome
-    binary for local Chrome testing.
+    binary when testing Chrome. This should be a full pathname.
 
     On MacOS, this should point at the
     `Contents/MacOS/Google_Chrome` file inside the app bundle.
+
+{{{
+-Dcaja.test.closeBrowser=false
+}}}
+
+    Normally when a browser test fails, the test runner will try to
+    leave the browser open so that it can be examined later.
+    When this flag is true, the test runner will always close the
+    browser when done, whether it passes or fails.
 
 {{{
 -Dcaja.test.remote=...
@@ -133,6 +148,17 @@ ant brserve+
     webdriver instead of a local webdriver.
     The value should be a URL, such as `http://remotehost:4444/`
     or `http://remotehost:4444/wd/hub/`
+
+{{{
+-Dcaja.test.serverPort=0
+}}}
+    Browser tests start a test HTTP server on localhost.
+    This setting lets you override the server's port.
+    The value `0` means to use any available port.
+
+    When actually running tests, the default is `0`.
+    But when you do `"ant brserve"` the default is `8000`,
+    since a fixed port is more convenient for manual testing.
 
 {{{
 -Dcaja.test.thishostname=...
@@ -162,27 +188,26 @@ ant brtest
 
     Firefox is the default browser for testing.  The test driver
     tries to find `firefox` in standard system locations,
-    including your PATH.  You can override the location with
-    `"-Dwebdriver.firefox.bin=..."`
+    including your PATH.
+
+    You can override the location with `"-Dwebdriver.firefox.bin=..."`
 
 == Chrome ==
-
-    Testing Chrome requires an additional program `chromedriver`,
-    which is available
-    [http://code.google.com/p/chromedriver/downloads/list here].
-
-    If you're using MacOS Homebrew,
-    you can `"brew install chromedriver"`
 
 {{{
 ant brtest -Dcaja.test.browser=chrome
 }}}
 
-    The test driver tries to run `chromedriver` from your PATH
-    (note: PATH entries using `~` will not work).
-    You can override that with `"-Dwebdriver.chrome.driver=..."`
+    First, you need `chromedriver`,  which is available
+    [http://code.google.com/p/chromedriver/downloads/list here].
 
-    `chromedriver` looks for Chrome in the standard system
+    If you're using MacOS Homebrew,
+    you can `"brew install chromedriver"`
+
+    If `chromedriver` isn't in your PATH, you can specify the
+    location with `"-Dwebdriver.chrome.driver=..."`
+
+    `chromedriver` looks for Chrome in standard system
     locations.  You can override that with
     `"-Dcaja.test.browserPath=..."`
 
@@ -208,13 +233,13 @@ java -jar selenium-server-standalone-{VERSION}.jar
     `selenium-server-standalone` in `third_party/java/webdriver`,
     but any recent version should be fine.
 
-    If you're trying to test Chrome, the remote host will also
-    need the `chromedriver` program, as described above.
+    For Chrome testing, the remote host will also
+    need the `chromedriver` program, which is explained
+    in the "Local browser testing" section above.
 
-    If you're only interested in Chrome testing, you can just run
-    `chromedriver` directly to provide remote webdriver service,
-    without `selenium-server-standalone` acting as an
-    intermediary.
+    If you only want to test Chrome, you can ignore
+    `selenium-server-standalone` and just run `chromedriver`
+    directly on the remote host to provide webdriver service.
 
 == webdriver server for IE ==
 
@@ -225,10 +250,6 @@ java -jar selenium-server-standalone-{VERSION}.jar
     webdriver server.
 
 == running the tests ==
-
-    You can verify the remote webdriver works by fetching the URL
-    `http://remote:4444/wd/hub/status` or
-    `http://remote:4444/status`
 
 {{{
 ant brtest -Dcaja.test.browser=... -Dcaja.test.remote=http://...
@@ -242,3 +263,7 @@ ant brtest -Dcaja.test.browser=... -Dcaja.test.remote=http://...
 
     For remote Windows, `caja.test.remote` should be something
     like `http://remote:4444/`
+
+    You can verify the remote webdriver works by fetching the URL
+    `http://remote:4444/wd/hub/status` or
+    `http://remote:4444/status`
