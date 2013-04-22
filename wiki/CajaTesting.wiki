@@ -55,66 +55,7 @@ ant brserve+
 == `runtests` flags ==
 
 {{{
--Dtest.debug=false
-}}}
-
-    If `test.debug` is true, `runtests` will listen on port 9999
-    and wait for a Java debugger to connect, before starting
-    tests.
-
-{{{
--Dtest.exclude=--none--
-}}}
-
-    `runtests` will skip Java test classes that match this glob pattern.
-
-{{{
--Dtest.filter=*Test
-}}}
-
-    `runtests` will only run Java test classes that match
-    the `test.filter` glob pattern.
-
-{{{
--Dtest.method.filter=*
-}}}
-
-    `runtests` will only run Java test methods that match the
-    `test.method.filter` pattern.
-    (This is supposed to be a glob, but the pattern matching is
-    a little buggy, and "x" is the same as "`*x*`".)
-
-    Note: we don't really have a way to skip running a test method.
-    Instead, methods that do not
-    match `test.method.filter` will pass without running
-    (which makes it a little tricky to tell the difference between
-    tests that pass because they ran vs tests that pass because
-    they were skipped.)
-
-{{{
--Dtest.threads=2
-}}}
-
-    `runtests` uses limited parallelism to finish faster.
-    Use `"-Dtest.threads=1"` to disable parallel execution.
-
-    Setting `test.threads` to more than 2 will not speed up tests
-    much, because most of the time is spent on browser tests,
-    which always run sequentially.
-
-{{{
--Dtestonly.{X}=...
-}}}
-
-    Any property that starts with `"testonly."` will be passed
-    through to the test runner, but with the `"testonly."` prefix
-    removed.  This is useful for properties that you want visible
-    to tests but not visible to `ant`.
-
-== Browser test flags ==
-
-{{{
--Dcaja.test.browser=firefox
+-Dtest.browser= (default: "firefox")
 }}}
 
     Chooses which browser to test.
@@ -122,61 +63,143 @@ ant brserve+
     `"firefox"`, `"chrome"`, and `"ie"` work for remote browser testing.
 
 {{{
--Dcaja.test.browserPath=...
-}}}
-
-    `caja.test.browserPath` overrides the location of the Chrome
-    binary when testing Chrome. This should be an absolute pathname.
-
-    On OS X, this should point at the 
-    `Contents/MacOS/Google Chrome` executable inside the app bundle.
-
-{{{
--Dcaja.test.closeBrowser=false
+-Dtest.browser.close= (default: "no")
 }}}
 
     Normally when a browser test fails, the test runner will try to
     leave the browser open so that it can be examined later.
-    When this flag is true, the test runner will always close the
+    When this flag is truthy, the test runner will always close the
     browser when done, whether it passes or fails.
 
 {{{
--Dcaja.test.remote=...
+-Dtest.chrome.binary= (default: system-dependent search)
 }}}
 
-    Setting `caja.test.remote` will run browser tests on a remote
-    webdriver instead of a local webdriver.
-    The value should be a URL, such as `http://remotehost:4444/`
-    or `http://remotehost:4444/wd/hub/`
+    Overrides the automatic search for the Chrome executable when
+    testing Chrome. This should be an absolute pathname.
+
+    On MacOS X, this should point at the 
+    `"Contents/MacOS/Google Chrome"` executable inside the app bundle.
 
 {{{
--Dcaja.test.serverPort=0
+-Dtest.debug= (default: "no")
 }}}
-    Browser tests start a test HTTP server on localhost.
-    This setting lets you override the server's port.
-    The value `0` means to use any available port.
+
+    When truthy, listen on port 9999 and wait for a Java debugger
+    to connect before starting tests.
+
+{{{
+-Dtest.debug.browser= (default: "no")
+}}}
+
+    When truthy, start the test server and the browser, then
+    wait. This is the same as `ant brserve+`.
+
+{{{
+-Dtest.debug.server= (default: "no")
+}}}
+
+    When truthy, start the test server, then wait. This is the
+    same as `ant brserve`.
+
+{{{
+-Dtest.exclude= (default: "--none--")
+}}}
+
+    Skip Java test classes that match this glob pattern.
+
+{{{
+-Dtest.failureNotAnOption= (default: "no")
+}}}
+
+    When truthy, the test report generator will ignore the
+    `@FailureIsAnOption` annotation on tests.
+
+{{{
+-Dtest.filter= (default: "*Test")
+}}}
+
+    Only run Java test classes that match this glob pattern.
+
+{{{
+-Dtest.filter.method= (default: "*")
+}}}
+
+    Only run Java test methods that match this glob pattern.
+
+    Note, we don't really have a way to skip running a test
+    method. Instead, non-matching methods will be recorded as
+    passing without being run, which makes it a little tricky to
+    tell the difference between tests that passed because they
+    ran vs tests that passed because they were skipped.
+
+{{{
+-Dtest.server.hostname= (default: automatic guess)
+}}}
+
+    When running a remote webdriver, the remote browser needs to
+    load resources from a local HTTP server started by the test
+    driver. The test driver will guess a hostname that the remote
+    browser can use to contact the local HTTP server, but the
+    guess can be wrong.  Setting this will override the guessed
+    hostname.
+
+{{{
+-Dtest.server.port= (default: "0" or "8000")
+}}}
+
+    Browser tests start a local HTTP server.  This setting lets
+    you override the server's port.  The value `0` means to use
+    any available port.
 
     When actually running tests, the default is `0`.
     But when you do `"ant brserve"` the default is `8000`,
     since a fixed port is more convenient for manual testing.
 
 {{{
--Dcaja.test.thishostname=...
+-Dtest.threads= (default: "2")
 }}}
 
-    When running a remote webdriver, the remote browser needs to
-    load resources from a local HTTP server started by the test
-    driver.  The test driver will guess a hostname that the
-    remote browser can use to contact the local server, but the
-    guess can be wrong.  Setting `caja.test.thishostname` will
-    override the guessed hostname.
+    `runtests` uses limited parallelism to finish faster.
+    Use `"-Dtest.threads=1"` to disable parallel execution.
+
+    Setting `test.threads` to more than 2 will probably not speed
+    up tests much, because most of the time is spent on browser
+    tests, which run sequentially.
 
 {{{
--Dwebdriver.{X}=...
+-Dtest.webdriver.url= (default: "")
+}}}
+
+    When this is non-null, browser tests are run on a remote
+    webdriver instead of a local webdriver.
+
+    The value should be something like `http://remotehost:4444/`
+    or `http://remotehost:4444/wd/hub/`
+
+{{{
+-Dtestonly.{X}=
+}}}
+
+    Any property that starts with `"testonly."` will be passed
+    through to the test runner, but with the `"testonly."` prefix
+    removed.  This is useful for properties that you want visible
+    to tests but not visible to `ant`.
+
+{{{
+-Dwebdriver.{X}=
 }}}
 
     Any property starting with `"webdriver."` will be passed
     through to the test runner unchanged.
+
+{{{
+-Dwebdriver.firefox.bin= (default: system-dependent search)
+}}}
+
+     Overrides the automatic search for the Firefox exectuable
+     when testing Firefox.
+
 
 = Local browser testing =
 
@@ -195,7 +218,7 @@ ant brtest
 == Chrome ==
 
 {{{
-ant brtest -Dcaja.test.browser=chrome
+ant brtest -Dtest.browser=chrome
 }}}
 
     First, you need `chromedriver`,  which is available
@@ -209,10 +232,10 @@ ant brtest -Dcaja.test.browser=chrome
 
     `chromedriver` looks for Chrome in standard system
     locations.  You can override that with
-    `"-Dcaja.test.browserPath=..."`
+    `"-Dtest.chrome.binary=..."`
 
-    On MacOS, `caja.test.browserPath` should point at the
-    `Contents/MacOS/Google_Chrome` binary inside the app bundle.
+    On MacOS, `test.chrome.binary` should point at the
+    `"Contents/MacOS/Google Chrome"` binary inside the app bundle.
 
     If you want more control over `chromedriver` settings, start
     it manually and treat it like a remote browser, described below.
@@ -252,16 +275,16 @@ java -jar selenium-server-standalone-{VERSION}.jar
 == running the tests ==
 
 {{{
-ant brtest -Dcaja.test.browser=... -Dcaja.test.remote=http://...
+ant brtest -Dtest.browser=... -Dtest.webdriver.url=http://...
 }}}
 
-    `caja.test.browser` can be `"firefox"` (default), `"chrome"`,
+    `test.browser` can be `"firefox"` (default), `"chrome"`,
     or `"ie"`.
 
-    For remote Linux and MacOS, `caja.test.remote` should be
+    For remote Linux and MacOS, `test.webdriver.url` should be
     something like `http://remote:4444/wd/hub`
 
-    For remote Windows, `caja.test.remote` should be something
+    For remote Windows, `test.webdriver.url` should be something
     like `http://remote:4444/`
 
     You can verify the remote webdriver works by fetching the URL
