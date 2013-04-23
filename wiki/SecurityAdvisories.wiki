@@ -1,4 +1,5 @@
 #summary All our security advisories (latest first).
+  * 23 Apr 2013 SecurityAdvisory20130423 Possible code execution (ES5/3 mode only), communication channel.
   * 10 Apr 2013 SecurityAdvisory20130410 Code execution vulnerability (ES5 mode only).
   * 13 Feb 2013 SecurityAdvisory20130213 Code execution vulnerabilities.
   * 22 Jan 2013 SecurityAdvisory20130122 Code execution vulnerabilities.
