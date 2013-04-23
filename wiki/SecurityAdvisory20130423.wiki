@@ -4,9 +4,9 @@
 
 Caja prior to version r5369 may be vulnerable to takeover of the host page by guest code if run in ES5/3 mode, and may allow uncontrolled communication between guests if run in ES5 mode. If you depend on Caja for security, either upgrade to version r5369 or later, or backport the security patches.
 
-==ES5 mode: [[ThrowTypeError]] was not defended==
+==ES5 mode: `[[ThrowTypeError]]` was not defended==
 
-Several browsers have bugs where the function known to the ES5 spec as [[ThrowTypeError]] is not immutable, as it is specified to be. SES did not verify that this was correctly implemented, resulting in it being possible to add properties to the function or its .prototype.
+Several browsers have bugs where the function known to the ES5 spec as `[[ThrowTypeError]]` is not immutable, as it is specified to be. SES did not verify that this was correctly implemented, resulting in it being possible to add properties to the function or its .prototype.
 
 This only affects ES5 mode. It does not make the host page vulnerable, but allows independent guests to communicate with each other.
 
