@@ -72,11 +72,34 @@ ant brserve+
     browser when done, whether it passes or fails.
 
 {{{
+-Dtest.chrome.args= (default: "")
+}}}
+
+    Semicolon-separated list of command-line args to use when
+    starting Chrome.
+
+    This applies to both local and remote Chrome testing.
+
+    A comprehensive list of args is available
+    [http://peter.sh/experiments/chromium-command-line-switches/ here],
+    but probably the only interesting one is `--js-flags`.
+
+    In particular, `--js-flags=--harmony` has the same effect as
+    the "Enable Experimental Javascript" option on the
+    `chrome://flags` page. (Note, using `--js-flags=--harmony`
+    will not change "Enable Experimental Javascript" on the flags
+    page, but the effect is the same.)
+
+{{{
 -Dtest.chrome.binary= (default: system-dependent search)
 }}}
 
     Overrides the automatic search for the Chrome executable when
     testing Chrome. This should be an absolute pathname.
+
+    This applies to both local and remote Chrome testing. For
+    remote testing, the value should be a pathname on the remote
+    host.
 
     On MacOS X, this should point at the 
     `"Contents/MacOS/Google Chrome"` executable inside the app bundle.
@@ -221,11 +244,11 @@ ant brtest
 ant brtest -Dtest.browser=chrome
 }}}
 
-    First, you need `chromedriver`,  which is available
+    First, you need `chromedriver`, which is available
     [http://code.google.com/p/chromedriver/downloads/list here].
 
-    If you're using MacOS Homebrew,
-    you can `"brew install chromedriver"`
+    Use the `chromedriver2` builds. The older chromedriver is
+    unable to talk to Chrome version 29 and later.
 
     If `chromedriver` isn't in your PATH, you can specify the
     location with `"-Dwebdriver.chrome.driver=..."`
