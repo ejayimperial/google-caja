@@ -263,12 +263,16 @@ ant brtest -Dtest.browser=chrome
     If you want more control over `chromedriver` settings, start
     it manually and treat it like a remote browser, described below.
 
+= Safari =
+
+    Doesn't work yet. Remote testing of Safari does work.
+
 = Remote browser testing =
 
     First you need to start a webdriver server on the remote
     host.
 
-== webdriver server for Firefox and Chrome ==
+== webdriver server for Chrome, Firefox, and Safari ==
 
 {{{
 java -jar selenium-server-standalone-{VERSION}.jar
@@ -301,8 +305,8 @@ java -jar selenium-server-standalone-{VERSION}.jar
 ant brtest -Dtest.browser=... -Dtest.webdriver.url=http://...
 }}}
 
-    `test.browser` can be `"firefox"` (default), `"chrome"`,
-    or `"ie"`.
+    `test.browser` can be `"chrome"`, `"firefox"` (default),
+    `"ie"`, or `"safari"`.
 
     For remote Linux and MacOS, `test.webdriver.url` should be
     something like `http://remote:4444/wd/hub`
