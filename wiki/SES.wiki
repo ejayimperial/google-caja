@@ -6,13 +6,13 @@ _All mentions of "ES5" below actually refer to !EcmaScript 5.1_
 
 = Introduction =
 
-SES is mostly defined as a fail-stop subset of ES5 that should compatibly run all ES5 code that follows recognized ES5 best practices. The SES restrictions support the writing of defensively consistent abstractions -- object abstractions that can defend their integrity while being exposed to untrusted but confined objects.
+SES is mostly defined as a fail-stop subset of ES5. SES should compatibly run all ES5 code that follows recognized ES5 best practices. The SES restrictions support the writing of defensively consistent abstractions -- object abstractions that can defend their integrity while being exposed to untrusted but confined objects.
 
 This page is for hard core developers, to document precisely the differences between the various forms of SES, and how these differ from ES5. Introductory and tutorial material will appear elsewhere. _*where?*_
 
 = ES6 extras: `WeakMaps` =
 
-There is one crucial way in which SES is more than a subset of ES5 though still a subset of ES6 -- the inclusion of the [http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps WeakMap abstraction] proposed for !EcmaScript 6. Over time, as more of ES6 settles down and becomes available in !JavaScript implementations, we expect to make more of these features available within SES as well. Note that `WeakMap` is always available in SES, whether or not it is available yet on the underlying !JavaScript platform. (When it does not derive from platform provided `WeakMap`s, the [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/WeakMap.js emulated WeakMaps] are necessarily leaky, but this is technically a quality of implementation issue rather than a correctness issue.)
+There is one crucial way in which SES is more than a subset of ES5 though still a subset of ES6 -- the inclusion of the [http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps WeakMap abstraction] proposed for !EcmaScript 6. Over time, as more of ES6 settles down and becomes available in !JavaScript implementations, we expect to make more of these features available within SES as well. Note that `WeakMap` is always available in SES, whether or not it is available yet on the underlying !JavaScript platform. (When it does not derive from platform provided `WeakMap`s, the [http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/ses/WeakMap.js emulated WeakMaps] are necessarily leaky, but this is technically a quality-of-implementation issue rather than a correctness issue.)
 
 = Idealized SES vs ES5 vs ES5 best practices =
 
@@ -208,7 +208,7 @@ To write `typeof` tests that operates the same way under ES5, SES, and Target-SE
 
 == `this`-binding of Global Function Calls ==
 
-In ES3, ES5-non-strict, when a global function is called as a function, its `this`-binding is the global object. In ES5-strict and in Source-SES, its `this`-binding is `undefined`. Unfortunately, the Target-SES behavior is more like the ES3 and ES5-non-strict behavior, but the global in question is the imports object (or virtual global) for that Target-SES evaluation.
+In ES3, ES5-non-strict, when a global function is called as a function, its `this`-binding is the global object. In ES5-strict and in Source-SES, its `this`-binding is `undefined`. Unfortunately, the Target-SES behavior is more like the ES3 and ES5-non-strict behavior, but the global in question is the scope object for that Target-SES evaluation.
 
 The above transformation which turns global functions into function expressions also addresses this difference in semantics.
 
