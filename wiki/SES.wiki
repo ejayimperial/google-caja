@@ -210,8 +210,6 @@ To write `typeof` tests that operates the same way under ES5, SES, and Target-SE
 
 In ES3, ES5-non-strict, when a global function is called as a function, its `this`-binding is the global object. In ES5-strict and in Source-SES, its `this`-binding is `undefined`. Unfortunately, the Target-SES behavior is more like the ES3 and ES5-non-strict behavior, but the global in question is the scope object for that Target-SES evaluation.
 
-The above transformation which turns global functions into function expressions also addresses this difference in semantics.
-
 == Safety of Thrown Values ==
 
 
