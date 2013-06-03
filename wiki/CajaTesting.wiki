@@ -263,9 +263,13 @@ ant brtest -Dtest.browser=chrome
     If you want more control over `chromedriver` settings, start
     it manually and treat it like a remote browser, described below.
 
-= Safari =
+== Safari ==
 
-    Doesn't work yet. Remote testing of Safari does work.
+    Doesn't work yet. Remote testing of Safari does work, so just treat
+    local Safari as a remote browser on localhost.
+
+    Note, browser-expectations has a test that will fail if Safari blocks
+    popups. You need to manually disable the popup blocker for that to pass.
 
 = Remote browser testing =
 
