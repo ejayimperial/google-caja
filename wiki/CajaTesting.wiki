@@ -18,7 +18,7 @@ ant runtests
     for after all tests are run, when generating the test
     summary.
 
-    The test summary is at `ant-reports/tests/index.html`
+    The test summary is at `ant-reports/*/report/index.html`
 
 {{{
 ant nobrtest
@@ -70,6 +70,20 @@ ant brserve+
     leave the browser open so that it can be examined later.
     When this flag is truthy, the test runner will always close the
     browser when done, whether it passes or fails.
+
+{{{
+-Dtest.capture.passes= (default: "no")
+}}}
+
+    When browser testing captures screenshots and logs, it normally captures just failed tests.
+    If this flag is truthy, passed tests will also be captured.
+
+{{{
+-Dtest.capture.to= {default: "", but set by build.xml to a subdir of ant-reports)
+}}}
+
+    When non-empty, this should be the path to a directory,
+    and browser testing will save screenshots and logs to that directory.
 
 {{{
 -Dtest.chrome.args= (default: "")
@@ -150,8 +164,8 @@ ant brserve+
 
     Only run Java test methods that match this glob pattern.
 
-    Note, we don't really have a way to skip running a test
-    method. Instead, non-matching methods will be recorded as
+    Note, we don't always have a way to skip running a test
+    method. Instead, non-matching methods may be recorded as
     passing without being run, which makes it a little tricky to
     tell the difference between tests that passed because they
     ran vs tests that passed because they were skipped.
