@@ -1,4 +1,0 @@
-{
-  "inherits": ["css21-defs.json", "css21-whitelist.json"],
-  "inherits": ["css-extensions-defs.json", "css-extensions-whitelist.json"]
-}
