@@ -64,6 +64,8 @@ $ myvn change
 $ myvn submit
 }}}
   This will also cause your change to be tested before submission. You'll need a recent Firefox to run the tests.
+
+  Submitting a change places it in the public repository regardless of whether the Private flag is set. Security patches should *not* be submitted until they are to be publicly disclosed.
   # Show the change description
 {{{
 $ myvn describe
