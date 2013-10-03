@@ -1,0 +1,151 @@
+<!--
+ - Copyright (C) 2011 Google Inc.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -      http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+
+<div class="testcontainer waiting" id="testExternalScripts"
+  ><base href="/ant-testlib/com/google/caja/plugin/"
+  ><style
+  >#hello { display: block; }</style
+  ><div id="hello" class="hello"
+  ></div
+  ><script
+  >window.executionOrder = "1";
+   window.onload = function () { window.executionOrder += "8"; };</script
+  ><script defer="defer">window.executionOrder += "7";</script
+  ><script src="test-external-doc-update.js"
+  ></script
+  ><script src="test-external-communicate-1.js"
+  ></script
+  ><script
+  >this.styleOrder = 
+      window.getComputedStyle(
+        document.getElementById("hello"), null).display;</script
+  ><link href="test-external-css.css" rel="stylesheet"
+  ><script
+  >this.styleOrder += ' then ' +
+      window.getComputedStyle(
+        document.getElementById("hello"), null).display;</script
+  ><script
+  >/* inline scripts */this.executionOrder = this.executionOrder + '4';</script
+  ><script src="test-external-communicate-2.js"
+  ></script
+  ><script src="test-external-doc-write.js"
+  ></script
+  ><script
+  >var asyncScriptsExpected = 2;
+   var asyncScriptsSeen = 0;
+   window.externalScriptCallback = function() {
+     asyncScriptsSeen++;
+     if (asyncScriptsSeen > asyncScriptsExpected) {
+       fail('Unexpected async script loaded');
+     }
+   }
+   var mybadscript = document.createElement('script');
+   mybadscript.src = "test-external-dynamic-fail.js";
+   document.body.appendChild(mybadscript);
+
+   // Note that the effect of this includes exercising relative URL resolution.
+   var myscript = document.createElement('script');
+   myscript.src = "test-external-dynamic.js";
+   document.body.appendChild(myscript);</script
+  >3</div>
+
+<br>
+<script type="text/javascript">
+  jsunitRegisterIf(inES5Mode,
+                   'testExternalScripts',
+                   function testExternalScripts () {
+    assertEquals("Execution order", "12345678", executionOrder);
+    assertEquals("Style loading", "block then inline", styleOrder);
+    assertAsynchronousRequirement(
+        'external scripts',
+        function() { return asyncScriptsSeen === asyncScriptsExpected; },
+        function() {
+      var testContainer = document.getElementById("testExternalScripts");
+      assertContains("Render result", "123", testContainer.innerText);
+    });
+    pass('testExternalScripts');
+  });
+</script>
+
+<script type="text/javascript">
+  var onloadScript = 0;
+
+  // TODO(kpreid): This is potentially useful in other tests to add rigor --
+  // see if so and move it to a more useful location.
+  function watchEvents(target, name, callback) {
+    callback = jsunitCallback(callback);
+    var results = [];
+    target.addEventListener(name, function(event) {
+      results.push('capture');
+      callback();
+    }, false);
+    target.addEventListener(name, function(event) {
+      results.push('bubble');
+      callback();
+    }, true);
+    target['on' + name] = function(event) {
+      results.push('handler');
+      callback();
+      return true;
+    };
+    return results;
+  }
+
+  function scriptEventTest(goodEvent, badEvent, url, willRun) {
+    var s = document.createElement('script');
+    // Note: watchEvents does not check that attribute-based handlers are called
+    // (since they are mutually exclusive with ones assigned as functions);
+    // furthermore, they are known to not work; see domicile.fireVirtualEvent.
+    var watchG = watchEvents(s, goodEvent, check);
+    var watchB = watchEvents(s, badEvent, check);
+    function check() {
+      if (willRun) {
+        // ordering constraint
+        assertFalse(watchG.length > 0 && !onloadScript);
+      }
+    }
+
+    s.src = url;
+    assertEquals('ran before add', 0, onloadScript);
+    assertObjectEquals(goodEvent + ' before add', [], watchG);
+    assertObjectEquals(badEvent + ' before add', [], watchB);
+    document.body.appendChild(s);
+
+    assertAsynchronousRequirement('fired', function() {
+      //console.log(watchG);
+      return watchG.indexOf('handler') !== -1;
+    }, function() {
+      if (willRun) { assertEquals('ran after', 1, onloadScript); }
+      assertObjectEquals(goodEvent + ' after', ['capture', 'bubble', 'handler'],
+          watchG);
+      assertObjectEquals(badEvent + ' after', [], watchB);
+    });
+  }
+
+  jsunitRegisterIf(inES5Mode,
+                   'testScriptOnload',
+                   function testScriptOnload() {
+    scriptEventTest('load', 'error', 'test-external-script-onload.js',
+        true);
+    pass('testScriptOnload');
+  });
+  jsunitRegisterIf(inES5Mode,
+                   'testScriptOnerror',
+                   function testScriptOnerror() {
+    scriptEventTest('error', 'load', 'non-existent-script.js', false);
+    pass('testScriptOnerror');
+  });
+</script>

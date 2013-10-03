@@ -1,0 +1,39 @@
+<base href="/ant-testlib/com/google/caja/plugin/">
+<link href="test-external-css.css" rel="stylesheet">
+<style type="text/css">
+  /* Test id-suffix association of CSS with HTML */
+  #foo { font-variant: small-caps; }
+</style>
+
+<p>static html</p>
+<p id="foo"></p>
+<p id="hello"></p>
+<script src="test-external-script.js"></script>
+<script src="non-existent-script.js"></script>
+<script>
+  throw "error"; // should not cause the rest of the execution to fail
+</script>
+<script type="text/javascript">
+
+  // This file is used to test different ways of invoking caja, which might
+  // produce different implementations, but should still have the same
+  // result.  In particular, cajoleContent methods will send an idClass,
+  // which will result in a cajoled module with static css.  Whereas
+  // cajoleUrl methods will not send idClass, and the cajoled module will
+  // emit css dynamically.
+
+  // Strings are broken so that if this script appears as text it doesn't
+  // pass tests inappropriately.
+
+  var p = document.createElement('p');
+  p.innerHTML = 'dynamic';
+  document.body.appendChild(p);
+
+  // test for bug 1551: having a <style> may screw up documentElement
+  if (document.documentElement.contains(p)) {
+    p.innerHTML += ' html';
+  }
+
+  // Test id-suffix association of JS with HTML
+  document.getElementById('foo').innerHTML = 'edited' + ' html';
+</script>

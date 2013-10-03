@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!--
+  See the file LICENSE.txt in this directory for license information for the
+  Caja Corkboard demo.
+
+  @author kpreid@switchb.org
+-->
+<html>
+<head>
+  <title>Caja Corkboard Admin</title>
+  <link rel="stylesheet" href="../r/style.css">
+  <meta name="viewport" content="width=device-width" />
+</head>
+<body onload="loadScripts('{{ cajaServer|escapejs|escape }}')">
+
+<h1>Caja Corkboard Demo Admin</h1>
+
+<form action="set-recaptcha-keys" method="post">
+  <div><label>Public: <input name="public" value="{{ recaptcha_public_key|urlencode|escape }}"></label></div>
+  <div><label>Private: <input name="private" value="******"></label></div>
+  <input type="submit" value="Set reCaptcha Keys">
+</form>
+
+<form action="flush" method="post">
+  <input type="submit" value="Flush Cache (including cajoled content)">
+</form>
+
+<p><a href="/">Corkboard</a></p>
+
+</body></html>

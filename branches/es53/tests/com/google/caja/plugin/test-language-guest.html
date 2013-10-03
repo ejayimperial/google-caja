@@ -1,0 +1,953 @@
+<!--
+ - Copyright (C) 2010 Google Inc.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -      http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+
+<p id="testPrototypeDefense" class="testcontainer">
+  testPrototypeDefense -- taming frame proto methods are frozen
+</p>
+<script type="text/javascript">
+  jsunitRegisterIf(
+      !((cajaVM.es5ProblemReports || {}).FIREFOX_15_FREEZE_PROBLEM || {})
+          .afterFailure,
+      'testPrototypeDefense',
+      function testPrototypeDefense() {
+
+    assertTrue('Object.prototype method frozen',
+        Object.isFrozen(document.propertyIsEnumerable));
+
+    var tamingFrameArray = document.attributes;
+    // If this assertion fails, we're not necessarily broken, but this test
+    // needs to find a different specimen object.
+    assertTrue('array thing is array', Array.isArray(tamingFrameArray));
+
+    assertTrue('Array.prototype method frozen',
+        Object.isFrozen(tamingFrameArray.forEach));
+
+    pass('testPrototypeDefense');
+});
+</script>
+
+<p id="testGlobalAssignmentReturnValue" class="testcontainer"
+>test-global-assignment-return-value</p>
+<script type="text/javascript">
+  jsunitRegister('testGlobalAssignmentReturnValue',
+                 function testGlobalAssignmentReturnValue() {
+    window['x'] = undefined;
+    assertEquals(x=2, 2);
+    pass('testGlobalAssignmentReturnValue');
+});
+</script>
+
+<p id="testBrowserApply" class="testcontainer">test-browser-apply</p>
+<script type="text/javascript">
+  // http://code.google.com/p/google-caja/issues/detail?id=1077
+  jsunitRegister('testBrowserApply',
+                 function testBrowserApply() {
+    var count = 0;
+
+    var inc = function() { if (arguments.length === 0) count += 1; };
+
+    inc.apply({});
+    inc.apply({}, []);
+    assertEquals('inc()', 2, count);
+
+    inc.apply({}, [1]);
+    assertEquals('inc(1)', 2, count);
+
+    // ES5 says these should work, but they throw an error on IE[678] in
+    // cajita, but not in valija.  In cajita, these become a direct call to
+    // native apply, and native apply throws the error.  This could be fixed
+    // by wrapping apply, but that adds overhead without much benefit.
+    //inc.apply({}, null);
+    //inc.apply({}, undefined);
+
+    // ES5 says these should throw TypeError.  They usually do in cajita, and
+    // usually don't in valija.  Enforcing the TypeError adds overhead
+    // without much benefit.
+    //expectFailure(function() { inc.apply({}, 0); }, 'apply 0');
+    //expectFailure(function() { inc.apply({}, 1); }, 'apply 1');
+    //expectFailure(function() { inc.apply({}, false); }, 'apply false');
+    //expectFailure(function() { inc.apply({}, true); }, 'apply true');
+    //expectFailure(function() { inc.apply({}, ''); }, 'apply ""');
+    //expectFailure(function() { inc.apply({}, 'x'); }, 'apply "x"');
+    //expectFailure(function() { inc.apply({}, {length:0}); }, 'fake array');
+
+    var add = function(x) { if (arguments.length === 1) count += x; };
+
+    add.apply({}, [3]);
+    assertEquals('add(3)', 5, count);
+
+    add.apply({}, []);
+    add.apply({}, [4, 5]);
+    assertEquals('add(4, 5)', 5, count);
+
+    pass('testBrowserApply');
+  });
+</script>
+
+<!--
+    TODO(ihab.awad): Schlepped from old domita tests;
+    not sure if this is valid any more.
+-->
+<p id="textXo4aApply" class="testcontainer">test-xo4a-apply</p>
+<script type="text/javascript">
+  jsunitRegister('textXo4aApply',
+                 function testXo4aApply() {
+    var type = Object.prototype.toString.apply('');
+    assertEquals('[object String]', type);
+    pass('textXo4aApply');
+  });
+</script>
+
+<p id="testNegativeIndices" class="testcontainer">Test negative indices</p>
+<script type="text/javascript">
+  jsunitRegister('testNegativeIndices',
+                 function testNegativeIndices() {
+    // Under Firefox, there are many undocumented properties
+    // with negative indices; see
+    // http://www.thespanner.co.uk/2009/07/14/hidden-firefox-properties-revisited/
+    // http://webreflection.blogspot.com/2009/06/javascript-arguments-weridness.html
+    var i;
+    function f(a, b, c) {}
+    (function() {
+      for (i = -1; i > -10; --i) {
+        assertEquals(f[i], void 0);
+        assertEquals(void 0, (new RegExp('.'))[i]);
+        assertEquals(void 0, 'abc'[i]);
+        assertEquals(void 0, (new String('abc'))[i]);
+        assertEquals(void 0, RegExp[i]);
+        assertEquals(void 0, arguments[i]);
+      }
+    })();
+    pass('testNegativeIndices');
+  });
+</script>
+
+<p id="testNegativeIndicesWorkaround" class="testcontainer">
+  Test negative indices workaround for Firefox
+</p>
+<script type="text/javascript">
+  jsunitRegister('testNegativeIndicesWorkaround',
+                 function testNegativeIndicesWorkaround() {
+    // Test potential weakness of the ES53 workaround for the negative index bug
+    var i;
+    function f(a, b, c) {}
+    (function() {
+      for (i = -1; i > -10; --i) {
+        assertFailsSafe(
+            function() { delete f[i]; },
+            function() { assertEquals(f[i], void 0); });
+        assertFailsSafe(
+            function() { delete (new RegExp('.'))[i]; },
+            function() { assertEquals(void 0, (new RegExp('.'))[i]); });
+        assertFailsSafe(
+            function() { delete 'abc'[i]; },
+            function() { assertEquals(void 0, 'abc'[i]); });
+        assertFailsSafe(
+            function() { delete RegExp[i]; },
+            function() { assertEquals(void 0, RegExp[i]); });
+        assertFailsSafe(
+            function() { delete arguments[i]; },
+            function() { assertEquals(void 0, arguments[i]); });
+      }
+    })();
+    pass('testNegativeIndicesWorkaround');
+  });
+</script>
+
+<p id="testMakeArrayLikeLength" class="testcontainer">
+  testMakeArrayLikeLength -- don't <em>blow up</em> on bad numbers
+</p>
+<script type="text/javascript">
+  function getPropertyNames(o) {
+    if (o === null) {
+      return [];
+    } else {
+      var names = getPropertyNames(Object.getPrototypeOf(o));
+      names.push.apply(names, Object.getOwnPropertyNames(o));
+      return names;
+    }
+  }
+
+  jsunitRegister('testMakeArrayLikeLength',
+                 function testMakeArrayLikeLength() {
+    // NOTE: This test may be considered fragile, because the bug it tested for
+    // only occurred on the *first* invocation of makeArrayLike.
+
+    var ArrayLike = cajaVM.makeArrayLike(-1);
+    var instance = ArrayLike(Object.create(ArrayLike.prototype),
+        function getLength() { return 0; },
+        function getItem(i) { return i; });
+
+    // ArrayLike implementations do not necessarily respond "properly" to the
+    // 'in' operator, so instead we seek to confirm that the instance does _not_
+    // have an excess of actual reified properties (that, or it is a proxy
+    // implementation which doesn't report even the properties it does have).
+    var props = getPropertyNames(instance);
+
+    // Make sure -1 isn't interpreted as 2^31 - 1. The actual consequence of
+    // the bug will likely be the browser bogging down and the test automation
+    // timing out while it attempts to create 2^31 - 1 properties; this assert
+    // is only intended to be correct-in-principle or correct in the event that
+    // the tests are running on a machine with lots of memory and CPU.
+    assertFalse('-1 blew up', props.indexOf('100000') >= 0);
+
+    // Make sure we aren't passing bogusly because some other code made normal
+    // use of makeArrayLike. (Yes, testing for [1], not [0], because the
+    // power-of-2 implementation always rounds up by at least 1.)
+    assertFalse('someone got here first with a length > 0',
+        props.indexOf('1') >= 0);
+
+    pass('testMakeArrayLikeLength');
+  });
+</script>
+
+<p id="testRegExec" class="testcontainer">
+  Test regexp.exec return value
+</p>
+<script type="text/javascript">
+  jsunitRegister('testRegExec', function testRegExec() {
+    var re = /-(.)(.)-/;
+    var m = re.exec('abcdef');
+    assertEquals(null, m);
+    m = re.exec('ab-cd-ef');
+    assertEquals(2, m.index);
+    assertEquals('ab-cd-ef', m.input);
+    assertEquals(3, m.length);
+    assertEquals('-cd-', m[0]);
+    assertEquals('c', m[1]);
+    assertEquals('d', m[2]);
+    m = re.e;
+    pass('testRegExec');
+  });
+</script>
+
+<p id="testParseInt" class="testcontainer">
+  Test parseInt
+</p>
+<script type="text/javascript">
+  jsunitRegister('testParseInt',
+                 function testParseInt() {
+    assertEquals(0, parseInt('0'));
+    assertEquals(1, parseInt('1'));
+    assertEquals(-1, parseInt('-1'));
+    assertEquals(10, parseInt('10'));
+    assertEquals(1, parseInt('0x01'));
+    assertEquals(-1, parseInt('-0x01'));
+    assertEquals(16, parseInt('0x10'));
+    assertEquals(-16, parseInt('-0x10'));
+    assertEquals(0, parseInt('00'));
+    assertEquals(1, parseInt('01'));
+    assertEquals(-1, parseInt('-01'));
+    assertEquals(10, parseInt('010'));
+
+    assertEquals(0, parseInt('0'));
+    assertEquals(1, parseInt('1', 8));
+    assertEquals(-1, parseInt('-1', 8));
+    assertEquals(8, parseInt('10', 8));
+    assertEquals(0, parseInt('0x01', 8));
+    assertEquals(0, parseInt('-0x01', 8));
+    assertEquals(0, parseInt('0x10', 8));
+    assertEquals(0, parseInt('-0x10', 8));
+    assertEquals(0, parseInt('00', 8));
+    assertEquals(1, parseInt('01', 8));
+    assertEquals(-1, parseInt('-01', 8));
+    assertEquals(8, parseInt('010', 8));
+
+    assertEquals(0, parseInt('0', 16));
+    assertEquals(1, parseInt('1', 16));
+    assertEquals(-1, parseInt('-1', 16));
+    assertEquals(16, parseInt('10', 16));
+    assertEquals(1, parseInt('0x01', 16));
+    assertEquals(-1, parseInt('-0x01', 16));
+    assertEquals(16, parseInt('0x10', 16));
+    assertEquals(-16, parseInt('-0x10', 16));
+    assertEquals(0, parseInt('00', 16));
+    assertEquals(1, parseInt('01', 16));
+    assertEquals(-1, parseInt('-01', 16));
+    assertEquals(16, parseInt('010', 16));
+
+    pass('testParseInt');
+  });
+</script>
+
+<p id="testIs" class="testcontainer">
+  Test is/identical/SameValue
+</p>
+<script type="text/javascript">
+  jsunitRegister('testIs', function testIs() {
+    function checkCall(name, fn, result, a, b) {
+      assertEquals(name + ': ' + a + ' ' + (result ? '=' : '!') + '== ' + b,
+          result, fn(a, b));
+    }
+    function check(name, fn) {
+      var o = {};
+      assertEquals(name, 'function', typeof fn);
+      checkCall(name, fn, true, o, o);
+      checkCall(name, fn, false, {}, {});
+      checkCall(name, fn, true, NaN, NaN);
+      checkCall(name, fn, true, NaN, 0/0);
+      checkCall(name, fn, true, Infinity, Infinity);
+      checkCall(name, fn, false, Infinity, -Infinity);
+      checkCall(name, fn, false, 0, -0);
+      checkCall(name, fn, false, NaN, { valueOf: function() { return NaN; } });
+    }
+    check('cajaVM.is', cajaVM.is);
+    if ('is' in Object) {  // SES only (as ES6 anticipation)
+      check('Object.is', Object.is);
+    }
+    pass('testIs');
+  });
+</script>
+
+<script>
+  var c = 0;
+</script>
+<p id="testGlobalReference" class="clickme testcontainer">
+  <span onclick="assertEquals(1, ++c); pass('testGlobalReference');">Test
+    global reference (clickme)</span>
+</p>
+<script type="text/javascript">
+  jsunitRegister('testGlobalReference',
+                 function testGlobalReference() { });
+</script>
+
+<div class="testcontainer" id="testTopLevel"
+  ><script
+  >var topVar1 = '1', topVar2 = '2';
+   var topVar3;
+   topVar3 = '3';
+   function testTopLevel_foo() {
+     var notTopVar1 = 'fail', notTopVar2 = 'fail';
+     var notTopVar3;
+     notTopVar3 = 'fail';
+   }
+   testTopLevel_foo();
+  </script>
+</div>
+<script type="text/javascript">
+  jsunitRegister('testTopLevel',
+                 function testTopLevel() {
+    assertEquals('Top level var', '1', topVar1);
+    assertEquals('Top level var', '2', topVar2);
+    assertEquals('Top level var', '3', topVar3);
+
+    assertEquals('Top level var', '1', window.topVar1);
+    assertEquals('Top level var', '2', window.topVar2);
+    assertEquals('Top level var', '3', window.topVar3);
+
+    assertEquals('Non-top level var', 'undefined', typeof window.notTopVar1);
+    assertEquals('Non-top level var', 'undefined', typeof window.notTopVar2);
+    // check that we didn't accidentally rewrite inside foo()
+    assertNotEquals('Non-top level var', 'fail', window.notTopVar3);
+
+    pass('testTopLevel');
+  });
+</script>
+
+<div class="testcontainer" id="testTypeOf"></div>
+<script>
+  jsunitRegister('testTypeOf',
+                 function testTypeOf() {
+    try {
+      assertEquals('undefined', typeof anDeclaredVariable);
+    } catch (e) {
+      fail();
+    }
+
+    pass('testTypeOf');
+  });
+</script>
+
+<!-- Tests that functions declared at the top-level of one script -->
+<!-- block are visible to code in a different code in a different -->
+<!-- script block. -->
+<div class="testcontainer" id="testTopLevelFuncs"></div>
+<script>
+  /**
+   * We want to test these interim values but these have to be at the
+   * top-level so we accumulate the results for latter testing by the
+   * jsunit test in the following block.
+   */
+  var topFuncHoisted = 'function' === typeof topLevelFunc;
+  var nonTopFuncHoisted = 'function' === typeof nonTopFunc1;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc2;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc3;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof funcExpr;
+
+  function topLevelFunc() {
+    function nonTopFunc1() {}  
+  }
+  (function funcExpr1() {
+    function nonTopFunc2() {}
+  })();
+
+  topFuncHoisted = topFuncHoisted && 'function' === typeof topLevelFunc;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc1;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc2;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc3;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof funcExpr;
+
+  (function () {
+    function nonTopFunc3() {}
+  })();
+</script>
+<script>
+  topFuncHoisted = topFuncHoisted && 'function' === typeof topLevelFunc;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc1;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc2;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof nonTopFunc3;
+  nonTopFuncHoisted = nonTopFuncHoisted || 'function' === typeof funcExpr;
+</script>
+<script>
+  jsunitRegister('testTopLevelFuncs',
+                 function testTopLevelFuncs() {
+    assertTrue('Top level func was not hoisted', topFuncHoisted);
+    assertFalse('Non-top level func got hoisted', nonTopFuncHoisted);
+
+    pass('testTopLevelFuncs');
+  });
+</script>
+
+<div id="testFunctionPrototype" class="testcontainer">
+  testFunctionPrototype
+</div>
+<script type="text/javascript">
+  jsunitRegisterIf(inES5Mode, 'testFunctionPrototype',
+      function testFunctionPrototype() {
+    function f() {}
+    // Test that Function.prototype is made tamper-proof, not frozen.
+    // If frozen, toString would be a non-writable data property and thus we'd
+    // be unable to change it by assignment on an object deriving from it.
+    f.toString = function() { return 'foo'; };
+    assertEquals('foo', '' + f);
+    pass('testFunctionPrototype');
+  });
+</script>
+
+<!-- Upstream escodegen errors causes errors rendering -->
+<!-- ObjectExpressions if they have object literals with keys and -->
+<!-- values.  This in turn causes top-level var mitigation to fail. -->
+<div id="testIssue1622" class="testcontainer">
+  testIssue1622
+</div>
+<script>
+  var issue1622_xxx = { foo: 1 };
+  function issue1622_myTopFunc() { return issue1622_xxx.foo; }
+</script>
+<script type="text/javascript">
+  jsunitRegister('testIssue1622',
+    function testIssue1622() {
+      try {
+        assertEquals(1, issue1622_myTopFunc());
+        pass('testIssue1622');
+      } catch (e) {
+        fail();
+      }
+  });
+</script>
+
+<div id="testMalformedScript" class="testcontainer">
+  testMalformedScript
+</div>
+<script type="text/javascript">
+  // Function is only supported in ES5 mode.
+  jsunitRegisterIf(inES5Mode, 'testMalformedScript',
+    function testMalformedScript() {
+      try {
+        Function("})");
+        fail();
+      } catch (e) {
+        pass('testMalformedScript');
+      }
+  });
+</script>
+
+<!-- Tests that vars in catch blocks do get hoisted -->
+<div class="testcontainer" id="testTopLevelVarsInCatch">
+testTopLevelVarsInCatch
+</div>
+<script>
+  try {
+    throw "some err";
+  } catch (e) {
+    var topCatchVar = 1;
+  }
+</script>
+<script>
+  jsunitRegister('testTopLevelVarsInCatch',
+                 function testTopLevelVarsInCatch() {
+    assertEquals(topCatchVar, 1);
+
+    pass('testTopLevelVarsInCatch');
+  });
+</script>
+
+<!-- Test the correctness of typeof rewriting -->
+<div id="testIssue1629" class="testcontainer">
+  testIssue1629
+</div>
+<script type="text/javascript">
+  function A() {}
+  A.prototype.x = 1;
+  A.prototype.xType = function() {
+    return typeof this.x;
+  }
+  var a = new A;
+</script>
+<script type="text/javascript">
+  jsunitRegister('testIssue1629', function testIssue1629() {
+    assertEquals('number', a.xType());
+    pass('testIssue1629');
+  });
+</script>
+
+<div id="testTypeOf1" class="testcontainer">
+  testTypeOf1
+</div>
+<script type="text/javascript">
+  jsunitRegisterIf(inES5Mode, 'testTypeOf1',
+    function testTypeOf1() {
+      var result = (function() { return typeof this; })();
+      assertEquals('undefined', result);
+      pass('testTypeOf1');
+  });
+</script>
+
+<div id="testTypeOf2" class="testcontainer">
+  testTypeOf2
+</div>
+<script type="text/javascript">
+  var isWindow = typeof this;
+</script>
+<script type="text/javascript">
+  jsunitRegisterIf(inES5Mode, 'testTypeOf2',
+    function testTypeOf2() {
+      assertEquals('object', isWindow);
+      assertEquals('undefined', typeof this);
+      pass('testTypeOf2');
+  });
+</script>
+
+<div id="testTypeOf3" class="testcontainer">
+  testTypeOf3
+</div>
+<script type="text/javascript">
+  jsunitRegister('testTypeOf3',
+    function testTypeOf3() {
+      var xxx = { yyy : 1 };
+      assertEquals('number', (function() { return typeof xxx.yyy; })());
+      pass('testTypeOf3');
+  });
+</script>
+
+<!-- Ensure typeof arg refers to the inner-most var not the global -->
+<div id="testTypeOf4" class="testcontainer">
+  testTypeOf4
+</div>
+<script type="text/javascript">
+  var xxx = 1;
+  jsunitRegister('testTypeOf4',
+    function testTypeOf4() {
+      var xxx = 'string';
+      assertEquals('string', (function() { return typeof xxx; })());
+      pass('testTypeOf4');
+  });
+</script>
+
+<!-- Ensure typeof expression that throws doesn't get suppressed -->
+<div id="testTypeOf5" class="testcontainer">
+  testTypeOf5
+</div>
+<script type="text/javascript">
+  function testType5_foo() { throw 'some error'; }
+  jsunitRegister('testTypeOf5',
+    function testTypeOf5() {
+      try {
+        typeof testType5_foo();
+        fail();
+      } catch (e) {
+        assertEquals('some error', e);
+        pass('testTypeOf5');
+      }
+  });
+</script>
+
+<div id="testTypeOf6" class="testcontainer">
+  testTypeOf6
+</div>
+<script type="text/javascript">
+  jsunitRegister('testTypeOf6', function testTypeOf6() {
+      assertEquals('object', typeof {});
+      pass('testTypeOf6');
+  });
+</script>
+
+<p id="testWindowObject" class="testcontainer">Test Window Object</p>
+<script type="text/javascript">
+  var testWindowObjectVariable;
+
+  jsunitRegister('testWindowObject',
+                   function testWindowObject() {
+    // Check to see that globals are properties of window
+    testWindowObjectVariable = 3;
+    assertEquals(testWindowObjectVariable, window.testWindowObjectVariable);
+    assertEquals(testWindowObjectVariable, 3);
+    pass('testWindowObject');
+  });
+</script>
+
+<div class="testcontainer" id="testVariablePropertyConflict">
+  testVariablePropertyConflict
+</div>
+<script>
+  function testVariablePropertyConflict_foo() {
+    return '<toString overridden by test>';
+  }
+  var toString = testVariablePropertyConflict_foo;
+</script>
+<script>
+  jsunitRegister('testVariablePropertyConflict',
+                 function testVariablePropertyConflict() {
+    // Existing code (Angular) uses toString as a variable name
+    assertEquals(testVariablePropertyConflict_foo, toString);
+    pass('testVariablePropertyConflict');
+  });
+</script>
+
+<div class="testcontainer" id="testVarInForLoops">
+  testVarInForLoops
+</div>
+<script>
+  for (var varInForLoops_i = 0; varInForLoops_i < 5; varInForLoops_i++) {}
+</script>
+<script>
+  jsunitRegister('testVarInForLoops',
+                 function testVarInForLoops() {
+    assertEquals(5, varInForLoops_i);
+    pass('testVarInForLoops');
+  });
+</script>
+
+<div class="testcontainer" id="testVarsInForLoops">
+  testVarsInForLoops
+</div>
+<script>
+  for (var varsInForLoops_1 = 0, varsInForLoops_2 = 0;
+      varsInForLoops_1 + varsInForLoops_2 < 5;
+      varsInForLoops_1++, varsInForLoops_2++) {}
+</script>
+<script>
+  jsunitRegister('testVarsInForLoops',
+                 function testVarsInForLoops() {
+    assertEquals(3, varsInForLoops_1);
+    assertEquals(3, varsInForLoops_2);
+    pass('testVarsInForLoops');
+  });
+</script>
+
+<!-- Also see issue 1634
+     http://code.google.com/p/google-caja/issues/detail?id=1634 
+     This test just ensures that for..in loops run correctly, however,
+     does not test that var declarations in for..in loops become
+     top-level variables.
+
+     This is because we choose not to implement top-level var
+     mitigation (rather than because we have choosen not to test for
+     this case).
+-->
+<div class="testcontainer" id="testVarsInForInLoops">
+  testVarsInForInLoops
+</div>
+<script>
+  var varsInForInLoop_i = 0;
+  for (var varsInForInLoop in [1,2,3]) {
+    varsInForInLoop_i++;
+  }
+</script>
+<script>
+  jsunitRegister('testVarsInForInLoops',
+                 function testVarsInForInLoops() {
+    assertEquals(3, varsInForInLoop_i);
+    pass('testVarsInForInLoops');
+  });
+</script>
+
+<div class="testcontainer" id="testReferenceError">
+  testReferenceError
+</div>
+<script>
+  jsunitRegister('testReferenceError',
+                 function testReferenceError() {
+    if (inES5Mode) {
+      assertEquals(void 0, testReferenceError_thisIsUndefined);
+    } else {
+      expectFailure(function() {
+        testReferenceError_thisIsUndefined;
+      }, null, function(e) {
+        return e instanceof ReferenceError && e.message ===
+          '"testReferenceError_thisIsUndefined" is not defined in this scope.';
+      });
+    }
+    pass('testReferenceError');
+  });
+</script>
+
+<div class="testcontainer" id="testVarInitializer">
+  testVarInitializer
+</div>
+<script>
+  var varInitializer1 = varInitializer1 || 33, varInitializer2;
+  for (var varInitializer3 = varInitializer3 || 66;
+    varInitializer3 <  69; varInitializer3++) {
+  }
+  varInitializer2 = 99;
+</script>
+<script>
+  jsunitRegister('testVarInitializer',
+                 function testVarInitializer() {
+    assertEquals(33, varInitializer1);
+    assertEquals(99, varInitializer2);
+    assertEquals(69, varInitializer3);
+    pass('testVarInitializer');
+  });
+</script>
+
+<div class="testcontainer" id="testParseErrorSafety">
+  testParseErrorSafety
+</div>
+<script>
+  jsunitRegisterIf(inES5Mode,
+                   'testParseErrorSafety',
+                   function testParseErrorSafety() {
+
+    // Cannot use expectFailure because that lives on the other side of the
+    // membrane, which would muffle the problem we're looking for.
+    function check(fn, label) {
+      try {
+        fn();
+      } catch (e) {
+        for (var p = Object.getPrototypeOf(e);
+             p !== null;
+             p = Object.getPrototypeOf(p)) {
+          if (Object.isExtensible(p)) {
+            fail(label + ': error\'s prototype chain is extensible: ' + e);
+          }
+        }
+        if (!(e instanceof SyntaxError)) {
+          fail(label + ': error not a SyntaxError: ' + e);
+        }
+      }
+    }
+
+    check(function() {
+      cajaVM.eval('}');
+    }, 'eval failure');
+    check(function() {
+      cajaVM.compileModule('}');
+    }, 'compileModule failure');
+    check(function() {
+      cajaVM.compileExpr('}');
+    }, 'compileExpr failure');
+    check(function() {
+      cajaVM.compileExpr('}', {
+        parseProgram: false
+      });
+    }, 'compileExpr failure');
+    check(function() {
+      cajaVM.compileExpr('});fail();(function(){', {
+        parseProgram: false
+      });
+    }, 'compileExpr failure');
+    expectFailure(function() {
+      new Function('}');
+    }, 'Function failure');
+
+    pass('testParseErrorSafety');
+  });
+</script>
+
+<p id="testProtoMention" class="testcontainer">
+  Test mentioning __proto__
+</p>
+<script type="text/javascript">
+  jsunitRegisterIf(inES5Mode,
+                   'testProtoMention',
+                   function testProtoMention() {
+    function doProtoTest(global) {
+      // Buried in an eval to avoid causing static failures in ES5/3
+      // Split identifier to avoid causing the same failure in this block
+      var test = cajaVM.compileModule(
+          (global ? '' : '(function() {') +
+          'var __pr'+'oto__;' +
+
+          'var a = __pr'+'oto__;' + 
+          '__pr'+'oto__ = 1;' +  // If you-know-what magic exists then this
+              // fails silently since the value isn't an object.
+          'var b = __pr'+'oto__;' +
+          'testProtoMention_callback(a, b);' +
+          (global ? '' : '}());'));
+      var envProto = {};
+      var env = Object.create(envProto);
+      envProto.toString = function() { return '<envProto>'; };
+      env.toString = function() { return '<env>'; };
+      env.testProtoMention_callback = jsunitCallback(function(a, b) {
+        // Two different permissible behaviors: either you-know-what is
+        // consistently the prototype property of the supplied environment
+        // object,
+        var looksLikeProto = a === envProto;
+        // or it is consistently just a declared variable.
+        var looksLikeVar = a === undefined;
+        assertTrue('initial value is not leaky: ' + a,
+            looksLikeProto || looksLikeVar);
+        if (looksLikeProto) {
+          // not using assertEquals so as to not get the taming membrane
+          // involved
+          assertTrue('assignment is consistently ignored: ' + b, b === envProto);
+        } else {
+          assertTrue('assignment works: ' + b, b === 1);
+        }
+      });
+      test(env);
+    }
+    doProtoTest(false);
+    try {
+      doProtoTest(true);
+    } catch (e) {
+      if (/Cannot assign to read only property '__proto__'/.test(e.message)) {
+        // Other permissible behavior: __proto__ fails loudly at being a global
+        // but it should still work as a lexical var. TODO(kpreid): Quick kludge
+        // to deal with FREEZING_BREAKS_PROTOTYPES. Refactor this test for
+        // cleaner control flow and no error-wording-dependency.
+      } else {
+        throw e;
+      }
+    }
+    pass('testProtoMention');
+  });
+</script>
+
+<!-- WeakMap tests:
+
+We have several different ways of implementing WeakMap (whitelisted browser
+provided, emulated ES5/3, emulated SES, 'double' maps for working around
+problems with browser provided WeakMap), so we have these end-to-end tests.
+
+-->
+
+<script type="text/javascript">
+  jsunitRegister('testWeakMapType', function testWeakMapType() {
+    assertEquals('function', typeof WeakMap);
+
+    var w = new WeakMap();
+
+    // TODO(kpreid): arrange so that w.constructor === WeakMap for all impls
+    // Right now we're just testing that it's not a _wrong_ constructor.
+    assertTrue('constructor', w.constructor === WeakMap ||
+        w.constructor === Object || w.constructor === undefined);
+
+    if (w.constructor === WeakMap) {
+      assertTrue('prototype', WeakMap.prototype === Object.getPrototypeOf(w));
+    }
+
+    pass('testWeakMapType');
+  });
+</script>
+
+<script type="text/javascript">
+  jsunitRegister('testWeakMapAccess', function testWeakMapAccess() {
+    var w = new WeakMap();
+
+    var k1 = {};
+    var k2 = Object.create(k1);
+    var k3 = document.createEvent('HTMLEvents'); // problematic in Firefox
+
+    w.set(k1, 'a');
+    assertEquals('a', w.get(k1));
+    assertTrue('a', w.has(k1));
+    assertEquals(undefined, w.get(k2));  // don't inherit membership
+    assertFalse('early has', w.has(k2));
+
+    w.set(k2, 'b');
+    w.set(k3, 'c');
+    assertEquals('b', w.get(k2));
+    assertEquals('c', w.get(k3));
+    assertTrue('b', w.has(k2));
+    assertTrue('c', w.has(k3));
+
+    // failed lookups
+    assertFalse('no obj', w.has({}));
+    assertFalse('no event', w.has(document.createEvent('HTMLEvents')));
+    assertEquals(undefined, w.get({}));
+    assertEquals(undefined, w.get(document.createEvent('HTMLEvents')));
+
+    // defaulted failed lookups
+    // TODO(kpreid): Not supported by Chrome native WeakMap.
+    if (false) {
+      assertEquals('oops', w.get({}, 'oops'));
+    }
+
+    // primitives should not be silently accepted
+    expectFailure(function() {
+      w.set(1, 'nope');
+    }, 'WeakMap on primitive', function(e) {
+      return e.name === 'TypeError';
+    });
+
+    // deletion
+    // TODO(kpreid): not all of our implementations support .delete or .clear;
+    // fix that and enable these tests
+    if (false) {
+      w.delete(k2);
+      w.delete(k3);
+      assertFalse('deleted k2', w.has(k2));
+      assertFalse('deleted k3', w.has(k3));
+      assertEquals('deleted k2', undefined, w.get(k2));
+      assertEquals('deleted k3', undefined, w.get(k3));
+
+      w.clear();
+      assertFalse('deleted k1', w.has(k1));
+      assertEquals('deleted k1', undefined, w.get(k1));
+    }
+
+    pass('testWeakMapAccess');
+  });
+</script>
+
+<script type="text/javascript">
+  // See repairES5.js "INCREMENT_IGNORES_FROZEN" flag
+  // See https://code.google.com/p/v8/issues/detail?id=2779
+  jsunitRegister('testIncrementIgnoresFrozen',
+      function testIncrementIgnoresFrozen() {
+        function f(o, i) {
+          if (i == 3) {
+            for (var j = 0; j < 100000; j++) {
+              o.x;
+            }
+          }
+          o.x++;
+        }
+        function dotest(frozen) {
+          var o = {x: 5};
+          if (frozen) { Object.freeze(o); }
+          for (var i = 0; i < 4; i++) {try { f(o, i); } catch (e) {} }
+          return o.x;
+        }
+
+        assertEquals(5, dotest(true));
+        assertEquals(9, dotest(false));
+        pass('testIncrementIgnoresFrozen');
+      });
+</script>

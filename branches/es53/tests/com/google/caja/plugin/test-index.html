@@ -1,0 +1,70 @@
+<!doctype html>
+<!--
+ - Copyright (C) 2012 Google Inc.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -      http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+<html>
+  <meta charset="utf-8">
+  <title>Caja Tests</title>
+  <style type="text/css">
+    li { margin-bottom: 0.1em; }
+
+    .manual { text-decoration: none; }
+    .comment {
+      background: white;
+      color: #777;
+      font-size: 0.8em;
+      white-space: pre-wrap;
+    }
+
+    [title] { border-right: .5em solid #ccc; }
+
+    #key { display: table; float: right; background-color: #EEE; padding: 1em; }
+    #key h3 { text-align: center; margin: 0; }
+    #key ul { margin: 0; padding: 0; }
+    #key li { margin: 0; padding: 0; list-style-type: none; }
+
+    .testlist li {
+      list-style-type: none;
+    }
+    .testlist, .testlist ul, .comment {
+      padding-left: 2em;
+    }
+  </style>
+  <body>
+    <div id="key">
+      <h3>Key</h3>
+      <ul>
+        <li><a href="" class="">Automated</a>
+        <li><a href="" class="manual">Manual only</a>
+        <li><del>Disabled</del></a>
+        <li><a href="" class="" title="Hello world">Hidden comment</a>
+      </ul>
+    </div>
+    <h2>End-to-end automated tests</h2>
+    <ul id='tests' class='testlist'></ul>
+    <h2>Third-party tests</h2>
+    <ul id='thirdparty' class='testlist'></ul>
+    <h2>Manual tools</h2>
+    <ul>
+      <li><a href="apidiff/analyzer.html">Browser API report/diff</a></li>
+      <li><a href="browser-test-case.html?test-case=repl.html&amp;es5=true">
+          REPL inside the sandbox</a></li>
+      <li><a href="generic-host-page.html">
+          Generic host page</a></li>
+    </ul>
+    <script src="catalog-parser.js"></script>
+    <script src="test-index.js"></script>
+  </body>
+</html>

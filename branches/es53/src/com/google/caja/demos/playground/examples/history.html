@@ -1,0 +1,33 @@
+<p>A script can examine a link's computed style to deduce whether
+  the user has visited that site.</p>
+
+<style type="text/css">
+  a.visitattack { color: #0000ff; }
+  a.visitattack:link { color: #0000ff; }
+  a.visitattack:visited { color: #ff0000; }
+</style>
+
+<p>The following link is red if you've visited
+  www.google.com recently and blue if you haven't:
+  <a id="googlesniff" class="visitattack"
+     href="http://www.google.com/">link</a></p>
+
+<p>Does getComputedStyle say you've visited www.google.com?
+  <span id="googlesniff-result"></span></p>
+
+<script>
+  var link = document.getElementById("googlesniff");
+  var computedColor;
+  if (document.defaultView) {
+    var computedStyle = document.defaultView.getComputedStyle(link, null);
+    try {computedColor = computedStyle.getPropertyValue('color');} catch(e){}
+  } else {
+    computedColor = link.currentStyle && link.currentStyle['color'];
+  }
+  var resultEl = document.getElementById('googlesniff-result');
+  if (computedColor == '#ff0000' || computedColor == 'rgb(255, 0, 0)') {
+    resultEl.innerHTML = 'Yes!';
+  } else {
+    resultEl.innerHTML = 'No';
+  }
+</script>

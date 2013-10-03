@@ -1,0 +1,295 @@
+<!--
+ - Copyright (C) 2011 Google Inc.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -      http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+
+<script>
+  function $(id) { return document.getElementById(id); }
+</script>
+
+<!-- form element named 'id' triggers bug 1090. -->
+<!-- NOTE, this form must be first, otherwise ff3.5.x will produce
+     false passes due to an optimizer bug.
+     https://bugzilla.mozilla.org/show_bug.cgi?id=508744 -->
+<div class="testcontainer" id="testEmitterId">
+  <script>921</script>
+  <form id="testEmitterId-0">
+    <input id="testEmitterId-1" name="id" value="pigeon">
+  </form>
+</div>
+<script type="text/javascript">
+  // make sure emitter isn't confused by form element named "id"
+  jsunitRegister('testEmitterId',
+                 function testEmitterId() {
+
+    // did emitter find form.id correctly?
+    var el = document.getElementById('testEmitterId-0');
+    assertTrue('el is truthy', !!el);
+
+    // make sure we're still the first form
+    var forms = document.getElementsByTagName('form');
+    assertEquals(el.id, forms[0].id);
+
+    pass('testEmitterId');
+  });
+</script>
+
+<!-- This should be the second test case with any FORM nodes in it,
+     so the tests get predictable results. -->
+<form class="testcontainer" id="testDocumentForms">Form 0</form>
+<script type="text/javascript">
+  jsunitRegister('testDocumentForms',
+                 function testDocumentForms() {
+    var df = document.forms;
+    assertEquals('testDocumentForms', df[1].id);
+    assertTrue(df.length >= 2);
+    pass('testDocumentForms');
+  });
+</script>
+
+<form class="testcontainer" id="testFormElements">
+  <input type="checkbox" name="a">
+  <input type="checkbox" name="a">
+  <input type="checkbox" name="a">
+  <button type="button" name="b">Button B 0</button>
+  <button type="button" name="b">Button B 1</button>
+  <button type="button" name="b">Button B 2</button>
+  <input type="checkbox" name="c">
+</form>
+<script type="text/javascript">
+  // <form> element's namespaceness is implemented via Proxy
+  jsunitRegisterIf(proxiesAvailableToTamingCode,
+                   'testFormElements',
+                   function testFormElements() {
+    var f = document.getElementById('testFormElements');
+
+    ////////////////////////////////////////////////////////////
+    // Ensure that the form provides access to its elements by
+    // direct property access based on the NAME of the enclosed
+    // form element. This access is HTMLCollection-like, but not
+    // the full HTMLCollection API (it does not include the
+    // namedItem() method).
+    // TODO(kpreid): Fix that.
+
+    // If there exist multiple elements with the same name, the
+    // result of this access must be a DOM NodeList.
+
+    assertEquals('testFormElements.a.length', 3, f.a.length);
+    assertEquals('testFormElements.b.length', 3, f.b.length);
+    assertEquals('INPUT', f.a[0].tagName);
+    assertEquals('BUTTON', f.b[0].tagName);
+    assertEquals('INPUT', f.a.item(0).tagName);
+    assertEquals('BUTTON', f.b.item(0).tagName);
+
+    // If there exists only one element with that name, the
+    // result of this access must be that HTMLElement itself.
+    assertEquals('INPUT', f.c.tagName);
+
+    ////////////////////////////////////////////////////////////
+    // Ensure that f.elements is a proper HTMLCollection.
+
+    // Check numeric indexing
+    assertEquals(7, f.elements.length);
+    assertEquals('INPUT', f.elements[0].tagName);
+    assertEquals('BUTTON', f.elements[3].tagName);
+    assertEquals('INPUT', f.elements[6].tagName);
+    assertEquals('INPUT', f.elements.item(0).tagName);
+    assertEquals('BUTTON', f.elements.item(3).tagName);
+    assertEquals('INPUT', f.elements.item(6).tagName);
+    assertFalse(!!f.elements.item(7));
+
+    // Check indexing by name.
+    // If there exist multiple elements with the same name, the
+    // result of this access must be a DOM NodeList.
+    assertEquals(3, f.elements.a.length);
+    assertEquals(3, f.elements.b.length);
+    assertEquals('INPUT', f.elements.a[0].tagName);
+    assertEquals('BUTTON', f.elements.b[0].tagName);
+    assertEquals('INPUT', f.elements.a.item(0).tagName);
+    assertEquals('BUTTON', f.elements.b.item(0).tagName);
+
+    // Check indexing by name.
+    // If there exists only one element with that name, the
+    // result of this access must be that HTMLElement itself.
+    assertEquals('INPUT', f.elements.c.tagName);
+
+    // Check indexing by name.
+    // Nonexistent names return falsy.
+    assertFalse(!!f.elements.d);
+
+    // Check indexing by name.
+    // The namedItem() method will return only the *first*
+    // element having the given name, and nonexistent names
+    // return falsy.
+    assertEquals('INPUT', f.elements.namedItem('a').tagName);
+    assertEquals('BUTTON', f.elements.namedItem('b').tagName);
+    assertEquals('INPUT', f.elements.namedItem('c').tagName);
+    assertFalse(!!f.elements.namedItem('d'));
+
+    pass('testFormElements');
+  });
+</script>
+
+<div class="testcontainer" id="testFormLength"
+  ><form id="testFormLength-form">
+    <input type="text">
+    <button></button>
+  </form>
+</div>
+<script type="text/javascript">
+  jsunitRegister('testFormLength',
+                 function testFormLength() {
+    var form = document.getElementById('testFormLength-form');
+    assertEquals(2, form.length);
+
+    pass('testFormLength');
+  });
+</script>
+
+<div class="testcontainer" id="testForms"></div>
+<script type="text/javascript">
+  var foo = jsunitCallback(
+      function foocb() {
+        var container = document.getElementById('testForms');
+        var div = document.createElement('blockquote');
+        div.innerHTML = 'event dispatched to <code>foo()</code>';
+        container.appendChild(div);
+      },
+      'testForms');
+
+  jsunitRegister('testForms',
+                 function testForms() {
+    var form = document.createElement('FORM');
+    assertEquals('return false', directAccess.getAttribute(form, 'onsubmit'));
+
+    assertEquals('off', directAccess.getAttribute(form, 'autocomplete'));
+    // TODO(felix8a): no such function in es5 in firefox?
+    //form.setAttribute('autocomplete', 'on');
+    assertEquals('off', directAccess.getAttribute(form, 'autocomplete'));
+
+    var input = document.createElement('input');
+    assertEquals('off', directAccess.getAttribute(input, 'autocomplete'));
+    input.setAttribute('autocomplete', 'on');
+    assertEquals('off', directAccess.getAttribute(input, 'autocomplete'));
+
+    var container = document.getElementById('testForms');
+    container.innerHTML = '<form onsubmit="foo()">'
+        + '<input type="submit" value="Submit"></form>';
+
+    // TODO(kpreid): This is matching implementation details. What do we
+    // actually want to test for here?
+    assertEquals('<form autocomplete="off" onsubmit="'
+                 + 'try { ___.plugin_dispatchEvent___'
+                 + '(this, event, 0, &quot;foo&quot;, 0);'
+                 + ' } finally { return false; }" target="_blank">'
+                 + '<input autocomplete="off" type="submit" value="Submit">'
+                 + '</form>',
+                 canonInnerHtml(directAccess.getInnerHTML(container)));
+
+    pass('testForms');
+  });
+</script>
+
+<div class="testcontainer" id="testDynamicForm">
+  <form id="testDynamicForm-form">
+    <input>
+  </form>
+</div>
+<script type="text/javascript">
+  jsunitRegister('testDynamicForm',
+                 function testDynamicForm() {
+
+    var form = document.getElementById('testDynamicForm-form');
+
+    form.elements;
+
+    var field = document.createElement('input');
+    form.appendChild(field);
+
+    // Regression test: form.elements updates with new elements
+    assertEquals(2, form.elements.length);
+    assertEquals(field, form.elements[1]);
+
+    pass('testDynamicForm');
+  });
+</script>
+
+<form class="testcontainer" id="testFancyInputs">testFancyInputs
+  <!-- HTML5 input types and related interface -->
+  <input type="text" id="testFancyInputs-plain" value="7">
+  <input type="number" id="testFancyInputs-num" value="7">
+</form>
+<script type="text/javascript">
+  // TODO(kpreid): Marked ES5 only because the cajoler is not allowing
+  // type=number through despite it being in the schema; I don't know why yet.
+  jsunitRegisterIf(inES5Mode, 'testFancyInputs', function testFancyInputs() {
+    // TODO(kpreid): test other HTML5 input types.
+
+    // basics/comparison
+    assertEquals('text', $('testFancyInputs-plain').type);
+    assertNaN($('testFancyInputs-plain').valueAsNumber);
+
+    assertEquals('number', $('testFancyInputs-num').getAttribute('type'));
+    if ($('testFancyInputs-num').type === 'number') {  // browser support
+      assertEquals('number', $('testFancyInputs-num').type);
+      assertEquals(7, $('testFancyInputs-num').valueAsNumber);
+
+      $('testFancyInputs-num').stepDown();
+      assertEquals(6, $('testFancyInputs-num').valueAsNumber);
+      $('testFancyInputs-num').stepUp();
+      assertEquals(7, $('testFancyInputs-num').valueAsNumber);
+    }
+
+    pass('testFancyInputs');
+  });
+</script>
+
+<form class="testcontainer" id="testAutofocus">testAutofocus
+  <input type="text" id="testAutofocus-field" autofocus>
+</form>
+<script>
+  jsunitRegister('testAutofocus', function() {
+    var el = document.getElementById('testAutofocus-field');
+    assertEquals(false, el.autofocus);
+    el.autofocus = true;
+    assertEquals(null, directAccess.getAttribute(el, 'autofocus'));
+    assertEquals(false, el.autofocus);
+    pass();
+  });
+</script>
+
+<form class="testcontainer" id="testOptgroup">
+  <optgroup id="testOptgroup-field" disabled label="testOptgroup">
+</form>
+<script>
+  jsunitRegister('testOptgroup', function() {
+    var el = document.getElementById('testOptgroup-field');
+
+    assertEquals('testOptgroup', el.label);
+    el.label = 'testOptgroup is nifty';
+    assertEquals('testOptgroup is nifty', el.getAttribute('label'));
+
+    // disabled
+    // extensive tests to exercise reflect-boolean-attribute code, not because
+    // we're worried about disabled in particular
+    assertEquals(true, el.disabled);
+    el.disabled = false;
+    assertEquals(null, directAccess.getAttribute(el, 'disabled'));
+    assertEquals(false, el.disabled);
+    el.disabled = true;
+    assertEquals('string', typeof directAccess.getAttribute(el, 'disabled'));
+    assertEquals(true, el.disabled);
+    pass();
+  });
+</script>

@@ -1,0 +1,76 @@
+/*
+ * Copyright (C) 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.testcontainer {
+  background: yellow;
+  border: 2px solid yellow;
+
+  /* uniform styles for even layout no matter whether the container is a
+     <p>, <div>, or <form> etc. */
+  margin: 2px 0;
+  padding: 1px;
+}
+
+.clickme {
+  border: 2px solid fuchsia;
+}
+
+/* test container waiting for an async event */
+.waiting {
+  border: 2px solid aqua;
+}
+
+/* test container for non-automated test requiring manual interaction */
+.manual {
+  background: #eef;
+  border: 2px solid #00f;
+}
+
+/* test container - test passed */
+.passed {
+  background: #c0ffc0;
+  border: 2px solid #c0ffc0;
+}
+
+/* test container - test failed */
+.failed {
+  background: #f99;
+  border: 2px solid #f99;
+}
+
+/* test container - test not run in this environment */
+.skipped {
+  background: #777;
+  border: 2px solid #777;
+}
+
+/* test framework toolbar and page layout */
+html { margin: 0; }
+body { margin: 0.5em; }  /* known margin to negate for toolbar */
+#toolbar {
+   background: #ccf;
+   margin: -0.5em -0.5em 0.5em;
+   padding: 1em 1em .12em 1em;
+   overflow-x: hidden;
+}
+#toolbar .widget, #toolbar .nonwidget {
+  display: inline-block;
+  padding: 0 .12em;
+  margin: 0 1em;
+}
+#toolbar .widget {
+  background: #eef;
+}

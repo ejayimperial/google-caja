@@ -1,0 +1,225 @@
+<!--
+ - Copyright (C) 2011 Google Inc.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -      http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+
+<script type="text/javascript">
+  function assertBottom(msg, o) {
+    if (!(o === null || o === undefined)) {
+      console.log("Expected bottom value: " + msg + "; but was", o);
+      fail("Expected bottom value: " + msg);
+    }
+  }
+</script>
+
+<div>
+  <span class="innertest" id="innersafe">
+     For testEmbeddedForeign; must be early in document.
+     There should be exactly two spans visible in the
+     document, this and the added one, not foreign ones.
+  </span>
+</div>
+
+<p class="testcontainer" id="testNotNull">
+  test-not-null
+</p>
+<script type="text/javascript">
+  jsunitRegister('testNotNull',
+                 function testNotNull() {
+    // Simple sanity check to make sure test harness worked okay
+    // Also happens to test toString on foreign nodes
+    document.getElementById('testNotNull').innerHTML +=
+        ' ' + getExternalForeignNode().toString() + ' ';
+    document.getElementById('testNotNull').innerHTML +=
+        ' ' + getEmbeddedForeignNode().toString() + ' ';
+    pass('testNotNull');
+  });
+</script>
+
+<script type="text/javascript">
+  function assertThrowsRestricted(name, f) {
+    try {
+      f();
+      fail(name + ' assertThrowsRestricted');
+    } catch (e) {
+      e = '' + e;
+      if (!(/Node is restricted/.test(e) || /Node not editable\./.test(e))) {
+        fail(name + ' assertThrowsRestricted failed with ' + e);
+      }
+    }
+  }
+
+  function testForeign(name, node, expectParent) {
+    name = name + ': ';
+
+    // Walk all of DOM interface Node to check for proper encapsulation
+    // http://www.w3.org/TR/DOM-Level-2-Core/core.html
+
+    assertEquals(name + 'nodeName', 'DIV', node.nodeName);
+    assertBottom(name + 'nodeValue', node.nodeValue);
+    assertEquals(name + 'nodeType', 1, node.nodeType);
+
+    assertBottom(name + 'localName', node.localName);
+    assertBottom(name + 'namespaceURI', node.namespaceURI);
+    assertBottom(name + 'prefix', node.prefix);
+
+    // assertFalse(name + 'hasAttributes()', node.hasAttributes());
+    assertEquals(name + 'attributes', 0, node.attributes.length);
+    assertBottom(name + 'attributes[0]', node.attributes[0]);
+    // There is no getAttribute method but a client could try this:
+    assertBottom(name + 'getAttribute unknown',
+      Element.prototype.getAttribute.call(node, 'testattr'));
+    assertBottom(name + 'getAttribute known',
+      Element.prototype.getAttribute.call(node, 'title'));
+    assertBottom(name + 'getAttributeNode unknown',
+      Element.prototype.getAttributeNode.call(node, 'testattr'));
+    assertBottom(name + 'getAttributeNode known',
+      Element.prototype.getAttributeNode.call(node, 'title'));
+
+    // assertFalse(name + 'isSupported()', node.isSupported('', ''));
+
+    assertThrowsRestricted(name + 'cloneNode(true)', function() {
+      node.cloneNode(true);
+    });
+
+    assertThrowsRestricted(name + 'cloneNode(false)', function() {
+      node.cloneNode(false);
+    });
+
+    // assertThrowsRestricted(name + 'normalize()', function() {
+    //   node.normalize();
+    // });
+
+    assertThrowsRestricted(name + 'replaceChild(Node,Node)', function() {
+      node.replaceChild(document.createElement('div'),
+        document.createElement('div'));
+    });
+
+    assertThrowsRestricted(name + 'insertBefore(Node,Node)', function() {
+      node.insertBefore(document.createElement('div'),
+        document.createElement('div'));
+    });
+
+    assertThrowsRestricted(name + 'removeChild(Node)', function() {
+      node.removeChild(document.createElement('div') /* ?? */);
+    });
+
+    assertThrowsRestricted(name + 'appendChild(Node)', function() {
+      node.appendChild(document.createElement('div') /* ?? */);
+    });
+
+    assertEquals(name + 'ownerDocument', node.ownerDocument, document);
+    assertBottom(name + 'parentNode', node.parentNode);
+
+    assertFalse(name + 'hasChildNodes()', node.hasChildNodes());
+    assertTrue(name + 'childNodes empty', node.childNodes.length === 0);
+    assertBottom(name + 'childNodes[0]', node.childNodes[0]);
+    assertBottom(name + 'childNodes[3]', node.childNodes[3]);
+
+    assertBottom(name + 'firstChild', node.firstChild);
+    assertBottom(name + 'lastChild', node.lastChild);
+    assertBottom(name + 'previousSibling', node.previousSibling);
+    assertBottom(name + 'nextSibling', node.nextSibling);
+
+    assertBottom(name + 'innerHTML', node.innerHTML);
+    assertBottom(name + 'textContent', node.textContent);
+    if (expectParent) {
+      var parent = directAccess.getParentNode(node);
+      assertTrue(name + 'innerHTML sanity check',
+          directAccess.getInnerHTML(node).indexOf('Div number') > 0);
+      assertFalse(name + 'containing innerHTML',
+          parent.innerHTML.indexOf('Div number') > 0);
+    }
+
+    assertTrue(name + 'getElementsByTagName empty',
+        node.getElementsByTagName('div').length === 0);
+    assertBottom(name + 'getElementsByTagName[0]',
+        node.getElementsByTagName('div')[0]);
+    assertBottom(name + 'getElementsByTagName[3]',
+        node.getElementsByTagName('div')[3]);
+
+    assertTrue(name + 'getElementsByClassName empty',
+        node.getElementsByClassName('testclass').length === 0);
+    assertBottom(name + 'getElementsByClassName[0]',
+        node.getElementsByClassName('testclass')[0]);
+    assertBottom(name + 'getElementsByClassName[3]',
+        node.getElementsByClassName('testclass')[3]);
+  }
+</script>
+
+<p class="testcontainer" id="testExternalForeign">
+  testExternalForeign
+</p>
+<script type="text/javascript">
+  jsunitRegister('testExternalForeign',
+                 function testExternalForeign() {
+    testForeign('testExternalForeign', getExternalForeignNode(), false);
+    pass('testExternalForeign');
+  });
+</script>
+
+<p class="testcontainer" id="testEmbeddedForeign">
+  testEmbeddedForeign
+</p>
+<script type="text/javascript">
+  // TODO(kpreid): Does this already exist? jsUnit.js assertArrayEquals is
+  // a deep-compare which is not good for this case.
+  function assertIdenticalElements(note, array1, array2) {
+    if (array1.length === array2.length) {
+      var ok = true;
+      for (var i = array1.length - 1; i >= 0; i--) {
+        if (array1[i] !== array2[i]) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) { return; }
+    }
+    // found a mismatch, generate default error
+    assertEquals(note, array1, array2);
+  }
+
+  jsunitRegister('testEmbeddedForeign',
+                 function testEmbeddedForeign() {
+    testForeign('testEmbeddedForeign', getEmbeddedForeignNode(), true);
+
+    // Test that getElementsBy* skip foreign children.
+    // goodNode1 is at the beginning of the list in document order and
+    // goodNode2 is at the end; they test that foreign children are omitted.
+    var goodNode1 = document.getElementById('innersafe');
+    var goodNode2 = document.createElement('span');
+    goodNode2.className = 'innertest';
+    document.body.appendChild(goodNode2);
+
+    var classNameList = document.getElementsByClassName('innertest');
+    var tagNameList = document.getElementsByTagName('span');
+
+    assertIdenticalElements('getElementsByClassName',
+        [goodNode1, goodNode2], classNameList);
+    assertIdenticalElements('getElementsByTagName',
+        [goodNode1, goodNode2], tagNameList);
+
+    // Test that node lists remain live-updating in the case where foreign
+    // nodes exist.
+    var goodNode1b = document.createElement('span');
+    goodNode1.parentNode.appendChild(goodNode1b);
+    assertIdenticalElements('getElementsByClassName after',
+        [goodNode1, goodNode1b, goodNode2], tagNameList);
+    goodNode1b.className = 'innertest';
+    assertIdenticalElements('getElementsByTagName after',
+        [goodNode1, goodNode1b, goodNode2], classNameList);
+
+    pass('testEmbeddedForeign');
+  });
+</script>

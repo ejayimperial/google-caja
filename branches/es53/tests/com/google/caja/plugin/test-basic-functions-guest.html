@@ -1,0 +1,114 @@
+<!doctype html>
+<!--
+ - Copyright (C) 2010 Google Inc.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -      http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+
+<script>
+  function $(id) { return document.getElementById(id); }
+</script>
+
+<div id="testStaticDom" class="testcontainer waiting">
+  testStaticDom
+  <p>Foo bar baz</p>
+</div>
+<script type="text/javascript">
+  jsunitRegister('testStaticDom',
+                 function testStaticDom() {
+    var s = directAccess.getInnerHTML($('testStaticDom'));
+    assertNotEquals(-1, s.indexOf('Foo bar baz'));
+    pass('testStaticDom');
+  });
+</script>
+
+<div id="testDynamicDom" class="testcontainer waiting">
+  testDynamicDom
+</div>
+<script type="text/javascript">
+  jsunitRegister('testDynamicDom',
+                 function testDynamicDom() {
+    var p = document.createElement('p');
+    p.innerHTML = 'Foo bar baz';
+    $('testDynamicDom').appendChild(p);
+    var s = directAccess.getInnerHTML($('testDynamicDom'));
+    assertNotEquals(-1, s.indexOf('Foo bar baz'));
+    pass('testDynamicDom');
+  });
+</script>
+
+<div id="testGlobalWindowProperties" class="testcontainer waiting">
+  testGlobalWindowProperties
+</div>
+<script type="text/javascript">
+  var foo = 0;
+  jsunitRegister('testGlobalWindowProperties',
+                 function testGlobalWindowProperties() {
+    assertEquals(0, foo);
+    window.foo = 1;
+    assertEquals(1, foo);
+    pass('testGlobalWindowProperties');
+  });
+</script>
+
+<script type="text/javascript">
+  // Capture global 'this' for later use by the tests
+  this.globalThis = this;
+</script>
+
+<div id="testGlobalWindowReassignment" class="testcontainer waiting">
+  testGlobalWindowReassignment
+</div>
+<script type="text/javascript">
+  jsunitRegister('testGlobalWindowReassignment',
+                 function testGlobalWindowReassignment() {
+    assertEquals(globalThis, window);
+    var origWindow = window;
+    window = 1;
+    assertEquals(1, window);
+    window = origWindow;
+    assertEquals(origWindow, window);
+    pass('testGlobalWindowReassignment');
+  });
+</script>
+
+<div id="testGlobalSelfReassignment" class="testcontainer waiting">
+  testGlobalSelfReassignment
+</div>
+<script type="text/javascript">
+  jsunitRegister('testGlobalSelfReassignment',
+                 function testGlobalSelfReassignment() {
+    assertEquals(globalThis, self);
+    var origSelf = self;
+    self = 1;
+    assertEquals(1, self);
+    self = origSelf;
+    assertEquals(origSelf, self);
+    pass('testGlobalSelfReassignment');
+  });
+</script>
+
+<div id="testGlobalNodeClassesReassignment" class="testcontainer waiting">
+  testGlobalNodeClassesReassignment
+</div>
+<script type="text/javascript">
+  jsunitRegister('testGlobalNodeClassesReassignment',
+                 function testGlobalNodeClassesReassignment() {
+    var origElement = HTMLElement;
+    HTMLElement = 1;
+    assertEquals(1, window.HTMLElement);
+    window.HTMLElement = origElement;
+    assertEquals(origElement, HTMLElement);
+    pass('testGlobalNodeClassesReassignment');
+  });
+</script>

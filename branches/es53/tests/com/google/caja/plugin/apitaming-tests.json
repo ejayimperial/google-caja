@@ -1,0 +1,28 @@
+[
+  {
+    "label": "apitaming",
+    "mode": "none",
+    "manual": true,
+    "tests": [
+      {
+        "label": "individual",
+        "bare-template": "../apitaming/tests-index.html?testsList=*-list.json&cajaServer=/caja",
+        "tests": [
+          { "bare": "maps" },
+          { "bare": "picker" },
+          { "bare": "visualization" }
+        ]
+      },
+      {
+        "label": "all",
+        "comment": "large/slow page",
+        "bare-template": "../apitaming/tests-side-by-side.html?testsList=*-list.json&cajaServer=/caja",
+        "tests": [
+          { "bare": "maps" },
+          { "bare": "picker" },
+          { "bare": "visualization" }
+        ]
+      }
+    ]
+  }
+]
