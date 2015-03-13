@@ -1,4 +1,5 @@
 #summary All our security advisories (latest first).
+  * 13 Mar 2015 SecurityAdvisory201513 Code execution, capability leak, endangered integrity.
   * 22 Sep 2014 SecurityAdvisory20140922 Rosetta Flash.
   * 21 Nov 2013 SecurityAdvisory20131121 Possible code execution.
   * 13 Aug 2013 SecurityAdvisory201308013 Possible code execution and communication channel.
